@@ -54,15 +54,11 @@ afterEach(() => {
 function setup() {
   const scene = new MapScene();
   const events = new EventEmitter();
-  const hidden = { setVisible: vi.fn() };
-  const face = () => ({ faces: { normal: hidden, pressed: hidden }, label: { label: hidden } });
   const route = { launch: vi.fn(), restart: vi.fn(), start: vi.fn() };
   Object.assign(scene, {
-    buttons: { continue: face(), home: face() },
     cache: { json: { get: (key: string) => (key === "bird" ? birdSheet : markerSheet) } },
     completed: new Set(),
     events,
-    fallback: [hidden],
     game: { events: new EventEmitter() },
     generation: 1,
     open: openMap(ZONE_MAP, new Set()),
@@ -73,7 +69,7 @@ function setup() {
   (Reflect.get(scene, "addDom") as () => void).call(scene);
   cleanups.push(() => events.emit("shutdown"));
   const root = document.querySelector<HTMLElement>(".map-scene")!;
-  return { events, hidden, root, route, scene };
+  return { events, root, route, scene };
 }
 
 function tap(target: Element) {
@@ -82,16 +78,14 @@ function tap(target: Element) {
   target.dispatchEvent(new PointerEvent("pointerup", at));
 }
 
-it("keeps the canvas fallback through decoding and hands off only on successful reveal", async () => {
-  const { hidden, root, route } = setup();
+it("keeps native input disabled through decoding until successful reveal", async () => {
+  const { root, route } = setup();
   const next = root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
   tap(next);
   expect(route.launch).not.toHaveBeenCalled();
   expect(root.hidden).toBe(true);
-  expect(hidden.setVisible).not.toHaveBeenCalled();
   ready.finish!(true);
   await Promise.resolve();
-  expect(hidden.setVisible).toHaveBeenCalledWith(false);
   expect(next.textContent).toBe(TEXT.map.continue);
   const critical = await ready.urls!;
   const walk = birdSheet.meta.frameTags.find(({ name }) => name === "walk")!;
@@ -134,13 +128,11 @@ it("does not hand off a failed or shutdown reveal", async () => {
   const failed = setup();
   ready.finish!(false);
   await Promise.resolve();
-  expect(failed.hidden.setVisible).not.toHaveBeenCalled();
   failed.events.emit("shutdown");
   const stale = setup();
   stale.events.emit("shutdown");
   ready.finish!(true);
   await Promise.resolve();
-  expect(stale.hidden.setVisible).not.toHaveBeenCalled();
   expect(ready.cancel).toHaveBeenCalled();
 });
 

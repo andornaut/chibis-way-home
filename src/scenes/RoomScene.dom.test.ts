@@ -2,11 +2,8 @@
 import { EventEmitter } from "node:events";
 
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { afterEach, expect, it, vi } from "vitest";
 
-import body from "../../public/art/fonts/font-body.fnt?raw";
-import title from "../../public/art/fonts/font-title.fnt?raw";
 import pug from "../../public/art/sprites/dog-pug.json" with { type: "json" };
 import dash from "../../public/art/sprites/icon-skill-dash.json" with { type: "json" };
 import type { RoomView } from "../ui/index.ts";
@@ -19,7 +16,12 @@ vi.mock("phaser", () => ({
 }));
 vi.mock("./save.ts", () => ({ grantSkill: vi.fn() }));
 vi.mock("./modalInput.ts", () => ({
-  modalInput: () => ({ accepts: () => true, capture: () => () => true, subscribe: () => {} }),
+  modalInput: () => ({
+    accepts: () => true,
+    capture: () => () => true,
+    ready: vi.fn(),
+    subscribe: () => {},
+  }),
 }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: vi.fn(async (_scene, art, frame) => `blob:${art}:${frame}`),
@@ -27,11 +29,7 @@ vi.mock("./domUi.ts", () => ({
   revealSceneView: vi.fn(),
   sceneDomUi: () => ({ element: document.createElement("div") }),
 }));
-vi.mock("./cardParts.ts", async (original) => ({
-  ...(await original<typeof import("./cardParts.ts")>()),
-  cardFonts: () => ({ body: parseBitmapFont(body), title: parseBitmapFont(title) }),
-  paletteColour: () => 0,
-}));
+vi.mock("./scenePalette.ts", () => ({ paletteColour: () => 0 }));
 
 import { artFrameUrl, revealSceneView } from "./domUi.ts";
 import { RoomScene } from "./RoomScene.ts";
@@ -51,34 +49,30 @@ function fixture() {
   });
   const events = new EventEmitter();
   const controller = { resume: vi.fn(), setVisible: vi.fn(), stop: vi.fn() };
-  const fallback = { setVisible: vi.fn() };
   const idle = sheetTags(pug as AsepriteSheet).get("idle")!;
   const portrait = { frame: { name: idle[0]!.frame }, height: 32, width: 44 };
   const room = new RoomScene();
   room.init({ room: "dash-gift", stage: "street" });
   Object.assign(room, {
     cache: { json: { get: (key: string) => (key === "dog-pug" ? pug : dash) } },
-    canvasUi: [fallback],
     events,
     portrait,
     scene: controller,
   });
   const scene = room as unknown as { createDomView(): void; view: RoomView };
   scene.createDomView();
-  return { cancel, controller, events, fallback, idle, portrait, resolve, scene };
+  return { cancel, controller, events, idle, portrait, resolve, scene };
 }
 
 it("hands off only after all idle frames decode, follows the native portrait frame and leaves once", async () => {
-  const { controller, events, fallback, idle, portrait, resolve, scene } = fixture();
+  const { controller, events, idle, portrait, resolve, scene } = fixture();
   scene.view.leave.click();
   expect(controller.resume).not.toHaveBeenCalled();
-  expect(fallback.setVisible).not.toHaveBeenCalled();
   const urls = await vi.mocked(revealSceneView).mock.calls[0]![2];
   expect(urls).toHaveLength(idle.length + 1);
   expect(artFrameUrl).toHaveBeenCalledTimes(idle.length + 1);
   resolve(true);
   await Promise.resolve();
-  expect(fallback.setVisible).toHaveBeenCalledExactlyOnceWith(false);
   const image = scene.view.panel!.portrait;
   expect(image.src).toBe(`blob:dog-pug:${idle[0]!.frame}`);
   expect(image.style.getPropertyValue("--room-portrait-width")).toBe(String(portrait.width));
@@ -100,7 +94,7 @@ it("hands off only after all idle frames decode, follows the native portrait fra
 });
 
 it("cancels a pending room handoff on shutdown without enabling stale controls", async () => {
-  const { cancel, controller, events, fallback, resolve, scene } = fixture();
+  const { cancel, controller, events, resolve, scene } = fixture();
   const view = scene.view;
   await vi.mocked(revealSceneView).mock.calls[0]![2];
   events.emit("shutdown");
@@ -108,7 +102,6 @@ it("cancels a pending room handoff on shutdown without enabling stale controls",
   await Promise.resolve();
   view.leave.click();
   expect(cancel).toHaveBeenCalledOnce();
-  expect(fallback.setVisible).not.toHaveBeenCalled();
   expect(controller.resume).not.toHaveBeenCalled();
   expect(events.listenerCount("prerender")).toBe(0);
 });

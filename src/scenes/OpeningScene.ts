@@ -1,40 +1,26 @@
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { type GameObjects, type Input, Scene } from "phaser";
+import { type GameObjects, Scene } from "phaser";
 
 import { OPENING } from "../data/opening.ts";
 import { SCREEN } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
-import type { Point } from "../data/types/index.ts";
 import { createOpeningPlayback } from "../progress/index.ts";
 import {
   createOpeningView,
   focusKeyAction,
-  openingLayout,
   type OpeningView,
-  pressedArea,
   showOpeningCaption,
   stepFocus,
 } from "../ui/index.ts";
-import {
-  addCardText,
-  addTextButton,
-  BODY_FONT,
-  captureTab,
-  cardFonts,
-  paletteColour,
-  pressTextButton,
-  PRIMARY_BUTTON,
-  ringFocus,
-  type TextButton,
-} from "./cardParts.ts";
 import { followTaps } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
-import { modalInput, onScenePointer } from "./modalInput.ts";
+import { captureTab } from "./keyboardCapture.ts";
+import { modalInput } from "./modalInput.ts";
 import { renderOpeningLayer } from "./openingLayer.ts";
-import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { fitPlayCamera } from "./playCamera.ts";
 import { saveOpeningSeen } from "./save.ts";
-import { uiObject } from "./uiRoots.ts";
+import { paletteColour } from "./scenePalette.ts";
 
 type Action = "continue" | "skip";
 // The keyboard's focus order: Continue then Skip, though Skip is drawn on the left.
@@ -48,16 +34,9 @@ export class OpeningScene extends Scene {
   private art!: GameObjects.Container;
   private background: GameObjects.Image | undefined;
   private layers: GameObjects.Sprite[] = [];
-  private caption!: GameObjects.BitmapText;
-  private buttons!: Record<Action, TextButton>;
-  private layout!: ReturnType<typeof openingLayout>;
   private focus: Action | undefined;
-  private ring: GameObjects.NineSlice | undefined;
   private shot: object | undefined;
   private beat: object | undefined;
-  private press:
-    | { readonly action: Action; readonly at: Point; readonly id: number; cancelled: boolean }
-    | undefined;
 
   constructor() {
     super("opening");
@@ -69,8 +48,6 @@ export class OpeningScene extends Scene {
     this.htmlReady = false;
     const generation = ++this.generation;
     this.focus = undefined;
-    this.ring = undefined;
-    this.press = undefined;
     this.shot = undefined;
     this.beat = undefined;
     this.layers = [];
@@ -81,38 +58,9 @@ export class OpeningScene extends Scene {
     this.add.rectangle(0, 0, SCREEN.width, SCREEN.height, paletteColour(this, "ink")).setOrigin(0);
     this.art = this.add.container(0, 0);
     this.background = undefined;
-    const footerY = openingLayout(
-      cardFonts(this),
-      TEXT.dialogue,
-      TEXT.lines[OPENING[0]!.text]!,
-    ).footerY;
-    this.add
-      .rectangle(0, footerY, SCREEN.width, SCREEN.height - footerY, paletteColour(this, "ink"))
-      .setOrigin(0);
-    this.caption = addCardText(this, BODY_FONT, { x: 0, y: 0 }, "", paletteColour(this, "white"));
-    uiObject(this, this.caption);
-    this.layout = openingLayout(cardFonts(this), TEXT.dialogue, TEXT.lines[OPENING[0]!.text]!);
-    this.buttons = {
-      continue: addTextButton(this, this.layout.continue, TEXT.dialogue.continue, {
-        marked: true,
-        style: PRIMARY_BUTTON,
-      }),
-      skip: addTextButton(this, this.layout.skip, TEXT.dialogue.skip),
-    };
-    for (const button of Object.values(this.buttons)) {
-      uiObject(this, button.faces.normal);
-      uiObject(this, button.faces.pressed);
-      uiObject(this, button.label.label);
-      if (button.label.mark !== undefined) {
-        uiObject(this, button.label.mark);
-      }
-    }
     const input = modalInput(this);
     input.open();
-    input.subscribe(() => {
-      this.press = undefined;
-      this.renderControls();
-    });
+    input.ready(false);
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
     const keydown = (event: KeyboardEvent) => {
@@ -129,7 +77,6 @@ export class OpeningScene extends Scene {
         if (this.htmlReady && this.focus !== undefined) {
           this.view?.buttons[this.focus].focus();
         }
-        this.renderControls();
       } else if (action === "press" && !event.repeat) {
         this.activate(this.focusedAction() ?? "continue");
       }
@@ -142,62 +89,18 @@ export class OpeningScene extends Scene {
     };
     this.input.keyboard?.on("keydown", keydown);
     this.input.keyboard?.on("keyup", keyup);
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      this.input.stopPropagation();
-      if (this.htmlReady || this.press) {
-        return;
-      }
-      const at = playPoint(this, pointer);
-      const action = this.actionAt(at);
-      if (action) {
-        this.press = { action, at, cancelled: false, id: pointer.id };
-      }
-      this.renderControls();
-    });
-    onScenePointer(this, "pointermove", (pointer: Input.Pointer) => {
-      if (this.press?.id !== pointer.id) {
-        return;
-      }
-      const at = playPoint(this, pointer);
-      this.press.cancelled ||=
-        Math.hypot(at.x - this.press.at.x, at.y - this.press.at.y) > TOUCH.tapMaxDistance;
-      this.renderControls();
-    });
-    const up = (pointer: Input.Pointer, outside: boolean) => {
-      if (this.press?.id !== pointer.id) {
-        return;
-      }
-      const press = this.press;
-      this.press = undefined;
-      const at = playPoint(this, pointer);
-      if (
-        !outside &&
-        !pointer.wasCanceled &&
-        !press.cancelled &&
-        this.actionAt(at) === press.action &&
-        Math.hypot(at.x - press.at.x, at.y - press.at.y) <= TOUCH.tapMaxDistance
-      ) {
-        this.activate(press.action);
-      }
-      this.renderControls();
-    };
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => up(pointer, false));
-    onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
     this.drawFrame();
-    this.renderControls();
     if (sceneDomUi(this) !== undefined) {
       const view = createOpeningView(document, TEXT.dialogue);
       this.view = view;
       const frame = this.playback.frame();
-      showOpeningCaption(this.layout, TEXT.lines[frame.beat.text]!, view);
+      showOpeningCaption(TEXT.lines[frame.beat.text]!, view);
       const stop = this.watchPresses(view);
       view.root.addEventListener("keydown", keydown);
       view.root.addEventListener("keyup", keyup);
-      const urls = artFrameUrl(
-        this,
-        "ui-play-mark",
-        this.buttons.continue.label.mark!.frame.name,
-      ).then((url) => {
+      const mark = sheetTags(this.cache.json.get("ui-play-mark") as AsepriteSheet).get("light")?.[0]
+        ?.frame;
+      const urls = artFrameUrl(this, "ui-play-mark", mark).then((url) => {
         if (this.generation === generation) {
           view.mark.src = url;
         }
@@ -219,16 +122,8 @@ export class OpeningScene extends Scene {
           return;
         }
         input.invalidate();
-        this.press = undefined;
         this.htmlReady = true;
-        this.caption.setVisible(false);
-        this.ring?.setVisible(false);
-        for (const button of Object.values(this.buttons)) {
-          button.faces.normal.setVisible(false);
-          button.faces.pressed.setVisible(false);
-          button.label.label.setVisible(false);
-          button.label.mark?.setVisible(false);
-        }
+        input.ready(true);
         if (this.focus !== undefined) {
           view.buttons[this.focus].focus();
         }
@@ -293,23 +188,11 @@ export class OpeningScene extends Scene {
     };
   }
 
-  private actionAt(at: Point): Action | undefined {
-    return pressedArea(
-      ACTIONS.map((key) => ({
-        art: this.layout[key].button,
-        hit: this.layout[key].hit,
-        key,
-      })),
-      at,
-    );
-  }
-
   private activate(action: Action): void {
     if (!modalInput(this).accepts() || this.playback.frame().finished) {
       return;
     }
     modalInput(this).invalidate();
-    this.press = undefined;
     if (action === "skip") {
       this.playback.skip();
     } else {
@@ -317,19 +200,6 @@ export class OpeningScene extends Scene {
     }
     if (!this.playback.frame().finished) {
       this.drawFrame();
-    }
-  }
-
-  private renderControls(): void {
-    if (this.htmlReady || this.playback.frame().finished) {
-      return;
-    }
-    for (const action of ACTIONS) {
-      pressTextButton(this.buttons[action], this.press?.action === action && !this.press.cancelled);
-    }
-    this.ring = ringFocus(this, this.ring, this.focus ? this.layout[this.focus].button : undefined);
-    if (this.ring !== undefined) {
-      uiObject(this, this.ring);
     }
   }
 
@@ -358,10 +228,8 @@ export class OpeningScene extends Scene {
       if (text === undefined) {
         throw new Error(`Missing opening caption ${frame.beat.text}`);
       }
-      this.layout = openingLayout(cardFonts(this), TEXT.dialogue, text);
-      this.caption.setText(text).setPosition(this.layout.caption.x, this.layout.caption.y);
       if (this.view !== undefined) {
-        showOpeningCaption(this.layout, text, this.view);
+        showOpeningCaption(text, this.view);
       }
       this.beat = frame.beat;
     }

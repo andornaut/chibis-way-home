@@ -1,19 +1,14 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
 import { browserExitPage, exitApp } from "@andornaut/game-kit/web/pwa/dom/exitApp";
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
-import { type GameObjects, type Input, Scene } from "phaser";
+import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
-import type { Rect } from "../data/types/index.ts";
 import { openingDestination } from "../progress/index.ts";
 import { coverZone, exitShown, PHONE_EVENTS, startScreenShown } from "../pwa/index.ts";
 import {
   createStart,
   focusKeyAction,
-  type IconButtonLayout,
-  type PressArea,
-  pressedArea,
   setTouchSettingShown,
   startBackAction,
   type StartScreenLayout,
@@ -27,24 +22,15 @@ import type {
   AchievementsOpener,
   AchievementsScene,
 } from "./AchievementsScene.ts";
-import {
-  addSlice,
-  addTextButton,
-  captureTab,
-  paletteColour,
-  pressTextButton,
-  PRIMARY_BUTTON,
-  ringFocus,
-  type TextButton,
-} from "./cardParts.ts";
 import { followTaps } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
-import { modalInput, onScenePointer } from "./modalInput.ts";
-import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { captureTab } from "./keyboardCapture.ts";
+import { modalInput } from "./modalInput.ts";
+import { fitPlayCamera } from "./playCamera.ts";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts";
 import { savedProgress } from "./save.ts";
+import { paletteColour } from "./scenePalette.ts";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene.ts";
-import { uiObject } from "./uiRoots.ts";
 
 const ACHIEVEMENTS = "achievements";
 const BACKGROUND = "start-background";
@@ -53,15 +39,8 @@ const RESTART = "restart";
 const SETTINGS = "settings";
 
 type Control = "achievements" | "exit" | "restart" | "settings" | "start";
-type NavControl = "achievements" | "exit" | "settings";
 // The card over the start screen, if one shows.
 type Card = "achievements" | "restart" | "settings";
-
-interface IconButton {
-  readonly face: GameObjects.Sprite;
-  readonly icon: GameObjects.Image;
-  readonly layout: IconButtonLayout;
-}
 
 // The screen the game opens on without saved progress, and that Back to title goes to: the Start
 // button, which opens the map (Continue, with him where he stands, once progress is saved),
@@ -72,21 +51,12 @@ interface IconButton {
 // unsupported (exitShown), and back there is the browser's own. A control acts when a press lands
 // on it and lifts on it.
 export class StartScene extends Scene implements AchievementsOpener, RestartOpener, SettingsOpener {
-  // The nav's icon buttons: Achievements, Settings and, where the game can exit, Exit.
-  private buttons = new Map<NavControl, IconButton>();
   private layout!: StartScreenLayout;
-  // The control a press landed on, which acts if the press lifts on it too.
-  private pressed: Control | undefined;
-  // The control the keyboard's focus is on, and art's ring round it.
   private focus: Control | undefined;
-  private focusRing: GameObjects.NineSlice | undefined;
   private card: Card | undefined;
   private starting = false;
-  private startButton!: TextButton;
-  private restartButton: TextButton | undefined;
   private view: StartView | undefined;
   private native = false;
-  private fallback: GameObjects.GameObject[] = [];
 
   constructor() {
     super("start");
@@ -97,20 +67,18 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
     this.native = false;
     this.view = undefined;
     fitPlayCamera(this);
-    this.pressed = undefined;
     this.card = undefined;
     this.focus = undefined;
-    this.focusRing = undefined;
     const logoFrame = this.textures.getFrame(LOGO);
     this.layout = startScreenLayout(
       { height: logoFrame.realHeight, width: logoFrame.realWidth },
       exitShown(),
       savedProgress().at !== "beginning",
     );
+    modalInput(this).ready(false);
     this.draw();
     this.mountNative();
     this.showPressed(undefined);
-    this.watchPresses();
     modalInput(this).subscribe(() => this.showPressed(undefined));
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
     const onBack = (event: Event) => {
@@ -160,27 +128,8 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
 
   // The static logical-view background stays behind the logo, nav and actions.
   private draw(): void {
-    const { achievements, exit, logo, nav, restart, settings, start } = this.layout;
     this.cameras.main.setBackgroundColor(this.colour("ink"));
     this.add.image(0, 0, BACKGROUND).setOrigin(0);
-    const firstUi = this.children.list.length;
-    addSlice(this, "ui-nav-bar", nav);
-    this.add.image(logo.x, logo.y, LOGO).setOrigin(0).setDisplaySize(logo.width, logo.height);
-    this.buttons = new Map([
-      ["achievements", this.iconButton(achievements, "icon-achievements")],
-      ["settings", this.iconButton(settings, "icon-settings-nav")],
-      ...(exit === undefined ? [] : [["exit", this.iconButton(exit, "ui-quit")] as const]),
-    ]);
-    this.startButton = addTextButton(
-      this,
-      start,
-      restart === undefined ? TEXT.start.start : TEXT.start.continue,
-      { style: PRIMARY_BUTTON },
-    );
-    this.restartButton =
-      restart === undefined ? undefined : addTextButton(this, restart, TEXT.start.restart);
-    this.fallback = this.children.list.slice(firstUi);
-    this.fallback.forEach((object) => uiObject(this, object));
   }
 
   private mountNative(): void {
@@ -285,83 +234,22 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
       }
       this.showPressed(undefined);
       this.native = true;
-      for (const object of this.fallback) {
-        (object as GameObjects.Image).setVisible(false);
-      }
-      this.focusRing?.setVisible(false);
+      input.ready(true);
       this.drawFocus();
     });
   }
 
-  // A nav icon button: its face, and its icon (the icon's first frame) over it.
-  private iconButton(layout: IconButtonLayout, icon: string): IconButton {
-    return {
-      face: this.add.sprite(layout.at.x, layout.at.y, "ui-icon-button").setOrigin(0),
-      icon: this.add.image(layout.icon.x, layout.icon.y, icon).setOrigin(0),
-      layout,
-    };
-  }
-
-  // A pressed control shows its pressed look until the press lifts: Start's face and label sink,
-  // and a nav button's face sinks with its icon.
   private showPressed(control: Control | undefined): void {
-    this.pressed = control;
-    if (this.native) {
-      for (const [name, button] of this.view?.buttons ?? []) {
-        button.toggleAttribute("data-pressed", name === control);
-      }
-      return;
+    for (const [name, button] of this.view?.buttons ?? []) {
+      button.toggleAttribute("data-pressed", name === control);
     }
-    pressTextButton(this.startButton, control === "start");
-    if (this.restartButton) {
-      pressTextButton(this.restartButton, control === "restart");
-    }
-    for (const [name, { face, icon, layout }] of this.buttons) {
-      const pressed = control === name;
-      face.play(animationKey("ui-icon-button", pressed ? "pressed" : "normal"));
-      icon.setY(pressed ? layout.pressedIcon.y : layout.icon.y);
-    }
-  }
-
-  private controlAt(pointer: Input.Pointer): Control | undefined {
-    const { achievements, exit, restart, settings, start } = this.layout;
-    const areas: PressArea<Control>[] = [
-      { art: achievements.art, hit: achievements.hit, key: "achievements" },
-      ...(exit === undefined ? [] : [{ art: exit.art, hit: exit.hit, key: "exit" as const }]),
-      ...(restart === undefined
-        ? []
-        : [{ art: restart.button, hit: restart.hit, key: "restart" as const }]),
-      { art: settings.art, hit: settings.hit, key: "settings" },
-      { art: start.button, hit: start.hit, key: "start" },
-    ];
-    return pressedArea(areas, playPoint(this, pointer));
-  }
-
-  private watchPresses(): void {
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      if (this.native) {
-        return;
-      }
-      // While a card shows, nothing on the start screen responds.
-      this.showPressed(this.card === undefined ? this.controlAt(pointer) : undefined);
-    });
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
-      if (this.native) {
-        return;
-      }
-      const control = this.pressed;
-      this.showPressed(undefined);
-      if (control !== undefined && control === this.controlAt(pointer)) {
-        this.act(control);
-      }
-    });
   }
 
   // Tab and the arrows move the keyboard's focus through Start, Restart and the nav's buttons; Enter and
   // Space press the focused one, or Start with nothing focused.
   private key(event: KeyboardEvent): void {
     // The cards take their keys in the page (src/ui/dom).
-    if (this.card !== undefined) {
+    if (!this.native || this.card !== undefined) {
       return;
     }
     if (!modalInput(this).accepts(event)) {
@@ -387,31 +275,12 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
     ];
   }
 
-  // Art's focus ring round Start's face or a nav button's face.
   private drawFocus(): void {
-    if (this.native) {
-      if (this.card === undefined && this.focus !== undefined) {
-        const button = this.view?.buttons.get(this.focus);
-        if (button) {
-          focusTarget(button);
-        }
+    if (this.card === undefined && this.focus !== undefined) {
+      const button = this.view?.buttons.get(this.focus);
+      if (button) {
+        focusTarget(button);
       }
-      return;
-    }
-    const faceOf = (control: Control): Rect | undefined => {
-      if (control === "start" || control === "restart") {
-        return this.layout[control]?.button;
-      }
-      const button = this.buttons.get(control);
-      return (
-        button && { height: button.face.height, width: button.face.width, ...button.layout.at }
-      );
-    };
-    const rect =
-      this.focus === undefined || this.card !== undefined ? undefined : faceOf(this.focus);
-    this.focusRing = ringFocus(this, this.focusRing, rect);
-    if (this.focusRing !== undefined) {
-      uiObject(this, this.focusRing);
     }
   }
 

@@ -3,11 +3,10 @@ import { EventEmitter } from "node:events";
 
 import { beforeEach, expect, it, vi } from "vitest";
 
+import markSheet from "../../public/art/sprites/ui-play-mark.json" with { type: "json" };
 import { OPENING } from "../data/opening.ts";
 import { SCREEN } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
-import { CARD_FONTS } from "../testing/cardFonts.ts";
-import { openingLayout } from "../ui/index.ts";
 
 const dom = vi.hoisted(() => ({
   cancel: vi.fn(),
@@ -81,6 +80,7 @@ vi.mock("phaser", () => {
         rectangle: vi.fn(drawable),
         sprite: drawable,
       };
+      readonly cache = { json: { get: () => markSheet } };
       readonly events = new EventEmitter();
       readonly game = {};
       readonly input = Object.assign(new EventEmitter(), {
@@ -92,42 +92,21 @@ vi.mock("phaser", () => {
   };
 });
 vi.mock("./save.ts", () => ({ saveOpeningSeen: vi.fn() }));
-vi.mock("./cardParts.ts", () => ({
-  BODY_FONT: "font-body",
-  PRIMARY_BUTTON: {},
-  addCardText: () => ({
-    setPosition: vi.fn().mockReturnThis(),
-    setText: vi.fn().mockReturnThis(),
-    setVisible: vi.fn().mockReturnThis(),
-  }),
-  addTextButton: vi.fn(() => ({
-    faces: { normal: { setVisible: vi.fn() }, pressed: { setVisible: vi.fn() } },
-    label: {
-      label: { setVisible: vi.fn() },
-      mark: { frame: { name: "light" }, setVisible: vi.fn() },
-    },
-  })),
-  captureTab: vi.fn(),
-  cardFonts: () => CARD_FONTS,
-  paletteColour: () => 0,
-  pressTextButton: vi.fn(),
-  ringFocus: vi.fn(),
-}));
+vi.mock("./keyboardCapture.ts", () => ({ captureTab: vi.fn() }));
+vi.mock("./scenePalette.ts", () => ({ paletteColour: () => 0 }));
 vi.mock("./playCamera.ts", () => ({
   fitPlayCamera: vi.fn(),
   playPoint: (_scene: unknown, pointer: { x: number; y: number }) => pointer,
 }));
 
-import { pressTextButton, ringFocus } from "./cardParts.ts";
 import { modalInput } from "./modalInput.ts";
 import { OpeningScene } from "./OpeningScene.ts";
 import { saveOpeningSeen } from "./save.ts";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(pressTextButton).mockReset();
   backgroundFixture.value = undefined;
-  dom.enabled = false;
+  dom.enabled = true;
   dom.ready = undefined;
   document.body.replaceChildren();
 });
@@ -145,18 +124,9 @@ function key(scene: OpeningScene, key: string, repeat = false) {
     stopPropagation: vi.fn(),
   });
 }
-function pointer(action: "skip" | "continue") {
-  const layout = openingLayout(CARD_FONTS, TEXT.dialogue, TEXT.lines[OPENING[0]!.text]!)[action];
-  return {
-    id: 1,
-    wasCanceled: false,
-    x: layout.button.x + layout.button.width / 2,
-    y: layout.button.y + layout.button.height / 2,
-  };
-}
 
-it("requires manual fresh activation and saves only at the final beat, not elapsed time or interruption", () => {
-  const scene = opening();
+it("requires manual fresh activation and saves only at the final beat, not elapsed time or interruption", async () => {
+  const { scene } = await htmlOpening();
   scene.update(0, 100000);
   key(scene, "Enter", true);
   key(scene, "Escape");
@@ -169,68 +139,29 @@ it("requires manual fresh activation and saves only at the final beat, not elaps
   key(scene, "Enter");
   expect(saveOpeningSeen).toHaveBeenCalledTimes(1);
   expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("map");
-  const interrupted = opening();
+  const { scene: interrupted } = await htmlOpening();
   key(interrupted, "Enter");
   interrupted.events.emit("shutdown");
   expect(saveOpeningSeen).toHaveBeenCalledTimes(1);
 });
 
-it("rejects inherited releases, drags and modal-crossing gestures before whole-opening Skip", () => {
-  const scene = opening();
-  const tap = pointer("skip");
-  vi.mocked(scene.scene.start).mockImplementation(() => {
-    vi.mocked(pressTextButton).mockImplementation(() => {
-      throw new Error("Disposed controls");
-    });
-    return scene.scene;
-  });
-  scene.input.emit("pointerup", tap);
-  scene.input.emit("pointerdown", tap);
-  scene.input.emit("pointermove", { ...tap, x: 0 });
-  scene.input.emit("pointerup", tap);
-  scene.input.emit("pointerdown", tap);
-  const cover = { ...scene, events: new EventEmitter() };
-  modalInput(cover as unknown as OpeningScene).open();
-  modalInput(cover as unknown as OpeningScene).close();
-  scene.input.emit("pointerup", tap);
-  expect(saveOpeningSeen).not.toHaveBeenCalled();
-  scene.input.emit("pointerdown", tap);
-  scene.input.emit("pointerup", tap);
-  expect(saveOpeningSeen).toHaveBeenCalledTimes(1);
-  expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("map");
-});
-
-it("draws palette ink for explicit null backgrounds without any image texture lookup", () => {
+it("draws palette ink for explicit null backgrounds without any image texture lookup", async () => {
   backgroundFixture.value = null;
-  const scene = opening();
+  const { scene } = await htmlOpening();
   scene.update(0, 100000);
   key(scene, "Enter");
   expect(scene.add.rectangle).toHaveBeenCalledWith(0, 0, SCREEN.width, SCREEN.height, 0);
   expect(scene.add.image).not.toHaveBeenCalled();
   expect(saveOpeningSeen).not.toHaveBeenCalled();
 });
-it("retains nonnull texture backgrounds and disposes the previous shot image", () => {
+it("retains nonnull texture backgrounds and disposes the previous shot image", async () => {
   backgroundFixture.value = "fixture-background";
-  const scene = opening();
+  const { scene } = await htmlOpening();
   expect(scene.add.image).toHaveBeenCalledWith(0, 0, "fixture-background");
   const image = vi.mocked(scene.add.image).mock.results[0]!.value;
   key(scene, "Enter");
   expect(image.destroy).toHaveBeenCalledOnce();
   expect(scene.add.image).toHaveBeenCalledTimes(2);
-});
-
-it("moves the keyboard's focus through Continue then Skip, wrapping, and presses the focused one", () => {
-  const scene = opening();
-  const layout = openingLayout(CARD_FONTS, TEXT.dialogue, TEXT.lines[OPENING[0]!.text]!);
-  const ringed = () => vi.mocked(ringFocus).mock.lastCall?.[2];
-  const steps = ["Tab", "Tab", "Tab"].map((value) => {
-    key(scene, value);
-    return ringed();
-  });
-  expect(steps).toEqual([layout.continue.button, layout.skip.button, layout.continue.button]);
-  key(scene, "Tab");
-  key(scene, "Enter");
-  expect(saveOpeningSeen).toHaveBeenCalledOnce();
 });
 
 async function htmlOpening() {
@@ -242,7 +173,7 @@ async function htmlOpening() {
   return { root, scene };
 }
 
-it("keeps the canvas controls until reveal succeeds, then renders each caption in HTML", async () => {
+it("holds actions until reveal succeeds, then renders each caption in HTML", async () => {
   dom.enabled = true;
   const scene = opening();
   const root = document.querySelector<HTMLElement>(".opening-scene")!;
@@ -251,13 +182,11 @@ it("keeps the canvas controls until reveal succeeds, then renders each caption i
   expect(root.inert).toBe(true);
   expect(caption.textContent).toBe(TEXT.lines[OPENING[0]!.text]);
   key(scene, "Enter");
-  expect(caption.textContent).toBe(TEXT.lines[OPENING[1]!.text]);
+  expect(caption.textContent).toBe(TEXT.lines[OPENING[0]!.text]);
   dom.ready!(true);
   await Promise.resolve();
-  const before = vi.mocked(pressTextButton).mock.calls.length;
   key(scene, "Enter");
-  expect(caption.textContent).toBe(TEXT.lines[OPENING[2]!.text]);
-  expect(vi.mocked(pressTextButton).mock.calls.length).toBe(before);
+  expect(caption.textContent).toBe(TEXT.lines[OPENING[1]!.text]);
   expect(root.hidden).toBe(false);
 });
 
@@ -308,25 +237,23 @@ it("cancels a pending reveal at shutdown and cannot hand off to a stale scene", 
   expect(saveOpeningSeen).not.toHaveBeenCalled();
 });
 
-it("retains the canvas controls on reveal failure and cancels a held tap at handoff", async () => {
-  dom.enabled = true;
+it("keeps failed-reveal input disabled and rejects a tap started before readiness", async () => {
   const scene = opening();
   dom.ready!(false);
   await Promise.resolve();
-  const tap = pointer("continue");
-  scene.input.emit("pointerdown", tap);
-  scene.input.emit("pointerup", tap);
   const root = document.querySelector<HTMLElement>(".opening-scene")!;
+  key(scene, "Enter");
   expect(root.hidden).toBe(true);
-  expect(root.querySelector(".opening-caption")!.textContent).toBe(TEXT.lines[OPENING[1]!.text]);
+  expect(root.querySelector(".opening-caption")!.textContent).toBe(TEXT.lines[OPENING[0]!.text]);
   scene.events.emit("shutdown");
   const next = opening();
-  const ready = dom.ready!;
-  next.input.emit("pointerdown", pointer("skip"));
-  ready(true);
+  const button = document.querySelector<HTMLButtonElement>('[data-control="skip"]')!;
+  button.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1 }));
+  dom.ready!(true);
   await Promise.resolve();
-  next.input.emit("pointerup", pointer("skip"));
+  button.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1 }));
   expect(saveOpeningSeen).not.toHaveBeenCalled();
+  next.events.emit("shutdown");
 });
 
 it("completes the HTML opening once through fresh Continue without acknowledging intermediate beats", async () => {
