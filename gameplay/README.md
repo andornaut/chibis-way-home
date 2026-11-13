@@ -12,6 +12,8 @@ Gameplay ownership, tuning targets, playtesting and current release work. Chibi'
 | [`narrative/`](narrative/README.md) | Connective scenes and story beats of the homeward journey      |
 | [`next.md`](next.md)                | Agreed future scope, unscheduled and outside the current build |
 
+The shared [game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md) own [product consistency](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#product-consistency), saves, cheats and update activation. The [ideas policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#ideas) governs undecided proposals; the local documents retain Chibi's decisions and scope.
+
 Docs state current decisions; git keeps their history. An undecided proposal stays in `ideas.md`. Agreed current rules belong in `design.md`; agreed later work belongs in `next.md`. Chibi's story, cast and stage route remain in the rulebook because they define this game's content.
 
 ## Scope

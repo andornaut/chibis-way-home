@@ -6,6 +6,8 @@ Help Chibi get home after Fert, his former best friend, mails him far away. A pi
 
 ## Docs
 
+The shared [game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md) define cross-game product and development rules; the local documents retain Chibi's specific design and implementation.
+
 The folder READMEs describe the current design and implementation:
 
 - [art/](art/README.md): pipeline and tooling, with the [visual style guide](art/style-guide.md)
