@@ -22,6 +22,32 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "industrial-crane-lookout--industrial-low-roof-strip",
+      "kind": "pair",
+      "layout": "ec52adb2f4ca3702",
+      "modules": ["crane-lookout", "industrial-low-roof-strip"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "7881e986e7903a24",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "ee38aa9eb2b8ff52:3047",
+      "work": 3047
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "industrial-industrial-low-roof-strip--industrial-low-roof-strip",
+      "kind": "pair",
+      "layout": "e07ba9de89fd5822",
+      "modules": ["industrial-low-roof-strip", "industrial-low-roof-strip"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "75a96627b782258a",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "92b62d5d59306c4d:741",
+      "work": 741
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "industrial-tunnel-broad-mesa",
       "kind": "single",
       "layout": "64632da4b13b6ff1",
@@ -339,7 +365,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "2770a3280fff57bf", "proofs": "0ac7a90427b29cb4" },
+  "inputs": { "data": "6cff9f081e9a0a55", "proofs": "0ac7a90427b29cb4" },
   "version": 1,
   "zone": "industrial"
 }
