@@ -1,4 +1,5 @@
-import type { ChunkModule, TerrainRect } from "../types/index.ts";
+import { redCeiling } from "../chunkTemplates.ts";
+import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
 
 // Woodland halves on the lower route (row 80). The gust ravine fills the right half and its
 // lookout the left half in front of it. Neither holds an encounter.
@@ -11,6 +12,32 @@ const floor = (col: number, cols: number, row: number): TerrainRect => ({
   row,
   rows: ROWS - row,
 });
+
+const red = (col: number, cols: number, row: number): readonly Instance[] => [
+  { character: "red-edge-top", col, cols, role: "edge-top", row: row - 1 },
+  { character: "red-edge-support", col, cols, role: "support", row, rows: ROWS - row },
+];
+
+// A short climb reaches two red gaps beneath a raised branch, with a landing between them.
+const raisedBranchChannel: ChunkModule = {
+  difficulty: 5,
+  encounters: 0,
+  entry: { row: 80 },
+  exit: { row: 80 },
+  id: "woodland-raised-branch-channel",
+  objects: [...redCeiling(7, 17, 69), ...red(10, 2, 77), ...red(18, 2, 77)],
+  route: {
+    profile: "recovery",
+    targets: [
+      { at: { col: 8, row: 77 } },
+      { at: { col: 15, row: 77 } },
+      { at: { col: 22, row: 77 } },
+    ],
+  },
+  sides: ["left", "right"],
+  solids: [floor(0, 6, 80), floor(6, 4, 77), floor(12, 6, 77), floor(20, 5, 77), floor(25, 5, 80)],
+  zones: ["woodland"],
+};
 
 // The gust ravine: from the entry run (row 80), jumps across three 4-col pockets (row 82) by two
 // cover posts (tops at row 77) to the exit run. The emitter stands on the exit run at col 25 and
@@ -54,5 +81,5 @@ const lookout: ChunkModule = {
 };
 
 export const WOODLAND_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(
-  [lookout, ravine].map((module) => [module.id, module]),
+  [lookout, ravine, raisedBranchChannel].map((module) => [module.id, module]),
 );
