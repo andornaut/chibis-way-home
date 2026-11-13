@@ -1,7 +1,14 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
 
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
-import type { BirdTuning, HazardPhase, Rect, ZoneLayout } from "../data/types/index.ts";
+import type {
+  BirdTuning,
+  HazardPhase,
+  ObjectLayout,
+  Rect,
+  ZoneLayout,
+} from "../data/types/index.ts";
+import { type BehaviourState, contactBox } from "../rules/behaviour.ts";
 import { type BirdState, ordinaryHorizontalVelocity } from "../rules/bird.ts";
 import { effectiveHazardPhase, validateHazardPhases } from "../rules/effectiveCollision.ts";
 import { timedHazardRect } from "../rules/timedHazard.ts";
@@ -9,6 +16,36 @@ import type { ZoneState } from "../rules/zone.ts";
 import type { Surface } from "../sim/zoneWalk.ts";
 
 export const REQUIRED_ROUTE_CONTROLLER = "required-route-intent-v2";
+
+export type RouteHazardProvenance = "non-hazard" | "static" | "timed" | "unsupported";
+
+// A declared clock remains timed even when its current state cannot pass native validation.
+export function routeHazardProvenance(
+  state: BehaviourState | undefined,
+  object: ObjectLayout,
+): RouteHazardProvenance {
+  if (
+    Object.values(object.behaviour?.states ?? {}).some((node) => node.hazardPhase !== undefined)
+  ) {
+    return "timed";
+  }
+  if (object.collision !== "hazard") {
+    return "non-hazard";
+  }
+  return object.behaviour === undefined &&
+    state === undefined &&
+    object.motion.algorithm === "static" &&
+    object.motion.playback === undefined &&
+    object.motion.variance === 0 &&
+    object.reaction.kind === "none" &&
+    object.orbit === undefined &&
+    object.contact === undefined &&
+    object.scene === undefined &&
+    object.crumbling === undefined &&
+    object.forcedTransit === undefined
+    ? "static"
+    : "unsupported";
+}
 
 export interface ResolvedRouteTarget {
   readonly index: number;
@@ -174,11 +211,19 @@ export function routeHazardIntent(
     return fail();
   }
   const body = { height: tuning.height, width: tuning.width, x: bird.x, y: bird.y };
-  const relevant = area.objects.flatMap((object, index) => {
-    if (object.collision !== "hazard") {
-      return [];
-    }
-    const rect = timedHazardRect(object, zone.objects[index] ?? object.origin);
+  const provenance = area.objects.map((object, index) =>
+    routeHazardProvenance(zone.behaviours[index], object),
+  );
+  if (provenance.some((kind) => kind === "unsupported")) {
+    return fail();
+  }
+  const timed = provenance.flatMap((kind, index) =>
+    kind === "timed" ? [currentHazardNode(layout, zone, index)] : [],
+  );
+  if (timed.some((hazard) => hazard === undefined)) {
+    return fail();
+  }
+  const relevant = (timed as CurrentHazardNode[]).flatMap(({ index, rect }) => {
     return rect.x + rect.width + EDGE >= bird.x &&
       rect.x < required.window.min &&
       rect.y < body.y + body.height &&
@@ -266,7 +311,11 @@ export function routeHazardIntent(
     if (object.behaviour && currentHazardNode(layout, zone, index) === undefined) {
       return fail();
     }
-    const rect = timedHazardRect(object, zone.objects[index] ?? object.origin);
+    const at = zone.objects[index] ?? object.origin;
+    const rect =
+      provenance[index] === "static"
+        ? contactBox(object, at, zone.behaviours[index]?.facing ?? 1, zone.behaviours[index]?.axis)
+        : timedHazardRect(object, at);
     if (
       object.collision !== "none" &&
       rectsOverlap(corridor, rect) &&

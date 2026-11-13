@@ -8,6 +8,7 @@ import { SKILL_PROFILES } from "../progress/index.ts";
 import { startBird } from "../rules/bird.ts";
 import { zoneLayout } from "../rules/tiles.ts";
 import { startZone, stepZone } from "../rules/zone.ts";
+import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "../sim/bot.ts";
 import { type Surface, surfaceAt, zoneSurfaces } from "../sim/zoneWalk.ts";
 import { CATALOGUE } from "./art.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
@@ -17,6 +18,7 @@ import {
   requiredRouteIntent,
   type RequiredRouteIntentTarget,
   routeHazardIntent,
+  routeHazardProvenance,
   type RouteIntentCurrent,
   staticRouteAssist,
 } from "./requiredRouteIntent.ts";
@@ -106,8 +108,128 @@ function crossingFixture() {
   return { context, goal, layout, zone };
 }
 
+function staticHazardFixture() {
+  const fixture = crossingFixture();
+  const area = fixture.layout.areas.course!;
+  const object = { ...area.objects[0]! };
+  delete object.behaviour;
+  const layout = { ...fixture.layout, areas: { course: { ...area, objects: [object] } } };
+  const zone = { ...fixture.zone, behaviours: [undefined] };
+  return { ...fixture, layout, object, zone };
+}
+
+it("delegates positively static red hazards to the existing native reactive jump", () => {
+  const { context, goal, layout, object, zone } = staticHazardFixture();
+  expect(object.contactCue).toBe("red-hazard");
+  expect(routeHazardProvenance(undefined, object)).toBe("static");
+  expect(routeHazardProvenance(undefined, { ...object, collision: "none" })).toBe("non-hazard");
+  const approach = {
+    ...zone,
+    bird: { ...zone.bird, x: object.origin.x - ORDINARY.width - DIAGNOSTIC_SKILL.lookAheadPx / 2 },
+  };
+  expect(routeHazardIntent(ORDINARY, layout, approach, context, goal)).toEqual({ kind: "none" });
+  expect(
+    botInput(
+      ORDINARY,
+      prepareSensors(layout),
+      layout,
+      DIAGNOSTIC_SKILL,
+      FORWARD_POLICY,
+      approach,
+      newBot(1),
+    ),
+  ).toEqual({ jumpHeld: true, move: 1, useHeld: false });
+});
+
+it("uses the native four-pixel static box as an additional timed-corridor obstacle", () => {
+  const fixture = crossingFixture();
+  const area = fixture.layout.areas.course!;
+  const edge = {
+    ...area.objects[0]!,
+    height: ORDINARY.height,
+    hitbox: { height: ORDINARY.height, width: 4, x: 44, y: 0 },
+    origin: { x: 180, y: fixture.zone.bird.y },
+  };
+  delete edge.behaviour;
+  const layout = {
+    ...fixture.layout,
+    areas: { course: { ...area, objects: [...area.objects, edge] } },
+  };
+  const zone = {
+    ...fixture.zone,
+    behaviours: [...fixture.zone.behaviours, undefined],
+    objects: [...fixture.zone.objects, edge.origin],
+  };
+  expect(routeHazardIntent(ORDINARY, layout, zone, fixture.context, fixture.goal)).toMatchObject({
+    kind: "cross",
+  });
+  const blocked = {
+    ...layout,
+    areas: {
+      course: {
+        ...layout.areas.course!,
+        objects: [...area.objects, { ...edge, hitbox: { ...edge.hitbox, x: 0 } }],
+      },
+    },
+  };
+  expect(routeHazardIntent(ORDINARY, blocked, zone, fixture.context, fixture.goal)).toMatchObject({
+    unavailable: { reason: "hazard-margin-unavailable" },
+  });
+});
+
+it("keeps a declared timed graph timed even when its collision declaration is malformed", () => {
+  const fixture = crossingFixture();
+  const area = fixture.layout.areas.course!;
+  const object = { ...area.objects[0]!, collision: "none" as const };
+  const layout = { ...fixture.layout, areas: { course: { ...area, objects: [object] } } };
+  expect(routeHazardProvenance(fixture.zone.behaviours[0], object)).toBe("timed");
+  expect(currentHazardNode(layout, fixture.zone, 0)).toBeUndefined();
+  expect(
+    routeHazardIntent(ORDINARY, layout, fixture.zone, fixture.context, fixture.goal),
+  ).toMatchObject({ unavailable: { reason: "hazard-margin-unavailable" } });
+});
+
+it("fails closed for nonphase behaviour, dynamic motion, reaction and sprite-contact hazards", () => {
+  const fixture = staticHazardFixture();
+  const area = fixture.layout.areas.course!;
+  const { object } = fixture;
+  const source = crossingFixture().layout.areas.course!.objects[0]!;
+  const behaviour = {
+    ...source.behaviour!,
+    states: Object.fromEntries(
+      Object.entries(source.behaviour!.states).map(([key, node]) => {
+        const plain = { ...node };
+        delete plain.hazardPhase;
+        return [key, plain];
+      }),
+    ),
+  };
+  const unsupported = [
+    { ...object, behaviour },
+    { ...object, motion: { ...object.motion, playback: "once-visible" as const } },
+    {
+      ...object,
+      motion: { ...object.motion, algorithm: "linear" as const, distance: 12, speed: 12 },
+    },
+    { ...object, reaction: { ...object.reaction, kind: "avoid" as const } },
+    {
+      ...object,
+      contact: { frame: { height: object.height, width: object.width }, frames: {}, tags: {} },
+    },
+  ];
+  for (const hazard of unsupported) {
+    expect(routeHazardProvenance(undefined, hazard)).toBe("unsupported");
+    const layout = { ...fixture.layout, areas: { course: { ...area, objects: [hazard] } } };
+    expect(
+      routeHazardIntent(ORDINARY, layout, fixture.zone, fixture.context, fixture.goal),
+    ).toMatchObject({ unavailable: { reason: "hazard-margin-unavailable" } });
+  }
+  expect(routeHazardProvenance(crossingFixture().zone.behaviours[0], object)).toBe("unsupported");
+});
+
 it("bounds only the current deterministic wait node and holds a safe refuge while warning", () => {
   const { context, goal, layout, zone } = crossingFixture();
+  expect(routeHazardProvenance(zone.behaviours[0], layout.areas.course!.objects[0]!)).toBe("timed");
   const warning = {
     ...zone,
     behaviours: zone.behaviours.map(
@@ -192,6 +314,12 @@ it("requires strict current-node margin and includes full body clearance plus th
     behaviours: zone.behaviours.map((state) => state && { ...state, stateKey: "unknown" }),
   };
   expect(currentHazardNode(layout, unknown, 0)).toBeUndefined();
+  expect(routeHazardProvenance(unknown.behaviours[0], layout.areas.course!.objects[0]!)).toBe(
+    "timed",
+  );
+  expect(routeHazardIntent(ORDINARY, layout, unknown, context, goal)).toMatchObject({
+    unavailable: { reason: "hazard-margin-unavailable" },
+  });
 });
 
 it.each([false, true])(
@@ -318,6 +446,12 @@ it("refuses negative or excessive velocity, carry, interrupted floors and blocke
     },
   };
   expect(currentHazardNode(branched, zone, 0)).toBeUndefined();
+  expect(routeHazardProvenance(zone.behaviours[0], branched.areas.course!.objects[0]!)).toBe(
+    "timed",
+  );
+  expect(routeHazardIntent(ORDINARY, branched, zone, context, goal)).toMatchObject({
+    unavailable: { reason: "hazard-margin-unavailable" },
+  });
 });
 
 it("approaches an exact grounded refuge without requesting an early jump", () => {
