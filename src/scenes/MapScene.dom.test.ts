@@ -72,7 +72,7 @@ function setup() {
   });
   (Reflect.get(scene, "addDom") as () => void).call(scene);
   cleanups.push(() => events.emit("shutdown"));
-  const root = document.querySelector<HTMLElement>(".map-view")!;
+  const root = document.querySelector<HTMLElement>(".map-scene")!;
   return { events, hidden, root, route, scene };
 }
 
@@ -146,6 +146,7 @@ it("does not hand off a failed or shutdown reveal", async () => {
 
 it("positions the exact travel frame mask at the sprite origin in both facings", () => {
   const { root, scene } = setup();
+  const view = root.querySelector<HTMLElement>(".map-view")!;
   const bird = {
     displayHeight: 21,
     displayWidth: 26,
@@ -159,12 +160,14 @@ it("positions the exact travel frame mask at the sprite origin in both facings",
   Object.assign(scene, { birdFrames: new Map([["pose", "blob:pose"]]), journey: { bird } });
   const mask = Reflect.get(scene, "maskTravelBird") as () => void;
   mask.call(scene);
-  expect(root.style.getPropertyValue("--map-bird-image")).toBe('url("blob:pose")');
-  expect(Number(root.style.getPropertyValue("--map-bird-x"))).toBe(97);
-  expect(Number(root.style.getPropertyValue("--map-bird-y"))).toBe(59);
-  expect(root.hasAttribute("data-bird-flipped")).toBe(false);
+  expect(view.style.getPropertyValue("--map-bird-image")).toBe('url("blob:pose")');
+  expect(Number(view.style.getPropertyValue("--map-bird-x"))).toBe(97);
+  expect(Number(view.style.getPropertyValue("--map-bird-y"))).toBe(59);
+  expect(view.hasAttribute("data-bird-flipped")).toBe(false);
   bird.flipX = true;
   mask.call(scene);
-  expect(Number(root.style.getPropertyValue("--map-bird-x"))).toBe(SCREEN.width - 97 - 26);
-  expect(root.hasAttribute("data-bird-flipped")).toBe(true);
+  expect(Number(view.style.getPropertyValue("--map-bird-x"))).toBe(SCREEN.width - 97 - 26);
+  expect(view.hasAttribute("data-bird-flipped")).toBe(true);
+  expect(root.hasAttribute("data-bird-flipped")).toBe(false);
+  expect(root.style.getPropertyValue("--map-bird-image")).toBe("");
 });

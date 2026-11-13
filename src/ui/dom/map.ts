@@ -27,6 +27,7 @@ export interface MapView {
   readonly destinations: ReadonlyMap<string, HTMLButtonElement>;
   readonly markers: ReadonlyMap<string, HTMLImageElement>;
   readonly root: HTMLElement;
+  readonly view: HTMLElement;
 }
 
 export const MAP_PROPERTIES = {
@@ -64,12 +65,15 @@ function box(rect: Rect, element: HTMLElement): void {
 // Marker press areas keep their canvas geometry. Names remain separate from those press areas.
 export function createMap(document: Document, words: MapWords, faces: readonly MapFace[]): MapView {
   const root = document.createElement("section");
-  root.className = "ui-view map-view";
-  writeLayoutProperties(MAP_PROPERTIES, root);
+  root.className = "map-scene";
+  const view = document.createElement("div");
+  view.className = "ui-view map-view";
+  writeLayoutProperties(MAP_PROPERTIES, view);
+  root.append(view);
   root.setAttribute("aria-labelledby", "map-title");
   const content = document.createElement("div");
   content.className = "map-content";
-  root.append(content);
+  view.append(content);
   const title = document.createElement("h1");
   title.id = "map-title";
   title.className = "map-title";
@@ -157,5 +161,5 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
     destinations.set(id, button);
     markers.set(id, marker);
   }
-  return { buttons, destinations, markers, root };
+  return { buttons, destinations, markers, root, view };
 }

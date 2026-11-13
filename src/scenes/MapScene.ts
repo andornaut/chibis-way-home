@@ -554,7 +554,7 @@ export class MapScene extends Scene implements StageSelectOpener {
 
   // Mask the whole HTML view so the canvas bird keeps its original position above every UI face.
   private maskTravelBird(): void {
-    const root = this.view?.root;
+    const root = this.view?.view;
     const bird = this.journey?.bird;
     if (root === undefined || bird === undefined) {
       return;
