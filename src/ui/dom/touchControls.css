@@ -1,0 +1,30 @@
+/* Canvas-base chrome uses --ui-unit and removes the layer's play-view origin shift once. */
+.touch-controls-scene,
+.touch-controls-scene * {
+  pointer-events: none;
+}
+
+.touch-controls-scene {
+  position: absolute;
+  inset: auto;
+  left: calc(var(--ui-view-left) - var(--ui-unit) * var(--touch-view-shift-x) * 1px);
+  top: calc(var(--ui-view-top) - var(--ui-unit) * var(--touch-view-shift-y) * 1px);
+  width: calc(var(--ui-unit) * var(--touch-canvas-width) * 1px);
+  height: calc(var(--ui-unit) * var(--touch-canvas-height) * 1px);
+  overflow: hidden;
+}
+
+.touch-control {
+  position: absolute;
+  left: calc(var(--ui-unit) * var(--touch-control-x) * 1px);
+  top: calc(var(--ui-unit) * var(--touch-control-y) * 1px);
+  width: calc(var(--ui-unit) * var(--touch-control-size) * 1px);
+  height: calc(var(--ui-unit) * var(--touch-control-size) * 1px);
+  opacity: var(--touch-control-opacity);
+}
+
+.touch-control > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
