@@ -45,6 +45,14 @@ body {
   text-size-adjust: 100%;
 }
 
+/* Editable game controls retain text selection and the native copy/paste callout. */
+#game :is(input, textarea, [contenteditable]:not([contenteditable="false"])),
+#game :is(input, textarea, [contenteditable]:not([contenteditable="false"])) * {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 body {
   flex-direction: row;
 }
