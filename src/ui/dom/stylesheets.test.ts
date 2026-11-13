@@ -7,15 +7,19 @@ import { achievementsCardProperties } from "../layout/achievementsCard.ts";
 import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
 import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard.ts";
 import { ACTION_HELP_PROPERTIES } from "./actionHelp.ts";
+import { CELEBRATION_DOM_LAYOUT } from "./celebration.ts";
 import { DEATH_LAYOUT } from "./death.ts";
 import { DIALOGUE_FOOTER_LAYOUT, DIALOGUE_PANEL_LAYOUT } from "./dialogue.ts";
 import { UI_LAYOUT } from "./layer.ts";
+import { MAP_PROPERTIES } from "./map.ts";
 import { PAUSE_LAYOUT, skillPlace } from "./pause.ts";
+import { roomPortraitProperties, roomProperties } from "./room.ts";
 import { runStatsProperties } from "./runStats.ts";
 import { SKILL_DETAILS_LAYOUT } from "./skillDetails.ts";
 import { SKILL_DISC_LAYOUT } from "./skillDisc.ts";
 import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
 import { STAGE_SUMMARY_LAYOUT, stageSummaryGaps } from "./stageSummary.ts";
+import { startIconProperties } from "./start.ts";
 
 // Vitest blanks CSS imports, so the stylesheets are read from disk.
 const DIRECTORY = new URL(".", import.meta.url);
@@ -35,6 +39,14 @@ const SET = new Set(
 const WRITTEN = new Set(
   [
     UI_LAYOUT,
+    CELEBRATION_DOM_LAYOUT,
+    MAP_PROPERTIES,
+    roomProperties({
+      art: { height: 0, width: 0, x: 0, y: 0 },
+      hit: { height: 0, width: 0, x: 0, y: 0 },
+    }),
+    roomPortraitProperties({ height: 0, width: 0 }),
+    startIconProperties(0, { height: 0, width: 0, x: 0, y: 0 }),
     SETTINGS_LAYOUT,
     STAGE_SELECT_LAYOUT,
     DEATH_LAYOUT,

@@ -6,6 +6,7 @@ import {
   type PhaserFontData,
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 import { type Cameras, type GameObjects, type Input, Scene, Scenes } from "phaser";
 
 import { PLAY_STEP_LIMITS, STEP_SECONDS } from "../core/index.ts";
@@ -27,6 +28,7 @@ import {
   ROOM_SCREEN,
   type RoomEvent,
   roomEvent,
+  roomPortraitProperties,
   type RoomView,
   SKILL_ART,
   SKILL_ROOM,
@@ -288,8 +290,7 @@ export class RoomScene extends Scene {
     );
     this.view = view;
     if (view.panel !== undefined && this.portrait !== undefined) {
-      view.panel.portrait.style.setProperty("--room-portrait-width", String(this.portrait.width));
-      view.panel.portrait.style.setProperty("--room-portrait-height", String(this.portrait.height));
+      writeLayoutProperties(roomPortraitProperties(this.portrait), view.panel.portrait);
     }
     const urls: Promise<string>[] = [];
     if (skill !== undefined && view.glyph !== undefined) {

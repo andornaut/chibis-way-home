@@ -14,15 +14,19 @@ it("keeps a complete Retry sibling group without reparenting its panel or labels
   expect(sceneUiRoots(scene)).toBe(roots);
   expect(roots.some((root) => "parentContainer" in root)).toBe(false);
 });
-it("registers only explicitly declared mixed-world UI and releases destroyed controls", () => {
-  const bird = new EventEmitter() as unknown as GameObjects.GameObject;
-  const control = new EventEmitter() as unknown as GameObjects.GameObject;
-  const scene = {
-    children: { list: [bird, control] },
-    sys: { settings: { key: "zone" } },
-  } as unknown as Scene;
-  expect(uiObject(scene, control)).toBe(control);
-  expect(sceneUiRoots(scene)).toEqual([control]);
-  control.emit("destroy");
-  expect(sceneUiRoots(scene)).toEqual([]);
+it("registers mixed-world UI once and releases destroyed controls without capturing world art", () => {
+  for (const key of ["celebration", "map", "opening", "room", "start", "zone"]) {
+    const bird = new EventEmitter() as unknown as GameObjects.GameObject;
+    const control = new EventEmitter() as unknown as GameObjects.GameObject;
+    const scene = {
+      children: { list: [bird, control] },
+      sys: { settings: { key } },
+    } as unknown as Scene;
+    expect(uiObject(scene, control), key).toBe(control);
+    expect(uiObject(scene, control), key).toBe(control);
+    expect(control.listenerCount("destroy"), key).toBe(1);
+    expect(sceneUiRoots(scene), key).toEqual([control]);
+    control.emit("destroy");
+    expect(sceneUiRoots(scene), key).toEqual([]);
+  }
 });

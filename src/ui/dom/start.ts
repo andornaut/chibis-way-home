@@ -1,4 +1,7 @@
-import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import {
+  type LayoutValues,
+  writeLayoutProperties,
+} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
 import type { Rect } from "../../data/types/index.ts";
 import type { StartScreenLayout } from "../layout/startScreen.ts";
@@ -22,16 +25,21 @@ export interface StartView {
 }
 
 // Each box keeps the canvas layout's logical coordinates inside the shared play view.
+export function startBoxProperties(rect: Rect): LayoutValues {
+  return {
+    "--start-height": rect.height,
+    "--start-width": rect.width,
+    "--start-x": rect.x,
+    "--start-y": rect.y,
+  };
+}
+
+export function startIconProperties(sink: number, rect: Rect): LayoutValues {
+  return { ...startBoxProperties(rect), "--start-icon-sink": sink };
+}
+
 function box(rect: Rect, element: HTMLElement): void {
-  writeLayoutProperties(
-    {
-      "--start-height": rect.height,
-      "--start-width": rect.width,
-      "--start-x": rect.x,
-      "--start-y": rect.y,
-    },
-    element,
-  );
+  writeLayoutProperties(startBoxProperties(rect), element);
   element.classList.add("start-box");
 }
 
@@ -93,7 +101,7 @@ export function createStart(
       // The icon's actual source dimensions are assigned when its art frame is available.
       face.append(icon);
       button.append(face);
-      writeLayoutProperties({ "--start-icon-sink": at.pressedIcon.y - at.icon.y }, button);
+      writeLayoutProperties(startIconProperties(at.pressedIcon.y - at.icon.y, at.hit), button);
     }
     buttons.set(control, button);
     view.append(button);

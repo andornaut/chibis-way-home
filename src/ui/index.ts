@@ -45,6 +45,12 @@ export {
   showAchievementsPage,
 } from "./dom/achievements.ts";
 export { type CardView, createCard, createMessageCard, showPresses } from "./dom/card.ts";
+export {
+  type CelebrationControl,
+  type CelebrationView,
+  type CelebrationWords,
+  createCelebrationView,
+} from "./dom/celebration.ts";
 export { type ChoiceCardView, createChoiceCard } from "./dom/choice.ts";
 export { createDeathCard, type DeathCardView } from "./dom/death.ts";
 export {
@@ -62,6 +68,19 @@ export {
 } from "./dom/dialogue.ts";
 export { createUiLayer, loadUiFonts, UI_DIMMED, UI_LAYOUT, type UiLayer } from "./dom/layer.ts";
 export {
+  createMap,
+  type DestinationLook,
+  type MapFace,
+  type MapView,
+  type MapWords,
+} from "./dom/map.ts";
+export {
+  createOpeningView,
+  type OpeningAction,
+  type OpeningView,
+  showOpeningCaption,
+} from "./dom/opening.ts";
+export {
   createPauseView,
   PAUSE_LAYOUT,
   type PauseColours,
@@ -72,6 +91,13 @@ export {
   skillPlace,
 } from "./dom/pause.ts";
 export { refuseControl } from "./dom/refusal.ts";
+export {
+  createRoomView,
+  roomPortraitProperties,
+  type RoomView,
+  type RoomViewColours,
+  type RoomViewWords,
+} from "./dom/room.ts";
 export {
   createSettingsCard,
   type SettingsCardView,
@@ -90,6 +116,7 @@ export {
   type StageSummaryView,
   type StageSummaryWords,
 } from "./dom/stageSummary.ts";
+export { createStart, type StartControl, type StartView, type StartWords } from "./dom/start.ts";
 export { focusKeyAction, stepFocus } from "./focus/index.ts";
 export { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "./input/deathInput.ts";
 export {

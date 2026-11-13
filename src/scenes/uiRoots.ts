@@ -1,23 +1,19 @@
 import type { GameObjects, Scene } from "phaser";
 
 const mixedRoots = new WeakMap<Scene, Set<GameObjects.GameObject>>();
+const mixedScenes = new Set(["celebration", "map", "opening", "room", "start", "zone"]);
 const uiScenes = new Set([
   "achievementNotice",
   "achievements",
-  "celebration",
   "cutscene",
   "death",
   "dialogue",
   "dialogueChoice",
-  "map",
-  "opening",
   "pause",
   "restart",
-  "room",
   "settings",
   "skillDetail",
   "stageSelect",
-  "start",
   "update",
   "zoneBark",
   "zoneDeparture",
@@ -26,13 +22,16 @@ const uiScenes = new Set([
 
 // Declare the UI boundary without changing hierarchy, visibility or the existing input route.
 export function uiObject<T extends GameObjects.GameObject>(scene: Scene, object: T): T {
-  if (scene.sys?.settings.key !== "zone") {
+  if (!mixedScenes.has(scene.sys?.settings.key)) {
     return object;
   }
   let roots = mixedRoots.get(scene);
   if (!roots) {
     roots = new Set();
     mixedRoots.set(scene, roots);
+  }
+  if (roots.has(object)) {
+    return object;
   }
   roots.add(object);
   const owned = roots;
@@ -45,7 +44,7 @@ export function sceneUiRoots(scene: Scene): readonly GameObjects.GameObject[] | 
   if (uiScenes.has(key)) {
     return scene.children.list;
   }
-  if (key === "zone") {
+  if (mixedScenes.has(key)) {
     return [...(mixedRoots.get(scene) ?? [])];
   }
   return key === "boot" ? [] : undefined;

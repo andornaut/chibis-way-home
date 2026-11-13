@@ -44,22 +44,12 @@ export interface RoomView {
   readonly root: HTMLElement;
 }
 
-// Text and controls only: the scene retains the room backdrop, cast and animation clock.
-export function createRoomView(
-  document: Document,
-  colours: RoomViewColours,
-  action: { readonly art: Rect; readonly hit: Rect },
-  words: RoomViewWords,
-): RoomView {
-  const make = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
-    const element = document.createElement(tag);
-    element.className = className;
-    return element;
-  };
-  const root = make("div", "room-scene");
-  root.setAttribute("role", "region");
-  root.setAttribute("aria-labelledby", "room-title");
-  const properties: LayoutValues = {
+export function roomPortraitProperties(size: Pick<Rect, "height" | "width">): LayoutValues {
+  return { "--room-portrait-height": size.height, "--room-portrait-width": size.width };
+}
+
+export function roomProperties(action: { readonly art: Rect; readonly hit: Rect }): LayoutValues {
+  return {
     ...DIALOGUE_PANEL_LAYOUT,
     "--room-action-height": action.art.height,
     "--room-action-hit-height": action.hit.height,
@@ -75,7 +65,24 @@ export function createRoomView(
     "--room-name-x": ROOM_SCREEN.nameCentre.x,
     "--room-name-y": ROOM_SCREEN.nameCentre.y,
   };
-  writeLayoutProperties(properties, root);
+}
+
+// Text and controls only: the scene retains the room backdrop, cast and animation clock.
+export function createRoomView(
+  document: Document,
+  colours: RoomViewColours,
+  action: { readonly art: Rect; readonly hit: Rect },
+  words: RoomViewWords,
+): RoomView {
+  const make = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
+    const element = document.createElement(tag);
+    element.className = className;
+    return element;
+  };
+  const root = make("div", "room-scene");
+  root.setAttribute("role", "region");
+  root.setAttribute("aria-labelledby", "room-title");
+  writeLayoutProperties(roomProperties(action), root);
   const view = make("div", "ui-view room-view");
   const title = make("h1", words.gift === undefined ? "room-name" : "ui-card-title");
   title.id = "room-title";
