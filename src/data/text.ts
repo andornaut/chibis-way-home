@@ -225,6 +225,13 @@ export const TEXT: GameText = {
   },
   map: {
     continue: "Continue",
+    destinationStates: {
+      current: "Current location",
+      locked: "Locked",
+      normal: "Available",
+      unbuilt: "Unavailable",
+      visited: "Completed",
+    },
     stageClose: "Close",
     stageLocked: "Locked",
     stageNumber: "Stage {number}",
