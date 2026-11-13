@@ -5,8 +5,7 @@ import { hitAround } from "./hitAreas.ts";
 
 export const CARD_TEXT_SCALE = FONT_SCALE;
 
-// Fixed frame geometry for the placeholder celebration. Ordinary modal cards measure their
-// contents through contentCardLayout.
+// Fixed frame geometry for the celebration card.
 const CARD_AT: Point = CELEBRATION_LAYOUT.at;
 const CARD_WIDTH = CELEBRATION_LAYOUT.width;
 
