@@ -23,15 +23,14 @@ import {
   focusRingAround,
   FONT_ROLES,
   type LabelledButton,
-  type Palette,
   textInkBounds,
 } from "../ui/index.ts";
+import { paletteColour } from "./scenePalette.ts";
 import { uiObject } from "./uiRoots.ts";
 
 // What the pause, settings, install steps and restart cards draw with: art's 9-slices, card text,
 // buttons and the palette's colours.
 
-const PALETTE = "palette";
 export const BODY_FONT = FONT_ROLES.body;
 export const TITLE_FONT = FONT_ROLES.heading;
 export const ACTION_FONT = FONT_ROLES.action;
@@ -42,18 +41,9 @@ export function cardFonts(scene: Scene): CardFonts {
   return { body: font(BODY_FONT), title: font(TITLE_FONT) };
 }
 
-export function palette(scene: Scene): Palette {
-  return scene.cache.json.get(PALETTE) as Palette;
-}
-
-// A palette colour by name, as a number for a tint.
-export function paletteColour(scene: Scene, name: string): number {
-  const hex = palette(scene).colours[name];
-  if (hex === undefined) {
-    throw new Error(`The palette has no ${name}`);
-  }
-  return Number.parseInt(hex.slice(1), 16);
-}
+// CLEANUP (added 2026-11-13): remove forwarding with the retired canvas card helpers.
+export { captureTab } from "./keyboardCapture.ts";
+export { palette, paletteColour } from "./scenePalette.ts";
 
 // A 9-slice sprite stretched over rect, by the edges art's manifest gives it: its frame, or its
 // first.
@@ -202,16 +192,6 @@ export function ringFocus(
 ): GameObjects.NineSlice | undefined {
   last?.destroy();
   return rect === undefined ? undefined : addSlice(scene, "ui-focus", focusRingAround(rect));
-}
-
-// Tab moves the keyboard's focus on a card or the start screen: while one shows, the game keeps
-// it from moving the page's focus out of the canvas.
-export function captureTab(scene: Scene, captured: boolean): void {
-  if (captured) {
-    scene.input.keyboard?.addCapture("TAB");
-  } else {
-    scene.input.keyboard?.removeCapture("TAB");
-  }
 }
 
 // Art's buttons, each with its label's palette colour: the normal one, grey with an ink label, and
