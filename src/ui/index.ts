@@ -109,6 +109,7 @@ export {
 export { createSkillDetailsCard, type SkillDetailsView } from "./dom/skillDetails.ts";
 export { filledFrame } from "./dom/skillDisc.ts";
 export { applySkin, remappedFrame, type SkinFrame, UI_FRAMES } from "./dom/skin.ts";
+export { createStageProgress, type StageProgressView } from "./dom/stageProgress.ts";
 export { createStageSelect, type StageFace, type StageSelectView } from "./dom/stageSelect.ts";
 export {
   createStageSummary,
@@ -117,6 +118,12 @@ export {
   type StageSummaryWords,
 } from "./dom/stageSummary.ts";
 export { createStart, type StartControl, type StartView, type StartWords } from "./dom/start.ts";
+export {
+  createTouchControls,
+  type TouchControlsState,
+  type TouchControlsView,
+  type TouchControlVisual,
+} from "./dom/touchControls.ts";
 export { focusKeyAction, stepFocus } from "./focus/index.ts";
 export { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "./input/deathInput.ts";
 export {

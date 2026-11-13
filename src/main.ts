@@ -19,6 +19,8 @@ import "./ui/dom/map.css";
 import "./ui/dom/opening.css";
 import "./ui/dom/room.css";
 import "./ui/dom/start.css";
+import "./ui/dom/stageProgress.css";
+import "./ui/dom/touchControls.css";
 import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";

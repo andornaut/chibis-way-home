@@ -18,8 +18,10 @@ import { runStatsProperties } from "./runStats.ts";
 import { SKILL_DETAILS_LAYOUT } from "./skillDetails.ts";
 import { SKILL_DISC_LAYOUT } from "./skillDisc.ts";
 import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
+import { STAGE_PROGRESS_PROPERTIES } from "./stageProgress.ts";
 import { STAGE_SUMMARY_LAYOUT, stageSummaryGaps } from "./stageSummary.ts";
 import { startIconProperties } from "./start.ts";
+import { TOUCH_CONTROLS_PROPERTIES } from "./touchControls.ts";
 
 // Vitest blanks CSS imports, so the stylesheets are read from disk.
 const DIRECTORY = new URL(".", import.meta.url);
@@ -39,6 +41,8 @@ const SET = new Set(
 const WRITTEN = new Set(
   [
     UI_LAYOUT,
+    STAGE_PROGRESS_PROPERTIES,
+    TOUCH_CONTROLS_PROPERTIES,
     CELEBRATION_DOM_LAYOUT,
     MAP_PROPERTIES,
     roomProperties({
