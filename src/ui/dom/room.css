@@ -1,0 +1,63 @@
+/* Room text overlays its canvas world. Geometry is in base pixels from the scene's room layout. */
+.room-scene .dialogue-portrait {
+  top: calc(var(--ui-unit) * (var(--dialogue-frame-inset) + var(--dialogue-portrait) / 2) * 1px);
+  left: calc(var(--ui-unit) * (var(--dialogue-frame-inset) + var(--dialogue-portrait) / 2) * 1px);
+  width: calc(var(--ui-unit) * var(--room-portrait-width) * 1px);
+  height: calc(var(--ui-unit) * var(--room-portrait-height) * 1px);
+  translate: -50% -50%;
+}
+
+.room-name {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--room-name-y) * 1px);
+  left: calc(var(--ui-unit) * var(--room-name-x) * 1px);
+  margin: 0;
+  color: var(--colour-cream);
+  font-size: calc(var(--ui-unit) * var(--heading-size) * 1px);
+  font-weight: 700;
+  line-height: calc(var(--ui-unit) * var(--heading-line) * 1px);
+  text-align: center;
+  translate: -50% -50%;
+}
+
+.room-gift-area {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--room-gift-top) * 1px);
+  width: 100%;
+  height: calc(var(--ui-unit) * var(--room-gift-height) * 1px);
+  display: grid;
+  place-items: center;
+}
+
+.room-skill-body {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  max-width: 100%;
+}
+
+.room-description {
+  max-width: calc(var(--ui-unit) * var(--room-description-width) * 1px);
+  margin: 0;
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 400;
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+  text-align: start;
+}
+
+.room-leave {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--room-action-y) * 1px);
+  left: calc(var(--ui-unit) * var(--room-action-x) * 1px);
+  width: calc(var(--ui-unit) * var(--room-action-hit-width) * 1px);
+  height: calc(var(--ui-unit) * var(--room-action-hit-height) * 1px);
+  padding: 0;
+}
+
+.room-leave > .ui-text-button-face {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--room-action-inset-y) * 1px);
+  left: calc(var(--ui-unit) * var(--room-action-inset-x) * 1px);
+  width: calc(var(--ui-unit) * var(--room-action-width) * 1px);
+  height: calc(var(--ui-unit) * var(--room-action-height) * 1px);
+}

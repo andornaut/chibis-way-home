@@ -1,9 +1,11 @@
 import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { frameSteps, startStepClock, type StepClock } from "@andornaut/game-kit/clock/fixedStep";
+import { fillNames } from "@andornaut/game-kit/lines";
 import {
   phaserBitmapFont,
   type PhaserFontData,
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { type Cameras, type GameObjects, type Input, Scene, Scenes } from "phaser";
 
 import { PLAY_STEP_LIMITS, STEP_SECONDS } from "../core/index.ts";
@@ -16,13 +18,17 @@ import type { RoomPlan } from "../data/types/index.ts";
 import { coverZone, PHONE_EVENTS } from "../pwa/index.ts";
 import {
   CARD_TEXT_SCALE,
+  createRoomView,
   DIALOGUE_PORTRAIT_SIZE,
   dialogueParagraphs,
   dialogueSpeakerLayout,
+  focusKeyAction,
   pressedArea,
   ROOM_SCREEN,
   type RoomEvent,
   roomEvent,
+  type RoomView,
+  SKILL_ART,
   SKILL_ROOM,
   skillDetails,
   skillRoomContinue,
@@ -46,10 +52,13 @@ import {
 } from "./cardParts.ts";
 import { drawDialoguePanel } from "./dialoguePanel.ts";
 import { drawDialogueParagraph } from "./dialogueParagraph.ts";
+import { followTaps } from "./domTaps.ts";
+import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { modalInput, onScenePointer } from "./modalInput.ts";
 import { fitCanvasCamera, fitPlayCamera, playPoint } from "./playCamera.ts";
 import { grantSkill, recordRoomTime } from "./save.ts";
 import { drawSkillButton } from "./skillButton.ts";
+import { uiObject } from "./uiRoots.ts";
 
 const ZONE = "zone";
 
@@ -77,6 +86,13 @@ export class RoomScene extends Scene {
   private roomKey = "";
   private stage = "";
   private clock: StepClock = startStepClock;
+  private canvasUi: { setVisible(visible: boolean): unknown }[] = [];
+  private domReady = false;
+  private portrait: GameObjects.Sprite | undefined;
+  private portraitFrames = new Map<string, string>();
+  private portraitFrame: string | undefined;
+  private view: RoomView | undefined;
+  private visit = 0;
 
   constructor() {
     super("room");
@@ -95,6 +111,13 @@ export class RoomScene extends Scene {
     this.focusRing = undefined;
     this.leaving = false;
     this.pressed = undefined;
+    this.canvasUi = [];
+    this.domReady = false;
+    this.portrait = undefined;
+    this.portraitFrames = new Map();
+    this.portraitFrame = undefined;
+    this.view = undefined;
+    this.visit++;
     if (room.grant !== undefined) {
       grantSkill(room.grant);
     }
@@ -120,14 +143,31 @@ export class RoomScene extends Scene {
     coverZone("room", true);
     captureTab(this, true);
 
-    this.drawRoom();
-    this.drawLeave();
+    if (this.room.grant === undefined) {
+      this.drawRoom();
+    } else {
+      this.rememberUi(() => this.drawRoom());
+    }
+    this.rememberUi(() => this.drawLeave());
     this.render();
     this.watchInput();
     modalInput(this).subscribe(() => {
       this.pressed = undefined;
       this.render();
     });
+    this.createDomView();
+  }
+
+  private rememberUi(draw: () => void): void {
+    const before = new Set(this.children.list);
+    draw();
+    for (const child of this.children.list) {
+      if (!before.has(child) && "setVisible" in child && typeof child.setVisible === "function") {
+        this.canvasUi.push(
+          uiObject(this, child as GameObjects.GameObject & GameObjects.Components.Visible),
+        );
+      }
+    }
   }
 
   private drawRoom(): void {
@@ -149,7 +189,7 @@ export class RoomScene extends Scene {
         drawDialogueParagraph(this, { ...paragraph, portrait: null });
         if (paragraph.portrait !== null) {
           const at = dialogueSpeakerLayout(paragraph.side).portrait;
-          this.add
+          this.portrait = this.add
             .sprite(
               at.x + DIALOGUE_PORTRAIT_SIZE / 2,
               at.y + DIALOGUE_PORTRAIT_SIZE / 2,
@@ -191,16 +231,185 @@ export class RoomScene extends Scene {
     const font = phaserBitmapFont(this.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
     const { nameCentre } = ROOM_SCREEN;
     const ink = textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, name);
-    addCardText(
-      this,
-      TITLE_FONT,
-      {
-        x: nameCentre.x - ink.width / 2 - ink.x,
-        y: nameCentre.y - ink.height / 2 - ink.y,
-      },
-      name,
-      this.colour("cream"),
+    this.rememberUi(() =>
+      addCardText(
+        this,
+        TITLE_FONT,
+        {
+          x: nameCentre.x - ink.width / 2 - ink.x,
+          y: nameCentre.y - ink.height / 2 - ink.y,
+        },
+        name,
+        this.colour("cream"),
+      ),
     );
+  }
+
+  private createDomView(): void {
+    const layer = sceneDomUi(this);
+    if (layer === undefined) {
+      return;
+    }
+    const visit = this.visit;
+    const skill = this.room.grant;
+    const words = skill === undefined ? undefined : TEXT.skills[skill];
+    const dialogue = this.room.enter === undefined ? undefined : DIALOGUES[this.room.enter];
+    const paragraph =
+      dialogue === undefined ? undefined : dialogueParagraphs(SPEAKERS, TEXT, dialogue)[0];
+    if (words !== undefined && paragraph === undefined) {
+      throw new Error("A skill room needs an entry dialogue");
+    }
+    const view = createRoomView(
+      layer.element.ownerDocument,
+      {
+        cream: this.colour("cream"),
+        ink: this.colour("ink"),
+        navy: this.colour("navy"),
+        white: this.colour("white"),
+        yellow: this.colour("yellow"),
+      },
+      this.leaveLayout(),
+      {
+        action: words === undefined ? TEXT.room.leave : TEXT.dialogue.continue,
+        actions: TEXT.buttons,
+        icons: TEXT.actionIcons,
+        name: TEXT.rooms[this.roomKey]?.name ?? "",
+        ...(words === undefined || paragraph === undefined
+          ? {}
+          : {
+              gift: {
+                description: words.description,
+                disc: fillNames(TEXT.skillDetails.disc, { skill: words.title }),
+                paragraph,
+                title: words.title,
+              },
+            }),
+      },
+    );
+    this.view = view;
+    if (view.panel !== undefined && this.portrait !== undefined) {
+      view.panel.portrait.style.setProperty("--room-portrait-width", String(this.portrait.width));
+      view.panel.portrait.style.setProperty("--room-portrait-height", String(this.portrait.height));
+    }
+    const urls: Promise<string>[] = [];
+    if (skill !== undefined && view.glyph !== undefined) {
+      const glyph = view.glyph;
+      const art = SKILL_ART[skill];
+      const frame = sheetTags(this.cache.json.get(art) as AsepriteSheet).get("ready")?.[0]?.frame;
+      urls.push(
+        artFrameUrl(this, art, frame, "ink").then((url) => {
+          if (this.visit === visit) {
+            glyph.src = url;
+          }
+          return url;
+        }),
+      );
+    }
+    if (paragraph?.portrait !== undefined && paragraph.portrait !== null) {
+      const art = paragraph.portrait;
+      const frames = sheetTags(this.cache.json.get(art) as AsepriteSheet).get("idle");
+      if (frames === undefined) {
+        throw new Error(`No idle portrait animation for ${art}`);
+      }
+      for (const { frame } of frames) {
+        urls.push(
+          artFrameUrl(this, art, frame).then((url) => {
+            if (this.visit === visit) {
+              this.portraitFrames.set(String(frame), url);
+            }
+            return url;
+          }),
+        );
+      }
+    }
+    const reveal = revealSceneView(this, view.root, Promise.all(urls));
+    const stopInput = this.watchDomInput(view);
+    const portrait = () => this.renderDomPortrait();
+    this.events.on(Scenes.Events.PRE_RENDER, portrait);
+    this.events.once("shutdown", () => {
+      this.visit++;
+      this.domReady = false;
+      this.view = undefined;
+      reveal.cancel();
+      stopInput();
+      this.events.off(Scenes.Events.PRE_RENDER, portrait);
+    });
+    mountSceneView(this, view.root);
+    void reveal.revealed.then(
+      (shown) => {
+        if (!shown || this.visit !== visit || this.leaving) {
+          return;
+        }
+        this.domReady = true;
+        this.canvasUi.forEach((part) => part.setVisible(false));
+        this.focusRing?.setVisible(false);
+        this.renderDomPortrait();
+        if (this.focused) {
+          focusTarget(view.leave);
+        }
+      },
+      (error: unknown) => console.warn("The room UI failed to load", error),
+    );
+  }
+
+  // Phaser advances the hidden UI portrait on its scene clock, including pauses and resumes.
+  private renderDomPortrait(): void {
+    const image = this.view?.panel?.portrait;
+    if (!this.domReady || image === undefined || this.portrait === undefined) {
+      return;
+    }
+    const frame = String(this.portrait.frame.name);
+    const url = this.portraitFrames.get(frame);
+    if (url !== undefined && frame !== this.portraitFrame) {
+      this.portraitFrame = frame;
+      image.src = url;
+    }
+  }
+
+  private watchDomInput(view: RoomView): () => void {
+    const input = modalInput(this);
+    const onClick = (event: MouseEvent) => {
+      if (event.detail === 0 && this.domReady && input.accepts(event)) {
+        this.act({ down: "leave", kind: "press", up: "leave" });
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (!this.domReady || !input.accepts(event)) {
+        return;
+      }
+      if (
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        (focusKeyAction(event.key, event.shiftKey, event.repeat) === undefined &&
+          ![" ", "Enter", "Escape", "p", "P"].includes(event.key))
+      ) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      this.act({ key: event.key, kind: "key", repeat: event.repeat, shift: event.shiftKey });
+    };
+    view.leave.addEventListener("click", onClick);
+    view.root.addEventListener("keydown", onKey);
+    const stopTaps = followTaps(
+      { preventDefault: true, target: view.root, view: view.root },
+      input,
+      {
+        accepts: () => this.domReady && !this.leaving,
+        controlAt: (event) => (event.composedPath().includes(view.leave) ? "leave" : null),
+        show: (pressed) => {
+          this.pressed = pressed;
+          this.render();
+        },
+        tap: () => this.act({ down: "leave", kind: "press", up: "leave" }),
+      },
+    );
+    return () => {
+      stopTaps();
+      view.leave.removeEventListener("click", onClick);
+      view.root.removeEventListener("keydown", onKey);
+    };
   }
 
   private leaveLayout() {
@@ -232,10 +441,17 @@ export class RoomScene extends Scene {
   private render(): void {
     const leave = this.leaveLayout();
     const pressed = this.pressed === "leave";
+    if (this.domReady && this.view !== undefined) {
+      this.view.leave.toggleAttribute("data-pressed", pressed);
+      return;
+    }
     this.leaveFaces.normal.setVisible(!pressed);
     this.leaveFaces.pressed.setVisible(pressed);
     placeButtonLabel(pressed, false, this.leaveLabel);
     this.focusRing = ringFocus(this, this.focusRing, this.focused ? leave.art : undefined);
+    if (this.focusRing !== undefined) {
+      uiObject(this, this.focusRing);
+    }
   }
 
   private controlAt(pointer: Input.Pointer): "leave" | undefined {
@@ -248,16 +464,25 @@ export class RoomScene extends Scene {
 
   private watchInput(): void {
     onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
+      if (this.domReady) {
+        return;
+      }
       this.pressed = this.controlAt(pointer);
       this.render();
     });
     onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
+      if (this.domReady) {
+        return;
+      }
       const down = this.pressed;
       this.pressed = undefined;
       this.render();
       this.act({ down, kind: "press", up: this.controlAt(pointer) });
     });
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+      if (this.domReady && event.target instanceof Node && this.view?.root.contains(event.target)) {
+        return;
+      }
       if (!modalInput(this).accepts(event)) {
         return;
       }
@@ -283,6 +508,9 @@ export class RoomScene extends Scene {
     if (outcome.focused !== this.focused) {
       this.focused = outcome.focused;
       this.render();
+      if (this.domReady && this.view !== undefined) {
+        focusTarget(this.view.leave);
+      }
     }
     if (outcome.leaves) {
       this.leave();
