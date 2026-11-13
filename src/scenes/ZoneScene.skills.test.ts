@@ -4,7 +4,6 @@ import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep"
 import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { afterEach, expect, it, vi } from "vitest";
 
-import palette from "../../public/art/palette.json" with { type: "json" };
 import { STEP_MS } from "../core/index.ts";
 import { BIRD } from "../data/bird.ts";
 import { SCREEN } from "../data/screen.ts";
@@ -22,6 +21,7 @@ import {
   shifted,
   SKILL_BUTTON,
   skillHud,
+  type TouchControlsState,
   touchIntent,
   touchLayout,
   viewShift,
@@ -124,40 +124,31 @@ function touchFixture() {
   const size = canvasSize(fit);
   const bounds = { ...css, x: 100, y: 50 };
   const canvas = Object.assign(new EventTarget(), { getBoundingClientRect: () => bounds });
-  const sprite = () => ({
-    anims: {},
-    frame: { height: 1, width: 1 },
-    play: vi.fn(),
-    setPosition(x: number, y: number) {
-      this.x = x;
-      this.y = y;
-      return this;
-    },
-    setVisible(value: boolean) {
-      this.visible = value;
-      return this;
-    },
-    texture: { key: "ui-move-hint" },
-    visible: true,
-    x: 0,
-    y: 0,
-  });
-  const ring = sprite();
-  const knob = sprite();
   const state = { active: true, covered: false, hudShown: true };
   const events = new EventEmitter();
   const scene = Object.assign(new ZoneScene(), {
-    controls: new Map(),
+    actionButtonsShown: false,
     events,
     game: { canvas },
-    moveHint: { knob, ring },
     playCovered: () => state.covered,
     scale: { gameSize: fit.backing, zoom: 1 / fit.r },
     scene: { isActive: () => state.active },
     skillState: () => ({ shown: state.hudShown }),
+    touchVisuals: Object.fromEntries(
+      ["jump", "knob", "move", "use"].map((key) => [
+        key,
+        {
+          centre: { x: 0, y: 0 },
+          expanded: false,
+          pose: "rest",
+          shown: false,
+        },
+      ]),
+    ),
   }) as unknown as {
     buttonTouches: Set<number>;
-    controls: Map<string, { visible: boolean }>;
+    actionButtonsShown: boolean;
+    touchVisuals: TouchControlsState["controls"];
     heldKeys: Set<string>;
     heldTouches: Map<number, HeldTouch>;
     clearControls(): void;
@@ -188,7 +179,7 @@ function touchFixture() {
   };
   const draw = () => {
     scene.drawMoveHint([...scene.heldTouches.values()]);
-    return ring.visible;
+    return scene.touchVisuals.move.shown;
   };
   const mouse = (
     type: string,
@@ -207,15 +198,14 @@ function touchFixture() {
     });
     host.dispatchEvent(event);
   };
-  return { canvas, draw, events, fit, host, knob, mouse, ring, scene, send, state };
+  return { canvas, draw, events, fit, host, mouse, scene, send, state };
 }
 
 it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])(
   "keeps mouse presses on shown %s out of movement through drag and release",
   (control) => {
     const f = touchFixture();
-    f.scene.controls.set("use", { visible: true });
-    f.scene.controls.set("jump", { visible: true });
+    f.scene.actionButtonsShown = true;
     f.scene.watchMouse();
     const point =
       control === "use" || control === "jump"
@@ -303,7 +293,7 @@ it.each([
   expect(f.scene.heldTouches.get(1)?.role).toBe(role);
   expect(f.draw()).toBe(false);
   f.scene.showTouchControls({ actionButtons: true, moveControls: true });
-  expect(f.ring.visible).toBe(false);
+  expect(f.scene.touchVisuals.move.shown).toBe(false);
   f.send("pointerup", 1, { x: 250, y: 180 }, target);
   expect(f.scene.heldTouches.size).toBe(0);
   expect(f.scene.buttonTouches.size).toBe(0);
@@ -324,8 +314,7 @@ it("retains the movement finger's joystick while another finger holds or release
     use: true,
   });
   expect(f.draw()).toBe(true);
-  const half = (touchLayout(f.fit).buttons.jump.art.width - 1) / 2;
-  expect({ x: f.ring.x + half, y: f.ring.y + half }).toEqual(start);
+  expect(f.scene.touchVisuals.move.centre).toEqual(start);
   f.send("pointerup", 2, use);
   expect(f.scene.heldTouches.has(1)).toBe(true);
   expect(f.draw()).toBe(true);
@@ -381,32 +370,31 @@ it("keeps blocked modal and room presses out of movement and clears their lifeti
   expect(f.scene.heldTouches.size).toBe(0);
 });
 
-it("draws current-stage progress on the existing HUD graphics with bottom loading-style rows", () => {
-  const graphics = {
-    clear: vi.fn(),
-    fillRect: vi.fn().mockReturnThis(),
-    fillStyle: vi.fn().mockReturnThis(),
+it("updates the DOM progress strip with the unchanged canvas-bottom rect and current fraction", () => {
+  const progress = {
+    place: vi.fn(),
+    placeCanvas: vi.fn(),
+    update: vi.fn(),
   };
   const scene = Object.assign(Object.create(ZoneScene.prototype), {
+    hud: { progress },
     layout: {
       areas: { main: { entries: { start: { x: 0 } }, exitX: SCREEN.width } },
       start: { area: "main", entry: "start" },
     },
-    progress: graphics,
     scale: { gameSize: SCREEN, zoom: 1 },
     zone: { area: "main", bird: { x: SCREEN.width / 4 - BIRD.width / 2 }, cleared: false },
   }) as { drawProgress(): void };
   scene.drawProgress();
-  expect(graphics.clear).toHaveBeenCalledExactlyOnceWith();
-  expect(graphics.fillRect.mock.calls).toEqual([
-    [0, SCREEN.height - 4, SCREEN.width, 4],
-    [1, SCREEN.height - 3, SCREEN.width - 2, 2],
-    [1, SCREEN.height - 3, Math.floor((SCREEN.width - 2) / 4), 1],
-    [1, SCREEN.height - 2, Math.floor((SCREEN.width - 2) / 4), 1],
-  ]);
-  expect(graphics.fillStyle.mock.calls.map(([colour]) => colour)).toEqual(
-    ["ink", "dslate", "yellow", "amber"].map((key) =>
-      Number.parseInt(palette.colours[key as keyof typeof palette.colours].slice(1), 16),
-    ),
+  expect(progress.placeCanvas).toHaveBeenCalledExactlyOnceWith(
+    { x: 0, y: 0 },
+    { ...SCREEN, x: 0, y: 0 },
   );
+  expect(progress.place).toHaveBeenCalledExactlyOnceWith({
+    height: 4,
+    width: SCREEN.width,
+    x: 0,
+    y: SCREEN.height - 4,
+  });
+  expect(progress.update).toHaveBeenCalledExactlyOnceWith(0.25);
 });

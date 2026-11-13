@@ -6,7 +6,6 @@ import {
   tagMs,
 } from "@andornaut/game-kit/art/aseprite";
 import { frameSteps, startStepClock, type StepClock } from "@andornaut/game-kit/clock/fixedStep";
-import { drawProgressBar } from "@andornaut/game-kit/progress/phaser/drawProgressBar";
 import { type Random, randomStream } from "@andornaut/game-kit/random";
 import { clampInto } from "@andornaut/game-kit/rect";
 import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
@@ -18,7 +17,7 @@ import {
   type PagePointerEvent,
   type PagePress,
 } from "@andornaut/game-kit/web/input/dom/pagePresses";
-import { type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "phaser";
+import { Core, type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "phaser";
 
 import {
   ART_MANIFEST_KEY,
@@ -164,10 +163,11 @@ import { zonePlanAvoiding, zonePlanFor } from "../rules/zonePlans.ts";
 import { sceneryParallax, type Tileset, worldScenery } from "../stage/index.ts";
 import {
   buttonHeld,
-  centredAt,
   coarsePointer,
   combineIntents,
   controlTag,
+  createStageProgress,
+  createTouchControls,
   type HeldTouch,
   isMouseMovementKey,
   keyIntent,
@@ -176,9 +176,10 @@ import {
   reducedMotion,
   shifted,
   stageProgressRect,
-  TOUCH_CHROME_FRAME,
-  TOUCH_KNOB_FRAME,
+  type StageProgressView,
   type TouchControl,
+  type TouchControlsState,
+  type TouchControlsView,
   touchIntent,
   type TouchLayout,
   touchLayout,
@@ -201,14 +202,9 @@ import { mountDashTrail } from "./dashTrail.ts";
 import { frameDeathCamera } from "./deathCamera.ts";
 import type { DeathData, DeathOpener } from "./DeathScene.ts";
 import { type DialogueData, type DialogueOpener } from "./DialogueScene.ts";
+import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { modalInput } from "./modalInput.ts";
-import {
-  canvasRect,
-  fitCanvasCamera,
-  fitPlayCamera,
-  sceneFit,
-  sceneViewShift,
-} from "./playCamera.ts";
+import { canvasRect, fitPlayCamera, sceneFit, sceneViewShift } from "./playCamera.ts";
 import { createPulseSpanArt } from "./pulseSpanArt.ts";
 import type { RoomData } from "./RoomScene.ts";
 import {
@@ -233,7 +229,6 @@ import {
 } from "./save.ts";
 import { createTetherArt } from "./tetherArt.ts";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
-import { createTouchChrome } from "./touchChrome.ts";
 import { bindZoneBarks } from "./zoneBarks.ts";
 import type { ZoneBarkScene } from "./ZoneBarkScene.ts";
 import type { ZoneDepartureData } from "./ZoneDepartureScene.ts";
@@ -329,7 +324,6 @@ function show(sprite: GameObjects.Sprite, tag: string): void {
 }
 
 // What a zone starts with: see ZoneScene.init.
-import { uiObject } from "./uiRoots.ts";
 
 export interface ZoneData {
   readonly backdrop?: boolean;
@@ -340,9 +334,10 @@ export interface ZoneData {
 // One zone, played with the keyboard or the touch controls.
 export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, IntroductionOpener {
   private clock: StepClock = startStepClock;
-  private readonly controls = new Map<TouchControl, GameObjects.Sprite>();
-  // The move hint's ring and knob.
-  private moveHint!: { readonly knob: GameObjects.Sprite; readonly ring: GameObjects.Sprite };
+  private hud:
+    { readonly progress: StageProgressView; readonly touch: TouchControlsView } | undefined;
+  private touchVisuals: TouchControlsState["controls"] | undefined;
+  private actionButtonsShown = false;
   private bird!: GameObjects.Sprite;
   private airCue: ReturnType<typeof mountAirJumpCue> | undefined;
   private dashWind: ReturnType<typeof mountDashTrail> | undefined;
@@ -353,7 +348,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private deathModal = false;
   private deathFraming = false;
   private restoreDeathCamera: (() => void) | undefined;
-  private progress!: GameObjects.Graphics;
   private loading = true;
   private zone!: ZoneState;
   private readonly heldKeys = new Set<string>();
@@ -444,6 +438,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       search,
     );
     this.loading = true;
+    this.hud = undefined;
+    this.touchVisuals = undefined;
+    this.actionButtonsShown = false;
     this.backdrop = data.backdrop === true;
     this.mapNode = data.node;
     this.continueVisit = data.continueVisit === true;
@@ -529,20 +526,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   }
 
   private createReady(): void {
-    // The main camera shows the zone in the game's view; the controls camera covers the whole
-    // canvas for the touch buttons, placed in the game's view (viewShift), and shows nothing else.
+    // The world camera stays on the play view; the HTML HUD uses canvas coordinates.
     fitPlayCamera(this);
-    const controlsCamera = this.cameras.add();
-    fitCanvasCamera(this, controlsCamera);
-    const offControls = (object: GameObjects.GameObject) => controlsCamera.ignore(object);
-    this.events.on(Scenes.Events.ADDED_TO_SCENE, offControls);
-    this.events.once("shutdown", () => this.events.off(Scenes.Events.ADDED_TO_SCENE, offControls));
     this.cameras.main.setBackgroundColor(BACKGROUND);
     this.cameras.main.setRoundPixels(true);
     this.areaArt = this.add.graphics();
-    this.progress = uiObject(this, this.add.graphics().setDepth(OVERLAY_DEPTH));
-    this.cameras.main.ignore(this.progress);
-    this.progress.cameraFilter &= ~controlsCamera.id;
     this.events.once("shutdown", () => {
       this.scene.stop("zoneIntroduction");
       this.introductionActive = false;
@@ -627,26 +615,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.loadPlan(zoneAt(seed, ZONE_MAP.start));
     }
 
-    const { buttons } = this.touchControls();
-    for (const control of Object.keys(CONTROL_SPRITES) as TouchControl[]) {
-      const sprite = createTouchChrome(this, control).setScrollFactor(0).setDepth(OVERLAY_DEPTH);
-      const at = centredAt(buttons[control].centre, {
-        height: TOUCH_CHROME_FRAME,
-        width: TOUCH_CHROME_FRAME,
-      });
-      this.controls.set(control, sprite.setPosition(at.x, at.y));
-      this.cameras.main.ignore(sprite);
-      sprite.cameraFilter &= ~controlsCamera.id;
-    }
-    this.moveHint = {
-      knob: createTouchChrome(this, "knob"),
-      ring: createTouchChrome(this, "move"),
-    };
-    for (const part of [this.moveHint.ring, this.moveHint.knob]) {
-      part.setScrollFactor(0).setDepth(OVERLAY_DEPTH);
-      this.cameras.main.ignore(part);
-      part.cameraFilter &= ~controlsCamera.id;
-    }
+    this.createHud();
     this.drawMoveHint([]);
     this.placeControls();
     this.scale.on(Scale.Events.RESIZE, this.placeControls, this);
@@ -757,7 +726,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       );
       this.drawArea();
     }
-    this.progress.setVisible(false);
+    this.hud?.progress.setVisible(false);
     this.input.enabled = false;
     this.drawObjects();
     this.drawBird();
@@ -795,43 +764,107 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     return touchRoleAt(this.touchControls().pressAreas, shifted(sceneViewShift(this), point, -1));
   }
 
-  // Puts the touch buttons at their places in the game's view, wherever it sits in the canvas.
-  private placeControls(): void {
+  private createHud(): void {
+    const layer = sceneDomUi(this);
+    if (this.preview || this.backdrop || layer === undefined) {
+      return;
+    }
+    const document = layer.element.ownerDocument;
+    const touch = createTouchControls(document, {
+      cream: paletteColour(this, "cream"),
+      ink: paletteColour(this, "ink"),
+      white: paletteColour(this, "white"),
+    });
+    const progress = createStageProgress(document, STAGE_PROGRESS_STYLE, TEXT.stageProgress.label);
+    this.hud = { progress, touch };
+    const layout = this.touchControls();
     const shift = sceneViewShift(this);
-    const { buttons } = this.touchControls();
-    for (const [control, sprite] of this.controls) {
-      const { centre } = buttons[control];
-      const at = shifted(
-        shift,
-        centredAt(centre, { height: TOUCH_CHROME_FRAME, width: TOUCH_CHROME_FRAME }),
-      );
-      sprite.setPosition(at.x, at.y);
+    const visual = (centre: Point) => ({
+      centre,
+      expanded: false,
+      pose: "rest" as const,
+      shown: false,
+    });
+    const rest = shifted(shift, layout.moveHint.centre);
+    this.touchVisuals = {
+      jump: visual(shifted(shift, layout.buttons.jump.centre)),
+      knob: visual(rest),
+      move: visual(rest),
+      use: visual(shifted(shift, layout.buttons.use.centre)),
+    };
+    mountSceneView(this, progress.root);
+    mountSceneView(this, touch.root);
+    const visible = () => this.syncHudVisibility();
+    this.game.events.on(Core.Events.PRE_RENDER, visible);
+    this.events.once("shutdown", () => {
+      this.game.events.off(Core.Events.PRE_RENDER, visible);
+      this.hud = undefined;
+      this.touchVisuals = undefined;
+      this.actionButtonsShown = false;
+    });
+    this.syncHudVisibility();
+  }
+
+  // Scene visibility can change while a room holds this scene paused.
+  private syncHudVisibility(): void {
+    const shown = !this.loading && !this.preview && !this.backdrop && this.scene.isVisible();
+    if (this.hud !== undefined) {
+      this.hud.touch.root.hidden = !shown;
+      this.hud.progress.setVisible(shown);
+    }
+  }
+
+  private renderTouchControls(): void {
+    if (this.touchVisuals !== undefined) {
+      this.hud?.touch.render({
+        canvas: canvasRect(this),
+        controls: this.touchVisuals,
+        viewShift: sceneViewShift(this),
+      });
+    }
+  }
+
+  // The renderer receives canvas coordinates, with the play view's shift applied once.
+  private placeControls(): void {
+    if (this.touchVisuals !== undefined) {
+      const shift = sceneViewShift(this);
+      const { buttons } = this.touchControls();
+      const visuals = { ...this.touchVisuals };
+      for (const control of Object.keys(CONTROL_SPRITES) as TouchControl[]) {
+        visuals[control] = { ...visuals[control], centre: shifted(shift, buttons[control].centre) };
+      }
+      this.touchVisuals = visuals;
+      this.drawMoveHint([...this.heldTouches.values()]);
     }
     this.drawProgress();
   }
 
-  // Shows or hides the touch controls now as settings has them, for the pause card to show the
-  // zone behind it as the settings change. They show only on a touch screen.
+  // Settings update the drawings immediately, including while the world is paused.
   showTouchControls(settings: Readonly<Record<TouchSetting, boolean>>): void {
     const touch = !this.playCovered() && coarsePointer(window);
     const buttons = settings.actionButtons && touch;
-    for (const sprite of this.controls.values()) {
-      sprite.setVisible(buttons);
-    }
+    this.actionButtonsShown = buttons;
     const touches = [...this.heldTouches.values()];
     const hint =
       settings.moveControls &&
       touch &&
       (touches.some(({ role }) => role === "move") ||
         (touches.length === 0 && this.buttonTouches.size === 0));
-    this.moveHint.ring.setVisible(hint);
-    this.moveHint.knob.setVisible(hint);
+    if (this.touchVisuals !== undefined) {
+      this.touchVisuals = {
+        jump: { ...this.touchVisuals.jump, shown: buttons },
+        knob: { ...this.touchVisuals.knob, shown: hint },
+        move: { ...this.touchVisuals.move, shown: hint },
+        use: { ...this.touchVisuals.use, shown: buttons },
+      };
+      this.renderTouchControls();
+    }
+    this.syncHudVisibility();
   }
 
   // The move hint rests at the bottom-left when idle, follows an eligible movement touch and
   // stays hidden during button-only presses. A second finger on a button keeps the mover's hint.
   private drawMoveHint(touches: readonly HeldTouch[]): void {
-    const { knob, ring } = this.moveHint;
     const shown =
       !this.playCovered() &&
       coarsePointer(window) &&
@@ -841,15 +874,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const { moveHint } = this.touchControls();
     const rest = shifted(sceneViewShift(this), moveHint.centre);
     const view = moveHintView(TOUCH, moveHint.knobReach, rest, touches);
-    show(ring, view.ringTag);
-    show(knob, view.knobTag);
-    const ringAt = centredAt(view.centre, {
-      height: TOUCH_CHROME_FRAME,
-      width: TOUCH_CHROME_FRAME,
-    });
-    const knobAt = centredAt(view.knob, { height: TOUCH_KNOB_FRAME, width: TOUCH_KNOB_FRAME });
-    ring.setPosition(ringAt.x, ringAt.y).setVisible(shown);
-    knob.setPosition(knobAt.x, knobAt.y).setVisible(shown);
+    if (this.touchVisuals !== undefined) {
+      this.touchVisuals = {
+        ...this.touchVisuals,
+        knob: { centre: view.knob, expanded: false, pose: view.knobTag, shown },
+        move: { centre: view.centre, expanded: false, pose: view.ringTag, shown },
+      };
+      this.renderTouchControls();
+    }
   }
 
   override update(time: number): void {
@@ -1054,13 +1086,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   }
 
   private drawProgress(): void {
-    this.progress.clear();
-    drawProgressBar(
-      this.progress,
-      STAGE_PROGRESS_STYLE,
-      stageProgressRect(sceneFit(this)),
-      this.progressFraction(),
-    );
+    const progress = this.hud?.progress;
+    if (progress !== undefined) {
+      progress.placeCanvas(sceneViewShift(this), canvasRect(this));
+      progress.place(stageProgressRect(sceneFit(this)));
+      progress.update(this.progressFraction());
+    }
   }
 
   private beginDeath(): void {
@@ -2172,7 +2203,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           { x: event.clientX, y: event.clientY },
         );
         const role = this.touchRoleOnCanvas(point);
-        return role === "move" || !this.controls.get(role)?.visible;
+        return role === "move" || !this.actionButtonsShown;
       },
       window,
       this.heldKeys,
@@ -2287,16 +2318,32 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private drawControls(nowMs: number, touches: readonly HeldTouch[]): void {
     const shown =
       !this.playCovered() && coarsePointer(window) && touchSettingShown("actionButtons");
-    for (const [control, sprite] of this.controls) {
-      sprite.setVisible(shown);
+    this.actionButtonsShown = shown;
+    const visuals = this.touchVisuals === undefined ? undefined : { ...this.touchVisuals };
+    for (const control of Object.keys(CONTROL_SPRITES) as TouchControl[]) {
       const since = trackPress(nowMs, buttonHeld(control, touches), this.presses.get(control));
       if (since === undefined) {
         this.presses.delete(control);
       } else {
         this.presses.set(control, since);
       }
-      const tag = controlTag(this.sheet(CONTROL_SPRITES[control]), nowMs, since);
-      show(sprite, tag);
+      const tags = this.sheet(CONTROL_SPRITES[control]);
+      const pose = controlTag(tags, nowMs, since) as "held" | "press" | "rest";
+      if (visuals !== undefined) {
+        visuals[control] = {
+          ...visuals[control],
+          expanded:
+            pose === "press" &&
+            since !== undefined &&
+            nowMs - since < (tags.get("press")?.[0]?.duration ?? 0),
+          pose,
+          shown,
+        };
+      }
+    }
+    if (visuals !== undefined) {
+      this.touchVisuals = visuals;
+      this.renderTouchControls();
     }
   }
 }
