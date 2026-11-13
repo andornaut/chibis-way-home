@@ -1,12 +1,11 @@
 /**
- * Build the two native 16px Liberation Sans BMFonts from bundled SIL OFL fonts.
+ * Build the private native 16px Liberation Sans body BMFont for generator preview labels.
  *
- * font-body uses Liberation Sans Regular for body text, dialogue and quips. font-title uses
- * Liberation Sans Bold for headings, names and action labels. Both draw at native 1x. The line
+ * font-body uses Liberation Sans Regular at native 1x. Runtime UI uses the served TTF faces. The line
  * height is the ascent plus the descent plus one pixel of leading, and the base is the ascent. The
  * exported FNT metrics own layout. Printable ASCII and the middle dot cover current player text.
  * Native glyph bearings and rounded pair kerning are retained. White RGBA glyphs use grayscale
- * alpha for tinting; font textures require linear sampling independently of art.
+ * alpha for compositing preview labels independently of game art.
  *
  * Glyphs rasterise with art-kit's Skia bitmap font renderer, so their coverage, advances and
  * kerning follow Skia rather than FreeType. The renderer fails the build when the font file has no
@@ -14,9 +13,8 @@
  * from the atlas's top-left with 1px spacing and a power-of-two atlas height.
  *
  * Usage, from the repository root:
- *   node art/tools/fonts.ts build             write public/art/fonts/<key>.png and XML .fnt,
- *                                             retaining the two keys, list them in the manifest,
- *                                             and copy art/fonts/liberation/ to fonts/liberation/
+ *   node art/tools/fonts.ts build             write art/generated/fonts/font-body.png and .fnt,
+ *                                             copy the TTFs and licence to public/art/fonts/liberation/
  *   node art/tools/fonts.ts preview OUT.png   every face with sample lines, 3x
  */
 
@@ -35,10 +33,11 @@ const FONTS: Readonly<Record<string, readonly [face: string, path: string, size:
   "font-body": ["Liberation Sans Regular", "art/fonts/liberation/LiberationSans-Regular.ttf", 16],
   "font-title": ["Liberation Sans Bold", "art/fonts/liberation/LiberationSans-Bold.ttf", 16],
 };
-const OUT = "public/art/fonts";
+const OUT = "art/generated/fonts";
+export const PREVIEW_FONT = `${OUT}/font-body`;
 // The Liberation TTFs and licence, served unchanged as the runtime UI fonts.
 const LIBERATION = "art/fonts/liberation";
-const SERVED_LIBERATION = `${OUT}/liberation`;
+const SERVED_LIBERATION = "public/art/fonts/liberation";
 const CHARS: readonly string[] = [
   ...Array.from({ length: 127 - 32 }, (_, i) => String.fromCharCode(32 + i)),
   "·",
@@ -132,16 +131,19 @@ function copyLiberation(): void {
   }
 }
 
+/** Deterministic prerequisite for standalone preview commands as well as the full art build. */
+export function buildPreviewFont(): void {
+  const [face, path, size] = FONTS["font-body"]!;
+  buildFont("font-body", face, size, path);
+}
+
 export function build(): void {
-  for (const [key, [face, path, size]] of Object.entries(FONTS)) {
-    buildFont(key, face, size, path);
-  }
+  buildPreviewFont();
   copyLiberation();
-  pixel.updateManifest(
-    "fonts",
-    Object.keys(FONTS).map((key) => ({ key, png: `fonts/${key}.png`, fnt: `fonts/${key}.fnt` })),
-  );
-  console.log("built", Object.keys(FONTS).join(", "));
+  const manifest = pixel.readManifest();
+  manifest.fonts = [];
+  pixel.writeJson({}, pixel.MANIFEST, manifest);
+  console.log("built private font-body and served Liberation fonts");
 }
 
 function drawLine(

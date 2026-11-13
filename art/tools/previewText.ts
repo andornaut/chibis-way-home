@@ -1,5 +1,5 @@
 /**
- * Preview labels in the committed body bitmap font, public/art/fonts/font-body.png and .fnt. For
+ * Preview labels in the private body bitmap font, art/generated/fonts/font-body.png and .fnt. For
  * contact sheets and previews only; shipped art carries no text.
  */
 
@@ -8,10 +8,11 @@ import { readFileSync } from "node:fs";
 import { composite, crop } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { buildPreviewFont, PREVIEW_FONT } from "./fonts.ts";
 import { readImage } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 
-const FONT = "public/art/fonts/font-body";
+const FONT = PREVIEW_FONT;
 /** Pixels between preview text lines. */
 const LINE_SPACING = 4;
 
@@ -43,6 +44,7 @@ export function bitmapFont(): BitmapFont {
   if (font) {
     return font;
   }
+  buildPreviewFont();
   const xml = readFileSync(`${FONT}.fnt`, "utf8");
   const common = attributes(/<common\b[^>]*>/.exec(xml)?.[0] ?? "");
   const glyphs = new Map<number, Glyph>();
