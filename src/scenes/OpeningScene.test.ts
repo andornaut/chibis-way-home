@@ -334,9 +334,16 @@ it("completes the HTML opening once through fresh Continue without acknowledging
   const button = root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
   for (const [index, beat] of OPENING.entries()) {
     expect(root.querySelector(".opening-caption")!.textContent).toBe(TEXT.lines[beat.text]);
-    button.dispatchEvent(
-      new KeyboardEvent("keydown", { bubbles: true, key: "Enter", repeat: true }),
-    );
+    button.focus();
+    const held = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: "Enter",
+      repeat: true,
+    });
+    button.dispatchEvent(held);
+    expect(held.defaultPrevented).toBe(true);
+    expect(root.querySelector(".opening-caption")!.textContent).toBe(TEXT.lines[beat.text]);
     expect(saveOpeningSeen).not.toHaveBeenCalled();
     button.click();
     expect(saveOpeningSeen).toHaveBeenCalledTimes(index === OPENING.length - 1 ? 1 : 0);

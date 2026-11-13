@@ -110,16 +110,17 @@ export class OpeningScene extends Scene {
         return;
       }
       event.stopPropagation();
-      const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
-      if (action === "next" || action === "previous") {
+      const action = focusKeyAction(event.key, event.shiftKey, false);
+      if (action === "next" || action === "previous" || action === "press") {
         event.preventDefault();
+      }
+      if (action === "next" || action === "previous") {
         this.focus = stepFocus(ACTIONS, this.focusedAction(), action);
         if (this.htmlReady && this.focus !== undefined) {
           this.view?.buttons[this.focus].focus();
         }
         this.renderControls();
-      } else if (action === "press") {
-        event.preventDefault();
+      } else if (action === "press" && !event.repeat) {
         this.activate(this.focusedAction() ?? "continue");
       }
     };
