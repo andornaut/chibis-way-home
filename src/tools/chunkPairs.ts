@@ -52,6 +52,8 @@ import {
   preparePairProposal,
 } from "../testing/selectedCertification.ts";
 
+const DEFAULT_SAMPLE_MS = 20_000;
+
 const USAGE = `Usage:
   npm run pairs -- certify [--zone ZONE]... [--all]
       prove every candidate of each zone (all zones by default) and write its certified list;
@@ -62,7 +64,7 @@ const USAGE = `Usage:
       check every list's input hashes and structure against the tree, fully prove entries that
       differ from REF's lists (needs git), then prove a sample ordered by S (the lists' input
       hashes by default), starting only proofs whose recorded work fits within N ms of the start
-      (default 20000)
+      (default ${DEFAULT_SAMPLE_MS})
   npm run pairs -- propose --zone ZONE --id ID... --profile ordinary --out SCRATCH_PATH
       prove only new selected pairs with ordinary tuning and write a scratch proposal;
       existing entries and arenas stay unchanged; no arena or assembly-feasibility proofs
@@ -498,7 +500,7 @@ async function main(args: readonly string[]): Promise<number> {
     case "certify":
       return certify(zones, values.all ?? false);
     case "verify": {
-      const sampleMs = Number(values["sample-ms"] ?? 20_000);
+      const sampleMs = Number(values["sample-ms"] ?? DEFAULT_SAMPLE_MS);
       if (!Number.isFinite(sampleMs) || sampleMs < 0) {
         console.error(`Invalid --sample-ms ${values["sample-ms"]}\n${USAGE}`);
         return 2;
