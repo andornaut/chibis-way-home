@@ -14,13 +14,12 @@ it.each([false, true])(
       "start",
       ...(saved ? ["restart"] : []),
       "achievements",
-      "settings",
       "exit",
     ]);
     expect(view.buttons.get("start")!.textContent).toBe(
       saved ? TEXT.start.continue : TEXT.start.start,
     );
-    for (const control of ["achievements", "settings", "exit"] as const) {
+    for (const control of ["achievements", "exit"] as const) {
       const button = view.buttons.get(control)!;
       expect(button.getAttribute("aria-label")).toBe(TEXT.start[control]);
       expect(Number(button.style.getPropertyValue("--start-x"))).toBe(layout[control]!.hit.x);
@@ -38,6 +37,6 @@ it("omits Exit and Restart when the installed window has no exit and there is no
     TEXT.start,
     startScreenLayout({ height: 239, width: 558 }, false, false),
   );
-  expect([...view.buttons.keys()]).toEqual(["start", "achievements", "settings"]);
+  expect([...view.buttons.keys()]).toEqual(["start", "achievements"]);
   expect(view.buttons.get("start")!.classList.contains("ui-text-button-primary")).toBe(true);
 });

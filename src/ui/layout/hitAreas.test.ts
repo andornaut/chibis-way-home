@@ -31,7 +31,7 @@ describe("hitAround", () => {
     ["Start", start.button, { height: 72, width: 216 }],
     [
       "a nav icon button",
-      startScreenLayout(SCREEN, true, false).settings.art,
+      startScreenLayout(SCREEN, true, false).achievements.art,
       { height: 54, width: 54 },
     ],
   ])("grows %s", (_, art, size) => {

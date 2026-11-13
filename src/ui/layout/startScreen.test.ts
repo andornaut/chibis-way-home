@@ -36,7 +36,6 @@ describe.each([
   ];
   const buttons: [string, IconButtonLayout][] = [
     ["achievements", layout.achievements],
-    ["settings", layout.settings],
     ...(layout.exit === undefined ? [] : [["exit", layout.exit] as [string, IconButtonLayout]]),
   ];
   const areas: PressArea<string>[] = [
@@ -53,29 +52,15 @@ describe.each([
     expect(corners.map((point) => pressedArea(areas, point))).toEqual([key, key]);
   });
 
-  it("ends the nav with Exit, or with Settings in Exit's place where there is no Exit", () => {
-    const last = layout.exit ?? layout.settings;
-    const withExit = startScreenLayout(SCREEN, true, saved).exit;
-    expect({
-      lastIsExit: last === layout.exit,
-      settingsBeforeExit:
-        layout.exit === undefined || right(layout.settings.art) <= layout.exit.art.x,
-      x: last.at.x,
-    }).toEqual({ lastIsExit: exitShown, settingsBeforeExit: true, x: withExit?.at.x });
-  });
-
-  it("shows Achievements immediately left of Settings, one nav slot apart", () => {
-    const slot = startScreenLayout(SCREEN, true, saved);
-    expect(layout.settings.art.x - right(layout.achievements.art)).toBe(SMALL_BUTTON_GAP);
-    expect({
-      gap: layout.settings.art.x - right(layout.achievements.art),
-      sameRow: layout.achievements.art.y === layout.settings.art.y,
-      slot: layout.settings.at.x - layout.achievements.at.x,
-    }).toEqual({
-      gap: slot.exit!.art.x - right(slot.settings.art),
-      sameRow: true,
-      slot: slot.exit!.at.x - slot.settings.at.x,
-    });
+  it("ends the nav with Exit, or Achievements when Exit is absent", () => {
+    const last = layout.exit ?? layout.achievements;
+    const withExit = startScreenLayout(SCREEN, true, saved).exit!;
+    expect(last.at.x).toBe(withExit.at.x);
+    if (layout.exit !== undefined) {
+      expect(layout.exit.art.x - right(layout.achievements.art)).toBe(SMALL_BUTTON_GAP);
+      expect(layout.achievements.art.y).toBe(layout.exit.art.y);
+    }
+    expect("settings" in layout).toBe(false);
   });
 
   it.each(texts)(

@@ -9,13 +9,11 @@ import { coverZone, exitShown, PHONE_EVENTS, startScreenShown } from "../pwa/ind
 import {
   createStart,
   focusKeyAction,
-  setTouchSettingShown,
   startBackAction,
   type StartScreenLayout,
   startScreenLayout,
   type StartView,
   stepFocus,
-  type TouchSetting,
 } from "../ui/index.ts";
 import type {
   AchievementsData,
@@ -30,27 +28,25 @@ import { fitPlayCamera } from "./playCamera.ts";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts";
 import { savedProgress } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
-import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene.ts";
 
 const ACHIEVEMENTS = "achievements";
 const BACKGROUND = "start-background";
 const LOGO = "logo";
 const RESTART = "restart";
-const SETTINGS = "settings";
 
-type Control = "achievements" | "exit" | "restart" | "settings" | "start";
+type Control = "achievements" | "exit" | "restart" | "start";
 // The card over the start screen, if one shows.
-type Card = "achievements" | "restart" | "settings";
+type Card = "achievements" | "restart";
 
 // The screen the game opens on without saved progress, and that Back to title goes to: the Start
 // button, which opens the map (Continue, with him where he stands, once progress is saved),
-// under a nav bar with Achievements, Settings and Exit at its right end. Achievements opens the
-// Achievements card over this screen, Settings the settings card, and Restart the restart card;
+// under a nav bar with Achievements and Exit at its right end. Achievements opens the
+// Achievements card over this screen, and Restart the restart card;
 // the card that shows takes the keys and back until it closes. Exit, and back with no card open,
-// leave the browser game. Installed app windows keep Settings without Exit when closing is
+// leave the browser game. Installed app windows omit Exit when closing is
 // unsupported (exitShown), and back there is the browser's own. A control acts when a press lands
 // on it and lifts on it.
-export class StartScene extends Scene implements AchievementsOpener, RestartOpener, SettingsOpener {
+export class StartScene extends Scene implements AchievementsOpener, RestartOpener {
   private layout!: StartScreenLayout;
   private focus: Control | undefined;
   private card: Card | undefined;
@@ -101,17 +97,6 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
       captureTab(this, false);
     });
     startScreenShown(true);
-  }
-
-  // The start screen has no zone to show the setting in: saving it is enough.
-  setTouchSetting(setting: TouchSetting, shown: boolean): void {
-    setTouchSettingShown(setting, shown);
-  }
-
-  settingsClosed(): void {
-    this.card = undefined;
-    coverZone("startCard", false);
-    this.drawFocus();
   }
 
   restartClosed(): void {
@@ -198,7 +183,6 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
       achievements: "icon-achievements",
       exit: "ui-quit",
       logo: LOGO,
-      settings: "icon-settings-nav",
     };
     const urls = Promise.all(
       [...view.images].map(async ([name, image]) => {
@@ -270,7 +254,6 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
       "start",
       ...(this.layout.restart === undefined ? [] : ["restart" as const]),
       "achievements",
-      "settings",
       ...(this.layout.exit === undefined ? [] : ["exit" as const]),
     ];
   }
@@ -297,11 +280,6 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
       coverZone("startCard", true);
       this.drawFocus();
       this.scene.launch(ACHIEVEMENTS, { opener: this.scene.key } satisfies AchievementsData);
-    } else if (control === "settings") {
-      this.card = "settings";
-      coverZone("startCard", true);
-      this.drawFocus();
-      this.scene.launch(SETTINGS, { opener: this.scene.key } satisfies SettingsData);
     } else if (control === "restart") {
       this.card = "restart";
       coverZone("startCard", true);
@@ -313,11 +291,9 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
   }
 
   // The card that shows, which takes back.
-  private cardScene(): AchievementsScene | RestartScene | SettingsScene {
-    const key = { achievements: ACHIEVEMENTS, restart: RESTART, settings: SETTINGS }[
-      this.card ?? "settings"
-    ];
-    return this.scene.get(key) as AchievementsScene | RestartScene | SettingsScene;
+  private cardScene(): AchievementsScene | RestartScene {
+    const key = this.card === "achievements" ? ACHIEVEMENTS : RESTART;
+    return this.scene.get(key) as AchievementsScene | RestartScene;
   }
 
   private colour(name: string): number {

@@ -7,14 +7,13 @@ import type { Rect } from "../../data/types/index.ts";
 import type { StartScreenLayout } from "../layout/startScreen.ts";
 import { textButton } from "./card.ts";
 
-export type StartControl = "achievements" | "exit" | "restart" | "settings" | "start";
+export type StartControl = "achievements" | "exit" | "restart" | "start";
 
 export interface StartWords {
   readonly achievements: string;
   readonly continue: string;
   readonly exit: string;
   readonly restart: string;
-  readonly settings: string;
   readonly start: string;
 }
 
@@ -67,7 +66,7 @@ export function createStart(
   view.append(nav, image("logo", layout.logo));
   const buttons = new Map<StartControl, HTMLButtonElement>();
   // DOM order is the established keyboard order, independent of the visual row order.
-  for (const control of ["start", "restart", "achievements", "settings", "exit"] as const) {
+  for (const control of ["start", "restart", "achievements", "exit"] as const) {
     const at = layout[control];
     if (at === undefined) {
       continue;
