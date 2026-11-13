@@ -112,6 +112,19 @@
     },
     {
       "encounters": 0,
+      "grade": 5,
+      "id": "industrial-industrial-vent-stair--industrial-vent-stair",
+      "kind": "pair",
+      "layout": "406ca4e5ddd575b2",
+      "modules": ["industrial-vent-stair", "industrial-vent-stair"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "e51ed8ccdbb175d8",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "2ddde118a804d54f:26842",
+      "work": 26842
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "industrial-tunnel-broad-mesa",
       "kind": "single",
