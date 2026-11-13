@@ -6,6 +6,12 @@
    sets the dimmed skin's on what the modal covers (layer.ts), so it dims through the same palette
    ramp as the canvas's world. */
 
+/* Readiness hides only its own pending view without changing scene visibility or modal inert. */
+.ui-layer [data-ui-unready] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 @font-face {
   font-family: "Liberation Sans";
   font-style: normal;

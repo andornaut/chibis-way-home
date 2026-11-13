@@ -153,21 +153,21 @@ export function mountSceneView(scene: Scene, view: HTMLElement): () => void {
 
 // Call before mountSceneView. The canvas fallback keeps drawing until revealed resolves true;
 // the caller then removes that fallback and enables its DOM input once. A cancelled view stays
-// hidden and inert. Scene shutdown cancels a pending reveal before it can enable stale input.
+// hidden by its readiness attribute. Inert and hidden remain owned by the modal layer and
+// scene controller. Shutdown cancels a pending reveal before it can enable stale input.
 export function revealSceneView(
   scene: Scene,
   view: HTMLElement,
   urls: readonly string[] | Promise<readonly string[]>,
 ): Reveal {
-  const inert = view.inert;
-  view.inert = true;
+  const pending = "data-ui-unready";
+  view.setAttribute(pending, "");
   let cancelled = false;
   const ready = Promise.all([loadUiFonts(view.ownerDocument.fonts), urls]).then(([, urls]) => urls);
   const reveal = revealWhenDecoded(sceneImages(scene, view.ownerDocument), ready, view);
   const cancel = () => {
     cancelled = true;
-    view.hidden = true;
-    view.inert = true;
+    view.setAttribute(pending, "");
     reveal.cancel();
     scene.events.off("shutdown", cancel);
   };
@@ -179,7 +179,7 @@ export function revealSceneView(
         cancel();
         return false;
       }
-      view.inert = inert;
+      view.removeAttribute(pending);
       return true;
     }),
   };

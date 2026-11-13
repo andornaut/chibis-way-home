@@ -6,6 +6,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 vi.mock("phaser", () => ({ Core: {}, Scale: {} }));
 
+import { createUiLayer } from "../ui/index.ts";
 import { revealSceneView } from "./domUi.ts";
 
 function pending() {
@@ -45,7 +46,7 @@ it("keeps a scene noninteractive until its fonts and images settle before handin
   const reveal = revealSceneView(scene, view, ["blob:logo"]);
   const handoff = vi.fn();
   void reveal.revealed.then(handoff);
-  expect([view.inert, view.hasAttribute("data-ui-pending")]).toEqual([true, true]);
+  expect([view.inert, view.hasAttribute("data-ui-unready")]).toEqual([false, true]);
   font.resolve();
   await new Promise((resolve) => {
     setTimeout(resolve, 0);
@@ -54,7 +55,7 @@ it("keeps a scene noninteractive until its fonts and images settle before handin
   expect(handoff).not.toHaveBeenCalled();
   image.resolve();
   await expect(reveal.revealed).resolves.toBe(true);
-  expect([view.inert, view.hasAttribute("data-ui-pending"), view.hidden]).toEqual([
+  expect([view.inert, view.hasAttribute("data-ui-unready"), view.hidden]).toEqual([
     false,
     false,
     false,
@@ -66,6 +67,8 @@ it("keeps a scene noninteractive until its fonts and images settle before handin
 it("cancels on shutdown without revealing or enabling the obsolete scene after images settle", async () => {
   const { events, font, image, scene, view } = fixture();
   const reveal = revealSceneView(scene, view, Promise.resolve(["blob:portrait"]));
+  view.inert = true;
+  view.hidden = true;
   events.emit("shutdown");
   await expect(reveal.revealed).resolves.toBe(false);
   font.resolve();
@@ -76,13 +79,29 @@ it("cancels on shutdown without revealing or enabling the obsolete scene after i
   expect([view.inert, view.hidden, events.listenerCount("shutdown")]).toEqual([true, true, 0]);
 });
 
-it("preserves a scene's independent inert state when its images are ready", async () => {
+it("leaves an intervening modal's inert state and its controller's visibility unchanged", async () => {
   const { events, font, image, scene, view } = fixture();
-  view.inert = true;
-  const reveal = revealSceneView(scene, view, []);
+  const reveal = revealSceneView(scene, view, ["blob:logo"]);
+  const layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  layer.mount(0, view);
+  const cover = document.createElement("div");
+  const dialog = document.createElement("section");
+  cover.append(dialog);
+  layer.mount(1, cover);
+  const close = layer.modals.open({}, dialog);
+  view.hidden = true;
+  expect(view.inert).toBe(true);
   font.resolve();
   image.resolve();
   await expect(reveal.revealed).resolves.toBe(true);
-  expect(view.inert).toBe(true);
+  expect([view.inert, view.hidden, view.hasAttribute("data-ui-unready")]).toEqual([
+    true,
+    true,
+    false,
+  ]);
+  close();
+  expect([view.inert, view.hidden]).toEqual([false, true]);
   events.emit("shutdown");
+  layer.dispose();
 });
