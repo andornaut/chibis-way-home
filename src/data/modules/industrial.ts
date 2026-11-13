@@ -4,7 +4,7 @@ import { GANTRY_BEHAVIOUR } from "../obstacleBehaviours.ts";
 import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
 
 // Industrial outskirts halves on the lower route (row 80), below the underground roof the zone
-// frame adds at row 35: the gantry crane ride and the observation half before it.
+// frame adds at row 35. The crane halves retain their dedicated observation and ride sequence.
 const ROWS = 120;
 const ROW = 80;
 
@@ -26,6 +26,52 @@ const RAIL = -8;
 const PIT = { col: 4, cols: 22 } as const;
 
 const MODULE_LIST: readonly ChunkModule[] = [
+  // Two successive full-jump steps, then supported descents back to the lower route.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "industrial-double-step",
+    objects: [],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 9, row: 75 } },
+        { at: { col: 15, row: 70 } },
+        { at: { col: 21, row: 75 } },
+      ],
+    },
+    sides: ["left", "right"],
+    solids: [
+      floor(0, 6, ROW),
+      floor(6, 6, 75),
+      floor(12, 6, 70),
+      floor(18, 6, 75),
+      floor(24, 6, ROW),
+    ],
+    zones: ["industrial"],
+  },
+  // Staggered raised landings over a red-floored gap wider than an ordinary running jump.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "industrial-staggered-bridge",
+    objects: [
+      { character: "platform-ledge", col: 10, cols: 4, role: "ledge", row: 76 },
+      { character: "platform-ledge", col: 18, cols: 4, role: "ledge", row: 73 },
+      ...red(6, 18, 90),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [{ at: { col: 12, row: 76 } }, { at: { col: 20, row: 73 } }],
+    },
+    sides: ["left", "right"],
+    solids: [floor(0, 6, ROW), floor(24, 6, ROW)],
+    zones: ["industrial"],
+  },
   // A short-press jump over a red strip beneath a red ceiling, with clear banks at both edges.
   {
     difficulty: 4,
@@ -37,6 +83,33 @@ const MODULE_LIST: readonly ChunkModule[] = [
     route: { profile: "recovery", targets: [{ at: { col: 22, row: ROW } }] },
     sides: ["left", "right"],
     solids: [floor(0, 16, ROW), floor(19, 11, ROW)],
+    zones: ["industrial"],
+  },
+  // Two climbs reach a vent deck with supported observation and recovery on either side.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "industrial-vent-stair",
+    objects: [{ character: "warned-vent", col: 15, row: 66 }],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 9, row: 76 } },
+        { at: { col: 12, row: 72 }, xRange: { max: 12, min: 12 } },
+        { at: { col: 20, row: 72 }, xRange: { max: 20, min: 20 } },
+        { at: { col: 23, row: 76 } },
+      ],
+    },
+    sides: ["left", "right"],
+    solids: [
+      floor(0, 7, ROW),
+      floor(7, 5, 76),
+      floor(12, 10, 72),
+      floor(22, 4, 76),
+      floor(26, 4, ROW),
+    ],
     zones: ["industrial"],
   },
   // Grade 2: a flat run with a 2-tile red strip to jump, from which the crane ahead is in view.
