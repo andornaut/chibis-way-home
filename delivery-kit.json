@@ -25,7 +25,7 @@
   "reports": {
     "project": "Chibi",
     "scheduledTicks": true,
-    "recipient": "dev-manager",
-    "workerParents": ["dev-manager"]
+    "recipient": "game-coordinator",
+    "workerParents": ["game-coordinator"]
   }
 }
