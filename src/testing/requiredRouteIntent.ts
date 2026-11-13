@@ -236,14 +236,14 @@ export function routeHazardIntent(
     area.solids.find(
       (solid) =>
         Math.abs(solid.y - bird.y - tuning.height) <= EDGE &&
-        solid.x <= bird.x &&
+        solid.x <= bird.x + EDGE &&
         solid.x + solid.width >= corridor.x + corridor.width,
     );
   if (
     !floor ||
     !area.solids.includes(floor) ||
     Math.abs(floor.y - bird.y - tuning.height) > EDGE ||
-    floor.x > bird.x ||
+    floor.x > bird.x + EDGE ||
     floor.x + floor.width < corridor.x + corridor.width ||
     clearX + tuning.walkSpeed * STEP_SECONDS > required.window.max + EDGE ||
     area.solids.some((solid) => rectsOverlap(corridor, solid))

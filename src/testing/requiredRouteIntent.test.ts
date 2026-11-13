@@ -194,6 +194,36 @@ it("requires strict current-node margin and includes full body clearance plus th
   expect(currentHazardNode(layout, unknown, 0)).toBeUndefined();
 });
 
+it.each([false, true])(
+  "keeps existing EDGE at the left floor boundary with retained=%s",
+  (retained) => {
+    const fixture = crossingFixture();
+    const original = fixture.layout.areas.course!;
+    const floor = {
+      ...original.solids[0]!,
+      width: original.solids[0]!.width - 12 * TILE,
+      x: 12 * TILE,
+    };
+    const layout = { ...fixture.layout, areas: { course: { ...original, solids: [floor] } } };
+    const initial = { ...fixture.zone, bird: { ...fixture.zone.bird, x: floor.x } };
+    const prepared = routeHazardIntent(ORDINARY, layout, initial, fixture.context, fixture.goal);
+    if (!("crossing" in prepared)) {
+      throw new Error("Expected a crossing from the exact floor boundary");
+    }
+    const context = { ...fixture.context, crossing: retained ? prepared.crossing : undefined };
+    for (const x of [floor.x - EDGE / 2, 143.99999999999997]) {
+      const zone = { ...initial, bird: { ...initial.bird, x } };
+      expect(routeHazardIntent(ORDINARY, layout, zone, context, fixture.goal)).toMatchObject({
+        kind: "cross",
+      });
+    }
+    const outside = { ...initial, bird: { ...initial.bird, x: floor.x - 2 * EDGE } };
+    expect(routeHazardIntent(ORDINARY, layout, outside, context, fixture.goal)).toMatchObject({
+      unavailable: { reason: "hazard-margin-unavailable" },
+    });
+  },
+);
+
 it.each([0, 48])("bounds native grounded acceleration and full crossing from vx=%s", (velocity) => {
   const fixture = crossingFixture();
   let zone = { ...fixture.zone, bird: { ...fixture.zone.bird, vx: velocity } };
