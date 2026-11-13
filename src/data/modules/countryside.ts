@@ -14,6 +14,105 @@ const floor = (col: number, cols: number, row: number): TerrainRect => ({
   rows: ROWS - row,
 });
 
+const red = (col: number, cols: number, row: number): readonly Instance[] => [
+  { character: "red-edge-top", col, cols, role: "edge-top", row: row - 1 },
+  { character: "red-edge-support", col, cols, role: "support", row, rows: ROWS - row },
+];
+
+const STATIC_MODULES: readonly ChunkModule[] = [
+  // A short step leads to a higher terrace, followed by supported descents.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "countryside-terrace-spine",
+    objects: [],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 9, row: 77 } },
+        { at: { col: 16, row: 72 } },
+        { at: { col: 22, row: 77 } },
+      ],
+    },
+    sides: ["left", "right"],
+    solids: [
+      floor(0, 6, 80),
+      floor(6, 6, 77),
+      floor(12, 8, 72),
+      floor(20, 4, 77),
+      floor(24, 6, 80),
+    ],
+    zones: ["countryside"],
+  },
+  // The lower terraces are recovery landings; the return climbs in two four-row steps.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "countryside-recovery-trench",
+    objects: [],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 9, row: 85 } },
+        { at: { col: 16, row: 88 } },
+        { at: { col: 22, row: 84 } },
+      ],
+    },
+    sides: ["left", "right"],
+    solids: [
+      floor(0, 6, 80),
+      floor(6, 7, 85),
+      floor(13, 7, 88),
+      floor(20, 5, 84),
+      floor(25, 5, 80),
+    ],
+    zones: ["countryside"],
+  },
+  // The banks are beyond one running jump; the raised island splits the red-floored gully.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "countryside-red-gully",
+    objects: [...red(5, 7, 90), ...red(18, 7, 90)],
+    route: { profile: "recovery", targets: [{ at: { col: 15, row: 78 } }] },
+    sides: ["left", "right"],
+    solids: [floor(0, 5, 80), floor(12, 6, 78), floor(25, 5, 80)],
+    zones: ["countryside"],
+  },
+  // Two short climbs approach a narrow elevated gap, with supported landings on either bank.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "countryside-raised-red-channel",
+    objects: red(16, 3, 84),
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 9, row: 77 } },
+        { at: { col: 14, row: 74 } },
+        { at: { col: 21, row: 74 } },
+      ],
+    },
+    sides: ["left", "right"],
+    solids: [
+      floor(0, 6, 80),
+      floor(6, 6, 77),
+      floor(12, 4, 74),
+      floor(19, 5, 74),
+      floor(24, 6, 80),
+    ],
+    zones: ["countryside"],
+  },
+];
+
 // The windmill: an approach at the joint (row 80), a wheel of sails over a trough 5 rows down,
 // and an exit bank 10 rows up, beyond a jump from the approach. The hub sits half a row below the
 // exit bank's top, so the sail stopped on the rising side stands level and flush with the bank,
@@ -92,5 +191,5 @@ const lookout: ChunkModule = {
 };
 
 export const COUNTRYSIDE_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(
-  [lookout, windmill].map((module) => [module.id, module]),
+  [lookout, windmill, ...STATIC_MODULES].map((module) => [module.id, module]),
 );
