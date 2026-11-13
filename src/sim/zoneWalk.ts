@@ -1102,6 +1102,7 @@ interface WalkRequirements {
   readonly intervals: {
     readonly max: number;
     readonly min: number;
+    readonly source: WalkRouteTarget;
     readonly target: Target;
     readonly token: bigint;
   }[];
@@ -1142,6 +1143,35 @@ function requiredComplete(required: WalkRequirements): boolean {
 
 export interface RequiredRouteWalk extends ZoneWalk {
   readonly complete: boolean;
+}
+
+// An actual living, grounded observation of the named support. Narrow intervals name the
+// actor's body-left position and also require its whole body on that support's current span.
+export function requiredRouteTargetReached(
+  tuning: BirdTuning,
+  query: { readonly surfaces: readonly Surface[]; readonly tile: number },
+  layout: ZoneLayout,
+  target: WalkRouteTarget,
+  zone: ZoneState,
+): boolean {
+  if (zone.death !== undefined || zone.turnedBack || !zone.bird.grounded) {
+    return false;
+  }
+  const expected = surfaceAt(query.tile, query.surfaces, target.area, target.at);
+  const under = surfaceUnder(tuning, layout, query.surfaces, zone);
+  if (expected === undefined || under?.key !== expected.key) {
+    return false;
+  }
+  if (target.xRange === undefined) {
+    return true;
+  }
+  const support = placed(under, zone, layout);
+  return (
+    zone.bird.x >= target.xRange.min * query.tile - EDGE &&
+    zone.bird.x <= target.xRange.max * query.tile + EDGE &&
+    zone.bird.x >= support.left - EDGE &&
+    zone.bird.x + tuning.width <= support.right + EDGE
+  );
 }
 
 export function walkRequiredRoutes(
@@ -1187,6 +1217,7 @@ export function walkRequiredRoutes(
     required.intervals.push({
       max,
       min,
+      source: query.targets[index]!,
       target: {
         fixed: true,
         key: `required:${index}`,
@@ -1203,22 +1234,16 @@ export function walkRequiredRoutes(
   }
   if (required.intervals.length > 0) {
     WALK_OBSERVERS.set(observedLayout, (_before, zone) => {
-      if (zone.death !== undefined || zone.turnedBack || !zone.bird.grounded) {
-        return;
-      }
-      const under = surfaceUnder(tuning, observedLayout, surfaces, zone);
-      if (!under) {
-        return;
-      }
-      const support = placed(under, zone, observedLayout);
       for (const interval of required.intervals) {
         if (
           (required.witnesses.profile(zone) & interval.token) === 0n &&
-          under.key === interval.target.surface.key &&
-          zone.bird.x >= interval.min - EDGE &&
-          zone.bird.x <= interval.max + EDGE &&
-          zone.bird.x >= support.left - EDGE &&
-          zone.bird.x + tuning.width <= support.right + EDGE
+          requiredRouteTargetReached(
+            tuning,
+            { surfaces, tile: query.tile },
+            observedLayout,
+            interval.source,
+            zone,
+          )
         ) {
           required.witnesses.mark(zone, interval.token);
         }
