@@ -99,6 +99,19 @@
     },
     {
       "encounters": 0,
+      "grade": 3,
+      "id": "industrial-industrial-staggered-bridge--industrial-staggered-bridge",
+      "kind": "pair",
+      "layout": "af0c82540cf777d7",
+      "modules": ["industrial-staggered-bridge", "industrial-staggered-bridge"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "b7edddf71b084977",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "8273772bc197ad66:1128",
+      "work": 1128
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "industrial-tunnel-broad-mesa",
       "kind": "single",
