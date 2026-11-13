@@ -1,4 +1,5 @@
 import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { focusTargets } from "@andornaut/game-kit/web/ui/dom/modalLayer";
 import { Scene } from "phaser";
 
@@ -167,7 +168,10 @@ export class AchievementsScene extends Scene {
       card,
     );
     if (focused instanceof HTMLButtonElement && focused.disabled) {
-      focusTargets(card.dialog)[0]?.focus();
+      const target = focusTargets(card.dialog)[0];
+      if (target !== undefined) {
+        focusTarget(target);
+      }
     }
   }
 }

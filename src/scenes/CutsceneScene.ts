@@ -1,3 +1,4 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
 import { ZONE_MAP } from "../data/map.ts";
@@ -136,7 +137,7 @@ export class CutsceneScene extends Scene {
           target instanceof Element && target.closest("[data-continue]") !== null
             ? "continue"
             : null,
-        land: () => view.continue.focus(),
+        land: () => focusTarget(view.continue),
         show: (control) => view.continue.toggleAttribute("data-pressed", control !== undefined),
         tap: () => this.continue(),
       },

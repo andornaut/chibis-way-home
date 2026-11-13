@@ -1,3 +1,4 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
 import { DIALOGUES, SPEAKERS } from "../data/dialogues.ts";
@@ -263,7 +264,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
             ? ((target.closest<HTMLElement>("[data-control]")?.dataset.control as
                 DialogueControl | undefined) ?? "panel")
             : null,
-        land: (control) => (control === "panel" ? view.dialog : view.buttons[control]).focus(),
+        land: (control) => focusTarget(control === "panel" ? view.dialog : view.buttons[control]),
         show: (control) =>
           CONTROLS.forEach((name) =>
             view.buttons[name].toggleAttribute("data-pressed", name === control),

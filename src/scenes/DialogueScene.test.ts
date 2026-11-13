@@ -131,6 +131,20 @@ it("steps the focus through Continue then Skip, wrapping, and presses the focuse
   expect(opener.dialogueClosed).toHaveBeenCalledOnce();
 });
 
+it("focuses a touched dialogue control without a ring and keeps keyboard focus visible", () => {
+  const { button, press } = conversation();
+  const next = button("continue");
+  const skip = button("skip");
+  const touchFocus = vi.spyOn(next, "focus");
+  const keyboardFocus = vi.spyOn(skip, "focus");
+  press(next);
+  expect(document.activeElement).toBe(next);
+  expect(touchFocus).toHaveBeenCalledWith({ focusVisible: false, preventScroll: true });
+  pressKey([], "Tab");
+  expect(document.activeElement).toBe(skip);
+  expect(keyboardFocus).toHaveBeenCalledWith();
+});
+
 it("passes P and Escape on, and takes no key or tap the modal gate refuses", () => {
   const { line, press, root, scene } = conversation();
   for (const key of ["p", "P", "Escape"]) {

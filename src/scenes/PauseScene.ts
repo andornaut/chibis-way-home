@@ -1,5 +1,6 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { readUnit } from "@andornaut/game-kit/web/ui/dom/viewUnits";
 import { Core, Scene } from "phaser";
 
@@ -311,7 +312,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     }
     this.state = "open";
     view.card.root.hidden = false;
-    (this.settingsFocus ?? view.card.dialog).focus();
+    focusTarget(this.settingsFocus ?? view.card.dialog);
     this.settingsFocus = undefined;
   }
 

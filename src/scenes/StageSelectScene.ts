@@ -1,4 +1,5 @@
 import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
 import { ZONE_MAP } from "../data/map.ts";
@@ -224,7 +225,7 @@ export class StageSelectScene extends Scene {
               ? view.pager?.next
               : view.stages.get(this.focus);
     if (focused !== undefined && document.activeElement !== focused) {
-      focused.focus();
+      focusTarget(focused);
     }
   }
 

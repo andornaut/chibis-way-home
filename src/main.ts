@@ -20,6 +20,7 @@ import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
 import { capFrameRate } from "@andornaut/game-kit/clock/phaser/capFrameRate";
 import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
+import { trackInputModality } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
 import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
 import { Game, Scale, WEBGL } from "phaser";
@@ -158,6 +159,8 @@ function startGame(): void {
   capFrameRate(MENU_FPS, () => game.scene.isActive("zone") || game.scene.isActive("opening"), game);
   CRASH_SCREEN.stopGameOnCrash(() => game.pause());
 }
+
+trackInputModality(document);
 
 // The browser's install prompt can come before the game draws, so the settings card's offer
 // starts listening as the page loads.
