@@ -141,7 +141,7 @@ it("hands Start input and only the canvas UI to the decoded native view, then ca
     sys: { isActive: () => true },
     textures: { getFrame: () => ({ realHeight: 239, realWidth: 558 }) },
     watchPresses: vi.fn(),
-  });
+  }) as unknown as Pick<StartScene, "create">;
   scene.create();
   const root = document.querySelector<HTMLElement>(".start-scene")!;
   const button = root.querySelector<HTMLButtonElement>('[data-control="start"]')!;
@@ -197,7 +197,7 @@ it("does not hand off a cancelled reveal after Start shuts down", async () => {
     sys: { isActive: () => true },
     textures: { getFrame: () => ({ realHeight: 239, realWidth: 558 }) },
     watchPresses: vi.fn(),
-  });
+  }) as unknown as Pick<StartScene, "create">;
   scene.create();
   events.emit("shutdown");
   reveal(true);
