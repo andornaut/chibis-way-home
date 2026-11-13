@@ -86,6 +86,9 @@ export interface GameText {
   // Map destination and stage names, indexed separately by catalogue and stage-node id.
   readonly map: {
     readonly continue: string;
+    readonly destinationStates: Readonly<
+      Record<"current" | "locked" | "normal" | "unbuilt" | "visited", string>
+    >;
     // The stage picker's close X, by its accessible name.
     readonly stageClose: string;
     // A locked stage's accessible description in the stage picker.
