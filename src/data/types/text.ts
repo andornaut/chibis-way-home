@@ -164,11 +164,20 @@ export interface GameText {
     readonly actionButtons: string;
     // The close X's accessible name, on the settings card and the install steps card.
     readonly close: string;
+    readonly descriptions: Readonly<
+      Record<"actionButtons" | "moveControls" | "reducedMotion", string>
+    >;
     readonly install: string;
     readonly installButton: string;
     readonly installSteps: Readonly<Record<InstallStepsKind, InstallSteps>>;
     readonly moveControls: string;
     readonly reducedMotion: string;
+    readonly state: {
+      readonly hidden: string;
+      readonly off: string;
+      readonly on: string;
+      readonly shown: string;
+    };
     readonly title: string;
     // The note under the Move controls and Action buttons rows' names: hiding either hides only
     // its drawing.
