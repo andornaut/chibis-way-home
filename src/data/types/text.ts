@@ -149,6 +149,7 @@ export interface GameText {
     readonly settings: string;
     readonly title: string;
   };
+  readonly stageProgress: { readonly label: string };
   // The start screen: Start without saved progress, or Continue and Restart with it, and the nav
   // bar's Achievements, Settings and Exit buttons.
   readonly start: {
