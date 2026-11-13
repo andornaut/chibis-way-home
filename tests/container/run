@@ -198,9 +198,9 @@ if [[ ${build_help} != *--resource* ]]; then
     exit 2
 fi
 run_admission build-image
-# The image install keeps normal file limits; only the check run caps nofile at 256.
+# Image installation allows 4096 open files; check runs retain their 256-file cap.
 timeout --signal=TERM --kill-after=10 "${limit}" \
-    docker build --resource cpu-period=100000 --resource cpu-quota=400000 \
+    docker build --ulimit nofile=4096:4096 --resource cpu-period=100000 --resource cpu-quota=400000 \
     --resource "memory=${memory_limit}" \
     --tag "${image}" --iidfile "${scratch}/image.id" --file tests/container/Dockerfile "${build_args[@]}" - \
     < "${scratch}/context.tar" >&2
