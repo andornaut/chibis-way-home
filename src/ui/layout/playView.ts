@@ -5,8 +5,8 @@ import type { Point, Rect, Size } from "../../data/types/index.ts";
 // The canvas fills the page's play area (#game), its backing in device pixels (fit.backing), and
 // the game's SCREEN-sized view draws fit.zoom device pixels per base pixel at the canvas's top,
 // centred across, so where the play area is wider or taller than 2:1 the bars beside or below the
-// view are the canvas's own. The page keeps #game clear of the device's safe-area insets
-// (src/main.css), so the whole canvas, the view included, is always inside the safe area.
+// view are the canvas's own. The game box uses the full available viewport without reserving
+// cutout or safe-area insets (src/main.css).
 
 // The game's view in the canvas, in device pixels, whole: a camera's viewport.
 export function playView(fit: RenderFit): Rect {

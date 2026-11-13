@@ -1,14 +1,6 @@
-/* The game page's layout under public/site.css's page frame: the nav column on the left (absent
-   in the installed app), then the game filling the rest, clear of the notch in landscape. On a
-   touch screen in portrait the kit's view/frameTurnLandscapeGame.css, imported by src/main.ts,
-   turns the whole frame onto its side and sets the --inset-* properties, the safe-area insets on
-   the frame's own edges, which every rule here uses in place of env(safe-area-inset-*). */
-
-/* The left and right edges both take the larger side inset, so a one-sided notch leaves the game
-   centred. */
-:root {
-  --inset-side: max(var(--inset-left), var(--inset-right));
-}
+/* The game fills the available viewport without reserving cutout or safe-area insets. The
+   navigation column remains on the left outside the installed app. On a touch screen in
+   portrait, the kit's frame turn rotates the page while retaining the full viewport. */
 
 /* In the turned frame, under the kit's turnedFrameQuery("landscape"). Its top is the game's top
    at whichever edge the turn puts it. Phaser's centring measures the turned canvas, so here CSS
@@ -25,13 +17,13 @@
   }
 }
 
-/* The slim nav column takes the side inset on the left, turned or not. */
+/* The navigation column keeps its ordinary width without reserving cutout space. */
 html .site-nav.slim {
-  width: calc(64px + var(--inset-side));
+  width: 64px;
 }
 
 html .site-nav.slim ul {
-  padding-left: var(--inset-side);
+  padding-left: 0;
 }
 
 html,
@@ -53,24 +45,21 @@ body {
   -webkit-touch-callout: default;
 }
 
-body {
+/* Override both the site frame and the kit's turned-frame cutout padding. */
+html > body {
   flex-direction: row;
+  padding-top: 0;
 }
 
-/* Margins rather than padding: Phaser sizes the canvas to the parent's border box, padding
-   included. The canvas sits at its top, and Phaser centres it across. The nav column takes the
-   left side inset when it shows. */
+/* Phaser and the HTML UI share the full game box. The canvas sits at its top and centres
+   across, leaving only the existing aspect-ratio bars. */
 #game {
   position: relative;
   flex: 1;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  margin: 0 var(--inset-side) var(--inset-bottom) var(--inset-side);
-}
-
-.site-nav + #game {
-  margin-left: 0;
+  margin: 0;
 }
 
 #game canvas {

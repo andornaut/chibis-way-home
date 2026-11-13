@@ -20,9 +20,9 @@ export const CONTROL_FRAME_INSET = 1;
 // corners mirror.
 export const HUD_EDGE = 12;
 
-// Use, Jump and the move hint are placed from the canvas's edges, which are the page's edges
-// inside the safe-area insets (the nav column's edge on the left where it shows), then each is
-// held CONTROL_VIEW_MARGIN inside the view's edge, so none is drawn in or against a bar.
+// Use, Jump and the move hint are placed from the full game canvas's edges (the navigation
+// column's edge on the left where it shows), then each is held CONTROL_VIEW_MARGIN inside the
+// view's edge, so none is drawn in or against a bar.
 
 // Jump and the move hint's drawn bottom edge above the canvas's bottom edge.
 export const CONTROL_BOTTOM = 40;
