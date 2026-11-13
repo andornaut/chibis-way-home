@@ -68,8 +68,8 @@ const INK = "#181425";
 // it linear, and the canvas itself is never smoothed. The UI overlay (mountUiPresentation) draws
 // the UI scenes over the canvas at the full device pixel ratio, and the HTML UI layer
 // (mountDomUi, src/ui/dom/) holds the screens moved to the page over both. The game is
-// constructed at once and shows its first screen as soon as it has loaded; offline play never
-// holds it.
+// constructed after the document's one-time staged-update launch boundary and shows its first
+// screen as soon as it has loaded.
 function startGame(): void {
   const game = new Game({
     // The bars beside the game's view, in the page's ink.
@@ -166,5 +166,8 @@ installOffer();
 // Asks for landscape, on the game page only; where the browser refuses, the frame turns.
 lockGameOrientation("landscape", screen);
 
-setupPhoneApp();
-startGame();
+void setupPhoneApp().then((launch) => {
+  if (launch !== "reloading") {
+    startGame();
+  }
+});

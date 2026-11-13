@@ -10,6 +10,7 @@ export interface HomeScreen {
 export function trackHomeScreen(
   onOfferVisible: (visible: boolean) => void,
   onRegistrationReady: () => void,
+  onArrival: () => void = () => undefined,
 ): HomeScreen {
   let zoneShown = false;
   let startShown = false;
@@ -41,8 +42,12 @@ export function trackHomeScreen(
       update();
     },
     startShown(shown) {
+      const arriving = shown && !startShown;
       startShown = shown;
       update();
+      if (arriving) {
+        onArrival();
+      }
     },
   };
 }

@@ -1,4 +1,5 @@
 import type {
+  LaunchResult,
   OfflinePage,
   OfflinePlay,
   OfflinePlayOptions,
@@ -9,10 +10,12 @@ const offline = vi.hoisted(() => {
   const play = {
     flow: {
       accept: vi.fn(),
+      arriveHome: vi.fn(),
       dismissOffer: vi.fn(),
       requireNewer: vi.fn(),
       setOfferVisible: vi.fn(),
     },
+    launchReady: vi.fn<() => Promise<LaunchResult>>(async () => "continue"),
     registrationReady: vi.fn(),
   };
   return {
@@ -78,10 +81,13 @@ it("wires updates to prepared registration and the shown Start screen", async ()
   expect(offline.play.flow.setOfferVisible).not.toHaveBeenCalled();
   pwa.startScreenShown(true);
   expect(offline.play.flow.setOfferVisible).toHaveBeenLastCalledWith(true);
+  expect(offline.play.flow.arriveHome).toHaveBeenCalledOnce();
   pwa.coverZone("startCard", true);
   pwa.coverZone("startCard", false);
+  expect(offline.play.flow.arriveHome).toHaveBeenCalledOnce();
   pwa.startScreenShown(false);
   pwa.startScreenShown(true);
+  expect(offline.play.flow.arriveHome).toHaveBeenCalledTimes(2);
   options.onUpdateShown(true);
   pwa.updateOffer.defer();
   expect(offline.play.flow.dismissOffer).toHaveBeenCalledOnce();
@@ -103,6 +109,22 @@ it("forwards a forced update to the kit and its reports to requiredUpdate", asyn
   options.onRequireNewer("unavailable");
   expect(states).toEqual(["updating", "unavailable"]);
 });
+
+it.each(["continue", "blocked", "reloading"] as const)(
+  "returns the document launch result %s without treating Start as another launch",
+  async (result) => {
+    offline.play.launchReady.mockResolvedValueOnce(result);
+    const pwa = await import("./index.ts");
+    expect(await pwa.setupPhoneApp()).toBe(result);
+    pwa.startScreenShown(true);
+    pwa.coverZone("startCard", true);
+    pwa.coverZone("startCard", false);
+    pwa.startScreenShown(false);
+    pwa.startScreenShown(true);
+    expect(offline.play.launchReady).toHaveBeenCalledOnce();
+    expect(offline.play.flow.arriveHome).toHaveBeenCalledTimes(2);
+  },
+);
 
 it("reports a forced update unavailable without offline play", async () => {
   vi.stubEnv("PROD", false);
@@ -126,11 +148,14 @@ function kitPage(controller: unknown) {
   });
   const container = Object.assign(new EventTarget(), {
     controller,
+    getRegistration: vi.fn(() => Promise.resolve(registration)),
     register: vi.fn(() => Promise.resolve(registration)),
   });
   const install = () => {
     registration.installing = Object.assign(new EventTarget(), {
-      postMessage: () => undefined,
+      postMessage: vi.fn((_message?: unknown, transfer?: Transferable[]) =>
+        (transfer?.[0] as MessagePort | undefined)?.postMessage("blocked"),
+      ),
       state: "installing",
     });
   };
@@ -224,19 +249,23 @@ it("offers a controlled page's update only once the new version is stored", asyn
   expect(offered.at(-1)).toBe(true);
 });
 
-it("keeps a dismissed offer hidden for the page session, across Start screens and versions", async () => {
+it("defers an offer until the next Start arrival without treating card closure as an arrival", async () => {
   const { fake, offered, pwa } = await offerShownOnStart({});
   fake.finish(true);
   expect(offered.at(-1)).toBe(true);
   pwa.updateOffer.defer();
   expect(offered.at(-1)).toBe(false);
+  pwa.coverZone("startCard", true);
+  pwa.coverZone("startCard", false);
+  expect(offered.at(-1)).toBe(false);
   pwa.startScreenShown(false);
   pwa.startScreenShown(true);
+  expect(offered.at(-1)).toBe(true);
   await settled();
   fake.install();
   fake.registration.dispatchEvent(new Event("updatefound"));
   fake.finish(true);
-  expect(offered.at(-1)).toBe(false);
+  expect(offered.at(-1)).toBe(true);
 });
 
 it("never offers an update on a page no version controls", async () => {

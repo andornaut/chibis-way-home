@@ -3,6 +3,19 @@ import { describe, expect, it, vi } from "vitest";
 import { trackHomeScreen } from "./homeScreen.ts";
 
 describe("Start-only update eligibility", () => {
+  it("reports true arrivals separately from card closure and repeated visibility", () => {
+    const arrive = vi.fn();
+    const home = trackHomeScreen(vi.fn(), vi.fn(), arrive);
+    home.startShown(true);
+    home.startShown(true);
+    home.cover("startCard", true);
+    home.cover("startCard", false);
+    expect(arrive).toHaveBeenCalledOnce();
+    home.startShown(false);
+    home.startShown(true);
+    expect(arrive).toHaveBeenCalledTimes(2);
+  });
+
   it("retains first-prepared-zone registration independently of the current screen", () => {
     const visible = vi.fn();
     const register = vi.fn();

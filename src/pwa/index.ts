@@ -2,10 +2,9 @@
 // wake lock and persistent storage. setupPhoneApp runs once from main.ts; the scenes listen for
 // PHONE_EVENTS on window and call the functions below.
 //
-// The game always starts at once from the version on disk: a page a version controls loads every
-// precached file from that version's cache, and nothing waits at start. A newer version downloads
-// in the background and activates only through the explicit Start-screen offer, once every file
-// is stored and verified, never automatically.
+// A fresh document may apply a complete waiting version before constructing the game or reading
+// saves. During play, newer versions stage separately and switch only through Update now or the
+// newer-save guard. Returning to Start or showing the page never activates them.
 import { appCannotClose } from "@andornaut/game-kit/web/pwa/appWindow";
 import { backCloseWatcher, isFirefoxAndroidApp } from "@andornaut/game-kit/web/pwa/backNavigation";
 import {
@@ -15,6 +14,7 @@ import {
 import { pageRunsAsApp } from "@andornaut/game-kit/web/pwa/dom/installFlow";
 import {
   browserOfflinePage,
+  type LaunchResult,
   type OfflinePlay,
   startOfflinePlay,
 } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
@@ -55,10 +55,10 @@ let screenWakeLock: ScreenWakeLock | undefined;
 // compete with the game's own downloads (registrationReady). The loading bar shows only the
 // kit's "precaching", that first visit's precache; an update installs in the background with no
 // bar (trackOfflineActivity).
-function setupOfflinePlay(): void {
+function setupOfflinePlay(): Promise<LaunchResult> {
   const page = import.meta.env.PROD ? browserOfflinePage() : undefined;
   if (page === undefined) {
-    return;
+    return Promise.resolve("continue");
   }
   const play = startOfflinePlay(
     {
@@ -70,13 +70,17 @@ function setupOfflinePlay(): void {
     page,
   );
   offlinePlay = play;
-  home = trackHomeScreen(play.flow.setOfferVisible, () => play.registrationReady());
+  home = trackHomeScreen(
+    play.flow.setOfferVisible,
+    () => play.registrationReady(),
+    () => play.flow.arriveHome(),
+  );
+  return play.launchReady();
 }
 
-// Sets up offline play and the phone app's behaviour. The game is constructed at once and never
-// waits on offline play.
-export function setupPhoneApp(): void {
-  setupOfflinePlay();
+// The launch result settles before game construction; an unsuccessful switch keeps this build.
+export function setupPhoneApp(): Promise<LaunchResult> {
+  const launch = setupOfflinePlay();
   // Asked once per launch of the installed app, never in a browser tab. Not waited for: the game
   // boots whatever the browser answers, or if it never does.
   void requestPersistentStorage(
@@ -104,6 +108,7 @@ export function setupPhoneApp(): void {
     document,
     "wakeLock" in navigator ? navigator.wakeLock : undefined,
   );
+  return launch;
 }
 
 // Whether the start screen offers to leave the game: Exit, and back with no card open. A browser
