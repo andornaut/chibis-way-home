@@ -143,7 +143,7 @@ function kitPage(controller: unknown) {
   const registration = Object.assign(new EventTarget(), {
     active: null,
     installing: null as (EventTarget & { postMessage(): void; state: string }) | null,
-    update: () => Promise.resolve(),
+    update: vi.fn(() => Promise.resolve()),
     waiting: null as (EventTarget & { postMessage(): void; state: string }) | null,
   });
   const container = Object.assign(new EventTarget(), {
@@ -173,7 +173,7 @@ function kitPage(controller: unknown) {
     eventTarget: new EventTarget(),
     now: () => 0,
     online: () => true,
-    reload: () => undefined,
+    reload: vi.fn(),
     session: undefined,
     visibilitySource: Object.assign(new EventTarget(), { visibilityState: "visible" as const }),
   };
@@ -227,6 +227,50 @@ it("never shows registration or an update's install on a controlled page", async
   fake.registration.dispatchEvent(new Event("updatefound"));
   fake.finish();
   expect(shown.every((active) => !active)).toBe(true);
+});
+
+it("checks online on every actual Start return and presents a ready update without reloading", async () => {
+  const { fake, pwa } = await precacheShown({});
+  const offered: boolean[] = [];
+  pwa.updateOffer.subscribe((visible) => offered.push(visible));
+  fake.registration.update.mockClear();
+
+  pwa.startScreenShown(true);
+  await settled();
+  expect(fake.registration.update).toHaveBeenCalledTimes(1);
+  pwa.startScreenShown(true);
+  pwa.coverZone("startCard", true);
+  pwa.coverZone("startCard", false);
+  await settled();
+  expect(fake.registration.update).toHaveBeenCalledTimes(1);
+
+  pwa.startScreenShown(false);
+  fake.registration.update.mockImplementationOnce(async () => {
+    fake.install();
+    fake.registration.dispatchEvent(new Event("updatefound"));
+    fake.finish(true);
+  });
+  pwa.startScreenShown(true);
+  await settled();
+  expect(fake.registration.update).toHaveBeenCalledTimes(2);
+  expect(offered.at(-1)).toBe(true);
+  expect(fake.page.reload).not.toHaveBeenCalled();
+
+  pwa.updateOffer.defer();
+  expect(offered.at(-1)).toBe(false);
+  pwa.coverZone("startCard", true);
+  pwa.coverZone("startCard", false);
+  await settled();
+  expect(fake.registration.update).toHaveBeenCalledTimes(2);
+  expect(offered.at(-1)).toBe(false);
+
+  pwa.startScreenShown(false);
+  pwa.startScreenShown(true);
+  await settled();
+  expect(fake.registration.update).toHaveBeenCalledTimes(3);
+  expect(offered.at(-1)).toBe(true);
+  expect(fake.page.reload).not.toHaveBeenCalled();
+  expect(fake.container.register).toHaveBeenCalledOnce();
 });
 
 // Whether the Update card showed at each change, with the Start screen shown and uncovered.
