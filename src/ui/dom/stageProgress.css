@@ -1,0 +1,23 @@
+/* The scene supplies the actual play-view shift and canvas size, both in base pixels. The
+   layer's view origin includes the canvas's page offset; subtracting the shift recovers it. */
+.stage-progress-canvas {
+  position: absolute;
+  left: calc(var(--ui-view-left) - var(--ui-unit) * var(--stage-progress-shift-x) * 1px);
+  top: calc(var(--ui-view-top) - var(--ui-unit) * var(--stage-progress-shift-y) * 1px);
+  width: calc(var(--ui-unit) * var(--stage-progress-canvas-width) * 1px);
+  height: calc(var(--ui-unit) * var(--stage-progress-canvas-height) * 1px);
+  overflow: hidden;
+}
+
+/* The kit draws the supplied canvas rect directly in base pixels, including the bottom bar. */
+.stage-progress-plane {
+  position: absolute;
+  inset: 0;
+  transform: scale(var(--ui-unit));
+  transform-origin: 0 0;
+}
+
+.stage-progress-scene,
+.stage-progress-scene * {
+  pointer-events: none;
+}
