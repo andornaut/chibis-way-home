@@ -72,10 +72,17 @@ export interface ZoneFrame {
   readonly themes: readonly string[];
 }
 
+export interface OrdinaryProofProfile {
+  readonly kind: "ordinary";
+  readonly tuning: string;
+  readonly version: 1;
+}
+
 // One certified middle chunk for a zone: a whole authored chunk (single) or a composed pair.
 // layout: its physics fingerprint, independent of theme and skin. trace: the FNV-1a 64 hash of
 // every required walk's behaviour trace. route: the hash of its required-route targets and slot
 // fills. work: executed walk ticks, a deterministic cost hint for scheduling.
+
 export interface CertifiedEntry {
   readonly encounters: 0 | 1;
   readonly grade: Difficulty;
@@ -83,6 +90,7 @@ export interface CertifiedEntry {
   readonly kind: "pair" | "single";
   readonly layout: string;
   readonly modules?: readonly [left: string, right: string];
+  readonly proof?: OrdinaryProofProfile;
   readonly route: string;
   readonly slots: { readonly door: number; readonly event: number };
   readonly trace: string;

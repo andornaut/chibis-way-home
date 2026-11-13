@@ -4,8 +4,9 @@
 // worker threads, longest recorded work first; output is sorted and holds no timings, so it is
 // identical for any worker count or machine.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { availableParallelism } from "node:os";
+import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { availableParallelism, tmpdir } from "node:os";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { isMainThread, parentPort, Worker } from "node:worker_threads";
 
@@ -14,6 +15,7 @@ import type {
   CertifiedArena,
   CertifiedChunks,
   CertifiedEntry,
+  OrdinaryProofProfile,
   ZoneKey,
 } from "../data/types/index.ts";
 import {
@@ -33,15 +35,17 @@ import {
   GAME_CONTEXT,
   hashOf,
   layoutOf,
+  ORDINARY_PROOF_PROFILE,
   type Proof,
   proofsHash,
-  prove,
+  proveForProfile,
   routeHash,
   structuralProblems,
   verifyStructure,
   zoneCandidates,
   ZONES,
 } from "../testing/pairCertify.ts";
+import { completePairProposal, preparePairProposal } from "../testing/selectedCertification.ts";
 
 const USAGE = `Usage:
   npm run pairs -- certify [--zone ZONE]... [--all]
@@ -54,6 +58,9 @@ const USAGE = `Usage:
       differ from REF's lists (needs git), then prove a sample ordered by S (the lists' input
       hashes by default), starting only proofs whose recorded work fits within N ms of the start
       (default 20000)
+  npm run pairs -- propose --zone ZONE --id ID... --profile ordinary --out SCRATCH_PATH
+      prove only new selected pairs with ordinary tuning and write a scratch proposal;
+      existing entries and arenas stay unchanged; no arena or assembly-feasibility proofs
   npm run pairs -- report --out PATH
       write rejections, grade and encounter counts and distinct layouts per zone; refuses an
       existing PATH`;
@@ -71,6 +78,7 @@ const listUrl = (zone: ZoneKey) => new URL(`../data/certified/${zone}.json`, imp
 interface Job {
   readonly arena?: true;
   readonly id: string;
+  readonly proof?: OrdinaryProofProfile;
   readonly themes?: readonly string[];
   readonly zone: ZoneKey;
 }
@@ -200,7 +208,12 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
       pending.push({
         candidate,
         cost: costOf(candidate, old),
-        job: { id: candidate.id, themes, zone },
+        job: {
+          id: candidate.id,
+          ...(old?.proof !== undefined && { proof: old.proof }),
+          themes,
+          zone,
+        },
         layout,
       });
     }
@@ -313,7 +326,11 @@ async function verify(options: VerifyOptions, zones: readonly ZoneKey[]): Promis
     const jobs = targets.map((target) =>
       "hash" in target.entry
         ? { arena: true as const, id: target.entry.id, zone: target.zone }
-        : { id: target.entry.id, zone: target.zone },
+        : {
+            id: target.entry.id,
+            ...(target.entry.proof !== undefined && { proof: target.entry.proof }),
+            zone: target.zone,
+          },
     );
     const results = await proveAll(
       jobs,
@@ -439,7 +456,9 @@ async function main(args: readonly string[]): Promise<number> {
         all: { type: "boolean" },
         "changed-since": { type: "string" },
         help: { short: "h", type: "boolean" },
+        id: { multiple: true, type: "string" },
         out: { type: "string" },
+        profile: { type: "string" },
         "sample-ms": { type: "string" },
         seed: { type: "string" },
         zone: { multiple: true, type: "string" },
@@ -458,6 +477,10 @@ async function main(args: readonly string[]): Promise<number> {
   const zones = (values.zone ?? ZONES) as ZoneKey[];
   const unknown = zones.filter((zone) => !ZONES.includes(zone));
   const [command, ...rest] = positionals;
+  if (command !== "propose" && (values.id !== undefined || values.profile !== undefined)) {
+    console.error(`Selection flags require propose\n${USAGE}`);
+    return 2;
+  }
   if (unknown.length > 0 || rest.length > 0) {
     console.error(`Unknown zone or argument: ${[...unknown, ...rest].join(", ")}\n${USAGE}`);
     return 2;
@@ -481,6 +504,74 @@ async function main(args: readonly string[]): Promise<number> {
         return 2;
       }
     }
+    case "propose":
+      if (
+        zones.length !== 1 ||
+        values.out === undefined ||
+        values.profile !== "ordinary" ||
+        values.id === undefined ||
+        values.all ||
+        values["changed-since"] !== undefined ||
+        values["sample-ms"] !== undefined ||
+        values.seed !== undefined
+      ) {
+        console.error(
+          `propose requires one zone, IDs, ordinary profile and a scratch path\n${USAGE}`,
+        );
+        return 2;
+      }
+      try {
+        const out = resolve(values.out);
+        const scratch = realpathSync(tmpdir());
+        const parent = realpathSync(dirname(out));
+        const within = relative(scratch, parent);
+        if (isAbsolute(within) || within === ".." || within.startsWith("../") || existsSync(out)) {
+          throw new Error("Proposal output must be a new file within the scratch directory");
+        }
+        const current = readList(zones[0]!);
+        if (current === undefined) {
+          throw new Error("No existing certificate list");
+        }
+        const plan = preparePairProposal(zones[0]!, current, values.id);
+        const results = await proveAll(
+          plan.selected.map(({ candidate, themes }) => ({
+            id: candidate.id,
+            proof: ORDINARY_PROOF_PROFILE,
+            themes,
+            zone: zones[0]!,
+          })),
+          plan.selected.map(() => 0),
+        );
+        const proofs = results.map((proof) => {
+          if (proof === undefined) {
+            throw new Error("Selected proof did not run");
+          }
+          return proof;
+        });
+        const proposed = completePairProposal(plan, proofs);
+        writeFileSync(
+          out,
+          `${JSON.stringify(
+            {
+              proposed,
+              selected: plan.selected.map(({ candidate, layout, themes }, index) => ({
+                id: candidate.id,
+                layout,
+                proof: proofs[index],
+                themes,
+              })),
+              status: "proposal",
+            },
+            null,
+            2,
+          )}\n`,
+          { flag: "wx" },
+        );
+        return 0;
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : String(error));
+        return 2;
+      }
     case "report":
       if (values.out === undefined) {
         console.error(`report needs --out\n${USAGE}`);
@@ -501,7 +592,9 @@ if (!isMainThread) {
       return;
     }
     const candidate = candidateOf(job.zone, job.id);
-    parentPort!.postMessage(prove(candidate, job.themes ?? layoutOf(job.zone, candidate).themes));
+    parentPort!.postMessage(
+      proveForProfile(job.proof, candidate, job.themes ?? layoutOf(job.zone, candidate).themes),
+    );
   });
 } else {
   process.exitCode = await main(process.argv.slice(2));

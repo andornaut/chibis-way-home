@@ -15,11 +15,13 @@ import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules/index.ts";
 import { TILE } from "../data/screen.ts";
 import { SEAM_ROWS } from "../data/seams.ts";
 import type {
+  BirdTuning,
   CertifiedChunks,
   CertifiedEntry,
   ChunkModule,
   ChunkPlan,
   Difficulty,
+  OrdinaryProofProfile,
   ZoneKey,
   ZoneLayout,
   ZoneRecipe,
@@ -280,6 +282,7 @@ export const routeHash = (candidate: Candidate): string =>
 
 export interface Proof {
   readonly problems: readonly string[];
+  readonly proof?: OrdinaryProofProfile;
   readonly trace: string;
   readonly work: number;
 }
@@ -292,7 +295,11 @@ function layoutFor(plan: ReturnType<typeof chunkThemePlan>): ZoneLayout {
 // assembly pass itself; then in each walked theme, every required route walked with slots empty
 // and filled, no no-cross pair crossed, the behaviour trace of every walk step hashed; then, for
 // an encounter, every boss's path out on the movement map.
-export function prove(candidate: Candidate, themes: readonly string[]): Proof {
+function proveWithTuning(
+  tuning: BirdTuning,
+  candidate: Candidate,
+  themes: readonly string[],
+): Proof {
   const library = libraryWith(candidate.id, candidate.chunk);
   const recorder = traceRecorder({ retain: false });
   const problems: string[] = [];
@@ -316,7 +323,7 @@ export function prove(candidate: Candidate, themes: readonly string[]): Proof {
       const layout = layoutFor(plan);
       const area = plan.start.area;
       const walk = walkRequiredRoutes(
-        BIRD,
+        tuning,
         {
           onStep: (stepped, seconds, before, after) => {
             recorder.record(zoneTraceLine(stepped, seconds, before, after));
@@ -333,7 +340,7 @@ export function prove(candidate: Candidate, themes: readonly string[]): Proof {
       for (const { from, to } of plan.areas[area]?.noCross ?? []) {
         const start = surfaceAt(TILE, walk.surfaces, area, from);
         const end = surfaceAt(TILE, walk.surfaces, area, to);
-        if (!start || !end || crosses(BIRD, layout, walk.surfaces, start, end)) {
+        if (!start || !end || crosses(tuning, layout, walk.surfaces, start, end)) {
           problems.push(`${theme} ${profile}: crossed no-cross ${from.col},${from.row}`);
         }
       }
@@ -351,11 +358,42 @@ export function prove(candidate: Candidate, themes: readonly string[]): Proof {
   return { problems, trace: recorder.hash(), work };
 }
 
+// Existing entries keep the original skill-capable proof and trace contract.
+export function prove(candidate: Candidate, themes: readonly string[]): Proof {
+  return proveWithTuning(BIRD, candidate, themes);
+}
+
+export const ORDINARY_PROOF_PROFILE: OrdinaryProofProfile = {
+  kind: "ordinary",
+  tuning: hashOf(ORDINARY),
+  version: 1,
+};
+
+export function proofProfileProblems(profile: OrdinaryProofProfile | undefined): string[] {
+  return profile === undefined || canonicalJson(profile) === canonicalJson(ORDINARY_PROOF_PROFILE)
+    ? []
+    : ["Unknown ordinary proof profile, version or tuning fingerprint"];
+}
+
+export function proveForProfile(
+  profile: OrdinaryProofProfile | undefined,
+  candidate: Candidate,
+  themes: readonly string[],
+): Proof {
+  const problems = proofProfileProblems(profile);
+  if (problems.length > 0) {
+    throw new Error(problems.join("; "));
+  }
+  return profile === undefined
+    ? prove(candidate, themes)
+    : { ...proveWithTuning(ORDINARY, candidate, themes), proof: ORDINARY_PROOF_PROFILE };
+}
+
 // The entry a proven candidate certifies.
 export function entryOf(
   candidate: Candidate,
   layout: string,
-  proof: Pick<Proof, "trace" | "work">,
+  proof: Pick<Proof, "proof" | "trace" | "work">,
 ): CertifiedEntry {
   const slots = (kind: "door" | "event") =>
     (candidate.chunk.slots ?? []).filter((slot) => slot.kind === kind).length;
@@ -366,6 +404,7 @@ export function entryOf(
     kind: candidate.kind,
     layout,
     ...(candidate.modules && { modules: candidate.modules }),
+    ...(proof.proof !== undefined && { proof: proof.proof }),
     route: routeHash(candidate),
     slots: { door: slots("door"), event: slots("event") },
     trace: proof.trace,
@@ -497,6 +536,11 @@ export function verifyStructure(context: CertifyContext, list: CertifiedChunks):
     const candidate = byId.get(entry.id);
     if (!candidate) {
       problems.push(`${entry.id}: not a candidate of ${list.zone}`);
+      continue;
+    }
+    const profileProblems = proofProfileProblems(entry.proof);
+    problems.push(...profileProblems.map((problem) => `${entry.id}: ${problem}`));
+    if (profileProblems.length > 0) {
       continue;
     }
     const steps = structuralProblems(list.zone, candidate);
