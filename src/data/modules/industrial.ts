@@ -1,3 +1,4 @@
+import { redCeiling } from "../chunkTemplates.ts";
 import { GANTRY_RIDE_TRANSIT } from "../forcedTransit.ts";
 import { GANTRY_BEHAVIOUR } from "../obstacleBehaviours.ts";
 import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
@@ -25,6 +26,19 @@ const RAIL = -8;
 const PIT = { col: 4, cols: 22 } as const;
 
 const MODULE_LIST: readonly ChunkModule[] = [
+  // A short-press jump over a red strip beneath a red ceiling, with clear banks at both edges.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "industrial-low-roof-strip",
+    objects: [...redCeiling(8, 16, 72), ...red(16, 3, ROW)],
+    route: { profile: "recovery", targets: [{ at: { col: 22, row: ROW } }] },
+    sides: ["left", "right"],
+    solids: [floor(0, 16, ROW), floor(19, 11, ROW)],
+    zones: ["industrial"],
+  },
   // Grade 2: a flat run with a 2-tile red strip to jump, from which the crane ahead is in view.
   {
     difficulty: 2,
