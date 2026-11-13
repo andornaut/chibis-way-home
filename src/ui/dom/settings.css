@@ -11,18 +11,20 @@
    areas, so the first starts where the header's text buttons' press areas would. */
 .settings-rows {
   display: grid;
+  align-self: stretch;
+  min-width: 0;
   row-gap: var(--ui-stack-button-gap);
   margin-top: calc(-1 * var(--ui-unit) * var(--button-hit) * 1px);
 }
 
-/* A row: its icons, its name and, at the row's right end, its switch or Install button, a gap
-   apart and centred on the row's height. The label turns dark slate while the row is pressed. */
+/* A row: its icons, its name and, at the row's right end, its current state and switch or Install
+   button. Rows grow for wrapped help without shrinking their press targets or fonts. */
 .settings-row {
   box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
-  height: calc(var(--ui-unit) * var(--settings-row-height) * 1px);
+  min-height: calc(var(--ui-unit) * var(--settings-row-height) * 1px);
   margin: 0;
   padding: 0;
   border: 0;
@@ -68,19 +70,31 @@
   image-rendering: pixelated;
 }
 
-/* The label, and on a touch row the note under it in dark slate, each one body line. */
+/* The label and the effect note under it use the full body font. Help wraps within the row. */
 .settings-name {
   display: flex;
   flex: 1;
   flex-direction: column;
+  min-width: 0;
 }
 
 .settings-label,
-.settings-note {
+.settings-note,
+.settings-state {
   font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
   font-weight: 400;
   line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
-  white-space: nowrap;
+}
+
+.settings-value {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+}
+
+.settings-state {
+  text-align: end;
 }
 
 .settings-note {

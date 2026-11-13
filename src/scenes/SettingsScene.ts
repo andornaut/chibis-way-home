@@ -260,7 +260,7 @@ export class SettingsScene extends Scene {
   // Each switch as its setting leaves it.
   private render(): void {
     if (this.card !== undefined) {
-      showSwitches(settingOn, this.card);
+      showSwitches(settingOn, TEXT.settings.state, this.card);
     }
   }
 }

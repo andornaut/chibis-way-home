@@ -40,7 +40,13 @@ vi.mock("./domUi.ts", () => ({
 }));
 
 import { TEXT } from "../data/text.ts";
-import { createUiLayer, reducedMotion, touchSettingShown, type UiLayer } from "../ui/index.ts";
+import {
+  createUiLayer,
+  reducedMotion,
+  setTouchSettingShown,
+  touchSettingShown,
+  type UiLayer,
+} from "../ui/index.ts";
 import { SettingsScene } from "./SettingsScene.ts";
 
 const WORDS = TEXT.settings;
@@ -72,7 +78,7 @@ const settle = () =>
 async function openCard(opener = "start", install = false) {
   offer.state.mockReturnValue(install ? "steps" : "installed");
   const events = new EventEmitter();
-  const owner = { setTouchSetting: vi.fn(), settingsClosed: vi.fn() };
+  const owner = { setTouchSetting: vi.fn(setTouchSettingShown), settingsClosed: vi.fn() };
   const stop = vi.fn();
   const scene = Object.assign(new SettingsScene(), {
     events,
@@ -128,9 +134,8 @@ it("shows a switch for each setting named from TEXT, then the build label, focus
   });
 });
 
-// Each touch row draws the controls it shows or hides as decorative inline icons, and its note,
-// under its label, describes its switch.
-it("notes under each touch row's label that touch still works, describing its switch", async () => {
+// Each setting's name and effect stay separate, with decorative inline touch icons where needed.
+it("describes every switch's effect separately from its setting name", async () => {
   const { control } = await openCard();
   const row = (label: string) => {
     const button = control(label);
@@ -149,17 +154,42 @@ it("notes under each touch row's label that touch still works, describing its sw
     {
       decorative: true,
       icons: ["move"],
-      name: [WORDS.moveControls, WORDS.touchStillWorks],
-      note: WORDS.touchStillWorks,
+      name: [WORDS.moveControls, WORDS.descriptions.moveControls],
+      note: WORDS.descriptions.moveControls,
     },
     {
       decorative: true,
       icons: ["use", "jump"],
-      name: [WORDS.actionButtons, WORDS.touchStillWorks],
-      note: WORDS.touchStillWorks,
+      name: [WORDS.actionButtons, WORDS.descriptions.actionButtons],
+      note: WORDS.descriptions.actionButtons,
     },
-    { decorative: true, icons: [], name: [WORDS.reducedMotion], note: null },
+    {
+      decorative: true,
+      icons: [],
+      name: [WORDS.reducedMotion, WORDS.descriptions.reducedMotion],
+      note: WORDS.descriptions.reducedMotion,
+    },
   ]);
+});
+
+it("shows current state text before and after toggling without changing the setting name", async () => {
+  const { control } = await openCard();
+  for (const [label, enabled, disabled] of [
+    [WORDS.moveControls, WORDS.state.shown, WORDS.state.hidden],
+    [WORDS.actionButtons, WORDS.state.shown, WORDS.state.hidden],
+    [WORDS.reducedMotion, WORDS.state.on, WORDS.state.off],
+  ] as const) {
+    const button = control(label);
+    const checked = button.getAttribute("aria-checked") === "true";
+    const state = button.querySelector<HTMLElement>(".settings-state")!;
+    expect(state.textContent).toBe(checked ? enabled : disabled);
+    button.click();
+    expect(button.getAttribute("aria-checked")).toBe(String(!checked));
+    expect(state.textContent).toBe(checked ? disabled : enabled);
+    expect(document.getElementById(button.getAttribute("aria-labelledby")!)?.textContent).toBe(
+      label,
+    );
+  }
 });
 
 it("moves the keyboard's focus through the rows, Install, then the close X, wrapping", async () => {
@@ -188,13 +218,11 @@ it("toggles and saves Reduced motion on a press, never through the opener", asyn
 
 it("takes its own scope over the pause card, and passes each touch setting's change to it", async () => {
   const { control, key, owner } = await openCard("pause");
+  const next = !touchSettingShown("actionButtons");
   control(WORDS.actionButtons).focus();
   key("Enter");
   key("Enter", { repeat: true });
-  expect(owner.setTouchSetting).toHaveBeenCalledExactlyOnceWith(
-    "actionButtons",
-    !touchSettingShown("actionButtons"),
-  );
+  expect(owner.setTouchSetting).toHaveBeenCalledExactlyOnceWith("actionButtons", next);
   // Over the pause card's dim it opens its own scope over the pause card's.
   expect({ backdrop: backdrop.mock.calls.length, scopes: gate.open.mock.calls.length }).toEqual({
     backdrop: 0,

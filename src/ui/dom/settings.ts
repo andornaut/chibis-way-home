@@ -15,9 +15,9 @@ import { closeButton } from "./card.ts";
 // with its title, the browser's steps beside their glyph and its own close X. Each row is one
 // button and its whole press area: a switch row (role switch, aria-checked, named by its label)
 // holds its icons, label and art's ui-switch; the Install row (named by its label) holds its icon,
-// label and art's ui-button face. A touch setting's row draws the controls it shows or hides as
-// inline control icons, and under its label the note that touch still works when hidden, which
-// describes its switch; every other row's icon is art's sprite. The icons are decorative, hidden
+// label and art's ui-button face. A switch row shows its current state beside the switch and
+// describes the effect under its label. Touch rows draw the controls they show or hide as inline
+// control icons; every other row's icon is art's sprite. The icons are decorative, hidden
 // from assistive technology. The close X comes last, so the keyboard's focus moves through the
 // rows in order, then the close X.
 
@@ -37,10 +37,17 @@ export interface SettingsCardColours {
 export interface SettingsCardWords {
   readonly actionButtons: string;
   readonly close: string;
+  readonly descriptions: Readonly<Record<SettingsSwitch, string>>;
   readonly install: string;
   readonly installButton: string;
   readonly moveControls: string;
   readonly reducedMotion: string;
+  readonly state: {
+    readonly hidden: string;
+    readonly off: string;
+    readonly on: string;
+    readonly shown: string;
+  };
   readonly title: string;
   readonly touchStillWorks: string;
 }
@@ -118,8 +125,8 @@ export function createSettingsCard(
   const { dialog } = dialogFor(id, words.title, "settings-card");
   const list = element("div", "settings-rows");
   const icons: Partial<Record<SettingsSpriteRow, HTMLImageElement>> = {};
-  // A row's button with its icons and its name: its label, which names it, and on a touch row the
-  // note under it, which describes it.
+  // A row's button with its icons and its label, which names it. Each switch's note describes
+  // its effect; aria-checked exposes the current state without repeating the visible state text.
   const row = (key: "install" | SettingsSwitch) => {
     const button = element("button", "settings-row ui-press");
     button.type = "button";
@@ -142,8 +149,8 @@ export function createSettingsCard(
     label.id = `${id}-${key}`;
     button.setAttribute("aria-labelledby", label.id);
     name.append(label);
-    if (isTouchSetting(key)) {
-      const note = text("span", "settings-note", words.touchStillWorks);
+    if (key !== "install") {
+      const note = text("span", "settings-note", words.descriptions[key]);
       note.id = `${id}-${key}-note`;
       button.setAttribute("aria-describedby", note.id);
       name.append(note);
@@ -159,7 +166,11 @@ export function createSettingsCard(
       button.setAttribute("aria-checked", "false");
       const toggle = element("span", "settings-switch");
       toggle.setAttribute("aria-hidden", "true");
-      button.append(toggle);
+      const value = element("span", "settings-value");
+      const state = element("span", "settings-state");
+      state.setAttribute("aria-hidden", "true");
+      value.append(state, toggle);
+      button.append(value);
       return [key, button];
     }),
   ) as Record<SettingsSwitch, HTMLButtonElement>;
@@ -207,13 +218,17 @@ export function createSettingsCard(
 // Shows each switch on or off as on states it.
 export function showSwitches(
   on: (setting: SettingsSwitch) => boolean,
+  words: SettingsCardWords["state"],
   view: SettingsCardView,
 ): void {
   for (const [setting, button] of Object.entries(view.switches) as [
     SettingsSwitch,
     HTMLButtonElement,
   ][]) {
-    button.setAttribute("aria-checked", String(on(setting)));
+    const enabled = on(setting);
+    button.setAttribute("aria-checked", String(enabled));
+    const state = isTouchSetting(setting) ? (enabled ? "shown" : "hidden") : enabled ? "on" : "off";
+    button.querySelector<HTMLElement>(".settings-state")!.textContent = words[state];
   }
 }
 
