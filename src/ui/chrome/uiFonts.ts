@@ -17,4 +17,3 @@ export const UI_FONT_RESOURCES = [
     weight: "700",
   },
 ] as const;
-

@@ -4,9 +4,9 @@ import { type GameObjects, type Scene, Scenes } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";
 import { canvasSize, modalColour, viewShift } from "../ui/index.ts";
-import { palette, paletteColour } from "./scenePalette.ts";
 import { modalInput } from "./modalInput.ts";
 import { canvasRect, fitCanvasCamera, sceneFit } from "./playCamera.ts";
+import { palette, paletteColour } from "./scenePalette.ts";
 
 // Capture only the underlying scenes, and draw the owned backdrop before the card cameras.
 export function showModalBackdrop(

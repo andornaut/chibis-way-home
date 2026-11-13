@@ -32,12 +32,12 @@ import {
   touchSettings,
 } from "../ui/index.ts";
 import { FRAME_TURN } from "../ui/input/frameTurn.ts";
-import { paletteColour } from "./scenePalette.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput, type SceneInput } from "./modalInput.ts";
 import { type PauseDiscTimeline, pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome.ts";
 import { activeSkill, savedSkills, selectActiveSkill } from "./save.ts";
+import { paletteColour } from "./scenePalette.ts";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene.ts";
 import type { SkillDetailData } from "./SkillDetailScene.ts";
 import type { ZoneScene } from "./ZoneScene.ts";

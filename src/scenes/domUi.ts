@@ -21,8 +21,8 @@ import {
   UI_FRAMES,
   type UiLayer,
 } from "../ui/index.ts";
-import { palette } from "./scenePalette.ts";
 import { sceneFit } from "./playCamera.ts";
+import { palette } from "./scenePalette.ts";
 
 // The game's HTML UI layer (src/ui/dom/layer.ts) in #game, over the canvas: kept on the play
 // view through every refit, skinned from the loaded art once BootScene has it, and each scene's

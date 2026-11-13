@@ -188,7 +188,6 @@ it("logs a failed boot file and queues it again in a later run that shows no bar
   vi.useRealTimers();
 });
 
-
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.clearAllMocks();

@@ -20,10 +20,10 @@ import {
   type TouchSetting,
   touchSettingShown,
 } from "../ui/index.ts";
-import { paletteColour } from "./scenePalette.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
+import { paletteColour } from "./scenePalette.ts";
 
 // The scene that opens the settings card, the pause card's or the start screen's: it saves each
 // touch setting and shows it as it changes, and shows again when the card closes. It passes the

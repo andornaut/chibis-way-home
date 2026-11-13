@@ -141,10 +141,7 @@ export {
   achievementsPerPage,
 } from "./layout/achievementsCard.ts";
 export { ACTION_HELP } from "./layout/actionHelp.ts";
-export {
-  buttonFace,
-  type ButtonFaceState,
-} from "./layout/buttonLabel.ts";
+export { buttonFace, type ButtonFaceState } from "./layout/buttonLabel.ts";
 export { CARD_TEXT_SCALE, cardTitleAt } from "./layout/cardFrame.ts";
 export {
   contactBorder,

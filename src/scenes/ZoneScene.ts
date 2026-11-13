@@ -194,7 +194,6 @@ import { achievementNoticeShowing } from "./achievementNotice.ts";
 import { mountAirJumpCue } from "./airJumpCue.ts";
 import { backdropBottomFrame } from "./backdropBottomFrame.ts";
 import { mountBossWarning } from "./bossWarning.ts";
-import { paletteColour } from "./scenePalette.ts";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback.ts";
 import { createCrumblingArt } from "./crumblingArt.ts";
 import type { CutsceneData } from "./CutsceneScene.ts";
@@ -227,6 +226,7 @@ import {
   wholeRunStats,
   zoneVisitStats,
 } from "./save.ts";
+import { paletteColour } from "./scenePalette.ts";
 import { createTetherArt } from "./tetherArt.ts";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
 import { bindZoneBarks } from "./zoneBarks.ts";

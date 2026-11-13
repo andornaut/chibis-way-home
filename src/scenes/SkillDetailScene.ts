@@ -8,10 +8,10 @@ import { TOUCH } from "../data/touch.ts";
 import type { SkillId } from "../data/types/index.ts";
 import { PHONE_EVENTS } from "../pwa/index.ts";
 import { createSkillDetailsCard, showPresses, SKILL_ART } from "../ui/index.ts";
-import { paletteColour } from "./scenePalette.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
+import { paletteColour } from "./scenePalette.ts";
 
 export interface SkillDetailData {
   readonly onClose: () => void;
