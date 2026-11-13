@@ -360,6 +360,7 @@ export const TEXT: GameText = {
       title: "Speedy",
     },
   },
+  stageProgress: { label: "Stage progress" },
   start: {
     achievements: "Achievements",
     continue: "Continue",
