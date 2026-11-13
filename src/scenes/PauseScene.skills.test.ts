@@ -465,7 +465,8 @@ it.each([
   expect(fixture.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
   expect(document.activeElement).toBe(fixture.dialog);
   fixture.update();
-  expect(fixture.pauseButton.hidden).toBe(true);
+  expect(fixture.pauseButton.hidden).toBe(false);
+  expect(fixture.pauseButton.disabled).toBe(true);
 });
 
 it.each([

@@ -24,6 +24,7 @@ const SHEETS: Readonly<Record<string, unknown>> = {
 // The scene manager's calls the scene makes, keyed by scene key.
 export interface ScenesStub {
   readonly key: string;
+  bringToTop?(): void;
   get(key: string): unknown;
   isActive(key: string): boolean;
   isPaused(key: string): boolean;
@@ -43,7 +44,7 @@ export function createPauseScene(game: { readonly events: EventEmitter }, scenes
     events,
     game,
     input: { keyboard },
-    scene: scenes,
+    scene: { bringToTop: () => {}, ...scenes },
     sys: { isActive: () => true },
     time,
   });

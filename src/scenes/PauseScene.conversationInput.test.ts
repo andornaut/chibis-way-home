@@ -269,7 +269,8 @@ it.each(
     expect(modalInput(scene as never).accepts()).toBe(false);
     pause.update();
     // Only the pause card hides the skill HUD over a conversation.
-    expect([pause.skill("dash").hidden, pause.pauseButton.hidden]).toEqual([true, true]);
+    expect([pause.skill("dash").hidden, pause.pauseButton.hidden]).toEqual([true, false]);
+    expect(pause.pauseButton.disabled).toBe(true);
     tap(pause.button(TEXT.pause.resume));
     expect(cardShown(pause.dialog)).toBe(false);
     expect(scenes.resume).toHaveBeenCalledExactlyOnceWith(HELD[mode]);
@@ -280,12 +281,15 @@ it.each(
 );
 
 it.each(MODES.flatMap((mode) => ["p", "P", "Escape"].map((name) => ({ mode, name }))))(
-  "passes $name on from the $mode to Pause without acting",
+  "captures $name for Pause over the $mode without a story action",
   async ({ mode, name }) => {
-    const { acted, key, state } = await conversation(mode);
+    const { acted, key, pause, state } = await conversation(mode);
     const before = state();
-    expect(key(name).stopped()).toBe(false);
+    expect(key(name).stopped()).toBe(true);
+    await settle();
+    expect(cardShown(pause.dialog)).toBe(true);
     expect(acted).not.toHaveBeenCalled();
+    tap(pause.button(TEXT.pause.resume));
     expect(state()).toEqual(before);
   },
 );
