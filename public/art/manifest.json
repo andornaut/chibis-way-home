@@ -1,16 +1,5 @@
 {
-  "fonts": [
-    {
-      "key": "font-body",
-      "png": "fonts/font-body.png",
-      "fnt": "fonts/font-body.fnt"
-    },
-    {
-      "key": "font-title",
-      "png": "fonts/font-title.png",
-      "fnt": "fonts/font-title.fnt"
-    }
-  ],
+  "fonts": [],
   "sprites": [
     {
       "key": "apartment-chandelier",
