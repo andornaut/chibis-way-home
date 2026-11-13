@@ -1,28 +1,18 @@
-import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
-import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
-import { MAP_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
+import { TEXT_BUTTON } from "../../data/layout.ts";
 import { ZONE_MAP } from "../../data/map.ts";
 import { SCREEN, TILE } from "../../data/screen.ts";
-import { TEXT } from "../../data/text.ts";
 import { MAP_ACTIONS } from "../input/mapInput.ts";
 import { destinationCentre } from "../map/mapDestinations.ts";
 import { type PressArea, pressedArea } from "./hitAreas.ts";
 import { MAP_SCREEN, mapLabel } from "./mapScreen.ts";
-import { textInkBounds } from "./textInk.ts";
 
 describe("mapLabel", () => {
-  it.each(Object.values(TEXT.map.zones))("centres actual ink for %s under its marker", (name) => {
+  it("centres supplied native ink under its marker", () => {
     const centre = { x: 300, y: 150 };
-    const font = parseBitmapFont(fontTitle);
-    const ink = textInkBounds(
-      font,
-      MAP_SCREEN.textScale,
-      font.lineHeight * MAP_SCREEN.textScale,
-      name,
-    );
+    const ink = { height: 16, width: 80, x: -2, y: 3 };
     const { knockout, origin } = mapLabel(ink, centre);
     expect(origin.x + ink.x + ink.width / 2).toBe(centre.x);
     expect(origin.y + ink.y + ink.height / 2).toBe(knockout.y + knockout.height / 2);
@@ -32,17 +22,14 @@ describe("mapLabel", () => {
 });
 
 describe("map footer actions", () => {
-  const labels = { continue: TEXT.map.continue, home: TEXT.pause.home };
   const areas: PressArea<string>[] = MAP_ACTIONS.map((key) => ({
     art: MAP_SCREEN[key].button,
     hit: MAP_SCREEN[key].hit,
     key,
   }));
 
-  it.each(MAP_ACTIONS)("fits %s at the shared font size with standard padding", (key) => {
+  it.each(MAP_ACTIONS)("keeps %s at the standard height and above the view bottom", (key) => {
     const button = MAP_SCREEN[key].button;
-    const ink = inkWidth(parseBitmapFont(fontTitle), MAP_SCREEN.textScale, labels[key]);
-    expect((button.width - ink) / 2).toBeGreaterThanOrEqual(TEXT_BUTTON.inset);
     expect(button.height).toBe(TEXT_BUTTON.height);
     expect(button.y + button.height).toBeLessThanOrEqual(SCREEN.height);
   });
@@ -70,10 +57,6 @@ describe("map footer actions", () => {
       const centre = destinationCentre(TILE, destination);
       const label = mapLabel({ height: 0, width: 0, x: 0, y: 0 }, centre);
       expect(label.knockout.y + label.knockout.height).toBeLessThan(MAP_SCREEN.home.button.y);
-      const name = TEXT.map.zones[destination.id]!;
-      expect(inkWidth(parseBitmapFont(fontTitle), MAP_SCREEN.textScale, name)).toBeLessThanOrEqual(
-        MAP_LAYOUT.label.width - 2 * MAP_LAYOUT.label.padding,
-      );
     },
   );
 

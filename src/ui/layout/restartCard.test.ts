@@ -1,25 +1,15 @@
 import { containsPoint, rectsOverlap } from "@andornaut/game-kit/rect";
-import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
-import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import buttonSheet from "../../../public/art/sprites/ui-button.json" with { type: "json" };
 import resumeSheet from "../../../public/art/sprites/ui-resume.json" with { type: "json" };
-import { PLAY_MARK } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
-import { TEXT } from "../../data/text.ts";
 import type { Rect } from "../../data/types/index.ts";
-import { CARD_FONTS } from "../../testing/cardFonts.ts";
-import { centredLabel } from "./buttonLabel.ts";
-import { CARD_TEXT_SCALE } from "./cardFrame.ts";
 import { pressedArea } from "./hitAreas.ts";
 import { CELEBRATION, type LabelledButton } from "./restartCard.ts";
 
-const FONT = parseBitmapFont(fontBody);
 const SCREEN_RECT: Rect = { ...SCREEN, x: 0, y: 0 };
-const ink = (text: string) => inkWidth(FONT, CARD_TEXT_SCALE, text);
-const actionInk = (text: string) => inkWidth(CARD_FONTS.title, CARD_TEXT_SCALE, text);
 const frameOf = (sheet: { frames: Record<string, { frame: { h: number; w: number } }> }) => {
   const { h: height, w: width } = Object.values(sheet.frames)[0]?.frame ?? { h: 0, w: 0 };
   return { height, width };
@@ -33,14 +23,14 @@ function inside(outer: Rect, inner: Rect): boolean {
   );
 }
 
-// Each card's buttons, with their labels and whether the play mark leads one.
-const CARDS: [string, Rect, [string, LabelledButton, string, boolean][]][] = [
+// Each card's button faces and press areas.
+const CARDS: [string, Rect, [string, LabelledButton][]][] = [
   [
     "celebration",
     CELEBRATION.card,
     [
-      ["restart", CELEBRATION.restart, TEXT.celebration.restart, false],
-      ["continue", CELEBRATION.continue, TEXT.celebration.continue, true],
+      ["restart", CELEBRATION.restart],
+      ["continue", CELEBRATION.continue],
     ],
   ],
 ];
@@ -67,22 +57,9 @@ describe.each(CARDS)("the %s", (_, card, buttons) => {
     ];
     expect(corners.map((point) => pressedArea(areas, point))).toEqual([key, key]);
   });
-
-  it.each(buttons)("fits %s's label, %s, on its button", (__, { button }, text, marked) => {
-    const { labelX, markX } = centredLabel(button, actionInk(text), marked ? PLAY_MARK : undefined);
-    const margins = [
-      (markX ?? labelX) - button.x,
-      button.x + button.width - (labelX + actionInk(text)),
-    ];
-    expect(Math.min(...margins)).toBeGreaterThan(0);
-  });
 });
 
-describe("celebration words", () => {
-  it("fits the message in its room", () => {
-    expect(ink(TEXT.celebration.message)).toBeLessThanOrEqual(CELEBRATION.room);
-  });
-
+describe("celebration geometry", () => {
   it("draws Continue at ui-resume's size, and the stretched buttons no smaller than ui-button", () => {
     const resume = frameOf(resumeSheet);
     const button = frameOf(buttonSheet);

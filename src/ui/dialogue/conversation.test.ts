@@ -1,15 +1,11 @@
-import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { describe, expect, it } from "vitest";
 
-import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
 import { TOUCH } from "../../data/touch.ts";
 import type { DialoguePlan, DialogueSpeaker, GameText } from "../../data/types/index.ts";
-import { DIALOGUE_SCREEN } from "../layout/dialogueScreen.ts";
 import {
   dialogueChoice,
   dialogueChoiceKey,
   dialogueKeyAction,
-  dialogueLines,
   dialogueParagraphs,
   type DialoguePress,
   dialogueProgress,
@@ -63,30 +59,6 @@ describe("dialogueParagraphs", () => {
       ).toThrow();
     },
   );
-});
-
-describe("dialogueLines", () => {
-  const font = parseBitmapFont(fontBody);
-  const style = DIALOGUE_SCREEN.text;
-
-  it.each([style.lines, style.lines + 1])("keeps the fixed font size for %i lines", (count) => {
-    const paragraph = Array.from({ length: count }, () => text.lines.greeting).join("\n");
-    const fit = () => dialogueLines(font, style, style.width, paragraph);
-    if (count > style.lines) {
-      expect(fit).toThrow("does not fit");
-    } else {
-      expect(fit()).toEqual(paragraph.split("\n"));
-    }
-  });
-
-  it("wraps by measured ink width and rejects an unbreakable word wider than the panel", () => {
-    const wide = "W".repeat(Math.ceil(style.width / inkWidth(font, style.scale, "W")) + 1);
-    expect(() => dialogueLines(font, style, style.width, wide)).toThrow("does not fit");
-    const paragraph = Array.from({ length: 25 }, () => text.lines.greeting).join(" ");
-    const lines = dialogueLines(font, { ...style, lines: 100 }, style.width, paragraph);
-    expect(lines.length).toBeGreaterThan(1);
-    expect(lines.every((line) => inkWidth(font, style.scale, line) <= style.width)).toBe(true);
-  });
 });
 
 describe("dialogueKeyAction", () => {

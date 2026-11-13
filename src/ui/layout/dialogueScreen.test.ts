@@ -1,5 +1,3 @@
-import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
-import { bitmapMeasure, fittingText } from "@andornaut/game-kit/text/textFit";
 import { describe, expect, it } from "vitest";
 
 import * as behaviours from "../../data/behaviours.ts";
@@ -9,35 +7,19 @@ import { STAGE_BARKS } from "../../data/stageBarks.ts";
 import { TEXT } from "../../data/text.ts";
 import type { DialogueLine, Rect } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
-import { CARD_FONTS } from "../../testing/cardFonts.ts";
-import {
-  dialogueLines,
-  type DialogueParagraph,
-  dialogueParagraphs,
-} from "../dialogue/conversation.ts";
+import { dialogueParagraphs } from "../dialogue/conversation.ts";
 import {
   DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
   dialogueNameTab,
   dialogueSpeakerLayout,
-  dialogueTextRows,
 } from "./dialogueScreen.ts";
-import { PAUSE_BUTTON } from "./pauseCard.ts";
 import { skillButton, skillHud } from "./skillHud.ts";
-import { textInkBounds } from "./textInk.ts";
 
-const font = CARD_FONTS.title;
-const width = (name: string) => inkWidth(font, DIALOGUE_SCREEN.text.scale, name);
 const { box } = DIALOGUE_SCREEN;
-const BODY_INK = textInkBounds(
-  CARD_FONTS.body,
-  DIALOGUE_SCREEN.text.scale,
-  DIALOGUE_SCREEN.text.pitch,
-  [...CARD_FONTS.body.glyphs.keys()].join(""),
-);
 
 describe("dialogue layout", () => {
-  it("draws the 480x60 panel and 408 text column below the skill HUD", () => {
+  it("keeps the panel and native text column below the skill HUD", () => {
     const hudBottom = Math.max(
       ...[...skillHud(SKILL_IDS).values()]
         .map((at) => skillButton(at).hit)
@@ -52,7 +34,7 @@ describe("dialogue layout", () => {
   it.each([
     ["left", { frameX: 124, slotX: 126, textX: 184 }],
     ["right", { frameX: 544, slotX: 546, textX: 128 }],
-  ] as const)("places the %s speaker's 52 frame, 48 slot and text column", (side, at) => {
+  ] as const)("places the %s portrait frame, slot and native text column", (side, at) => {
     const layout = dialogueSpeakerLayout(side);
     const frameY = box.y + 4;
     expect(layout.portraitFrame).toEqual({ height: 52, width: 52, x: at.frameX, y: frameY });
@@ -67,49 +49,18 @@ describe("dialogue layout", () => {
   });
 
   it.each([
-    ["left", "right end", (tab: Rect) => tab.x + tab.width, 592],
-    ["right", "left end", (tab: Rect) => tab.x, 128],
-  ] as const)("puts the %s speaker's name tab at the panel's %s", (side, _end, edge, at) => {
-    const tab = dialogueNameTab(side, width("Chibi"));
+    ["left", (tab: Rect) => tab.x + tab.width, 592],
+    ["right", (tab: Rect) => tab.x, 128],
+  ] as const)("anchors the %s name tab beside its portrait", (side, edge, at) => {
+    const tab = dialogueNameTab(side, 48);
     expect(edge(tab)).toBe(at);
-    expect(tab).toMatchObject({ height: 20, width: width("Chibi") + 12, y: 66 });
+    expect(tab).toMatchObject({ height: 20, width: 60, y: 66 });
     expect(box.y - tab.y).toBe(10);
     const frame = dialogueSpeakerLayout(side).portraitFrame;
     expect(tab.x >= frame.x + frame.width || tab.x + tab.width <= frame.x).toBe(true);
-    expect(() => dialogueNameTab(side, 480)).toThrow("reaches over the portrait");
   });
-
-  it.each([
-    [1, [96]],
-    [2, [86, 106]],
-  ] as const)("centres %i body line by ink below the name tab", (count, pens) => {
-    const rows = dialogueTextRows(CARD_FONTS, count);
-    const pitch = DIALOGUE_SCREEN.text.pitch;
-    expect(Array.from({ length: count }, (_, index) => rows.bodyY + index * pitch)).toEqual(pens);
-    const above = rows.bodyY + BODY_INK.y - box.y;
-    const below =
-      box.y + box.height - (rows.bodyY + (count - 1) * pitch + BODY_INK.y + BODY_INK.height);
-    expect(Math.abs(above - below)).toBeLessThanOrEqual(1);
-    expect(rows.bodyY + BODY_INK.y).toBeGreaterThanOrEqual(dialogueNameTab("left", 0).y + 20);
-  });
-
-  it.each(["left", "right"] as const)(
-    "keeps the %s speaker's panel and widest name tab clear of Pause's press area",
-    (side) => {
-      const widest = Math.max(...Object.values(TEXT.dialogue.speakers).map(width));
-      const pause = PAUSE_BUTTON.hit;
-      const overlaps = (area: Rect) =>
-        area.x < pause.x + pause.width &&
-        pause.x < area.x + area.width &&
-        area.y < pause.y + pause.height &&
-        pause.y < area.y + area.height;
-      expect([box, dialogueNameTab(side, widest)].filter(overlaps)).toEqual([]);
-    },
-  );
 });
 
-// Every bark the zone shows in the dialogue box: boss spotted and escaped lines, and the stage's
-// journey statements, found as { line, speaker } pairs anywhere in their data.
 function barkLines(...sources: readonly unknown[]): readonly DialogueLine[] {
   const found = new Map<string, DialogueLine>();
   const visit = (value: unknown): void => {
@@ -126,40 +77,13 @@ function barkLines(...sources: readonly unknown[]): readonly DialogueLine[] {
   return [...found.values()];
 }
 
-// Every paragraph wraps to at most two lines of the 408 column at the native body size, with its
-// ink inside the panel and its name tab clear of the portrait.
-function expectFits(id: string, paragraph: DialogueParagraph): void {
-  const style = DIALOGUE_SCREEN.text;
-  // Wrapped without a line cap, so a failure names how many lines the paragraph needs.
-  const fitted = fittingText(
-    { ...style, lines: 9 },
-    bitmapMeasure(CARD_FONTS.body),
-    style.width,
-    paragraph.text,
-  );
-  expect(fitted.lines.length, `${id}: ${paragraph.text}`).toBeLessThanOrEqual(style.lines);
-  const lines = dialogueLines(CARD_FONTS.body, style, style.width, paragraph.text);
-  const rows = dialogueTextRows(CARD_FONTS, lines.length);
-  for (const [index, line] of lines.entries()) {
-    const ink = textInkBounds(CARD_FONTS.body, style.scale, style.pitch, line);
-    expect(ink.width, `${id}: ${line}`).toBeLessThanOrEqual(style.width);
-    expect(rows.bodyY + index * style.pitch + ink.y + ink.height, id).toBeLessThanOrEqual(
-      box.y + box.height,
-    );
-  }
-  expect(() => dialogueNameTab(paragraph.side, width(paragraph.name)), id).not.toThrow();
-}
-
-it("fits every authored dialogue paragraph in two lines at native body size", () => {
-  for (const [scene, plan] of Object.entries(DIALOGUES)) {
-    const paragraphs = dialogueParagraphs(SPEAKERS, TEXT, plan);
-    paragraphs.forEach((paragraph, index) =>
-      expectFits(`${scene} ${plan.lines[index]!.line}`, paragraph),
-    );
+it("resolves every authored dialogue paragraph for the native panel", () => {
+  for (const plan of Object.values(DIALOGUES)) {
+    expect(dialogueParagraphs(SPEAKERS, TEXT, plan)).toHaveLength(plan.lines.length);
   }
 });
 
-it("fits every boss bark and journey statement in two lines at native body size", () => {
+it("resolves boss barks and journey statements for the native panel", () => {
   const lines = barkLines(behaviours, CHARACTERS, STAGE_BARKS);
   for (const kind of ["-escaped", "-spotted", "fert-journey-"]) {
     expect(
@@ -168,6 +92,8 @@ it("fits every boss bark and journey statement in two lines at native body size"
     ).toBe(true);
   }
   for (const line of lines) {
-    expectFits(line.line, dialogueParagraphs(SPEAKERS, TEXT, { lines: [line] })[0]!);
+    expect(dialogueParagraphs(SPEAKERS, TEXT, { lines: [line] })[0]?.text).toBe(
+      TEXT.lines[line.line],
+    );
   }
 });

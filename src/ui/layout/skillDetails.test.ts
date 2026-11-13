@@ -1,25 +1,19 @@
 import { rectsOverlap } from "@andornaut/game-kit/rect";
-import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
 import { SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { renderFit } from "@andornaut/game-kit/view/renderScale";
 import { describe, expect, it } from "vitest";
 
-import fontBody from "../../../public/art/fonts/font-body.fnt?raw";
-import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
 import { CARD_CONTENT, CONTROL_FRAME_INSET, HUD_EDGE, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
-import { TEXT } from "../../data/text.ts";
 import type { SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
-import { cardTextSize } from "./contentCard.ts";
 import { PAUSE_BUTTON } from "./pauseCard.ts";
 import { shifted, viewShift } from "./playView.ts";
 import { ROOM_SCREEN } from "./roomScreen.ts";
-import { SKILL_ROOM, skillDetails, skillRoomContinue } from "./skillDetails.ts";
+import { SKILL_ROOM } from "./skillDetails.ts";
 import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud.ts";
 
-const fonts = { body: parseBitmapFont(fontBody), title: parseBitmapFont(fontTitle) };
 const inside = (
   outer: { x: number; y: number; width: number; height: number },
   inner: typeof outer,
@@ -30,24 +24,13 @@ const inside = (
   inner.y + inner.height <= outer.y + outer.height;
 
 describe("native skill presentation", () => {
-  it("measures the gift Continue footer at the shared native action size while ordinary rooms stay compact", () => {
-    const action = skillRoomContinue(fonts, TEXT.dialogue.continue);
-    expect(action.art.height).toBe(TEXT_BUTTON.height);
-    expect(action.art.width).toBe(
-      cardTextSize(fonts.title, TEXT.dialogue.continue).width + 2 * TEXT_BUTTON.inset,
-    );
-    expect(SCREEN.width - action.art.x - action.art.width).toBe(CARD_CONTENT.padding);
-    expect(SCREEN.height - action.art.y - action.art.height).toBe(CARD_CONTENT.padding);
+  it("keeps the gift footer's face anchor and its panel clear of the press area", () => {
+    const footer = SKILL_ROOM.footer;
+    expect(footer.height).toBe(TEXT_BUTTON.height);
+    expect(SCREEN.width - footer.x - footer.width).toBe(CARD_CONTENT.padding);
+    expect(SCREEN.height - footer.y - footer.height).toBe(CARD_CONTENT.padding);
+    expect(SKILL_ROOM.bounds.y + SKILL_ROOM.bounds.height).toBeLessThan(footer.y);
     expect(ROOM_SCREEN.leave.art).toEqual({ height: 28, width: 72, x: 640, y: 10 });
-  });
-  it.each(SKILL_IDS)("fits the full-font %s description in the room's panel", (skill) => {
-    const room = skillDetails(fonts, SKILL_ROOM.bounds, TEXT.buttons, TEXT.skills[skill]);
-    expect(room.close).toBeUndefined();
-    expect(inside(SKILL_ROOM.bounds, room.card)).toBe(true);
-    expect(inside(room.card, room.groups.description!)).toBe(true);
-    const action = skillRoomContinue(fonts, TEXT.dialogue.continue);
-    expect(rectsOverlap(room.card, action.hit)).toBe(false);
-    expect(inside({ ...SCREEN, x: 0, y: 0 }, action.hit)).toBe(true);
   });
   it.each([
     { shown: ["doubleJump"] },

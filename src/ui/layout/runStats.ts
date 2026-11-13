@@ -1,11 +1,6 @@
 import { fillNames } from "@andornaut/game-kit/lines";
-import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
-import { bitmapMeasure, fitsRoom, fittingText } from "@andornaut/game-kit/text/textFit";
 
-import { CARD_CONTENT } from "../../data/layout.ts";
-import { SCREEN } from "../../data/screen.ts";
 import { timeText } from "../../progress/index.ts";
-import { CARD_TEXT_SCALE } from "./cardFrame.ts";
 
 export const RUN_STAT_KEYS = ["attempts", "lastAttempt", "best"] as const;
 // The current stage's metrics in the order a statistics column shows them.
@@ -36,20 +31,6 @@ export function statsTotalRows(
     label: fillNames(templates[key], { time: "" }).trimEnd(),
     value: timeText(seconds),
   }));
-}
-
-export function wrappedCardText(font: BitmapFont, width: number, text: string): string {
-  const measure = bitmapMeasure(font);
-  const fitted = fittingText(
-    { lines: Math.floor(SCREEN.height / CARD_CONTENT.lineHeight), scale: CARD_TEXT_SCALE },
-    measure,
-    width,
-    text,
-  );
-  if (!fitsRoom(measure, width, fitted)) {
-    throw new Error(`Text cannot fit ${width}px: ${text}`);
-  }
-  return fitted.lines.join("\n");
 }
 
 export function runStatLabels(templates: RunStatWords): RunStatWords {

@@ -1,6 +1,3 @@
-import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
-import { bitmapMeasure, fitsRoom, fittingText } from "@andornaut/game-kit/text/textFit";
-
 import type {
   DialogueChoice,
   DialoguePlan,
@@ -37,21 +34,6 @@ export function dialogueParagraphs(
     }
     return { ...who, name, text: paragraph };
   });
-}
-
-// Wrap at the fixed font size. A paragraph outside its room is rejected rather than shrunk.
-export function dialogueLines(
-  font: BitmapFont,
-  style: { readonly lines: number; readonly scale: number },
-  width: number,
-  text: string,
-): readonly string[] {
-  const measure = bitmapMeasure(font);
-  const fitted = fittingText(style, measure, width, text);
-  if (!fitsRoom(measure, width, fitted)) {
-    throw new Error("Dialogue paragraph does not fit its text area");
-  }
-  return fitted.lines;
 }
 
 export type DialogueControl = "continue" | "skip";

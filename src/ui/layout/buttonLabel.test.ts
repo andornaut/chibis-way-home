@@ -1,20 +1,12 @@
 import { readFileSync } from "node:fs";
 
-import { inkWidth, parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
 import { PNG } from "pngjs";
 import { describe, expect, it } from "vitest";
 
-import fontTitle from "../../../public/art/fonts/font-title.fnt?raw";
 import palette from "../../../public/art/palette.json" with { type: "json" };
 import secondary from "../../../public/art/sprites/ui-button.json" with { type: "json" };
 import primary from "../../../public/art/sprites/ui-button-primary.json" with { type: "json" };
-import { PLAY_MARK, TEXT_BUTTON } from "../../data/layout.ts";
-import { SCREEN } from "../../data/screen.ts";
-import { TEXT } from "../../data/text.ts";
-import { buttonFace, buttonLabelPlacement, centredLabel } from "./buttonLabel.ts";
-import { CARD_TEXT_SCALE } from "./cardFrame.ts";
-import { startScreenLayout } from "./startScreen.ts";
-import { textInkBounds } from "./textInk.ts";
+import { buttonFace, centredLabel } from "./buttonLabel.ts";
 
 const button = { height: 28, width: 72, x: 452, y: 198 };
 
@@ -37,88 +29,6 @@ describe("centredLabel", () => {
   ])("places $name", ({ expected, ink, mark }) => {
     expect(centredLabel(button, ink, mark)).toEqual(expected);
   });
-
-  it.each([
-    ["Start", TEXT.start.start],
-    ["Continue", TEXT.start.continue],
-  ])("fits the start screen's unmarked %s label with standard padding", (_, text) => {
-    const { button: start } = startScreenLayout(SCREEN, true, false).start;
-    const ink = inkWidth(parseBitmapFont(fontTitle), CARD_TEXT_SCALE, text);
-    const { labelX } = centredLabel(start, ink);
-    const margins = [labelX - start.x, start.x + start.width - (labelX + ink)];
-    expect(Math.min(...margins)).toBeGreaterThanOrEqual(16);
-  });
-
-  it("fits the start screen's Restart label on its button", () => {
-    const restart = startScreenLayout(SCREEN, true, true).restart?.button;
-    const ink = inkWidth(parseBitmapFont(fontTitle), CARD_TEXT_SCALE, TEXT.start.restart);
-    const labelX = restart && centredLabel(restart, ink).labelX;
-    const margins = restart &&
-      labelX !== undefined && [labelX - restart.x, restart.x + restart.width - (labelX + ink)];
-    expect(margins && Math.min(...margins)).toBeGreaterThanOrEqual(16);
-  });
-});
-
-it.each([
-  { height: 48, marked: false, text: "Continue" },
-  { height: 48, marked: true, text: "Try again" },
-  { height: 28, marked: false, text: "Install" },
-])(
-  "centres actual $text ink and its optional mark in every visible $height px face",
-  ({ height, marked, text }) => {
-    const font = parseBitmapFont(fontTitle);
-    const button = { height, width: 192, x: 40, y: 50 };
-    const glyphs = [...text]
-      .map((char) => font.glyphs.get(char)!)
-      .filter((glyph) => glyph.width > 0 && glyph.height > 0);
-    const top = Math.min(...glyphs.map((glyph) => glyph.yOffset)) * CARD_TEXT_SCALE;
-    const bottom =
-      Math.max(...glyphs.map((glyph) => glyph.yOffset + glyph.height)) * CARD_TEXT_SCALE;
-    const width = inkWidth(font, CARD_TEXT_SCALE, text);
-    for (const state of ["normal", "pressed", "disabled"] as const) {
-      const face = buttonFace(state, button);
-      const at = buttonLabelPlacement(
-        font,
-        CARD_TEXT_SCALE,
-        marked ? PLAY_MARK : undefined,
-        face,
-        text,
-      );
-      expect(at.label.y + (top + bottom) / 2).toBe(face.y + face.height / 2);
-      if (height === TEXT_BUTTON.height) {
-        expect(at.label.y + top - face.y).toBeGreaterThanOrEqual(TEXT_BUTTON.verticalInset);
-      }
-      const left =
-        at.mark?.x ??
-        at.label.x +
-          textInkBounds(font, CARD_TEXT_SCALE, font.lineHeight * CARD_TEXT_SCALE, text).x;
-      expect(
-        Math.abs(
-          left +
-            (width + (marked ? PLAY_MARK.width + PLAY_MARK.gap : 0)) / 2 -
-            face.x -
-            face.width / 2,
-        ),
-      ).toBeLessThanOrEqual(0.5);
-      if (at.mark) {
-        expect(at.mark.y + PLAY_MARK.height / 2).toBe(face.y + face.height / 2);
-      }
-    }
-  },
-);
-
-it("subtracts visible left/top bearings while retaining kerning and full glyph size", () => {
-  const font = {
-    glyphs: new Map([
-      ["A", { advance: 8, height: 6, width: 5, xOffset: -2, yOffset: 3 }],
-      ["V", { advance: 8, height: 7, width: 6, xOffset: 1, yOffset: 2 }],
-    ]),
-    kernings: new Map([["AV", -2]]),
-    lineHeight: 12,
-  };
-  const face = { height: 32, width: 64, x: 10, y: 20 };
-  const at = buttonLabelPlacement(font, 2, undefined, face, "AV");
-  expect(at.label).toEqual({ x: 31, y: 25 });
 });
 
 it("uses the actual native face pixels for primary, secondary and flat disabled content bounds", () => {

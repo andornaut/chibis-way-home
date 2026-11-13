@@ -1,9 +1,6 @@
-import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
-
 import { DIALOGUE_LAYOUT, HUD_EDGE } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { DialogueSpeaker, Point, Rect } from "../../data/types/index.ts";
-import type { CardFonts } from "./contentCard.ts";
 import { FONT_SCALE } from "./fontRoles.ts";
 import { SKILL_BUTTON } from "./skillHud.ts";
 
@@ -49,22 +46,6 @@ export function dialogueSpeakerLayout(side: DialogueSpeaker["side"]) {
   };
 }
 
-// The text column's body rows, centred down the panel by measured ink: the first row's ink top
-// to the last row's ink bottom, over bodyCount lines. The origin is a BitmapText pen.
-export function dialogueTextRows(fonts: CardFonts, bodyCount: number): { readonly bodyY: number } {
-  const { lines, pitch, scale } = DIALOGUE_SCREEN.text;
-  if (bodyCount < 1 || bodyCount > lines) {
-    throw new Error(`The dialogue panel holds no ${bodyCount}-line paragraph`);
-  }
-  const body = fontInk(fonts.body, scale);
-  const height = (bodyCount - 1) * pitch + body.bottom - body.top;
-  const bodyY = BOX.y + Math.round((BOX.height - height) / 2 - body.top);
-  if (bodyY + body.top < TAB_TOP + TAB.height) {
-    throw new Error("The dialogue name tab overlaps the first line");
-  }
-  return { bodyY };
-}
-
 // The speaker's name tab: above the panel's top at the end opposite the portrait.
 export function dialogueNameTab(side: DialogueSpeaker["side"], nameWidth: number): Rect {
   const width = nameWidth + 2 * TAB.inset;
@@ -79,16 +60,4 @@ export function dialogueNameTab(side: DialogueSpeaker["side"], nameWidth: number
     throw new Error("The dialogue speaker name reaches over the portrait");
   }
   return tab;
-}
-
-// The highest ink top and lowest ink bottom of any drawn glyph, relative to the pen.
-function fontInk(
-  font: BitmapFont,
-  scale: number,
-): { readonly bottom: number; readonly top: number } {
-  const drawn = [...font.glyphs.values()].filter(({ height, width }) => width > 0 && height > 0);
-  return {
-    bottom: Math.max(...drawn.map(({ height, yOffset }) => (yOffset + height) * scale)),
-    top: Math.min(...drawn.map(({ yOffset }) => yOffset * scale)),
-  };
 }
