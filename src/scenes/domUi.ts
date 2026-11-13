@@ -1,4 +1,10 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import {
+  createImageCache,
+  type ImageCache,
+  type Reveal,
+  revealWhenDecoded,
+} from "@andornaut/game-kit/web/ui/dom/imageReady";
 import { cutFrame } from "@andornaut/game-kit/web/ui/dom/sheetFrames";
 import { Core, type Game, Scale, type Scene } from "phaser";
 
@@ -24,6 +30,16 @@ import { sceneFit } from "./playCamera.ts";
 
 const MANIFEST = manifestJson as ArtManifest;
 const layers = new WeakMap<Game, UiLayer>();
+const imageCaches = new WeakMap<Game, ImageCache>();
+
+function sceneImages(scene: Scene, document: Document): ImageCache {
+  let cache = imageCaches.get(scene.game);
+  if (cache === undefined) {
+    cache = createImageCache(document);
+    imageCaches.set(scene.game, cache);
+  }
+  return cache;
+}
 // Each game's cut art frames' blob: URLs, by art key and frame name.
 const frameUrls = new WeakMap<Game, Map<string, Promise<string>>>();
 
@@ -102,7 +118,16 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
         source: frame.source.image as CanvasImageSource,
       };
     });
-    layer.setDimmedSkin(await applySkin(document, palette(scene), frames, layer.element));
+    const dimmed = await applySkin(document, palette(scene), frames, layer.element);
+    const values = [
+      ...Array.from(layer.element.style, (name) => layer.element.style.getPropertyValue(name)),
+      ...Object.values(dimmed),
+    ];
+    const urls = values.flatMap((value) =>
+      [...String(value).matchAll(/url\("([^"]+)"\)/g)].map((match) => match[1]!),
+    );
+    await sceneImages(scene, document).decoded(urls);
+    layer.setDimmedSkin(dimmed);
   };
   await Promise.all([
     loadUiFonts(document.fonts),
@@ -124,6 +149,40 @@ export function mountSceneView(scene: Scene, view: HTMLElement): () => void {
     (() => view.remove());
   scene.events.once("shutdown", unmount);
   return unmount;
+}
+
+// Call before mountSceneView. The canvas fallback keeps drawing until revealed resolves true;
+// the caller then removes that fallback and enables its DOM input once. A cancelled view stays
+// hidden and inert. Scene shutdown cancels a pending reveal before it can enable stale input.
+export function revealSceneView(
+  scene: Scene,
+  view: HTMLElement,
+  urls: readonly string[] | Promise<readonly string[]>,
+): Reveal {
+  const inert = view.inert;
+  view.inert = true;
+  let cancelled = false;
+  const ready = Promise.all([loadUiFonts(view.ownerDocument.fonts), urls]).then(([, urls]) => urls);
+  const reveal = revealWhenDecoded(sceneImages(scene, view.ownerDocument), ready, view);
+  const cancel = () => {
+    cancelled = true;
+    view.hidden = true;
+    view.inert = true;
+    reveal.cancel();
+    scene.events.off("shutdown", cancel);
+  };
+  scene.events.once("shutdown", cancel);
+  return {
+    cancel,
+    revealed: reveal.revealed.then((shown) => {
+      if (!shown || cancelled) {
+        cancel();
+        return false;
+      }
+      view.inert = inert;
+      return true;
+    }),
+  };
 }
 
 // A blob: URL of art's frameName (its sheet's first where none) for an <img>, cut once per game
@@ -161,6 +220,7 @@ export function artFrameUrl(
       cutFrame(document, dim, { height: dim.height, width: dim.width, x: 0, y: 0 }),
     ]);
     sceneDomUi(scene)?.dimImage(cut, dimmed);
+    sceneImages(scene, document).retain([cut, dimmed]);
     return cut;
   })();
   urls.set(key, url);
