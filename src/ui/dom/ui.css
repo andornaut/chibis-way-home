@@ -140,6 +140,10 @@
   margin: calc(-1 * var(--hit));
 }
 
+.ui-text-button[hidden] {
+  display: none;
+}
+
 .ui-text-button {
   display: block;
   margin: 0;
@@ -153,11 +157,11 @@
   cursor: pointer;
 }
 
-.ui-text-button:not(:first-child) {
+.ui-text-button:not([hidden]):not(:nth-child(1 of :not([hidden]))) {
   padding-left: var(--half-gap);
 }
 
-.ui-text-button:not(:last-child) {
+.ui-text-button:not([hidden]):not(:nth-last-child(1 of :not([hidden]))) {
   padding-right: var(--half-gap);
 }
 
@@ -165,17 +169,25 @@
   outline: none;
 }
 
-/* A row of a primary then a secondary button shows the secondary on the left and the primary on
+/* A row of two visible buttons, primary then secondary, shows the secondary on the left and the primary on
    the right, though the primary leads the focus order: each press area reaches the full margin on
    its outer side and half the gap on its inner. */
-.ui-card-actions > .ui-text-button-primary:first-child:nth-last-child(2) {
+.ui-card-actions
+  > .ui-text-button-primary:not([hidden]):nth-child(1 of :not([hidden])):nth-last-child(
+    2 of :not([hidden])
+  ) {
   grid-row: 1;
   grid-column: 2;
   padding-right: var(--hit);
   padding-left: var(--half-gap);
 }
 
-.ui-card-actions > .ui-text-button-primary:first-child:nth-last-child(2) + .ui-text-button {
+.ui-card-actions:has(
+    > .ui-text-button-primary:not([hidden]):nth-child(1 of :not([hidden])):nth-last-child(
+        2 of :not([hidden])
+      )
+  )
+  > .ui-text-button:not([hidden]):nth-child(2 of :not([hidden])) {
   grid-row: 1;
   grid-column: 1;
   padding-right: var(--half-gap);
