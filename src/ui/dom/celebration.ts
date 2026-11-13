@@ -20,8 +20,24 @@ export interface CelebrationView extends CardView<CelebrationControl> {
   readonly images: Readonly<Record<"normal" | "pressed" | "mark", HTMLImageElement>>;
 }
 
+// The authored press area and face for one placeholder action.
+export function celebrationButtonLayout(key: CelebrationControl): LayoutValues {
+  const { button, hit } = CELEBRATION[key];
+  return {
+    "--celebration-button-height": button.height,
+    "--celebration-button-width": button.width,
+    "--celebration-hit-height": hit.height,
+    "--celebration-hit-width": hit.width,
+    "--celebration-hit-x": hit.x - CELEBRATION.card.x,
+    "--celebration-hit-y": hit.y - CELEBRATION.card.y,
+    "--celebration-inset-x": button.x - hit.x,
+    "--celebration-inset-y": button.y - hit.y,
+  };
+}
+
 // Preserve the placeholder's authored frame, text slots and button press areas.
 export const CELEBRATION_DOM_LAYOUT: LayoutValues = {
+  ...celebrationButtonLayout("continue"),
   "--celebration-card-height": CELEBRATION.card.height,
   "--celebration-card-width": CELEBRATION.card.width,
   "--celebration-card-x": CELEBRATION.card.x,
@@ -54,22 +70,9 @@ export function createCelebrationView(
   card.dialog.setAttribute("role", "region");
   writeLayoutProperties(CELEBRATION_DOM_LAYOUT, card.root);
   for (const key of ["continue", "restart"] as const) {
-    const { button, hit } = CELEBRATION[key];
     const control = card.buttons[key];
     control.dataset.action = key;
-    writeLayoutProperties(
-      {
-        "--celebration-button-height": button.height,
-        "--celebration-button-width": button.width,
-        "--celebration-hit-height": hit.height,
-        "--celebration-hit-width": hit.width,
-        "--celebration-hit-x": hit.x - CELEBRATION.card.x,
-        "--celebration-hit-y": hit.y - CELEBRATION.card.y,
-        "--celebration-inset-x": button.x - hit.x,
-        "--celebration-inset-y": button.y - hit.y,
-      },
-      control,
-    );
+    writeLayoutProperties(celebrationButtonLayout(key), control);
   }
   const images = Object.fromEntries(
     ["normal", "pressed", "mark"].map((key) => {
