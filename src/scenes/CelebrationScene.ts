@@ -1,13 +1,14 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
-import { type GameObjects, type Input, Scene } from "phaser";
+import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { type GameObjects, Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
 import { PHONE_EVENTS } from "../pwa/index.ts";
 import {
   CELEBRATION,
+  type CelebrationView,
+  createCelebrationView,
   focusKeyAction,
-  type PressArea,
-  pressedArea,
   stepFocus,
 } from "../ui/index.ts";
 import {
@@ -25,8 +26,10 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts.ts";
-import { modalInput, onScenePointer } from "./modalInput.ts";
-import { fitPlayCamera, playPoint } from "./playCamera.ts";
+import { followTaps } from "./domTaps.ts";
+import { artFrameUrl, mountSceneView, revealSceneView } from "./domUi.ts";
+import { modalInput } from "./modalInput.ts";
+import { fitPlayCamera } from "./playCamera.ts";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts";
 
 const MAP = "map";
@@ -44,6 +47,9 @@ const CONTROLS: readonly Control[] = ["continue", "restart"];
 // on it and lifts on it; Tab and the arrows move the keyboard's focus, and Enter and Space press
 // the focused one, or Continue with nothing focused.
 export class CelebrationScene extends Scene implements RestartOpener {
+  private view: CelebrationView | undefined;
+  private finished = false;
+  private generation = 0;
   private continueFace!: GameObjects.Sprite;
   private continueLabel!: ButtonLabel;
   private focus: Control | undefined;
@@ -59,6 +65,9 @@ export class CelebrationScene extends Scene implements RestartOpener {
 
   create(): void {
     fitPlayCamera(this);
+    this.view = undefined;
+    this.finished = false;
+    const generation = ++this.generation;
     this.focus = undefined;
     this.focusRing = undefined;
     this.pressed = undefined;
@@ -82,12 +91,61 @@ export class CelebrationScene extends Scene implements RestartOpener {
       words.continue,
     );
     this.render();
-    this.watchPresses();
+    const input = modalInput(this);
+    input.ready(false);
+    const view = createCelebrationView(document, words);
+    this.view = view;
+    const urls = Promise.all(
+      (["normal", "pressed", "mark"] as const).map(async (key) => {
+        const art = key === "mark" ? "ui-play-mark" : "ui-resume";
+        const tag = key === "mark" ? "rest" : key;
+        const frame = sheetTags(this.cache.json.get(art) as AsepriteSheet).get(tag)?.[0]?.frame;
+        if (frame === undefined) {
+          throw new Error(`No ${tag} frame for ${art}`);
+        }
+        const url = await artFrameUrl(this, art, frame);
+        if (this.generation === generation) {
+          view.images[key].src = url;
+        }
+        return url;
+      }),
+    );
+    const fallback = [...this.children.list];
+    const reveal = revealSceneView(this, view.root, urls);
+    mountSceneView(this, view.root);
+    void reveal.revealed.then((ready) => {
+      if (!ready || this.generation !== generation) {
+        return;
+      }
+      fallback.forEach((object) => object.destroy());
+      input.ready(true);
+      this.watchPresses(view);
+    });
+    const onKey = (event: KeyboardEvent) => this.key(event);
+    const onKeyUp = (event: KeyboardEvent) => {
+      if (
+        !this.restartOpen &&
+        input.accepts(event) &&
+        (event.key === " " || event.key === "Enter")
+      ) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("keyup", onKeyUp);
+    this.events.once("shutdown", () => {
+      ++this.generation;
+      reveal.cancel();
+      this.view = undefined;
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("keyup", onKeyUp);
+    });
     modalInput(this).subscribe(() => {
       this.pressed = undefined;
       this.render();
     });
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
+
     const onBack = (event: Event) => {
       if (this.restartOpen) {
         const card = this.restartCard();
@@ -107,30 +165,39 @@ export class CelebrationScene extends Scene implements RestartOpener {
   restartClosed(): void {
     this.restartOpen = false;
     this.render();
+    if (this.view !== undefined) {
+      focusTarget(this.view.buttons.restart);
+    }
   }
 
-  private watchPresses(): void {
-    onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      this.pressed = this.restartOpen ? undefined : this.controlAt(pointer);
-      this.render();
-    });
-    onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
-      const control = this.pressed;
-      this.pressed = undefined;
-      this.render();
-      if (control !== undefined && control === this.controlAt(pointer)) {
-        this.act(control);
+  private watchPresses(view: CelebrationView): void {
+    const controlAt = (target: EventTarget | null): Control | null =>
+      CONTROLS.find((key) => target instanceof Node && view.buttons[key].contains(target)) ?? null;
+    const stop = followTaps<Control>(
+      { preventDefault: true, target: view.root, view: view.root },
+      modalInput(this),
+      {
+        accepts: () => !this.finished && !this.restartOpen,
+        controlAt: ({ target }) => controlAt(target),
+        land: (key) => focusTarget(view.buttons[key]),
+        show: (key) =>
+          CONTROLS.forEach((control) =>
+            view.buttons[control].toggleAttribute("data-pressed", control === key),
+          ),
+        tap: (key) => this.act(key),
+      },
+    );
+    const click = (event: MouseEvent) => {
+      const key = controlAt(event.target);
+      if (event.detail === 0 && key !== null) {
+        this.act(key);
       }
+    };
+    view.root.addEventListener("click", click);
+    this.events.once("shutdown", () => {
+      stop();
+      view.root.removeEventListener("click", click);
     });
-  }
-
-  private controlAt(pointer: Input.Pointer): Control | undefined {
-    const areas: PressArea<Control>[] = CONTROLS.map((key) => ({
-      art: CELEBRATION[key].button,
-      hit: CELEBRATION[key].hit,
-      key,
-    }));
-    return pressedArea(areas, playPoint(this, pointer));
   }
 
   private key(event: KeyboardEvent): void {
@@ -142,16 +209,30 @@ export class CelebrationScene extends Scene implements RestartOpener {
       return;
     }
     const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
+    if (action !== undefined || event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    const view = this.view;
+    if (view === undefined) {
+      return;
+    }
+    this.focus = CONTROLS.find((key) => view.buttons[key] === document.activeElement);
     if (action === "next" || action === "previous") {
       this.focus = stepFocus([...CONTROLS], this.focus, action);
-      this.render();
+      focusTarget(view.buttons[this.focus!]);
     } else if (action === "press") {
       this.act(this.focus ?? "continue");
     }
   }
 
   private act(control: Control): void {
+    if (this.finished || this.restartOpen || !modalInput(this).accepts()) {
+      return;
+    }
     if (control === "continue") {
+      this.finished = true;
+      modalInput(this).ready(false);
       this.scene.start(MAP);
     } else {
       this.restartOpen = true;
@@ -163,6 +244,9 @@ export class CelebrationScene extends Scene implements RestartOpener {
   // Each button as the press leaves it, and art's focus ring round the focused one while no card
   // shows.
   private render(): void {
+    if (this.view !== undefined) {
+      return;
+    }
     const continuing = this.pressed === "continue";
     this.continueFace.play(animationKey("ui-resume", continuing ? "pressed" : "normal"));
     placeButtonLabel(continuing, false, this.continueLabel);
