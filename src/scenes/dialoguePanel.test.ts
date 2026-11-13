@@ -11,8 +11,9 @@ import {
   DIALOGUE_PANEL_LAYOUT,
   dialogueParagraphs,
   showPanelParagraph,
+  UI_FRAMES,
 } from "../ui/index.ts";
-import { DIALOGUE_PANEL_KEY } from "./dialoguePanel.ts";
+const DIALOGUE_PANEL_KEY = UI_FRAMES.find(({ name }) => name === "ui-dialogue-box")!.art;
 
 const SOURCES = import.meta.glob<string>(["../**/*.ts", "!../**/*.test.ts"], {
   eager: true,
@@ -22,14 +23,12 @@ const SOURCES = import.meta.glob<string>(["../**/*.ts", "!../**/*.test.ts"], {
 // Vitest blanks CSS imports, so the stylesheet is read from disk, from the project root.
 const DIALOGUE_CSS = readFileSync("src/ui/dom/dialogue.css", "utf8");
 
-// The scenes that show a conversation, bark or achievement notice panel in the HTML UI, and the
-// room, whose gift panel the canvas still draws.
+// The scenes that show a conversation, bark or achievement notice panel in the HTML UI.
 const DOM_PANEL_SCENES = [
   "./AchievementNoticeScene.ts",
   "./DialogueScene.ts",
   "./ZoneBarkScene.ts",
 ];
-const CANVAS_PANEL_SCENES = ["./RoomScene.ts"];
 
 const speakerParagraph = (speaker: string) =>
   dialogueParagraphs(SPEAKERS, TEXT, {
@@ -90,12 +89,12 @@ it("draws only the box at the shared translucent alpha", () => {
 });
 
 it("shows every dialogue panel only through the shared views", () => {
-  const owners = ["./dialoguePanel.ts", "../ui/dom/dialogue.ts", "../ui/dom/skin.ts"];
+  const owners = ["../ui/dom/dialogue.ts", "../ui/dom/skin.ts"];
   for (const [path, source] of Object.entries(SOURCES)) {
     if (!owners.includes(path)) {
       expect(source, path).not.toContain(DIALOGUE_PANEL_KEY);
     }
-    if (!["../data/dialogues.ts", "../ui/dom/dialogue.ts", "./dialoguePanel.ts"].includes(path)) {
+    if (!["../data/dialogues.ts", "../ui/dom/dialogue.ts"].includes(path)) {
       expect(source, path).not.toContain("DIALOGUE_PANEL_ALPHA");
     }
   }
@@ -103,8 +102,6 @@ it("shows every dialogue panel only through the shared views", () => {
     expect(SOURCES[path], path).toMatch(/create(DialogueView|StatusPanel)\(/);
     expect(SOURCES[path], path).not.toContain("drawDialoguePanel");
   }
-  for (const path of CANVAS_PANEL_SCENES) {
-    expect(SOURCES[path], path).toContain("drawDialoguePanel(this)");
-    expect(SOURCES[path], path).toContain("drawDialogueParagraph(this");
-  }
+  expect(SOURCES["./RoomScene.ts"]).toContain("createRoomView(");
+  expect(SOURCES["../ui/dom/room.ts"]).toContain("createDialoguePanel(document");
 });

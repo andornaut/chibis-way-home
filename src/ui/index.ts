@@ -29,7 +29,6 @@ export {
   dialogueChoiceKey,
   type DialogueControl,
   dialogueKeyAction,
-  dialogueLines,
   type DialogueParagraph,
   dialogueParagraphs,
   type DialoguePress,
@@ -141,12 +140,10 @@ export {
   achievementsListTop,
   achievementsPerPage,
 } from "./layout/achievementsCard.ts";
-export { ACTION_HELP, type ActionHelpLayout, actionHelpLayout } from "./layout/actionHelp.ts";
+export { ACTION_HELP } from "./layout/actionHelp.ts";
 export {
   buttonFace,
   type ButtonFaceState,
-  type ButtonLabelPlacement,
-  buttonLabelPlacement,
 } from "./layout/buttonLabel.ts";
 export { CARD_TEXT_SCALE, cardTitleAt } from "./layout/cardFrame.ts";
 export {
@@ -155,17 +152,6 @@ export {
   contactOverscan,
   contactWorldOffset,
 } from "./layout/contactFeedback.ts";
-export {
-  CARD_HEADING,
-  cardActions,
-  cardActionsSize,
-  type CardFonts,
-  cardTextOrigin,
-  cardTextSize,
-  type CardTitleLayout,
-  cardTitleOrigin,
-  contentCardLayout,
-} from "./layout/contentCard.ts";
 export { PAUSE_VISIBLE_DIAMETER } from "./layout/controlChrome.ts";
 export { CUTSCENE_CONTINUE } from "./layout/cutscene.ts";
 export {
@@ -173,13 +159,11 @@ export {
   DIALOGUE_SCREEN,
   dialogueNameTab,
   dialogueSpeakerLayout,
-  dialogueTextRows,
 } from "./layout/dialogueScreen.ts";
 export { FONT_ROLES, FONT_SCALE } from "./layout/fontRoles.ts";
 export { type PressArea, pressedArea } from "./layout/hitAreas.ts";
 export { labelledButton } from "./layout/labelledButton.ts";
 export { MAP_PATH_LOOKS, MAP_SCREEN, mapLabel, type PathLook } from "./layout/mapScreen.ts";
-export { openingLayout } from "./layout/opening.ts";
 export { PAUSE_BUTTON } from "./layout/pauseCard.ts";
 export { canvasSize, playView, shifted, viewShift } from "./layout/playView.ts";
 export { CELEBRATION, type LabelledButton } from "./layout/restartCard.ts";
@@ -192,7 +176,7 @@ export {
   type StatsTotalsSnapshot,
 } from "./layout/runStats.ts";
 export { focusRingAround, SETTINGS_LAYOUT } from "./layout/settingsCard.ts";
-export { SKILL_ROOM, skillDetails, skillRoomContinue } from "./layout/skillDetails.ts";
+export { SKILL_ROOM } from "./layout/skillDetails.ts";
 export { SKILL_ART, SKILL_BUTTON, skillButton, skillHud } from "./layout/skillHud.ts";
 export { stageProgressRect } from "./layout/stageProgress.ts";
 export { stagePageOf, STAGES_PER_PAGE } from "./layout/stageSelectCard.ts";
@@ -201,7 +185,6 @@ export {
   type StartScreenLayout,
   startScreenLayout,
 } from "./layout/startScreen.ts";
-export { textInkBounds } from "./layout/textInk.ts";
 export { type TouchControl, type TouchLayout, touchLayout } from "./layout/touchControls.ts";
 export {
   destinationAtTap,
