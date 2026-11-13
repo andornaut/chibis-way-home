@@ -98,3 +98,10 @@ export function completePairProposal(
   }
   return proposal;
 }
+
+// Reuse must reject unknown profiles before retaining an existing native trace.
+export function existingProofProfileProblems(current: Pick<CertifiedChunks, "entries">): string[] {
+  return current.entries.flatMap((entry) =>
+    proofProfileProblems(entry.proof).map((problem) => `${entry.id}: ${problem}`),
+  );
+}

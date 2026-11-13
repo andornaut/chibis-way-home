@@ -6,7 +6,8 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { availableParallelism, tmpdir } from "node:os";
-import { dirname, isAbsolute, relative, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 import { isMainThread, parentPort, Worker } from "node:worker_threads";
 
@@ -45,7 +46,11 @@ import {
   zoneCandidates,
   ZONES,
 } from "../testing/pairCertify.ts";
-import { completePairProposal, preparePairProposal } from "../testing/selectedCertification.ts";
+import {
+  completePairProposal,
+  existingProofProfileProblems,
+  preparePairProposal,
+} from "../testing/selectedCertification.ts";
 
 const USAGE = `Usage:
   npm run pairs -- certify [--zone ZONE]... [--all]
@@ -187,6 +192,10 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
       console.log(`${zone} module ${id} rejected: ${problems.join("; ")}`);
     }
     const previous = readList(zone);
+    const profileProblems = previous === undefined ? [] : existingProofProfileProblems(previous);
+    if (profileProblems.length > 0) {
+      throw new Error(profileProblems.join("; "));
+    }
     const reuse = !all && previous?.inputs.proofs === proofs;
     const before = new Map((previous?.entries ?? []).map((entry) => [entry.id, entry]));
     const entries: CertifiedEntry[] = [];
@@ -524,9 +533,15 @@ async function main(args: readonly string[]): Promise<number> {
         const out = resolve(values.out);
         const scratch = realpathSync(tmpdir());
         const parent = realpathSync(dirname(out));
-        const within = relative(scratch, parent);
-        if (isAbsolute(within) || within === ".." || within.startsWith("../") || existsSync(out)) {
-          throw new Error("Proposal output must be a new file within the scratch directory");
+        const checkout = realpathSync(fileURLToPath(new URL("../../", import.meta.url)));
+        const inside = (root: string, subject: string) => {
+          const path = relative(root, subject);
+          return !isAbsolute(path) && path !== ".." && !path.startsWith(`..${sep}`);
+        };
+        if (!inside(scratch, parent) || inside(checkout, parent) || existsSync(out)) {
+          throw new Error(
+            "Proposal output must be a new file within the scratch directory and outside the checkout",
+          );
         }
         const current = readList(zones[0]!);
         if (current === undefined) {
