@@ -7,14 +7,13 @@
  * geometry are not paint data.
  */
 
-import { oklchToSrgb, srgbToOklab, srgbToOklch } from "@andornaut/art-kit/colour";
+import { oklchToSrgb, rgb as bytes, srgbToOklab, srgbToOklch } from "@andornaut/art-kit/colour";
 
 import { THEMES } from "./zoneThemes.ts";
 
 type Palette = Readonly<Record<string, string>>;
 type Layer = "far" | "mid" | "near";
 type Role = "light" | "base" | "shade";
-type Triple = [number, number, number];
 
 export const ZONES: Readonly<Record<string, string>> = {
   apartment: "apartment",
@@ -62,10 +61,6 @@ function lookup<T>(table: Readonly<Record<string, T>>, key: string): T {
     throw new Error(`Unknown key: ${key}`);
   }
   return table[key] as T;
-}
-
-function bytes(colour: string): Triple {
-  return [0, 2, 4].map((i) => Number.parseInt(colour.slice(i, i + 2), 16)) as Triple;
 }
 
 function hex(colour: readonly number[]): string {
