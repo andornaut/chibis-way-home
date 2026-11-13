@@ -8,7 +8,11 @@ const IDS = [
   "industrial-crane-lookout--industrial-low-roof-strip",
   "industrial-industrial-low-roof-strip--industrial-low-roof-strip",
 ];
-const current = CERTIFIED_LISTS.find(({ zone }) => zone === "industrial")!;
+const industrial = CERTIFIED_LISTS.find(({ zone }) => zone === "industrial")!;
+const current = {
+  ...industrial,
+  entries: industrial.entries.filter(({ id }) => !IDS.includes(id)),
+};
 const proof = (): Proof => ({
   problems: [],
   proof: ORDINARY_PROOF_PROFILE,
