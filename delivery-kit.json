@@ -15,7 +15,7 @@
       { "name": "build", "run": "tests/container/check build" }
     ]
   },
-  "resources": { "cpus": 4, "loadLimit": 30 },
+  "resources": { "cpus": 4, "loadLimit": 30, "memoryMiB": 8192 },
   "ci": {
     "requiredNames": ["AI attributions", "Lint", "Test"],
     "pollSeconds": 60,
