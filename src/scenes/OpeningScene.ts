@@ -1,3 +1,4 @@
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { OPENING } from "../data/opening.ts";
@@ -6,7 +7,15 @@ import { TEXT } from "../data/text.ts";
 import { TOUCH } from "../data/touch.ts";
 import type { Point } from "../data/types/index.ts";
 import { createOpeningPlayback } from "../progress/index.ts";
-import { focusKeyAction, openingLayout, pressedArea, stepFocus } from "../ui/index.ts";
+import {
+  createOpeningView,
+  focusKeyAction,
+  openingLayout,
+  type OpeningView,
+  pressedArea,
+  showOpeningCaption,
+  stepFocus,
+} from "../ui/index.ts";
 import {
   addCardText,
   addTextButton,
@@ -19,6 +28,8 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts.ts";
+import { followTaps } from "./domTaps.ts";
+import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { modalInput, onScenePointer } from "./modalInput.ts";
 import { renderOpeningLayer } from "./openingLayer.ts";
 import { fitPlayCamera, playPoint } from "./playCamera.ts";
@@ -29,6 +40,9 @@ type Action = "continue" | "skip";
 const ACTIONS: readonly Action[] = ["continue", "skip"];
 
 export class OpeningScene extends Scene {
+  private view: OpeningView | undefined;
+  private htmlReady = false;
+  private generation = 0;
   private playback!: ReturnType<typeof createOpeningPlayback>;
   private art!: GameObjects.Container;
   private background: GameObjects.Image | undefined;
@@ -50,6 +64,9 @@ export class OpeningScene extends Scene {
 
   create(): void {
     fitPlayCamera(this);
+    this.view = undefined;
+    this.htmlReady = false;
+    const generation = ++this.generation;
     this.focus = undefined;
     this.ring = undefined;
     this.press = undefined;
@@ -88,7 +105,7 @@ export class OpeningScene extends Scene {
     });
     captureTab(this, true);
     this.events.once("shutdown", () => captureTab(this, false));
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+    const keydown = (event: KeyboardEvent) => {
       if (!input.accepts(event)) {
         return;
       }
@@ -96,17 +113,27 @@ export class OpeningScene extends Scene {
       const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
       if (action === "next" || action === "previous") {
         event.preventDefault();
-        this.focus = stepFocus(ACTIONS, this.focus, action);
+        this.focus = stepFocus(ACTIONS, this.focusedAction(), action);
+        if (this.htmlReady && this.focus !== undefined) {
+          this.view?.buttons[this.focus].focus();
+        }
         this.renderControls();
       } else if (action === "press") {
         event.preventDefault();
-        this.activate(this.focus ?? "continue");
+        this.activate(this.focusedAction() ?? "continue");
       }
-    });
-    this.input.keyboard?.on("keyup", (event: KeyboardEvent) => event.stopPropagation());
+    };
+    const keyup = (event: KeyboardEvent) => {
+      event.stopPropagation();
+      if (event.key === " ") {
+        event.preventDefault();
+      }
+    };
+    this.input.keyboard?.on("keydown", keydown);
+    this.input.keyboard?.on("keyup", keyup);
     onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
       this.input.stopPropagation();
-      if (this.press) {
+      if (this.htmlReady || this.press) {
         return;
       }
       const at = playPoint(this, pointer);
@@ -147,6 +174,55 @@ export class OpeningScene extends Scene {
     onScenePointer(this, "pointerupoutside", (pointer: Input.Pointer) => up(pointer, true));
     this.drawFrame();
     this.renderControls();
+    if (sceneDomUi(this) !== undefined) {
+      const view = createOpeningView(document, TEXT.dialogue);
+      this.view = view;
+      const frame = this.playback.frame();
+      showOpeningCaption(this.layout, TEXT.lines[frame.beat.text]!, view);
+      const stop = this.watchPresses(view);
+      view.root.addEventListener("keydown", keydown);
+      view.root.addEventListener("keyup", keyup);
+      const urls = artFrameUrl(
+        this,
+        "ui-play-mark",
+        this.buttons.continue.label.mark!.frame.name,
+      ).then((url) => {
+        if (this.generation === generation) {
+          view.mark.src = url;
+        }
+        return [url];
+      });
+      const reveal = revealSceneView(this, view.root, urls);
+      this.events.once("shutdown", () => {
+        ++this.generation;
+        this.htmlReady = false;
+        reveal.cancel();
+        stop();
+        view.root.removeEventListener("keydown", keydown);
+        view.root.removeEventListener("keyup", keyup);
+        this.view = undefined;
+      });
+      mountSceneView(this, view.root);
+      void reveal.revealed.then((ready) => {
+        if (!ready || this.generation !== generation || this.playback.frame().finished) {
+          return;
+        }
+        input.invalidate();
+        this.press = undefined;
+        this.htmlReady = true;
+        this.caption.setVisible(false);
+        this.ring?.setVisible(false);
+        for (const button of Object.values(this.buttons)) {
+          button.faces.normal.setVisible(false);
+          button.faces.pressed.setVisible(false);
+          button.label.label.setVisible(false);
+          button.label.mark?.setVisible(false);
+        }
+        if (this.focus !== undefined) {
+          view.buttons[this.focus].focus();
+        }
+      });
+    }
   }
 
   override update(_time: number, delta: number): void {
@@ -154,6 +230,56 @@ export class OpeningScene extends Scene {
       this.playback.tick(delta / 1000);
     }
     this.drawFrame();
+  }
+
+  private focusedAction(): Action | undefined {
+    if (!this.htmlReady) {
+      return this.focus;
+    }
+    const active = this.view?.root.ownerDocument.activeElement;
+    return ACTIONS.find((action) => this.view?.buttons[action] === active);
+  }
+
+  private watchPresses(view: OpeningView): () => void {
+    const input = modalInput(this);
+    const live = () => this.htmlReady && !this.playback.frame().finished;
+    const controlAt = ({ target }: { readonly target: EventTarget | null }): Action | null => {
+      if (!(target instanceof Element) || !view.root.contains(target)) {
+        return null;
+      }
+      const action = target.closest<HTMLElement>("[data-control]")?.dataset.control;
+      return action === "continue" || action === "skip" ? action : null;
+    };
+    const stop = followTaps<Action>(
+      { preventDefault: true, target: view.root, view: view.root },
+      input,
+      {
+        accepts: live,
+        controlAt,
+        land: (action) => focusTarget(view.buttons[action]),
+        show: (held) =>
+          ACTIONS.forEach((action) =>
+            view.buttons[action].toggleAttribute("data-pressed", held === action),
+          ),
+        tap: (action) => this.activate(action),
+      },
+    );
+    const click = (event: MouseEvent) => {
+      const action = controlAt(event);
+      if (event.detail === 0 && action !== null && live() && input.accepts()) {
+        this.activate(action);
+      }
+    };
+    const keep = (event: Event) => event.preventDefault();
+    view.root.addEventListener("click", click);
+    view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
+    view.root.addEventListener("touchend", keep, { capture: true, passive: false });
+    return () => {
+      stop();
+      view.root.removeEventListener("click", click);
+      view.root.removeEventListener("touchstart", keep, true);
+      view.root.removeEventListener("touchend", keep, true);
+    };
   }
 
   private actionAt(at: Point): Action | undefined {
@@ -184,7 +310,7 @@ export class OpeningScene extends Scene {
   }
 
   private renderControls(): void {
-    if (this.playback.frame().finished) {
+    if (this.htmlReady || this.playback.frame().finished) {
       return;
     }
     for (const action of ACTIONS) {
@@ -220,6 +346,9 @@ export class OpeningScene extends Scene {
       }
       this.layout = openingLayout(cardFonts(this), TEXT.dialogue, text);
       this.caption.setText(text).setPosition(this.layout.caption.x, this.layout.caption.y);
+      if (this.view !== undefined) {
+        showOpeningCaption(this.layout, text, this.view);
+      }
       this.beat = frame.beat;
     }
   }
