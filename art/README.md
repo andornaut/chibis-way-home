@@ -14,7 +14,7 @@ Chibi's Way Home artwork, drawing pipeline and remaining art work. The [style gu
 - `art/`: generator scripts, font sources and art documentation.
 - `public/art/`: served sprites, images, fonts, palette, manifest and contact metadata. The art pipeline also supplies the app and favicon assets in `public/icons/` and `public/`.
 
-Start, Map, Opening, room gift/helper and placeholder Celebration interfaces use the HTML UI layer, reusing the exported frames, palette, Liberation Sans TTFs and native glyphs. Backgrounds and world art stay on canvas, including map paths, regional miniatures and the travelling bird, opening actors and the room cast. This does not retire the canvas font exports or migrate live touch controls and progress displays.
+Start, Map, Opening, room gift/helper and placeholder Celebration interfaces use the HTML UI layer, reusing the exported frames, palette, Liberation Sans TTFs and native glyphs. Backgrounds and world art stay on canvas, including map paths, regional miniatures and the travelling bird, opening actors and the room cast. Live Move, Use and Jump controls and the movement knob use decorative SVG on the same HTML layer; stage progress is a separate DOM strip. Their existing input geometry remains unchanged. Canvas font exports remain available for remaining consumers and generator previews.
 
 ## Pipeline
 
