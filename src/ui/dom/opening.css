@@ -1,34 +1,54 @@
-/* The opening's captions and controls use the shared layout's base-pixel geometry. */
+/* The footer keeps its fixed height and face anchors; loaded native fonts size its content. */
 .opening-view {
   pointer-events: none;
 }
 
-.opening-caption {
+.opening-footer {
   position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  height: calc(var(--ui-unit) * var(--opening-footer-height) * 1px);
+  padding: 0 calc(var(--ui-unit) * var(--card-padding) * 1px);
+  background: var(--colour-ink);
+}
+
+.opening-caption {
   margin: 0;
   font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
   font-weight: 400;
   line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
   white-space: pre;
   color: var(--colour-white);
+  text-box: trim-both cap alphabetic;
 }
 
-.opening-view > .ui-text-button {
-  position: absolute;
-  box-sizing: border-box;
+.ui-card-actions.opening-actions {
+  /* The outer hit area reaches past the right inset; its face stays on the original anchor. */
+  margin: 0 calc(-1 * var(--hit)) 0 0;
 }
 
-.opening-view .ui-text-button-face {
-  box-sizing: border-box;
+.opening-actions .ui-text-button-face {
   min-width: 0;
 }
 
-.opening-view .ui-text-button-label {
-  display: inline-flex;
-  align-items: center;
+/* The mark joins the centred label without changing the intrinsic width of either face. */
+.opening-actions .ui-text-button-primary .ui-text-button-label {
+  position: relative;
+  left: calc(var(--ui-unit) * var(--opening-mark-lead) / 2 * 1px);
 }
 
-.opening-view .ui-text-button-label img {
-  flex-shrink: 0;
+.opening-actions .ui-text-button-label img {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + var(--ui-unit) * var(--opening-mark-gap) * 1px);
+  width: calc(var(--ui-unit) * var(--opening-mark-width) * 1px);
+  height: calc(var(--ui-unit) * var(--opening-mark-height) * 1px);
   image-rendering: pixelated;
+  translate: 0 -50%;
 }

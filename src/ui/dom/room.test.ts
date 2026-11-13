@@ -17,7 +17,7 @@ const COLOURS = {
 const WORDS = { actions: TEXT.buttons, icons: TEXT.actionIcons };
 
 it("renders an ordinary room's name and sole secondary Leave control at its existing target", () => {
-  const view = createRoomView(document, COLOURS, ROOM_SCREEN.leave, {
+  const view = createRoomView(document, COLOURS, {
     ...WORDS,
     action: TEXT.room.leave,
     name: TEXT.rooms.test?.name ?? "",
@@ -39,7 +39,7 @@ it("renders an ordinary room's name and sole secondary Leave control at its exis
 it("keeps gift text, helper name, animated portrait slot and primary Continue in semantic HTML", () => {
   const skill = TEXT.skills.dash;
   const paragraph = dialogueParagraphs(SPEAKERS, TEXT, DIALOGUES["dash-gift"]!)[0]!;
-  const view = createRoomView(document, COLOURS, ROOM_SCREEN.leave, {
+  const view = createRoomView(document, COLOURS, {
     ...WORDS,
     action: TEXT.dialogue.continue,
     gift: { description: skill.description, disc: skill.title, paragraph, title: skill.title },
@@ -51,6 +51,9 @@ it("keeps gift text, helper name, animated portrait slot and primary Continue in
   expect(view.root.querySelectorAll("button")).toHaveLength(1);
   expect(view.leave.textContent).toBe(TEXT.dialogue.continue);
   expect(view.leave.classList.contains("ui-text-button-primary")).toBe(true);
+  expect(view.root.hasAttribute("data-gift")).toBe(true);
+  expect(view.leave.style.width).toBe("");
+  expect(view.leave.querySelector<HTMLElement>(".ui-text-button-face")!.style.width).toBe("");
   expect(view.glyph?.alt).toBe("");
   expect(view.panel?.portrait.alt).toBe("");
   expect(view.root.querySelectorAll(".dialogue-portrait")).toHaveLength(1);

@@ -48,7 +48,8 @@ export function roomPortraitProperties(size: Pick<Rect, "height" | "width">): La
   return { "--room-portrait-height": size.height, "--room-portrait-width": size.width };
 }
 
-export function roomProperties(action: { readonly art: Rect; readonly hit: Rect }): LayoutValues {
+export function roomProperties(): LayoutValues {
+  const action = ROOM_SCREEN.leave;
   return {
     ...DIALOGUE_PANEL_LAYOUT,
     "--room-action-height": action.art.height,
@@ -60,6 +61,7 @@ export function roomProperties(action: { readonly art: Rect; readonly hit: Rect 
     "--room-action-x": action.hit.x,
     "--room-action-y": action.hit.y,
     "--room-description-width": SKILL_DETAILS.descriptionWidth,
+    "--room-footer-width": SKILL_ROOM.footer.width,
     "--room-gift-height": SKILL_ROOM.bounds.height,
     "--room-gift-top": SKILL_ROOM.bounds.y,
     "--room-name-x": ROOM_SCREEN.nameCentre.x,
@@ -71,7 +73,6 @@ export function roomProperties(action: { readonly art: Rect; readonly hit: Rect 
 export function createRoomView(
   document: Document,
   colours: RoomViewColours,
-  action: { readonly art: Rect; readonly hit: Rect },
   words: RoomViewWords,
 ): RoomView {
   const make = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
@@ -82,7 +83,8 @@ export function createRoomView(
   const root = make("div", "room-scene");
   root.setAttribute("role", "region");
   root.setAttribute("aria-labelledby", "room-title");
-  writeLayoutProperties(roomProperties(action), root);
+  root.toggleAttribute("data-gift", words.gift !== undefined);
+  writeLayoutProperties(roomProperties(), root);
   const view = make("div", "ui-view room-view");
   const title = make("h1", words.gift === undefined ? "room-name" : "ui-card-title");
   title.id = "room-title";
