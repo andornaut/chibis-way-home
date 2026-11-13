@@ -21,6 +21,19 @@
     },
     {
       "encounters": 0,
+      "grade": 3,
+      "id": "industrial-crane-lookout--industrial-double-step",
+      "kind": "pair",
+      "layout": "fa58007288a2b097",
+      "modules": ["crane-lookout", "industrial-double-step"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "35c1ac98f7a88e0e",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "9684339c2ce5a9af:1452",
+      "work": 1452
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "industrial-crane-lookout--industrial-low-roof-strip",
       "kind": "pair",
@@ -31,6 +44,45 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "ee38aa9eb2b8ff52:3047",
       "work": 3047
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "industrial-crane-lookout--industrial-staggered-bridge",
+      "kind": "pair",
+      "layout": "d6230dd1c5ed6660",
+      "modules": ["crane-lookout", "industrial-staggered-bridge"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "d42a550deb27a336",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "f853b09318729534:623",
+      "work": 623
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "industrial-crane-lookout--industrial-vent-stair",
+      "kind": "pair",
+      "layout": "fbce37f012f77750",
+      "modules": ["crane-lookout", "industrial-vent-stair"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "94cceba71ab0c565",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "a3d7d98dd658a394:6924",
+      "work": 6924
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "industrial-industrial-double-step--industrial-double-step",
+      "kind": "pair",
+      "layout": "719f95d968840742",
+      "modules": ["industrial-double-step", "industrial-double-step"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "9f8205b4bb062656",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "f603d47b8adb0716:989",
+      "work": 989
     },
     {
       "encounters": 0,
@@ -365,7 +417,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "6cff9f081e9a0a55", "proofs": "0ac7a90427b29cb4" },
+  "inputs": { "data": "71be8d6cfadbcaf9", "proofs": "0ac7a90427b29cb4" },
   "version": 1,
   "zone": "industrial"
 }
