@@ -1,11 +1,18 @@
-import { expect, it } from "vitest";
+import { expect, it, vi } from "vitest";
 
 import { BIRD_FRAME } from "../assets/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { Instance, TerrainRect, ZonePlan } from "../data/types/index.ts";
 import { zoneLayout } from "../rules/tiles.ts";
+import * as zoneRules from "../rules/zone.ts";
 import { startZone } from "../rules/zone.ts";
-import { requiredRouteTargetReached, type WalkRouteTarget, zoneSurfaces } from "../sim/zoneWalk.ts";
+import {
+  requiredRouteObservation,
+  requiredRouteTargetReached,
+  surfaceAt,
+  type WalkRouteTarget,
+  zoneSurfaces,
+} from "../sim/zoneWalk.ts";
 import { CATALOGUE } from "./art.ts";
 import { continuousRequiredRoute } from "./continuousRequiredRoute.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
@@ -31,6 +38,25 @@ it("proves an actual continuous ordinary entry-to-clear trajectory with grounded
   expect(result.ticks).toBeLessThanOrEqual(600);
   expect(result.missing).toEqual([]);
   expect(result.witnesses).toHaveLength(1);
+  expect(result.witnesses.every(({ tick }) => tick >= 1)).toBe(true);
+});
+
+it("never counts the initialization snapshot as an actual-step witness", () => {
+  const layout = fixture();
+  const initial = startZone(ORDINARY, layout, 1);
+  const entry = { ...initial, bird: { ...initial.bird, grounded: true } };
+  const col = entry.bird.x / TILE;
+  const target = { area: entry.area, at: { col, row: 50 }, xRange: { max: col, min: col } };
+  const initialize = vi.spyOn(zoneRules, "startZone").mockReturnValueOnce(entry);
+  try {
+    const result = continuousRequiredRoute(layout, [target]);
+    expect(result.terminal.cleared).toBe(true);
+    expect(result.status).toBe("not-proven");
+    expect(result.missing).toEqual([{ index: 0, target }]);
+    expect(result.witnesses).toEqual([]);
+  } finally {
+    initialize.mockRestore();
+  }
 });
 
 it("rejects an actual clear that misses a declared refuge surface", () => {
@@ -63,8 +89,14 @@ it("matches an exact refuge interval using body-left X and rejects unsafe observ
     ...start,
     bird: { ...start.bird, grounded: true, x: 12 * TILE, y: 50 * TILE - ORDINARY.height },
   };
+  const expected = surfaceAt(TILE, query.surfaces, target.area, target.at);
+  const interval = { max: target.xRange!.max * TILE, min: target.xRange!.min * TILE };
   const match = (state: typeof zone) =>
-    requiredRouteTargetReached(ORDINARY, query, layout, target, state);
+    requiredRouteTargetReached(
+      expected,
+      interval,
+      requiredRouteObservation(ORDINARY, layout, query.surfaces, state),
+    );
   expect(match(zone)).toBe(true);
   expect(match({ ...zone, bird: { ...zone.bird, x: zone.bird.x + 0.01 } })).toBe(false);
   expect(match({ ...zone, bird: { ...zone.bird, x: zone.bird.x - ORDINARY.width / 2 } })).toBe(
@@ -112,9 +144,15 @@ it("matches a moving refuge at its current support position and keeps full-body 
       index === 0 ? { ...object, x: 30 * TILE } : object,
     ),
   };
-  expect(requiredRouteTargetReached(ORDINARY, { surfaces, tile: TILE }, layout, target, zone)).toBe(
-    true,
-  );
+  const expected = surfaceAt(TILE, surfaces, target.area, target.at);
+  const interval = { max: target.xRange!.max * TILE, min: target.xRange!.min * TILE };
+  expect(
+    requiredRouteTargetReached(
+      expected,
+      interval,
+      requiredRouteObservation(ORDINARY, layout, surfaces, zone),
+    ),
+  ).toBe(true);
   const offSupport = {
     ...zone,
     objects: zone.objects.map((object, index) =>
@@ -122,6 +160,10 @@ it("matches a moving refuge at its current support position and keeps full-body 
     ),
   };
   expect(
-    requiredRouteTargetReached(ORDINARY, { surfaces, tile: TILE }, layout, target, offSupport),
+    requiredRouteTargetReached(
+      expected,
+      interval,
+      requiredRouteObservation(ORDINARY, layout, surfaces, offSupport),
+    ),
   ).toBe(false);
 });
