@@ -1,0 +1,132 @@
+/* Map geometry stays in base pixels on the fitted play view. */
+.map-title,
+.map-label,
+.map-action,
+.map-destination,
+.map-marker {
+  position: absolute;
+  left: calc(var(--ui-unit) * var(--map-x) * 1px);
+  top: calc(var(--ui-unit) * var(--map-y) * 1px);
+  margin: 0;
+}
+
+.map-title {
+  font-size: calc(var(--ui-unit) * var(--heading-size) * 1px);
+  line-height: calc(var(--ui-unit) * var(--heading-line) * 1px);
+}
+
+.map-label,
+.map-action,
+.map-destination,
+.map-marker {
+  width: calc(var(--ui-unit) * var(--map-width) * 1px);
+  height: calc(var(--ui-unit) * var(--map-height) * 1px);
+}
+
+.map-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--colour-lgrey);
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 700;
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.map-view .map-action,
+.map-view .map-destination {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.map-action .ui-text-button-face {
+  position: absolute;
+  left: calc(var(--ui-unit) * var(--map-face-x) * 1px);
+  top: calc(var(--ui-unit) * var(--map-face-y) * 1px);
+  width: calc(var(--ui-unit) * var(--map-face-width) * 1px);
+}
+
+.map-marker {
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.map-destination:focus {
+  outline: none;
+}
+
+.map-destination:focus-visible .map-marker {
+  box-shadow: var(--focus-ring);
+}
+
+.map-destination[aria-disabled="true"] {
+  cursor: default;
+}
+
+/* Exclude only opaque miniature pixels, so the world's miniature stays above its marker. */
+.map-marker[data-miniature] {
+  -webkit-mask-image: linear-gradient(#000, #000), var(--map-miniature-image);
+  mask-image: linear-gradient(#000, #000), var(--map-miniature-image);
+  -webkit-mask-position:
+    0 0,
+    calc(var(--ui-unit) * var(--map-miniature-x) * 1px)
+      calc(var(--ui-unit) * var(--map-miniature-y) * 1px);
+  mask-position:
+    0 0,
+    calc(var(--ui-unit) * var(--map-miniature-x) * 1px)
+      calc(var(--ui-unit) * var(--map-miniature-y) * 1px);
+  -webkit-mask-size:
+    100% 100%,
+    calc(var(--ui-unit) * var(--map-miniature-width) * 1px)
+      calc(var(--ui-unit) * var(--map-miniature-height) * 1px);
+  mask-size:
+    100% 100%,
+    calc(var(--ui-unit) * var(--map-miniature-width) * 1px)
+      calc(var(--ui-unit) * var(--map-miniature-height) * 1px);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+/* The entire HTML view excludes the travelling canvas bird's exact current frame alpha. */
+.map-view {
+  image-rendering: pixelated;
+  -webkit-mask-image: linear-gradient(#000, #000), var(--map-bird-image);
+  mask-image: linear-gradient(#000, #000), var(--map-bird-image);
+  -webkit-mask-position:
+    0 0,
+    calc(var(--ui-unit) * var(--map-bird-x) * 1px) calc(var(--ui-unit) * var(--map-bird-y) * 1px);
+  mask-position:
+    0 0,
+    calc(var(--ui-unit) * var(--map-bird-x) * 1px) calc(var(--ui-unit) * var(--map-bird-y) * 1px);
+  -webkit-mask-size:
+    100% 100%,
+    calc(var(--ui-unit) * var(--map-bird-width) * 1px)
+      calc(var(--ui-unit) * var(--map-bird-height) * 1px);
+  mask-size:
+    100% 100%,
+    calc(var(--ui-unit) * var(--map-bird-width) * 1px)
+      calc(var(--ui-unit) * var(--map-bird-height) * 1px);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+.map-content {
+  position: absolute;
+  inset: 0;
+}
+
+/* Mirroring the mask and counter-mirroring its content preserves every visual and hit area. */
+.map-view[data-bird-flipped],
+.map-view[data-bird-flipped] > .map-content {
+  transform: scaleX(-1);
+}

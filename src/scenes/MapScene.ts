@@ -1,15 +1,17 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
+import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
 import { inkWidth } from "@andornaut/game-kit/text/bitmapFont";
 import {
   phaserBitmapFont,
   type PhaserFontData,
 } from "@andornaut/game-kit/text/phaser/phaserBitmapFont";
+import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 import { type GameObjects, type Input, Scene } from "phaser";
 
 import { ART_MANIFEST_KEY, type ArtManifest } from "../assets/index.ts";
 import { MAP_LAYOUT, MAP_PATH } from "../data/layout.ts";
 import { MAP_TRAVEL, ZONE_MAP } from "../data/map.ts";
-import { TILE } from "../data/screen.ts";
+import { SCREEN, TILE } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
 import type { MapDestination, Point, Rect } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
@@ -26,6 +28,7 @@ import {
 import { PHONE_EVENTS } from "../pwa/index.ts";
 import {
   bentCurve,
+  createMap,
   curveWalk,
   destinationAtTap,
   destinationCentre,
@@ -37,6 +40,7 @@ import {
   type MapAction,
   mapKeyAction,
   mapLabel,
+  type MapView,
   type PathLook,
   pathRects,
   type PressArea,
@@ -51,6 +55,8 @@ import {
   ringFocus,
   type TextButton,
 } from "./cardParts.ts";
+import { followTaps } from "./domTaps.ts";
+import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { modalInput, onScenePointer } from "./modalInput.ts";
 import { fitPlayCamera, playPoint } from "./playCamera.ts";
 import { savedMap, saveStand } from "./save.ts";
@@ -77,6 +83,13 @@ interface MapData {
 // picker, however many of its stages are unlocked. The footer and saved stand keep Continue safe
 // as the default action.
 export class MapScene extends Scene implements StageSelectOpener {
+  private birdFrames = new Map<string, string>();
+  private view: MapView | undefined;
+  private domReady = false;
+  private generation = 0;
+  private fallback: (
+    GameObjects.BitmapText | GameObjects.Graphics | GameObjects.Sprite | GameObjects.NineSlice
+  )[] = [];
   private colours: Readonly<Record<string, string>> = {};
   private completed: ReadonlySet<string> = new Set();
   private buttons!: Readonly<Record<MapAction, TextButton>>;
@@ -111,6 +124,11 @@ export class MapScene extends Scene implements StageSelectOpener {
     this.completed = new Set(completed);
     this.open = openMap(ZONE_MAP, this.completed);
     this.stand = this.open.zones.includes(stand) ? stand : ZONE_MAP.start;
+    this.birdFrames = new Map();
+    this.view = undefined;
+    this.domReady = false;
+    this.generation += 1;
+    this.fallback = [];
     this.pressed = undefined;
     this.focus = undefined;
     this.focusRing = undefined;
@@ -140,14 +158,18 @@ export class MapScene extends Scene implements StageSelectOpener {
     this.drawPaths();
     this.drawNodes();
     const { textScale, title } = MAP_SCREEN;
-    uiObject(
-      this,
-      this.add
-        .bitmapText(title.x, title.y, TITLE_FONT, TEXT.map.title)
-        .setScale(textScale)
-        .setTint(this.colour("ink")),
+    this.fallback.push(
+      uiObject(
+        this,
+        this.add
+          .bitmapText(title.x, title.y, TITLE_FONT, TEXT.map.title)
+          .setScale(textScale)
+          .setTint(this.colour("ink")),
+      ),
     );
     this.addActions();
+    this.fallback.forEach((object) => uiObject(this, object));
+    this.addDom();
     this.showPressed(undefined);
     modalInput(this).subscribe(() => this.showPressed(undefined));
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
@@ -170,12 +192,12 @@ export class MapScene extends Scene implements StageSelectOpener {
       this.selectionOpen = false;
     });
     onScenePointer(this, "pointerdown", (pointer: Input.Pointer) => {
-      if (!this.selectionOpen && !this.travelling) {
+      if (!this.domReady && !this.selectionOpen && !this.travelling) {
         this.showPressed(this.controlAt(pointer));
       }
     });
     onScenePointer(this, "pointerup", (pointer: Input.Pointer) => {
-      if (this.selectionOpen || this.travelling) {
+      if (this.domReady || this.selectionOpen || this.travelling) {
         return;
       }
       const control = this.pressed;
@@ -212,6 +234,7 @@ export class MapScene extends Scene implements StageSelectOpener {
     }
     journey.previousX = point.x;
     journey.bird.setPosition(Math.round(point.x), Math.round(point.y + journey.bottomOffset));
+    this.maskTravelBird();
     if (journey.distance >= journey.path.length) {
       this.stand = journey.stage;
       saveStand(this.stand);
@@ -236,10 +259,14 @@ export class MapScene extends Scene implements StageSelectOpener {
     bird.setScale(this.mapBird.displayWidth / bird.width).setFlipX(toAt.x < fromAt.x);
     this.mapBird.setVisible(false);
     this.travelling = true;
+    if (this.view !== undefined) {
+      this.view.root.inert = true;
+    }
     this.input.enabled = false;
     this.focus = undefined;
     this.showPressed(undefined);
     this.journey = { bird, bottomOffset, distance: 0, path, previousX: fromAt.x, stage };
+    this.maskTravelBird();
   }
 
   private centre(destination: MapDestination): Point {
@@ -278,6 +305,7 @@ export class MapScene extends Scene implements StageSelectOpener {
     const { bird, icon, marker, textScale } = MAP_SCREEN;
     const font = phaserBitmapFont(this.cache.bitmapFont.get(TITLE_FONT).data as PhaserFontData);
     const knockouts = this.add.graphics().fillStyle(this.colour("lgrey"));
+    this.fallback.push(knockouts);
     const labels: { at: Point; name: string }[] = [];
     for (const destination of ZONE_MAP.destinations) {
       const name = TEXT.map.zones[destination.id];
@@ -302,10 +330,12 @@ export class MapScene extends Scene implements StageSelectOpener {
         this.stand,
         destination,
       );
-      this.add
-        .sprite(centre.x + marker.zone.x, centre.y + marker.zone.y, "map-zone")
-        .setOrigin(0)
-        .play(animationKey("map-zone", state));
+      this.fallback.push(
+        this.add
+          .sprite(centre.x + marker.zone.x, centre.y + marker.zone.y, "map-zone")
+          .setOrigin(0)
+          .play(animationKey("map-zone", state)),
+      );
       if (state !== "unbuilt" && state !== "locked") {
         this.add
           .sprite(centre.x + icon.x, centre.y + icon.y, destination.icon)
@@ -314,12 +344,14 @@ export class MapScene extends Scene implements StageSelectOpener {
       }
     }
     for (const { at, name } of labels) {
-      uiObject(
-        this,
-        this.add
-          .bitmapText(at.x, at.y, TITLE_FONT, name)
-          .setScale(textScale)
-          .setTint(this.colour("ink")),
+      this.fallback.push(
+        uiObject(
+          this,
+          this.add
+            .bitmapText(at.x, at.y, TITLE_FONT, name)
+            .setScale(textScale)
+            .setTint(this.colour("ink")),
+        ),
       );
     }
     const current = destinationForStage(ZONE_MAP, this.stand);
@@ -337,13 +369,227 @@ export class MapScene extends Scene implements StageSelectOpener {
       }),
       home: addTextButton(this, MAP_SCREEN.home, TEXT.pause.home),
     };
+    for (const button of Object.values(this.buttons)) {
+      uiObject(this, button.faces.normal);
+      uiObject(this, button.faces.pressed);
+      uiObject(this, button.label.label);
+      if (button.label.mark !== undefined) {
+        uiObject(this, button.label.mark);
+      }
+    }
+  }
+
+  private addDom(): void {
+    const layer = sceneDomUi(this);
+    if (layer === undefined) {
+      return;
+    }
+    const generation = this.generation;
+    const faces = ZONE_MAP.destinations.map((destination) => ({
+      centre: this.centre(destination),
+      id: destination.id,
+      name: TEXT.map.zones[destination.id]!,
+      state: destinationState(PLANS, ZONE_MAP, this.open, this.completed, this.stand, destination),
+    }));
+    const view = createMap(
+      layer.element.ownerDocument,
+      {
+        continue: TEXT.map.continue,
+        home: TEXT.pause.home,
+        states: TEXT.map.destinationStates,
+        title: TEXT.map.title,
+      },
+      faces,
+    );
+    this.view = view;
+    const urls = Promise.all(
+      faces.map(async ({ id, state }) => {
+        const frame = sheetTags(this.cache.json.get("map-zone") as AsepriteSheet).get(state)?.[0]
+          ?.frame;
+        if (frame === undefined) {
+          throw new Error(`No map-zone frame ${state}`);
+        }
+        const url = await artFrameUrl(this, "map-zone", frame);
+        const marker = view.markers.get(id)!;
+        marker.src = url;
+        if (state === "locked" || state === "unbuilt") {
+          return [url];
+        }
+        const miniature = destinationOf(ZONE_MAP, id).icon;
+        const miniatureTag = state === "visited" ? "visited" : "normal";
+        const miniatureFrame = sheetTags(this.cache.json.get(miniature) as AsepriteSheet).get(
+          miniatureTag,
+        )?.[0]?.frame;
+        if (miniatureFrame === undefined) {
+          throw new Error(`No miniature frame ${miniature}`);
+        }
+        const miniatureUrl = await artFrameUrl(this, miniature, miniatureFrame);
+        const frameSize = this.textures.getFrame(miniature, miniatureFrame);
+        marker.dataset.miniature = "";
+        writeLayoutProperties(
+          {
+            "--map-miniature-height": frameSize.cutHeight,
+            "--map-miniature-image": `url("${miniatureUrl}")`,
+            "--map-miniature-width": frameSize.cutWidth,
+            "--map-miniature-x": MAP_SCREEN.icon.x - MAP_SCREEN.marker.zone.x,
+            "--map-miniature-y": MAP_SCREEN.icon.y - MAP_SCREEN.marker.zone.y,
+          },
+          marker,
+        );
+        return [url, miniatureUrl];
+      }),
+    );
+    const birdFrames = this.birdFrames;
+    const walks = sheetTags(this.cache.json.get("bird") as AsepriteSheet).get("walk");
+    if (walks === undefined || walks.length === 0) {
+      throw new Error("No map travel walk frames");
+    }
+    const travelUrls = Promise.all(
+      walks.map(async ({ frame }) => {
+        const url = await artFrameUrl(this, "bird", frame);
+        birdFrames.set(String(frame), url);
+        return url;
+      }),
+    );
+    const reveal = revealSceneView(
+      this,
+      view.root,
+      Promise.all([urls, travelUrls]).then(([markers, travel]) => [...markers.flat(), ...travel]),
+    );
+    mountSceneView(this, view.root);
+    const live = () => this.domReady && !this.selectionOpen && !this.travelling;
+    const controls = new Map<HTMLButtonElement, Control>([
+      [view.buttons.continue, { kind: "continue" }],
+      [view.buttons.home, { kind: "home" }],
+      ...[...view.destinations].map(
+        ([id, button]) => [button, { id, kind: "node" } as Control] as const,
+      ),
+    ]);
+    const controlAt = (target: EventTarget | null) => {
+      const button = target instanceof Element ? target.closest("button") : null;
+      return button instanceof HTMLButtonElement && controls.has(button) ? button : null;
+    };
+    const activate = (button: HTMLButtonElement) => {
+      if (
+        !live() ||
+        !modalInput(this).accepts() ||
+        button.getAttribute("aria-disabled") === "true"
+      ) {
+        return;
+      }
+      const control = controls.get(button)!;
+      if (control.kind === "node") {
+        this.walkToDestination(control.id);
+      } else {
+        this.act(control.kind);
+      }
+    };
+    const stop = followTaps(
+      { preventDefault: true, target: view.root, view: view.root },
+      modalInput(this),
+      {
+        accepts: live,
+        controlAt: (event) => controlAt(event.target),
+        land: (button) => {
+          if (button.getAttribute("aria-disabled") === "true") {
+            return;
+          }
+          const control = controls.get(button)!;
+          this.focus = control.kind === "node" ? undefined : control.kind;
+          focusTarget(button);
+        },
+        show: (button) =>
+          controls.forEach((_control, target) =>
+            target.toggleAttribute(
+              "data-pressed",
+              button === target && target.getAttribute("aria-disabled") !== "true",
+            ),
+          ),
+        tap: activate,
+      },
+    );
+    view.root.addEventListener("keydown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.key(event);
+    });
+    view.root.addEventListener("click", (event) => {
+      const button = controlAt(event.target);
+      if (event.detail === 0 && button !== null) {
+        activate(button);
+      }
+    });
+    const keep = (event: Event) => event.preventDefault();
+    view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
+    view.root.addEventListener("touchend", keep, { capture: true, passive: false });
+    this.events.once("shutdown", () => {
+      this.generation += 1;
+      reveal.cancel();
+      stop();
+      view.root.removeEventListener("touchstart", keep, true);
+      view.root.removeEventListener("touchend", keep, true);
+    });
+    void reveal.revealed.then((shown) => {
+      if (!shown || generation !== this.generation) {
+        return;
+      }
+      this.maskTravelBird();
+      this.domReady = true;
+      this.fallback.forEach((object) => object.setVisible(false));
+      for (const button of Object.values(this.buttons)) {
+        button.faces.normal.setVisible(false);
+        button.faces.pressed.setVisible(false);
+        button.label.label.setVisible(false);
+        button.label.mark?.setVisible(false);
+      }
+      this.focusRing?.setVisible(false);
+      if (this.travelling) {
+        view.root.inert = true;
+      }
+      if (this.focus !== undefined && !this.travelling && !this.selectionOpen) {
+        focusTarget(view.buttons[this.focus]);
+      }
+    });
+  }
+
+  // Mask the whole HTML view so the canvas bird keeps its original position above every UI face.
+  private maskTravelBird(): void {
+    const root = this.view?.root;
+    const bird = this.journey?.bird;
+    if (root === undefined || bird === undefined) {
+      return;
+    }
+    const url = this.birdFrames.get(String(bird.frame.name));
+    if (url === undefined) {
+      return;
+    }
+    const left = bird.x - bird.originX * bird.displayWidth;
+    writeLayoutProperties(
+      {
+        "--map-bird-height": bird.displayHeight,
+        "--map-bird-image": `url("${url}")`,
+        "--map-bird-width": bird.displayWidth,
+        "--map-bird-x": bird.flipX ? SCREEN.width - left - bird.displayWidth : left,
+        "--map-bird-y": bird.y - bird.originY * bird.displayHeight,
+      },
+      root,
+    );
+    root.toggleAttribute("data-bird-flipped", bird.flipX);
   }
 
   // Both footer actions use the shared normal/pressed faces, label displacement and focus ring.
   private showPressed(control: Control | undefined): void {
     this.pressed = control;
-    for (const name of MAP_ACTIONS) {
-      pressTextButton(this.buttons[name], control?.kind === name);
+    if (!this.domReady) {
+      for (const name of MAP_ACTIONS) {
+        pressTextButton(this.buttons[name], control?.kind === name);
+      }
+    }
+    if (this.domReady) {
+      this.view?.buttons.continue.toggleAttribute("data-pressed", control?.kind === "continue");
+      this.view?.buttons.home.toggleAttribute("data-pressed", control?.kind === "home");
+      this.focusRing?.setVisible(false);
+      return;
     }
     this.focusRing = ringFocus(
       this,
@@ -352,6 +598,9 @@ export class MapScene extends Scene implements StageSelectOpener {
         ? undefined
         : MAP_SCREEN[this.focus].button,
     );
+    if (this.focusRing !== undefined) {
+      uiObject(this, this.focusRing);
+    }
   }
 
   private controlAt(pointer: Input.Pointer): Control | undefined {
@@ -381,6 +630,9 @@ export class MapScene extends Scene implements StageSelectOpener {
       this.walkToDestination(steppedDestination(PLANS, ZONE_MAP, this.open, this.stand, action.by));
     } else if (action?.kind === "focus") {
       this.focus = action.target;
+      if (this.domReady && action.target !== undefined) {
+        focusTarget(this.view!.buttons[action.target]);
+      }
       this.showPressed(this.pressed);
     } else if (action?.kind === "activate") {
       this.act(action.target);
