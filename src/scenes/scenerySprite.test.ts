@@ -1,11 +1,13 @@
 import { expect, it, vi } from "vitest";
 
-import type { ObjectLayout } from "../data/types/index.ts";
+import type { ArtManifest } from "../assets/index.ts";
+import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
-import { ZoneScene } from "./ZoneScene.ts";
+import type { ZoneState } from "../rules/zone.ts";
+import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 it("places animated scenery behind actors, crops it before rendering and ignores camera movement for facing", () => {
   const sprite = {
@@ -50,11 +52,9 @@ it("places animated scenery behind actors, crops it before rendering and ignores
   } as unknown as ObjectLayout;
   const scene = {
     add: { sprite: () => sprite },
-    animate: vi.fn(),
+    cache: { json: { get: () => undefined } },
     cameras: { main: { scrollX: 7160, scrollY: 0 } },
     chunkBackdrops: [],
-    drawPulses: vi.fn(),
-    drawTransients: vi.fn(),
     layout: {
       areas: { main: { chunks: [{ width: 720, x: 7200 }], objects: [object], width: 8640 } },
     },
@@ -67,20 +67,30 @@ it("places animated scenery behind actors, crops it before rendering and ignores
       behaviours: [],
       bird: { x: 0, y: 0 },
       objects: [object.origin],
+      pulses: [],
+      seconds: 0,
       seed: 1,
+      transients: [],
     },
   };
-  const methods = ZoneScene.prototype as unknown as {
-    drawObject(key: undefined, tileset: undefined, object: ObjectLayout, index: number): unknown;
-    drawObjects(): void;
-    renderBackdrops(): void;
-  };
-  scene.objectArt = [methods.drawObject.call(scene, undefined, undefined, object, 0)];
+  const renderer = createZoneObjectArt(
+    scene as unknown as Parameters<typeof createZoneObjectArt>[0],
+    {
+      manifest: scene.manifest as unknown as ArtManifest,
+      sheet: () => new Map(),
+      warning: undefined,
+    },
+  );
+  renderer.reset(scene.layout as unknown as ZoneLayout, scene.zone as unknown as ZoneState);
   expect(sprite.setDepth).toHaveBeenLastCalledWith(-3);
   expect(sprite.play).toHaveBeenCalledWith("ambient:idle");
-  methods.renderBackdrops.call(scene);
+  renderer.renderBackdrops();
   expect(sprite.setCrop).toHaveBeenLastCalledWith(14, 0, 18, 24);
-  methods.drawObjects.call(scene);
+  renderer.draw(
+    scene.layout as unknown as ZoneLayout,
+    undefined,
+    scene.zone as unknown as ZoneState,
+  );
   expect(sprite.setFlipX).not.toHaveBeenCalled();
-  expect(scene.animate.mock.lastCall?.[2]).toBe("idle");
+  expect(sprite.play).toHaveBeenLastCalledWith("ambient:idle");
 });

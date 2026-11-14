@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { expect, it, vi } from "vitest";
 
-import type { AreaLayout, ObjectLayout } from "../data/types/index.ts";
+import type { ArtManifest } from "../assets/index.ts";
+import type { AreaLayout, ObjectLayout, ZoneLayout } from "../data/types/index.ts";
 import { initialCrumblingWorld } from "../rules/crumbling.ts";
 import type { ZoneCrumblingWorld } from "../rules/zoneCrumbling.ts";
 import type { Tileset } from "../stage/index.ts";
@@ -10,7 +11,8 @@ import type { Tileset } from "../stage/index.ts";
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
-import { ZoneScene } from "./ZoneScene.ts";
+import type { ZoneState } from "../rules/zone.ts";
+import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 const tileset = JSON.parse(
   readFileSync(
@@ -54,34 +56,50 @@ function fixture() {
     };
     return handle;
   };
-  const container = { setDepth: vi.fn().mockReturnThis(), setPosition: vi.fn(), x: 288, y: 576 };
+  const container = {
+    destroy: vi.fn(),
+    setDepth: vi.fn().mockReturnThis(),
+    setPosition: vi.fn(),
+    x: 288,
+    y: 576,
+  };
   const zone: { crumbling: ZoneCrumblingWorld; objects: { x: number; y: number }[] } = {
     crumbling: initialCrumblingWorld(area.crumbling!),
     objects: [ledge.origin],
   };
-  const scene = Object.assign(Object.create(ZoneScene.prototype), {
+  const layout = { areas: { main: area } } as unknown as ZoneLayout;
+  const state = {
+    ...zone,
+    area: "main",
+    behaviours: [],
+    bird: { x: 0, y: 0 },
+    pulses: [],
+    transients: [],
+  };
+  const host = {
     add: { container: vi.fn(() => container), image },
-    drawPulses: vi.fn(),
-    drawTransients: vi.fn(),
-    layout: { areas: { main: area } },
-    zone: { ...zone, area: "main", behaviours: [], bird: { x: 0, y: 0 } },
+    cache: { json: { get: () => tileset } },
+  };
+  const scene = createZoneObjectArt(host as unknown as Parameters<typeof createZoneObjectArt>[0], {
+    manifest: {} as ArtManifest,
+    sheet: () => new Map(),
+    warning: undefined,
   });
-  scene.objectArt = [scene.drawObject("tiles-platforming", tileset, ledge, 0)];
-  scene.crumblingArt = scene.drawCrumbling(area);
+  scene.reset(layout, state as unknown as ZoneState);
   // Visible tile indices, left to right.
   const shown = () => images.filter(({ visible }) => visible).map(({ frame }) => frame);
-  return { area, ledge, scene, shown };
+  return { area, layout, ledge, scene, shown, state };
 }
 
 it("swaps the ledge onto its dedicated intact and warning skins and hides it while absent", () => {
-  const { ledge, scene, shown } = fixture();
+  const { layout, ledge, scene, shown, state } = fixture();
   const run = (key: string) =>
     [`${key}-left`, ...Array(4).fill(`${key}-middle`), `${key}-right`].map(
       (name) => tileset.tiles[name],
     );
   const phase = (kind: "intact" | "warning" | "absent") => {
-    scene.zone.crumbling = {
-      ...scene.zone.crumbling,
+    state.crumbling = {
+      ...state.crumbling,
       supports: [
         {
           phase:
@@ -94,7 +112,7 @@ it("swaps the ledge onto its dedicated intact and warning skins and hides it whi
         },
       ],
     };
-    scene.drawObjects();
+    scene.draw(layout, undefined, state as unknown as ZoneState);
     return shown();
   };
   // Before the first live draw the intact skin already shows; the base skin never does.
@@ -106,17 +124,33 @@ it("swaps the ledge onto its dedicated intact and warning skins and hides it whi
 });
 
 it("fails at load for a crumbling object without a mapped skin, and for crumbling terrain", () => {
-  const { area, ledge, scene } = fixture();
+  const { area, ledge, scene, state } = fixture();
   expect(() =>
-    scene.drawObject("tiles-platforming", tileset, { ...ledge, art: "platform-top" }, 0),
+    scene.reset(
+      {
+        areas: { main: { ...area, objects: [{ ...ledge, art: "platform-top" }] } },
+      } as unknown as ZoneLayout,
+      state as unknown as ZoneState,
+    ),
   ).toThrow("No crumbling skin for platform-top");
   const terrain = { height: 12, width: 12, x: 0, y: 0 };
   expect(() =>
-    scene.drawCrumbling({
-      ...area,
-      crumbling: [
-        { profile: { absentSeconds: 2, warningSeconds: 0.8 }, supportId: terrain, volume: terrain },
-      ],
-    }),
+    scene.reset(
+      {
+        areas: {
+          main: {
+            ...area,
+            crumbling: [
+              {
+                profile: { absentSeconds: 2, warningSeconds: 0.8 },
+                supportId: terrain,
+                volume: terrain,
+              },
+            ],
+          },
+        },
+      } as unknown as ZoneLayout,
+      state as unknown as ZoneState,
+    ),
   ).toThrow("Crumbling terrain has no registered skin");
 });

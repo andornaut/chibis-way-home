@@ -5,7 +5,7 @@ import palette from "../../public/art/palette.json" with { type: "json" };
 import { BIRD } from "../data/bird.ts";
 import { HAZARD_PHASE_STYLE } from "../data/hazardPhaseStyle.ts";
 import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours.ts";
-import type { Archetype, ObjectLayout, Rect } from "../data/types/index.ts";
+import type { Archetype, ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
 import { startBehaviour, stepBehaviour } from "../rules/behaviour.ts";
 import { startBird } from "../rules/bird.ts";
 import { effectiveCollision } from "../rules/effectiveCollision.ts";
@@ -16,7 +16,9 @@ import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
-import { ZoneScene } from "./ZoneScene.ts";
+import type { ArtManifest } from "../assets/index.ts";
+import type { ZoneState } from "../rules/zone.ts";
+import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 const colour = (name: string) =>
   Number.parseInt(palette.colours[name as keyof typeof palette.colours].slice(1), 16);
@@ -154,32 +156,26 @@ function fixture() {
     tileset: undefined,
     width: 720,
   };
-  const scene = Object.assign(Object.create(ZoneScene.prototype), {
+  const host = {
     add: { graphics: vi.fn(() => art.item), rectangle: vi.fn(), sprite: vi.fn() },
-    areaArt: graphics().item,
     cache: { json: { get: () => palette } },
-    cameras: { main: { setBackgroundColor: vi.fn(), setBounds: vi.fn() } },
-    chunkBackdrops: [],
-    drawPulses: vi.fn(),
-    drawTransients: vi.fn(),
-    layout: { areas: { main: area } },
-    objectArt: [],
-    pulseArt: new Map(),
-    pulseSpans: new Map(),
-    removalArt: new Map(),
-    scenerySprites: [],
-    transientArt: new Map(),
-    zone,
+  };
+  const layout = { areas: { main: area } } as unknown as ZoneLayout;
+  Object.assign(zone, { pulses: [], transients: [] });
+  const scene = createZoneObjectArt(host as unknown as Parameters<typeof createZoneObjectArt>[0], {
+    manifest: {} as ArtManifest,
+    sheet: () => new Map(),
+    warning: undefined,
   });
-  scene.objectArt = [scene.drawObject(undefined, undefined, object, 0)];
-  return { area, art, bird, initial, object, scene, zone };
+  scene.reset(layout, zone as unknown as ZoneState);
+  return { area, art, bird, host, initial, layout, object, scene, zone };
 }
 
 it("consumes the authoritative graph phase and full producer collider in the live object renderer", () => {
-  const { art, bird, initial, object, scene, zone } = fixture();
-  expect(scene.objectArt[0].sprite).toBeUndefined();
-  expect(scene.add.rectangle).not.toHaveBeenCalled();
-  expect(scene.add.sprite).not.toHaveBeenCalled();
+  const { art, bird, host, initial, layout, object, scene, zone } = fixture();
+  expect(scene.sprite(0)).toBeUndefined();
+  expect(host.add.rectangle).not.toHaveBeenCalled();
+  expect(host.add.sprite).not.toHaveBeenCalled();
   const activeStart = WARNED_VENT_SECONDS.inactive + WARNED_VENT_SECONDS.warning;
   for (const [seconds, expected, collision] of [
     [0, HAZARD_PHASE_STYLE.inactive, "none"],
@@ -190,8 +186,8 @@ it("consumes the authoritative graph phase and full producer collider in the liv
     const state = stepBehaviour(BIRD, object, [], seconds, bird, object.origin, initial).state;
     zone.behaviours[0] = state;
     const before = JSON.stringify(state);
-    scene.drawObjects();
-    scene.drawObjects();
+    scene.draw(layout, undefined, zone as unknown as ZoneState);
+    scene.draw(layout, undefined, zone as unknown as ZoneState);
     expect(JSON.stringify(state)).toBe(before);
     expect(art.pixel(0, 0)).toBe(colour(expected));
     expect(art.item.setPosition).toHaveBeenLastCalledWith(zone.objects[0]!.x, zone.objects[0]!.y);
@@ -204,19 +200,21 @@ it("consumes the authoritative graph phase and full producer collider in the liv
     });
   }
   zone.behaviours[0] = initial;
-  scene.drawObjects();
+  scene.draw(layout, undefined, zone as unknown as ZoneState);
   expect(art.pixel(0, 0)).toBe(colour(HAZARD_PHASE_STYLE.inactive));
 });
 
 it("replaces the timed object painter through the existing area and retry lifecycle", () => {
-  const { art, initial, scene, zone } = fixture();
+  const { art, host, initial, layout, scene, zone } = fixture();
   const replacement = graphics();
-  scene.add.graphics.mockReturnValue(replacement.item);
-  scene.drawArea();
+  host.add.graphics.mockReturnValue(replacement.item);
+  scene.reset(layout, zone as unknown as ZoneState);
   expect(art.item.destroy).toHaveBeenCalledOnce();
-  expect(scene.objectArt[0].item).toBe(replacement.item);
+  expect((scene as unknown as { objectArt: readonly { item: unknown }[] }).objectArt[0]?.item).toBe(
+    replacement.item,
+  );
   zone.behaviours[0] = initial;
-  scene.drawObjects();
+  scene.draw(layout, undefined, zone as unknown as ZoneState);
   expect(replacement.pixel(0, 0)).toBe(colour(HAZARD_PHASE_STYLE.inactive));
   expect(art.item.destroy).toHaveBeenCalledOnce();
 });

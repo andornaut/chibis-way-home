@@ -3,7 +3,8 @@ import { EventEmitter } from "node:events";
 import { expect, it, vi } from "vitest";
 
 import manifest from "../../public/art/manifest.json" with { type: "json" };
-import type { ObjectLayout } from "../data/types/index.ts";
+import type { ArtManifest } from "../assets/index.ts";
+import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
 
 vi.mock("phaser", () => ({
   Scene: class {},
@@ -12,26 +13,50 @@ vi.mock("phaser", () => ({
 
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
+import type { ZoneState } from "../rules/zone.ts";
+import { createZoneObjectArt } from "./zoneObjectArt.ts";
 import { ZoneScene } from "./ZoneScene.ts";
 
 it("updates paused preview backdrops after camera changes and removes the render hook on shutdown", () => {
-  const item = { setPosition: vi.fn().mockReturnThis(), setTilePosition: vi.fn().mockReturnThis() };
+  const item = {
+    setDepth: vi.fn().mockReturnThis(),
+    setOrigin: vi.fn().mockReturnThis(),
+    setPosition: vi.fn().mockReturnThis(),
+    setScrollFactor: vi.fn().mockReturnThis(),
+    setTilePosition: vi.fn().mockReturnThis(),
+  };
   const methods = ZoneScene.prototype as unknown as { renderBackdrops(): void };
   const scene = {
+    add: { tileSprite: vi.fn(() => item) },
+    cache: { json: { get: () => undefined } },
     cameras: { main: { scrollX: 7200, scrollY: 0 } },
-    chunkBackdrops: [
-      {
-        bounds: { height: 600, width: 720, x: 7200, y: 120 },
-        item,
-        parallax: { x: 0.4, y: 0.15 },
-      },
-    ],
     createReady: vi.fn(),
     events: new EventEmitter(),
+    objects: undefined as ReturnType<typeof createZoneObjectArt> | undefined,
     preview: {},
     renderBackdrops: methods.renderBackdrops,
-    scenerySprites: [],
+    textures: { getFrame: () => ({ height: 600 }) },
   };
+  const object = {
+    art: "fixture",
+    backdropSpan: true,
+    height: 600,
+    origin: { x: 7200, y: 120 },
+    parallax: { x: 0.4, y: 0.15 },
+    width: 720,
+  } as ObjectLayout;
+  const layout = {
+    areas: { main: { chunks: [{ width: 720, x: 7200 }], objects: [object], width: 8640 } },
+  } as unknown as ZoneLayout;
+  scene.objects = createZoneObjectArt(
+    scene as unknown as Parameters<typeof createZoneObjectArt>[0],
+    {
+      manifest: { backdrops: [{ key: "fixture", repeat: "x" }] } as unknown as ArtManifest,
+      sheet: () => new Map(),
+      warning: undefined,
+    },
+  );
+  scene.objects.reset(layout, { area: "main" } as ZoneState);
   ZoneScene.prototype.create.call(scene as unknown as ZoneScene);
   scene.events.emit("prerender");
   expect(item.setPosition).toHaveBeenLastCalledWith(7200, 120);
@@ -58,7 +83,11 @@ it("bottom-aligns a taller apartment skin before applying chunk-local parallax",
   const scene = {
     add: { tileSprite: vi.fn(() => item) },
     chunkBackdrops: [] as { bounds: { height: number; width: number; x: number; y: number } }[],
-    layout: { areas: { exterior: { chunks: [{ width: 720, x: 7200 }], width: 8640 } } },
+    layout: {
+      areas: {
+        exterior: { chunks: [{ width: 720, x: 7200 }], objects: [] as ObjectLayout[], width: 8640 },
+      },
+    },
     manifest: { backdrops: [{ key: "apartment-far", repeat: "x" }] },
     textures: { getFrame: () => ({ height: 720 }) },
     zone: { area: "exterior" },
@@ -70,13 +99,25 @@ it("bottom-aligns a taller apartment skin before applying chunk-local parallax",
     parallax: { x: 0.4, y: 0.15 },
     width: 720,
   } as ObjectLayout;
-  const methods = ZoneScene.prototype as unknown as {
-    drawObject(key: undefined, tileset: undefined, object: ObjectLayout, index: number): unknown;
-  };
-  methods.drawObject.call(scene, undefined, undefined, object, 0);
+  scene.layout.areas[scene.zone.area as keyof typeof scene.layout.areas].objects = [object];
+  const renderer = createZoneObjectArt(
+    scene as unknown as Parameters<typeof createZoneObjectArt>[0],
+    {
+      manifest: scene.manifest as unknown as ArtManifest,
+      sheet: () => new Map(),
+      warning: undefined,
+    },
+  );
+  renderer.reset(scene.layout as unknown as ZoneLayout, scene.zone as ZoneState);
   expect(scene.add.tileSprite).toHaveBeenCalledWith(0, 0, 720, 720, "apartment-far");
   expect(item.setScrollFactor).toHaveBeenCalledWith(1, 1);
-  expect(scene.chunkBackdrops[0]?.bounds).toEqual({ height: 720, width: 720, x: 7200, y: 0 });
+  expect(
+    (
+      renderer as unknown as {
+        chunkBackdrops: { bounds: { height: number; width: number; x: number; y: number } }[];
+      }
+    ).chunkBackdrops[0]?.bounds,
+  ).toEqual({ height: 720, width: 720, x: 7200, y: 0 });
 });
 
 it("derives the interior texture origin from the manifest without moving its authored quad", () => {
@@ -97,6 +138,7 @@ it("derives the interior texture origin from the manifest without moving its aut
           chunks: [],
           entries: { start: { x: 0, y: 600 } },
           height: 1440,
+          objects: [] as ObjectLayout[],
           solids: [{ height: 840, width: 720, x: 0, y: 600 }],
           width: 720,
         },
@@ -115,12 +157,17 @@ it("derives the interior texture origin from the manifest without moving its aut
     parallax: { x: 0.8, y: 1 },
     width: 720,
   } as ObjectLayout;
-  const methods = ZoneScene.prototype as unknown as {
-    drawObject(key: undefined, tileset: undefined, object: ObjectLayout, index: number): unknown;
-    renderBackdrops(): void;
-  };
-  methods.drawObject.call(scene, undefined, undefined, object, 0);
-  methods.renderBackdrops.call(scene);
+  scene.layout.areas[scene.zone.area as keyof typeof scene.layout.areas].objects = [object];
+  const renderer = createZoneObjectArt(
+    scene as unknown as Parameters<typeof createZoneObjectArt>[0],
+    {
+      manifest: scene.manifest as unknown as ArtManifest,
+      sheet: () => new Map(),
+      warning: undefined,
+    },
+  );
+  renderer.reset(scene.layout as unknown as ZoneLayout, scene.zone as ZoneState);
+  renderer.renderBackdrops();
   expect(scene.add.tileSprite).toHaveBeenCalledWith(0, 600, 720, 240, "warehouse-wall");
   expect(item.setScrollFactor).toHaveBeenCalledWith(1, 1);
   expect(item.setDepth).toHaveBeenCalledWith(-3.5);
@@ -158,6 +205,7 @@ it("extends opted-in outdoor pixels below the quad at the same phase and cleans 
           chunks: [{ width: 720, x: 0 }],
           entries: { start: { x: 0, y: 600 } },
           height: 1440,
+          objects: [] as ObjectLayout[],
           solids: [{ height: 840, width: 720, x: 0, y: 600 }],
           width: 720,
         },
@@ -178,19 +226,24 @@ it("extends opted-in outdoor pixels below the quad at the same phase and cleans 
     parallax: { x: 0.4, y: 0.15 },
     width: 720,
   } as ObjectLayout;
-  const methods = ZoneScene.prototype as unknown as {
-    drawObject(key: undefined, tileset: undefined, object: ObjectLayout, index: number): unknown;
-    renderBackdrops(): void;
-  };
-  methods.drawObject.call(scene, undefined, undefined, object, 0);
-  methods.renderBackdrops.call(scene);
+  scene.layout.areas[scene.zone.area as keyof typeof scene.layout.areas].objects = [object];
+  const renderer = createZoneObjectArt(
+    scene as unknown as Parameters<typeof createZoneObjectArt>[0],
+    {
+      manifest: scene.manifest as unknown as ArtManifest,
+      sheet: () => new Map(),
+      warning: undefined,
+    },
+  );
+  renderer.reset(scene.layout as unknown as ZoneLayout, scene.zone as ZoneState);
+  renderer.renderBackdrops();
   expect(base.setPosition).toHaveBeenLastCalledWith(0, -102);
   expect(extension.setPosition).toHaveBeenLastCalledWith(0, 498);
   expect(extension.setSize).toHaveBeenLastCalledWith(720, 102);
   expect(extension.setTilePosition).toHaveBeenLastCalledWith(-216, 0);
   expect(extension.setDepth.mock.lastCall).toEqual(base.setDepth.mock.lastCall);
   scene.cameras.main.scrollY = 360;
-  methods.renderBackdrops.call(scene);
+  renderer.renderBackdrops();
   expect(extension.setPosition).toHaveBeenLastCalledWith(0, 600);
   expect(extension.setSize).toHaveBeenLastCalledWith(720, 120);
   const destroy = base.once.mock.calls.find(([event]) => event === "destroy")![1] as () => void;
