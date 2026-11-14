@@ -30,10 +30,14 @@ const SHEETS = readdirSync(DIRECTORY)
   .filter((name) => name.endsWith(".css"))
   .map((name) => [name, readFileSync(new URL(name, DIRECTORY), "utf8")] as const);
 // The kit's ui.css, which loads first, sets the shared button gaps.
-const KIT_CSS = readFileSync(
-  createRequire(import.meta.url).resolve("@andornaut/game-kit/web/ui/dom/ui.css"),
-  "utf8",
-);
+const KIT_CSS = ["ui.css", "controls.css", "controlPresentation.css", "layoutTree.css"]
+  .map((name) =>
+    readFileSync(
+      createRequire(import.meta.url).resolve(`@andornaut/game-kit/web/ui/dom/${name}`),
+      "utf8",
+    ),
+  )
+  .join("\n");
 const SET = new Set(
   [KIT_CSS, ...SHEETS.map(([, css]) => css)].flatMap((css) =>
     [...css.matchAll(/(--[\w-]+)\s*:/g)].map(([, name]) => name!),

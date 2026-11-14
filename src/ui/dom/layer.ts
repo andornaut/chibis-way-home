@@ -20,6 +20,11 @@ import { cardTitleReserve } from "../layout/contentCard.ts";
 import { FONT_METRICS } from "../layout/fontRoles.ts";
 import { hitMargin } from "../layout/hitAreas.ts";
 import { playView } from "../layout/playView.ts";
+import {
+  refreshTextButtonFrames,
+  setButtonLayoutDefaults,
+  watchTextButtonFrames,
+} from "./buttonLayout.ts";
 
 // The HTML UI over the canvas (src/ui/dom/ui.css). The layer covers #game, so full-area
 // backdrops reach the bars; each scene's view mounts in it as one child, stacked by the scene's
@@ -72,6 +77,7 @@ export const UI_LAYOUT: LayoutValues = {
   "--text-line": FONT_METRICS.body.lineHeight,
   "--text-size": FONT_METRICS.body.size,
   "--ui-font-family": JSON.stringify(UI_FONT_FAMILY),
+  "--ui-page-divider-thickness": DEATH_CARD.dividerWidth,
 };
 
 // The attribute on what the top modal dims.
@@ -259,6 +265,8 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
   const element = document.createElement("div");
   element.className = "ui-layer";
   writeLayoutProperties(UI_LAYOUT, element);
+  setButtonLayoutDefaults(element);
+  const stopButtonFrames = watchTextButtonFrames(element);
   const edges = [...new Set([...frameEdges, ...WHOLE_LENGTHS])].sort((a, b) => a - b);
   const update = createViewUnits(edges, element);
   const dim = createDim(element);
@@ -273,6 +281,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
   return {
     dimImage: (lit, dimmed) => dim.image(lit, dimmed),
     dispose() {
+      stopButtonFrames();
       modals.dispose();
       dim.dispose();
       element.remove();
@@ -289,6 +298,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
           y: canvasAt.y + view.y / fit.r,
         },
       });
+      refreshTextButtonFrames(element);
     },
     menuEntry(button) {
       if (entryView.childElementCount !== 0) {

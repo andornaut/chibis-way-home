@@ -123,6 +123,9 @@
 /* The compact Install face, centred in the row's height, its label clear of its sides by the
    compact inset, pressed with the row. The whole row stays its press area. */
 .settings-install .ui-text-button-face {
+  --ui-button-height: var(--settings-install-height);
+  --ui-button-min-width: var(--settings-install-width);
+
   flex: none;
   width: calc(var(--ui-unit) * var(--settings-install-width) * 1px);
   height: calc(var(--ui-unit) * var(--settings-install-height) * 1px);

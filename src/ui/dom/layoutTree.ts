@@ -5,7 +5,7 @@ import {
   mountLayout,
 } from "@andornaut/game-kit/web/ui/dom/layoutTree";
 
-import { setTextButtonSizing, type TextButtonSizing } from "./buttonLayout.ts";
+import { setTextButtonRole, setTextButtonSizing, type TextButtonSizing } from "./buttonLayout.ts";
 import {
   type CardView,
   type CardWords,
@@ -69,6 +69,7 @@ export function createUiLayoutPorts(document: Document): LayoutComponentPorts<Ui
           buttonLabel(props.label, element);
           setTextButtonSizing(props.sizing ?? "standard", element);
           element.classList.toggle("ui-text-button-primary", props.primary === true);
+          setTextButtonRole(props.primary === true, element);
           element.disabled = props.disabled === true;
           element.hidden = props.hidden === true;
           if (props.control === undefined) {
@@ -105,10 +106,13 @@ export function createUiLayoutPorts(document: Document): LayoutComponentPorts<Ui
           view.dialog
             .querySelector(".ui-card-actions")!
             .classList.toggle("ui-button-stack", props.words.actionsLayout === "stack");
+          (view.dialog.querySelector(".ui-card-actions") as HTMLElement).dataset.uiAxis =
+            props.words.actionsLayout === "stack" ? "stack" : "row";
           for (const action of props.words.actions) {
             const button = view.buttons[action.key]!;
             buttonLabel(action.label, button);
             button.classList.toggle("ui-text-button-primary", action.primary === true);
+            setTextButtonRole(action.primary === true, button);
           }
           if (view.close !== undefined) {
             view.close.setAttribute("aria-label", props.words.close!);
@@ -122,6 +126,12 @@ export function createUiLayoutPorts(document: Document): LayoutComponentPorts<Ui
     },
     Native: {
       create(initial) {
+        if (initial.element.classList.contains("ui-card-actions")) {
+          initial.element.classList.add("ui-control-group");
+          initial.element.dataset.uiAxis = initial.element.classList.contains("ui-button-stack")
+            ? "stack"
+            : "row";
+        }
         const content = initial.content ?? initial.element;
         if (!initial.element.contains(content)) {
           throw new RangeError("Native layout content must belong to its production root");

@@ -43,7 +43,12 @@ export {
   createAchievementsCard,
   showAchievementsPage,
 } from "./dom/achievements.ts";
-export { setTextButtonSizing, type TextButtonSizing } from "./dom/buttonLayout.ts";
+export {
+  BUTTON_FACE_INSETS,
+  BUTTON_TOKENS,
+  setTextButtonSizing,
+  type TextButtonSizing,
+} from "./dom/buttonLayout.ts";
 export { type CardView, createCard, createMessageCard, showPresses } from "./dom/card.ts";
 export {
   type CelebrationControl,

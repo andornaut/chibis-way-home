@@ -1,7 +1,7 @@
 import type { CardView, CardWords } from "./cardElements.ts";
 import { mountUiLayout } from "./layoutTree.ts";
 
-export { type CardView, type CardWords,closeButton } from "./cardElements.ts";
+export { type CardView, type CardWords, closeButton } from "./cardElements.ts";
 
 // Detached materialization uses the same typed production ports as composed screen trees.
 export function textButton(document: Document, label: string, primary = false): HTMLButtonElement {

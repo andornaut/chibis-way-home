@@ -1,3 +1,5 @@
+import { setTextButtonRole } from "./buttonLayout.ts";
+
 // A modal card in the HTML UI (ui.css .ui-card): a scene's view holding a full-area backdrop
 // that takes outside taps, and the card on the play view, in art's ui-settings-card frame, with
 // its title, an optional line of text and a row of equal text buttons in art's ui-button (or
@@ -42,12 +44,13 @@ export function createTextButtonElement(
   button.type = "button";
   button.className = primary ? "ui-text-button ui-text-button-primary" : "ui-text-button";
   const face = document.createElement("span");
-  face.className = "ui-text-button-face ui-frame";
+  face.className = "ui-text-button-face ui-frame ui-control-button";
   const text = document.createElement("span");
-  text.className = "ui-text-button-label";
+  text.className = "ui-text-button-label ui-control-label";
   text.textContent = label;
   face.append(text);
   button.append(face);
+  setTextButtonRole(primary, button);
   return button;
 }
 
@@ -99,7 +102,8 @@ export function createCardElement<Key extends string>(
     text.textContent = words.text;
     dialog.append(text);
   }
-  const actions = element("div", "ui-card-actions");
+  const actions = element("div", "ui-card-actions ui-control-group");
+  actions.dataset.uiAxis = words.actionsLayout === "stack" ? "stack" : "row";
   actions.classList.toggle("ui-button-stack", words.actionsLayout === "stack");
   const buttons = Object.fromEntries(
     words.actions.map(({ key, label, primary }) => [

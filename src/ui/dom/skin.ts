@@ -1,3 +1,4 @@
+import { setPageDivider } from "@andornaut/game-kit/web/ui/dom/controlPresentation";
 import {
   type LayoutValues,
   writeLayoutProperties,
@@ -9,9 +10,11 @@ import {
 } from "@andornaut/game-kit/web/ui/dom/sheetFrames";
 import { slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
 
+import { DEATH_CARD } from "../../data/layout.ts";
 import type { Rect } from "../../data/types/index.ts";
 import type { Palette } from "../chrome/dim.ts";
 import { modalColour } from "../chrome/modalDim.ts";
+import { refreshTextButtonFrames } from "./buttonLayout.ts";
 
 // Art's nine-slice frames the HTML UI draws, cut from the images the game already loaded: each
 // frame's art key, the animation tag whose first frame it is (the sheet's first frame where
@@ -149,6 +152,13 @@ export async function applySkin(
   const dim = modalColour(palette);
   const colours = skinColours(palette);
   writeLayoutProperties(colours.lit, layer);
+  setPageDivider(
+    {
+      colour: Number.parseInt(palette.colours.ink!.slice(1), 16),
+      thickness: DEATH_CARD.dividerWidth,
+    },
+    layer,
+  );
   const cut = (canvas: HTMLCanvasElement) =>
     cutFrame(document, canvas, { height: canvas.height, width: canvas.width, x: 0, y: 0 });
   const urls = await Promise.all(
@@ -159,7 +169,10 @@ export async function applySkin(
       ]),
     ),
   );
-  const dimmed: Record<string, string> = { ...colours.dimmed };
+  const dimmed: Record<string, string> = {
+    ...colours.dimmed,
+    "--ui-page-divider-colour": remappedHex(dim, palette.colours.ink!),
+  };
   frames.forEach(({ name, slice: insets }, index) => {
     const [url, dimmedUrl] = urls[index]!;
     dimmed[`--${name}-image`] = `url("${dimmedUrl}")`;
@@ -180,5 +193,6 @@ export async function applySkin(
       layer,
     );
   });
+  refreshTextButtonFrames(layer);
   return dimmed;
 }
