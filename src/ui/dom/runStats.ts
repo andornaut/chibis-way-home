@@ -1,3 +1,4 @@
+import { createPageDivider } from "@andornaut/game-kit/web/ui/dom/controlPresentation";
 import {
   type LayoutValues,
   writeLayoutProperties,
@@ -67,7 +68,8 @@ export function createRunStats(
         if (index === 0) {
           return [list];
         }
-        const divider = element("div", "ui-run-stats-divider");
+        const divider = createPageDivider(document);
+        divider.classList.add("ui-run-stats-divider");
         divider.setAttribute("aria-hidden", "true");
         return [divider, list];
       }),

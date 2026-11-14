@@ -1,3 +1,4 @@
+import { invokeControl } from "@andornaut/game-kit/ui/controlPresentation";
 import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
 import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
 import { Scene } from "phaser";
@@ -272,15 +273,21 @@ export class StageSelectScene extends Scene {
     if (!this.visibleStages().includes(target.id)) {
       return;
     }
-    if (!this.available.includes(target.id)) {
+    const executed = invokeControl(
+      this.available.includes(target.id)
+        ? { kind: "available" }
+        : { kind: "unavailable", reason: TEXT.map.stageLocked },
+      () => {
+        this.finished = true;
+        this.closeModal?.();
+        this.closeModal = undefined;
+        this.scene.stop();
+        (this.scene.get("map") as unknown as StageSelectOpener).stageSelected(target.id);
+      },
+    );
+    if (!executed) {
       this.refuse(this.view?.stages.get(target.id));
-      return;
     }
-    this.finished = true;
-    this.closeModal?.();
-    this.closeModal = undefined;
-    this.scene.stop();
-    (this.scene.get("map") as unknown as StageSelectOpener).stageSelected(target.id);
   }
 
   private refuse(control: HTMLElement | undefined): void {

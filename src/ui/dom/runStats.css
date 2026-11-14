@@ -15,9 +15,10 @@
   grid-auto-flow: row;
 }
 
-.ui-run-stats-divider {
+.ui-run-stats .ui-run-stats-divider {
+  align-self: stretch;
   width: var(--run-stats-divider);
-  background: var(--colour-ink);
+  height: auto;
 }
 
 /* Each row's label at the column's left and its value at the right, the values right-aligned

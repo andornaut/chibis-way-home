@@ -1,3 +1,4 @@
+import { controlPresentation } from "@andornaut/game-kit/ui/controlPresentation";
 import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
 import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard.ts";
@@ -81,7 +82,7 @@ export function createStageSelect(
     page.hidden = true;
     page.append(
       ...stages.slice(index * perPage, (index + 1) * perPage).map((stage) => {
-        const button = stageButton(element, `${ID}-locked`, stage);
+        const button = stageButton(element, `${ID}-locked`, words.locked, stage);
         buttons.set(stage.id, button);
         previews.set(stage.id, button.querySelector("img")!);
         return button;
@@ -119,13 +120,17 @@ function stageButton(
     className: string,
   ) => HTMLElementTagNameMap[K],
   lockedId: string,
+  lockedReason: string,
   stage: StageFace,
 ): HTMLButtonElement {
   const button = element("button", "stage-select-stage ui-press");
   button.type = "button";
   button.dataset.stage = stage.id;
   button.dataset.look = stage.look;
-  if (stage.look === "locked") {
+  const presentation = controlPresentation(
+    stage.look === "locked" ? { kind: "unavailable", reason: lockedReason } : { kind: "available" },
+  );
+  if (!presentation.executable) {
     button.setAttribute("aria-disabled", "true");
     button.setAttribute("aria-describedby", lockedId);
     button.tabIndex = -1;
