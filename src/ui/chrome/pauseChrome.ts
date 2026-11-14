@@ -17,10 +17,10 @@ export function pauseChromeLayers(
   const outer = expanded ? PAUSE_DISC.expandedRadius : PAUSE_DISC.restRadius;
   const core = pose === "rest" ? colours.cream : colours.white;
   const face = pose === "rest" ? colours.navy : colours.dslate;
-  const radius = PAUSE_DISC.restRadius - (pose === "rest" || expanded ? 3 : 4);
+  const radius = pose === "rest" || expanded ? 13.5 : 12.5;
   return [
     { centre, colour: colours.ink, kind: "disc", radius: outer },
-    { centre, colour: core, kind: "disc", radius: outer - PAUSE_DISC.inset },
+    { centre, colour: core, kind: "disc", radius: outer - 1 },
     { centre, colour: face, kind: "disc", radius },
     { colour: core, kind: "rect", rect: { height: 13, width: 4, x: 12, y: 11 } },
     { colour: core, kind: "rect", rect: { height: 13, width: 4, x: 19, y: 11 } },
