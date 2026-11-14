@@ -1,3 +1,4 @@
+import { PAUSE_GLYPH } from "../../data/layout.ts";
 import { PAUSE_DISC } from "../layout/controlChrome.ts";
 import type { TouchChromeColours, TouchChromeLayer } from "./touchChrome.ts";
 
@@ -22,7 +23,6 @@ export function pauseChromeLayers(
     { centre, colour: colours.ink, kind: "disc", radius: outer },
     { centre, colour: core, kind: "disc", radius: outer - 1 },
     { centre, colour: face, kind: "disc", radius },
-    { colour: core, kind: "rect", rect: { height: 13, width: 4, x: 12, y: 11 } },
-    { colour: core, kind: "rect", rect: { height: 13, width: 4, x: 19, y: 11 } },
+    ...PAUSE_GLYPH.bars.map((rect) => ({ colour: core, kind: "rect" as const, rect })),
   ];
 }

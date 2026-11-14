@@ -15,6 +15,25 @@ export const TOUCH_CIRCLE_RADIUS = 63;
 // Art draws each control (pause, Use, Jump and the move hint) this far inside its frame.
 export const CONTROL_FRAME_INSET = 1;
 
+export const CONTROL_DISC_FRAME = 35;
+
+export const MENU_GLYPH = {
+  bars: [
+    { height: 3, width: 11, x: 12, y: 11 },
+    { height: 3, width: 11, x: 12, y: 16 },
+    { height: 3, width: 11, x: 12, y: 21 },
+  ],
+  frame: CONTROL_DISC_FRAME,
+} as const;
+
+export const PAUSE_GLYPH = {
+  bars: [
+    { height: 13, width: 4, x: 12, y: 11 },
+    { height: 13, width: 4, x: 19, y: 11 },
+  ],
+  frame: CONTROL_DISC_FRAME,
+} as const;
+
 // The top-corner HUD's drawn edge in from the view: Pause's disc in from the view's top and left,
 // and the skill row's discs in from its top and the rightmost one in from its right, so the two
 // corners mirror.

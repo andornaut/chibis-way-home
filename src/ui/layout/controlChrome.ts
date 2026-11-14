@@ -1,6 +1,6 @@
-import { CONTROL_FRAME_INSET } from "../../data/layout.ts";
+import { CONTROL_DISC_FRAME, CONTROL_FRAME_INSET } from "../../data/layout.ts";
 
-const frame = 35;
+const frame = CONTROL_DISC_FRAME;
 const restDiameter = frame - 2 * CONTROL_FRAME_INSET;
 
 export const PAUSE_DISC = {
