@@ -518,6 +518,14 @@
       "once": []
     },
     {
+      "key": "ui-menu",
+      "png": "sprites/ui-menu.png",
+      "json": "sprites/ui-menu.json",
+      "once": [
+        "press"
+      ]
+    },
+    {
       "key": "ui-move-hint",
       "png": "sprites/ui-move-hint.png",
       "json": "sprites/ui-move-hint.json",
