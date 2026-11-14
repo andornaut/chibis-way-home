@@ -20,6 +20,8 @@ import { decodePng, encodeRgbaPng } from "@andornaut/art-kit/png";
 import { composite, crop, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
 import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { ROOM_BUILDING_OPENING } from "../../src/data/roomBuildings.ts";
+import { TILE } from "../../src/data/screen.ts";
 import { commands, run } from "./cli.ts";
 import { greyscale, rect, rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
@@ -29,7 +31,12 @@ const USAGE = "Usage: roomBuildings.ts build | preview OUT.png";
 const PNG = { deflateLevel: 9, deflateStrategy: 3, filterType: -1 };
 const SIZE = [180, 180] as const;
 type Box = readonly [x0: number, y0: number, x1: number, y1: number];
-const OPENING: Box = [60, 96, 120, 180];
+const OPENING: Box = [
+  ROOM_BUILDING_OPENING.col * TILE,
+  ROOM_BUILDING_OPENING.row * TILE,
+  (ROOM_BUILDING_OPENING.col + ROOM_BUILDING_OPENING.cols) * TILE,
+  (ROOM_BUILDING_OPENING.row + ROOM_BUILDING_OPENING.rows) * TILE,
+];
 const STYLES: Readonly<Record<string, readonly [zone: string, gable: boolean]>> = {
   "blue-cityscape": ["street", false],
   industrial: ["industrial", false],

@@ -56,6 +56,7 @@
 
 import { opaque } from "@andornaut/art-kit/raster";
 
+import { TILE as T } from "../../src/data/screen.ts";
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import {
@@ -77,7 +78,6 @@ import * as pixel from "./pixel.ts";
 import { drawLabel } from "./previewText.ts";
 import { THEMES } from "./zoneThemes.ts";
 
-const T = 12;
 const TILESET = "tiles-industrial";
 const BOTTOM = 600;
 const PRIMARY = (THEMES.industrial as { primary: string }).primary;

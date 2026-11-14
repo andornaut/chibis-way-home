@@ -34,6 +34,7 @@
  *   sprite centre (12,6) and a hook ring below.
  */
 
+import { TILE as T } from "../../src/data/screen.ts";
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";
 import {
@@ -52,7 +53,6 @@ import * as pixel from "./pixel.ts";
 import { drawLabel } from "./previewText.ts";
 import { THEMES } from "./zoneThemes.ts";
 
-const T = 12;
 const TILESET = "tiles-apartment";
 const BOTTOM = 720;
 const PRIMARY = (THEMES.apartment as { primary: string }).primary;

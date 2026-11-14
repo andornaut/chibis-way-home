@@ -18,6 +18,7 @@ import {
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
 
+import { TILE } from "../../src/data/screen.ts";
 import * as backgroundPalette from "./backgroundPalette.ts";
 import { commands } from "./cli.ts";
 import * as zoneThemes from "./zoneThemes.ts";
@@ -255,7 +256,7 @@ interface TilesetOptions {
  * RGBA. Returns the manifest entry.
  */
 export async function writeTileset(
-  { columns = 8, hitboxes, key, pieces = {}, size = 12 }: TilesetOptions,
+  { columns = 8, hitboxes, key, pieces = {}, size = TILE }: TilesetOptions,
   items: readonly (readonly [name: string, tile: RgbaImage])[],
 ): Promise<ManifestEntry> {
   mkdirSync(TILESETS, { recursive: true });

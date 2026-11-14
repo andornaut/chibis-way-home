@@ -36,12 +36,12 @@ import { decodePng, encodeRgbPng } from "@andornaut/art-kit/png";
 import { composite, crop, filledImage } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
 
+import { TILE as T } from "../../src/data/screen.ts";
 import { commands, run } from "./cli.ts";
 import { greyscale, rect, rgba } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 
 const KEY = "tiles-platforming";
-const T = 12;
 export const HITBOXES: Record<string, pixel.Hitbox> = {
   "hazard-bottom": { x: 0, y: 0, width: 12, height: 4 },
   "hazard-left": { x: 8, y: 0, width: 4, height: 12 },
