@@ -161,7 +161,58 @@ it("refuses ambiguous or moving touching banks", () => {
   });
 });
 
-function touchingBankFixture() {
+it.each([
+  { from: { left: 276, right: 312, y: 888 }, requiredY: 924 },
+  { from: { left: 240, right: 300, y: 924 }, requiredY: 912 },
+])(
+  "accepts both touching endpoints for departure Y=$from.y and required Y=$requiredY",
+  ({ from, requiredY }) => {
+    const departure = { ...surface, ...from, key: "departure" };
+    const required = {
+      index: 2,
+      surface: {
+        ...surface,
+        key: "required",
+        left: 432,
+        right: 432 + ORDINARY.width,
+        y: requiredY,
+      },
+      window: { max: 432, min: 432 },
+    };
+    const here = {
+      ...current,
+      bird: { ...current.bird, x: from.left, y: from.y - ORDINARY.height },
+      support: departure,
+    };
+    const original = structuredClone(required);
+    const bank = {
+      ...surface,
+      key: "bank",
+      left: from.right,
+      right: required.surface.left,
+      y: 960,
+    };
+    for (const offset of [-EDGE / 2, 0, EDGE / 2, EDGE]) {
+      const touching = { ...bank, right: bank.right + offset };
+      expect(staticRouteAssist(ORDINARY, here, [touching], required)).toEqual({
+        assist: {
+          index: required.index,
+          surface: touching,
+          window: { max: touching.right - ORDINARY.width, min: touching.left },
+        },
+      });
+    }
+    expect(
+      staticRouteAssist(ORDINARY, here, [{ ...bank, right: bank.right + 2 * EDGE }], required),
+    ).toEqual({ assist: undefined });
+    expect(staticRouteAssist(ORDINARY, here, [{ ...bank, mover: 0 }], required)).toEqual({
+      unavailable: { index: required.index, reason: "dynamic-support" },
+    });
+    expect(required).toEqual(original);
+  },
+);
+
+function touchingBankFixture(requiredLeftCol = 18) {
   return zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), {
     areas: {
       course: {
@@ -172,7 +223,7 @@ function touchingBankFixture() {
         solids: [
           { col: 0, cols: 8, row: 50, rows: 10 },
           { col: 8, cols: 8, row: 54, rows: 6 },
-          { col: 18, cols: 42, row: 50, rows: 10 },
+          { col: requiredLeftCol, cols: 60 - requiredLeftCol, row: 50, rows: 10 },
         ],
       },
     },
@@ -220,31 +271,34 @@ it("inhibits a new jump for the bank seam rather than the far goal and preserves
   expect(bot.holding).toBe(1);
 });
 
-it("records an actual touching-bank landing separately while retaining all required witnesses", () => {
-  const targets = [
-    { area: "course", at: { col: 58, row: 50 } },
-    { area: "course", at: { col: 4, row: 50 } },
-  ];
-  const original = structuredClone(targets);
-  const result = continuousRequiredRoute(touchingBankFixture(), targets);
-  expect(result, JSON.stringify(result)).toMatchObject({
-    missing: [],
-    reason: "cleared",
-    status: "proven",
-  });
-  expect(targets).toEqual(original);
-  expect(result.witnesses).toHaveLength(targets.length);
-  expect(result.assistWitnesses).toHaveLength(1);
-  const assist = result.assistWitnesses[0]!;
-  expect(assist).toMatchObject({
-    area: "course",
-    requiredIndex: 0,
-    y: 54 * TILE - ORDINARY.height,
-  });
-  expect(assist.tick).toBeGreaterThanOrEqual(1);
-  expect(assist.tick).toBeLessThan(result.witnesses.find(({ index }) => index === 0)!.tick);
-  expect(result.ticks).toBeLessThanOrEqual(600);
-});
+it.each([18, 16])(
+  "records an actual bank landing with required left col=%s and all required witnesses",
+  (requiredLeftCol) => {
+    const targets = [
+      { area: "course", at: { col: 58, row: 50 } },
+      { area: "course", at: { col: 4, row: 50 } },
+    ];
+    const original = structuredClone(targets);
+    const result = continuousRequiredRoute(touchingBankFixture(requiredLeftCol), targets);
+    expect(result, JSON.stringify(result)).toMatchObject({
+      missing: [],
+      reason: "cleared",
+      status: "proven",
+    });
+    expect(targets).toEqual(original);
+    expect(result.witnesses).toHaveLength(targets.length);
+    expect(result.assistWitnesses).toHaveLength(1);
+    const assist = result.assistWitnesses[0]!;
+    expect(assist).toMatchObject({
+      area: "course",
+      requiredIndex: 0,
+      y: 54 * TILE - ORDINARY.height,
+    });
+    expect(assist.tick).toBeGreaterThanOrEqual(1);
+    expect(assist.tick).toBeLessThan(result.witnesses.find(({ index }) => index === 0)!.tick);
+    expect(result.ticks).toBeLessThanOrEqual(600);
+  },
+);
 
 function staticHazardFixture() {
   const fixture = crossingFixture();

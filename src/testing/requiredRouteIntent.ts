@@ -90,7 +90,7 @@ export function staticRouteAssist(
     (surface) =>
       surface.area === current.area &&
       surface.left >= support.right - EDGE &&
-      surface.right < required.surface.left - EDGE &&
+      surface.right <= required.surface.left + EDGE &&
       surface.y > Math.max(support.y, required.surface.y),
   );
   if (banks.length > 1) {
