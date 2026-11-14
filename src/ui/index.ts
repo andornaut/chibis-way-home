@@ -43,6 +43,7 @@ export {
   createAchievementsCard,
   showAchievementsPage,
 } from "./dom/achievements.ts";
+export { setTextButtonSizing, type TextButtonSizing } from "./dom/buttonLayout.ts";
 export { type CardView, createCard, createMessageCard, showPresses } from "./dom/card.ts";
 export {
   type CelebrationControl,
@@ -66,6 +67,16 @@ export {
   type StatusPanelView,
 } from "./dom/dialogue.ts";
 export { createUiLayer, loadUiFonts, UI_DIMMED, UI_LAYOUT, type UiLayer } from "./dom/layer.ts";
+export {
+  createUiLayoutPorts,
+  mountUiLayout,
+  type UiButtonProps,
+  type UiCardProps,
+  type UiLayoutNode,
+  type UiLayoutSchema,
+  type UiNativeProps,
+  type UiTextProps,
+} from "./dom/layoutTree.ts";
 export {
   createMap,
   type DestinationLook,

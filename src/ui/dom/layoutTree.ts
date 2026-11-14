@@ -5,6 +5,7 @@ import {
   mountLayout,
 } from "@andornaut/game-kit/web/ui/dom/layoutTree";
 
+import { setTextButtonSizing, type TextButtonSizing } from "./buttonLayout.ts";
 import {
   type CardView,
   type CardWords,
@@ -22,6 +23,7 @@ export interface UiTextProps {
   readonly text: string;
 }
 export interface UiButtonProps {
+  readonly sizing?: TextButtonSizing;
   readonly control?: string;
   readonly disabled?: boolean;
   readonly hidden?: boolean;
@@ -65,6 +67,7 @@ export function createUiLayoutPorts(document: Document): LayoutComponentPorts<Ui
         const element = createTextButtonElement(document, initial.label, initial.primary);
         const update = (props: UiButtonProps) => {
           buttonLabel(props.label, element);
+          setTextButtonSizing(props.sizing ?? "standard", element);
           element.classList.toggle("ui-text-button-primary", props.primary === true);
           element.disabled = props.disabled === true;
           element.hidden = props.hidden === true;
