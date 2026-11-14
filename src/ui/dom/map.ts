@@ -50,6 +50,12 @@ export const MAP_PROPERTIES = {
   "--map-y": 0,
 };
 
+export const MAP_TITLE_PROPERTIES = {
+  "--map-title-width": MAP_SCREEN.title.width,
+  "--map-x": MAP_SCREEN.title.x,
+  "--map-y": MAP_SCREEN.title.y,
+};
+
 function box(rect: Rect, element: HTMLElement): void {
   writeLayoutProperties(
     {
@@ -78,14 +84,7 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
   title.id = "map-title";
   title.className = "map-title";
   title.textContent = words.title;
-  writeLayoutProperties(
-    {
-      "--map-title-width": MAP_SCREEN.title.width,
-      "--map-x": MAP_SCREEN.title.x,
-      "--map-y": MAP_SCREEN.title.y,
-    },
-    title,
-  );
+  writeLayoutProperties(MAP_TITLE_PROPERTIES, title);
   content.append(title);
   const buttons = {
     continue: textButton(document, words.continue, true),
