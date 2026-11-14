@@ -223,9 +223,48 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "e67536bdfdb4a44e:408",
       "work": 408
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "woodland-woodland-canopy-return--woodland-raised-branch-channel",
+      "kind": "pair",
+      "layout": "dc212b05fe916c72",
+      "modules": ["woodland-canopy-return", "woodland-raised-branch-channel"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "b1dff4e800e20488",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "37ff020b76bc05fb:809",
+      "work": 809
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "woodland-woodland-raised-branch-channel--woodland-canopy-return",
+      "kind": "pair",
+      "layout": "9adb7a668ac5c12c",
+      "modules": ["woodland-raised-branch-channel", "woodland-canopy-return"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "af467697c4c5f00b",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "21fd833c167fbf37:188161",
+      "work": 188161
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "woodland-woodland-raised-branch-channel--woodland-raised-branch-channel",
+      "kind": "pair",
+      "layout": "6f91ee93fb8f1c67",
+      "modules": ["woodland-raised-branch-channel", "woodland-raised-branch-channel"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "d9f8cfdc5a2f2700",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "2fe8140e9077af14:663",
+      "work": 663
     }
   ],
-  "inputs": { "data": "45d65cf1a075bcd6", "proofs": "e75912aeb7023610" },
+  "inputs": { "data": "00def711a9653b32", "proofs": "e75912aeb7023610" },
   "version": 1,
   "zone": "woodland"
 }
