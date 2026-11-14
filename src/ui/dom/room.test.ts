@@ -69,3 +69,22 @@ it("centres the portrait in its slot while anchoring the page title at its top i
   expect(roomCss).toMatch(/\.room-name\s*\{[^}]*translate:\s*-50% 0;/);
   expect(roomProperties()["--room-name-y"]).toBe(PAGE_TITLE.y);
 });
+
+it("keeps authoring gift glyphs and dialogue portraits independent of a live room", () => {
+  const skill = TEXT.skills.dash;
+  const paragraph = dialogueParagraphs(SPEAKERS, TEXT, DIALOGUES["dash-gift"]!)[0]!;
+  const words = {
+    ...WORDS,
+    action: TEXT.dialogue.continue,
+    gift: { description: skill.description, disc: skill.title, paragraph, title: skill.title },
+    name: "",
+  };
+  const live = createRoomView(document, COLOURS, words);
+  document.body.append(live.root);
+  live.glyph!.src = "blob:runtime-glyph";
+  const authored = createRoomView(document, COLOURS, words);
+  expect(authored.glyph!.getAttribute("src")).toBeNull();
+  expect(authored.panel!.portrait).not.toBe(live.panel!.portrait);
+  expect(authored.leave.textContent).toBe(TEXT.dialogue.continue);
+  live.root.remove();
+});

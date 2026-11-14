@@ -9,7 +9,6 @@ import { PAGE_TITLE } from "../layout/pageTitle.ts";
 import { ROOM_SCREEN } from "../layout/roomScreen.ts";
 import { SKILL_ROOM } from "../layout/skillDetails.ts";
 import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";
-import { textButton } from "./card.ts";
 import {
   createDialoguePanel,
   DIALOGUE_PANEL_LAYOUT,
@@ -17,6 +16,7 @@ import {
   type PanelParagraph,
   showPanelParagraph,
 } from "./dialogue.ts";
+import { mountUiLayout, type UiLayoutNode } from "./layoutTree.ts";
 import { createSkillDisc } from "./skillDisc.ts";
 
 export interface RoomViewColours {
@@ -88,20 +88,29 @@ export function createRoomView(
   root.toggleAttribute("data-gift", words.gift !== undefined);
   writeLayoutProperties(roomProperties(), root);
   const view = make("div", "ui-view room-view");
-  const title = make("h1", words.gift === undefined ? "room-name" : "ui-card-title");
-  title.id = "room-title";
-  title.textContent = words.gift?.title ?? words.name;
+  const title: UiLayoutNode = {
+    component: "Text",
+    key: "title",
+    kind: "component",
+    props: {
+      className: words.gift === undefined ? "room-name" : "ui-card-title",
+      id: "room-title",
+      tag: "h1",
+      text: words.gift?.title ?? words.name,
+    },
+  };
+  const children: UiLayoutNode[] = [];
   let panel: DialoguePanelView | undefined;
   let glyph: HTMLImageElement | undefined;
   if (words.gift === undefined) {
-    view.append(title);
+    children.push(title);
   } else {
     const gift = words.gift;
     panel = createDialoguePanel(document, "room-helper");
     showPanelParagraph(panel, gift.paragraph);
     const area = make("div", "room-gift-area");
     const card = make("section", "ui-card ui-frame room-gift-card");
-    card.setAttribute("aria-labelledby", title.id);
+    card.setAttribute("aria-labelledby", "room-title");
     card.setAttribute("aria-describedby", "room-description");
     const body = make("div", "room-skill-body");
     const disc = createSkillDisc(document, colours, { ready: true, selected: false }, gift.disc);
@@ -109,14 +118,83 @@ export function createRoomView(
     const description = make("p", "room-description");
     description.id = "room-description";
     description.append(...createActionHelp(document, colours, words, gift.description));
-    body.append(disc.element, description);
-    card.append(title, body);
-    area.append(card);
-    view.append(panel.element, area);
+    children.push(
+      { component: "Native", key: "helper", kind: "component", props: { element: panel.element } },
+      {
+        component: "Native",
+        key: "gift-area",
+        kind: "component",
+        props: { element: area },
+        slots: {
+          content: [
+            {
+              component: "Native",
+              key: "gift-card",
+              kind: "component",
+              props: { element: card },
+              slots: {
+                content: [
+                  title,
+                  {
+                    component: "Native",
+                    key: "body",
+                    kind: "component",
+                    props: { element: body },
+                    slots: {
+                      content: [
+                        {
+                          component: "Native",
+                          key: "disc",
+                          kind: "component",
+                          props: { element: disc.element },
+                        },
+                        {
+                          component: "Native",
+                          key: "description",
+                          kind: "component",
+                          props: { element: description },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    );
   }
-  const leave = textButton(document, words.action, words.gift !== undefined);
-  leave.classList.add("room-leave");
-  view.append(leave);
-  root.append(view);
+  let leave!: HTMLButtonElement;
+  children.push({
+    component: "Button",
+    key: "leave",
+    kind: "component",
+    props: {
+      label: words.action,
+      primary: words.gift !== undefined,
+      ref: (button) => {
+        leave = button;
+        button.classList.add("room-leave");
+      },
+    },
+  });
+  mountUiLayout(document, document.createElement("div"), {
+    component: "Native",
+    key: "room",
+    kind: "component",
+    props: { element: root },
+    slots: {
+      content: [
+        {
+          component: "Native",
+          key: "view",
+          kind: "component",
+          props: { element: view },
+          slots: { content: children },
+        },
+      ],
+    },
+  });
   return { glyph, leave, panel, root };
 }

@@ -4,7 +4,7 @@ import {
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
 import { CARD_CONTENT, PLAY_MARK, TEXT_BUTTON } from "../../data/layout.ts";
-import { textButton } from "./card.ts";
+import { mountUiLayout, type UiLayoutNode } from "./layoutTree.ts";
 
 export type OpeningAction = "continue" | "skip";
 
@@ -37,26 +37,88 @@ export function createOpeningView(
   view.className = "ui-view opening-view";
   const footer = document.createElement("div");
   footer.className = "opening-footer";
-  const caption = document.createElement("p");
-  caption.className = "opening-caption";
-  caption.setAttribute("aria-live", "polite");
-  const buttons = {
-    continue: textButton(document, words.continue, true),
-    skip: textButton(document, words.skip),
-  };
+  let caption!: HTMLElement;
+  const buttons = new Map<OpeningAction, HTMLButtonElement>();
   const mark = document.createElement("img");
   mark.alt = "";
-  buttons.continue.querySelector(".ui-text-button-label")!.prepend(mark);
-  for (const [action, button] of Object.entries(buttons)) {
-    button.dataset.control = action;
-  }
   const actions = document.createElement("div");
   actions.className = "ui-card-actions opening-actions";
-  actions.append(buttons.continue, buttons.skip);
-  footer.append(caption, actions);
-  view.append(footer);
-  root.append(backdrop, view);
-  return { buttons, caption, mark, root };
+  const tree: UiLayoutNode = {
+    component: "Native",
+    key: "opening",
+    kind: "component",
+    props: { element: root },
+    slots: {
+      content: [
+        { component: "Native", key: "backdrop", kind: "component", props: { element: backdrop } },
+        {
+          component: "Native",
+          key: "view",
+          kind: "component",
+          props: { element: view },
+          slots: {
+            content: [
+              {
+                component: "Native",
+                key: "footer",
+                kind: "component",
+                props: { element: footer },
+                slots: {
+                  content: [
+                    {
+                      component: "Text",
+                      key: "caption",
+                      kind: "component",
+                      props: {
+                        attributes: { "aria-live": "polite" },
+                        className: "opening-caption",
+                        ref: (element) => {
+                          caption = element;
+                        },
+                        tag: "p",
+                        text: "",
+                      },
+                    },
+                    {
+                      component: "Native",
+                      key: "actions",
+                      kind: "component",
+                      props: { element: actions },
+                      slots: {
+                        content: (["continue", "skip"] as const).map((action) => ({
+                          component: "Button",
+                          key: action,
+                          kind: "component",
+                          props: {
+                            control: action,
+                            label: words[action],
+                            primary: action === "continue",
+                            ref: (button) => {
+                              buttons.set(action, button);
+                              if (action === "continue") {
+                                button.querySelector(".ui-text-button-label")!.prepend(mark);
+                              }
+                            },
+                          },
+                        })),
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    },
+  };
+  mountUiLayout(document, document.createElement("div"), tree);
+  return {
+    buttons: { continue: buttons.get("continue")!, skip: buttons.get("skip")! },
+    caption,
+    mark,
+    root,
+  };
 }
 
 export function showOpeningCaption(text: string, view: OpeningView): void {

@@ -112,3 +112,29 @@ it("keeps the fitted play view inside the full-layer scene root across refits", 
   unmount();
   layer.dispose();
 });
+
+it("creates independent destination image slots through the production factory for authoring", () => {
+  const words = {
+    continue: "Continue",
+    home: "Title",
+    states: {
+      current: "Here",
+      locked: "Locked",
+      normal: "Available",
+      unbuilt: "Unavailable",
+      visited: "Completed",
+    },
+    title: "Map",
+  };
+  const faces = [
+    { centre: { x: 100, y: 100 }, id: "fixture", name: words.title, state: "current" as const },
+  ];
+  const live = createMap(document, words, faces);
+  document.body.append(live.root);
+  live.markers.get("fixture")!.src = "blob:runtime-marker";
+  const authored = createMap(document, words, faces);
+  expect(authored.markers.get("fixture")!.getAttribute("src")).toBeNull();
+  expect(authored.destinations.get("fixture")).not.toBe(live.destinations.get("fixture"));
+  expect(authored.view.querySelector(".map-content")?.parentElement).toBe(authored.view);
+  live.root.remove();
+});

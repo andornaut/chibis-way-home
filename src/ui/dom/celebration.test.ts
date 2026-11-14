@@ -23,3 +23,17 @@ it("retains placeholder words, Continue-first focus order and authored press are
   expect(Object.values(view.images).every((image) => image.alt === "")).toBe(true);
   expect(view.close).toBeUndefined();
 });
+
+it("materializes fresh authored chrome slots through the same production card factory", () => {
+  const live = createCelebrationView(document, TEXT.celebration);
+  document.body.append(live.root);
+  live.images.normal.src = "blob:runtime-chrome";
+  const authored = createCelebrationView(document, TEXT.celebration);
+  expect(authored.images.normal.getAttribute("src")).toBeNull();
+  expect(authored.buttons.continue).not.toBe(live.buttons.continue);
+  expect(authored.buttons.continue.querySelector(".ui-text-button-label img")).toBe(
+    authored.images.mark,
+  );
+  expect(authored.dialog.getAttribute("role")).toBe("region");
+  live.root.remove();
+});

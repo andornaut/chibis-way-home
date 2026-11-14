@@ -40,3 +40,16 @@ it("omits Exit and Restart when the installed window has no exit and there is no
   expect([...view.buttons.keys()]).toEqual(["start", "achievements"]);
   expect(view.buttons.get("start")!.classList.contains("ui-text-button-primary")).toBe(true);
 });
+
+it("uses fresh production controls and image slots for authoring while retaining conditional order", () => {
+  const layout = startScreenLayout({ height: 239, width: 558 }, true, true);
+  const live = createStart(document, TEXT.start, layout);
+  document.body.append(live.root);
+  live.images.get("logo")!.src = "blob:runtime-logo";
+  const authored = createStart(document, TEXT.start, layout);
+  expect([...authored.buttons.keys()]).toEqual([...live.buttons.keys()]);
+  expect(authored.buttons.get("start")).not.toBe(live.buttons.get("start"));
+  expect(authored.images.get("logo")!.getAttribute("src")).toBeNull();
+  expect(authored.root.children).toHaveLength(1);
+  live.root.remove();
+});

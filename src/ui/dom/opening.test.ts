@@ -49,3 +49,19 @@ it("keeps the fixed footer and play mark geometry while the browser supplies lab
   );
   expect(view.mark.alt).toBe("");
 });
+
+it("materializes a fresh authoring view without inheriting a live opening's caption or mark", () => {
+  const live = createOpeningView(document, TEXT.dialogue);
+  document.body.append(live.root);
+  showOpeningCaption(TEXT.lines[OPENING[0]!.text]!, live);
+  live.mark.src = "blob:runtime-mark";
+  const authored = createOpeningView(document, TEXT.dialogue);
+  expect(authored.caption.textContent).toBe("");
+  expect(authored.mark.getAttribute("src")).toBeNull();
+  expect(authored.buttons.continue).not.toBe(live.buttons.continue);
+  expect([...authored.root.children].map((element) => element.className)).toEqual([
+    "ui-backdrop",
+    "ui-view opening-view",
+  ]);
+  live.root.remove();
+});

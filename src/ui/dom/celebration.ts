@@ -7,7 +7,8 @@ import { CARD_CONTENT, PLAY_MARK } from "../../data/layout.ts";
 import { CARD_FRAME } from "../layout/cardFrame.ts";
 import { CELEBRATION } from "../layout/celebrationCard.ts";
 import { FONT_METRICS } from "../layout/fontRoles.ts";
-import { type CardView, createCard } from "./card.ts";
+import type { CardView } from "./card.ts";
+import { mountUiLayout } from "./layoutTree.ts";
 
 export type CelebrationControl = "continue" | "restart";
 export interface CelebrationWords {
@@ -57,35 +58,49 @@ export function createCelebrationView(
   document: Document,
   words: CelebrationWords,
 ): CelebrationView {
-  const card = createCard<CelebrationControl>(document, "celebration", {
-    actions: [
-      { key: "continue", label: words.continue },
-      { key: "restart", label: words.restart },
-    ],
-    text: words.message,
-    title: words.title,
+  const image = (key: "normal" | "pressed" | "mark") => {
+    const element = document.createElement("img");
+    element.alt = "";
+    element.draggable = false;
+    element.className = `celebration-${key}`;
+    return element;
+  };
+  const images = { mark: image("mark"), normal: image("normal"), pressed: image("pressed") };
+  let card!: CardView<CelebrationControl>;
+  mountUiLayout(document, document.createElement("div"), {
+    component: "Card",
+    key: "celebration",
+    kind: "component",
+    props: {
+      id: "celebration",
+      ref: (view) => {
+        card = {
+          ...view,
+          buttons: { continue: view.buttons.continue!, restart: view.buttons.restart! },
+        };
+        card.root.classList.add("celebration-scene");
+        card.dialog.classList.add("celebration-card");
+        card.dialog.setAttribute("role", "region");
+        writeLayoutProperties(CELEBRATION_DOM_LAYOUT, card.root);
+        for (const key of ["continue", "restart"] as const) {
+          const control = card.buttons[key];
+          control.dataset.action = key;
+          writeLayoutProperties(celebrationButtonLayout(key), control);
+        }
+        const face = card.buttons.continue.querySelector(".ui-text-button-face")!;
+        face.classList.remove("ui-frame");
+        face.prepend(images.normal, images.pressed);
+        card.buttons.continue.querySelector(".ui-text-button-label")!.prepend(images.mark);
+      },
+      words: {
+        actions: [
+          { key: "continue", label: words.continue },
+          { key: "restart", label: words.restart },
+        ],
+        text: words.message,
+        title: words.title,
+      },
+    },
   });
-  card.root.classList.add("celebration-scene");
-  card.dialog.classList.add("celebration-card");
-  card.dialog.setAttribute("role", "region");
-  writeLayoutProperties(CELEBRATION_DOM_LAYOUT, card.root);
-  for (const key of ["continue", "restart"] as const) {
-    const control = card.buttons[key];
-    control.dataset.action = key;
-    writeLayoutProperties(celebrationButtonLayout(key), control);
-  }
-  const images = Object.fromEntries(
-    ["normal", "pressed", "mark"].map((key) => {
-      const image = document.createElement("img");
-      image.alt = "";
-      image.draggable = false;
-      image.className = `celebration-${key}`;
-      return [key, image];
-    }),
-  ) as Record<"normal" | "pressed" | "mark", HTMLImageElement>;
-  const face = card.buttons.continue.querySelector(".ui-text-button-face")!;
-  face.classList.remove("ui-frame");
-  face.prepend(images.normal, images.pressed);
-  card.buttons.continue.querySelector(".ui-text-button-label")!.prepend(images.mark);
   return { ...card, images };
 }
