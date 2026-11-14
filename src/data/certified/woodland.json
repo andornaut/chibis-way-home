@@ -15,6 +15,19 @@
     },
     {
       "encounters": 0,
+      "grade": 5,
+      "id": "woodland-ravine-lookout--woodland-raised-branch-channel",
+      "kind": "pair",
+      "layout": "f685778ad69e9a65",
+      "modules": ["ravine-lookout", "woodland-raised-branch-channel"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "d84709478abe1341",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "1e3d5911665612af:530",
+      "work": 530
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "woodland-vertical-broad-mesa",
       "kind": "single",
@@ -212,7 +225,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "26da489c0bb49c2c", "proofs": "2527962ca2395ad4" },
+  "inputs": { "data": "45d65cf1a075bcd6", "proofs": "2527962ca2395ad4" },
   "version": 1,
   "zone": "woodland"
 }
