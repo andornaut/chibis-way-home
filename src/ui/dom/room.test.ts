@@ -26,6 +26,9 @@ it("renders an ordinary room's name and sole secondary Leave control at its exis
     name: TEXT.rooms.test?.name ?? "",
   });
   expect(view.root.querySelector("h1")?.textContent).toBe(TEXT.rooms.test?.name ?? "");
+  expect(
+    view.leave.querySelector(".ui-text-button-face")!.hasAttribute("data-ui-authored-size"),
+  ).toBe(true);
   expect(view.root.querySelectorAll("button")).toHaveLength(1);
   expect(view.leave.textContent).toBe(TEXT.room.leave);
   expect(view.leave.classList.contains("ui-text-button-primary")).toBe(false);

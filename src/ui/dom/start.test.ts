@@ -10,6 +10,12 @@ it.each([false, true])(
   (saved) => {
     const layout = startScreenLayout({ height: 239, width: 558 }, true, saved);
     const view = createStart(document, TEXT.start, layout);
+    expect(
+      view.buttons
+        .get("start")!
+        .querySelector(".ui-text-button-face")!
+        .hasAttribute("data-ui-authored-size"),
+    ).toBe(true);
     expect([...view.buttons.keys()]).toEqual([
       "start",
       ...(saved ? ["restart"] : []),

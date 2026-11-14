@@ -177,6 +177,7 @@ export function createRoomView(
         leave = button;
         button.classList.add("room-leave");
       },
+      sizing: "authored",
     },
   });
   mountUiLayout(document, document.createElement("div"), {

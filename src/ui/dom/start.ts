@@ -96,6 +96,7 @@ export function createStart(
             box({ ...at.button, x: at.button.x - at.hit.x, y: at.button.y - at.hit.y }, face);
             buttons.set(control, button);
           },
+          sizing: "authored",
         },
       });
       continue;

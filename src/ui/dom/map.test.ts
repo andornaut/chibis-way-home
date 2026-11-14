@@ -27,6 +27,11 @@ it("names every destination and describes its availability without adding nodes 
       state: state as DestinationLook,
     })),
   );
+  expect(
+    view.buttons.continue
+      .querySelector(".ui-text-button-face")!
+      .hasAttribute("data-ui-authored-size"),
+  ).toBe(true);
   for (const [state, button] of view.destinations) {
     expect(button.getAttribute("aria-label")).toBe(`Zone ${state}`);
     expect(

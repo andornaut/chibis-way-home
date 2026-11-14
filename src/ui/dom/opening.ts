@@ -99,6 +99,7 @@ export function createOpeningView(
                                 button.querySelector(".ui-text-button-label")!.prepend(mark);
                               }
                             },
+                            sizing: "authored",
                           },
                         })),
                       },

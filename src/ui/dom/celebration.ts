@@ -7,6 +7,7 @@ import { CARD_CONTENT, PLAY_MARK } from "../../data/layout.ts";
 import { CARD_FRAME } from "../layout/cardFrame.ts";
 import { CELEBRATION } from "../layout/celebrationCard.ts";
 import { FONT_METRICS } from "../layout/fontRoles.ts";
+import { setTextButtonSizing } from "./buttonLayout.ts";
 import type { CardView } from "./card.ts";
 import { mountUiLayout } from "./layoutTree.ts";
 
@@ -84,6 +85,7 @@ export function createCelebrationView(
         writeLayoutProperties(CELEBRATION_DOM_LAYOUT, card.root);
         for (const key of ["continue", "restart"] as const) {
           const control = card.buttons[key];
+          setTextButtonSizing("authored", control);
           control.dataset.action = key;
           writeLayoutProperties(celebrationButtonLayout(key), control);
         }

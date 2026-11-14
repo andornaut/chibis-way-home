@@ -14,6 +14,11 @@ it("keeps each caption as plain text and Continue first without freezing native 
     });
   try {
     const view = createOpeningView(document, TEXT.dialogue);
+    expect(
+      view.buttons.continue
+        .querySelector(".ui-text-button-face")!
+        .hasAttribute("data-ui-authored-size"),
+    ).toBe(true);
     for (const beat of OPENING) {
       const text = TEXT.lines[beat.text]!;
       showOpeningCaption(text, view);

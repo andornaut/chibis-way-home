@@ -15,6 +15,11 @@ it("retains placeholder words, Continue-first focus order and authored press are
     view.buttons.restart,
   ]);
   for (const key of ["continue", "restart"] as const) {
+    expect(
+      view.buttons[key]
+        .querySelector(".ui-text-button-face")!
+        .hasAttribute("data-ui-authored-size"),
+    ).toBe(true);
     expect(view.buttons[key].textContent).toBe(TEXT.celebration[key]);
     expect(view.buttons[key].style.getPropertyValue("--celebration-hit-width")).toBe(
       String(CELEBRATION[key].hit.width),

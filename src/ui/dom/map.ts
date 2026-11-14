@@ -125,6 +125,7 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
           );
           controls.set(key, button);
         },
+        sizing: "authored",
       },
     });
   }
