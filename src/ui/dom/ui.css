@@ -120,7 +120,7 @@
   --half-gap: calc(var(--ui-button-gap) / 2);
 
   /* Press wrappers already supply the face gap. */
-  --ui-control-gap: 0px;
+  --ui-control-gap: 0;
 
   margin: calc(-1 * var(--hit));
 }

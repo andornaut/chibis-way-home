@@ -23,7 +23,10 @@ function fontsDocument() {
       }
     },
   );
-  const fonts = { add: vi.fn(), load: vi.fn<FontFaceSet["load"]>() };
+  const fonts = Object.assign(new EventTarget(), {
+    add: vi.fn(),
+    load: vi.fn<FontFaceSet["load"]>(),
+  });
   Object.defineProperty(document, "fonts", { value: fonts });
   return { document, faces, fonts };
 }

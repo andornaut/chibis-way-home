@@ -33,7 +33,7 @@ function fixture() {
   const decode = vi.spyOn(HTMLImageElement.prototype, "decode").mockReturnValue(image.promise);
   Object.defineProperty(document, "fonts", {
     configurable: true,
-    value: { load: () => font.promise },
+    value: Object.assign(new EventTarget(), { load: () => font.promise }),
   });
   const events = new EventEmitter();
   const scene = { events, game: {} } as unknown as Scene;
