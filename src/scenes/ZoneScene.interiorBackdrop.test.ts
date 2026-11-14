@@ -1,10 +1,12 @@
 import { expect, it, vi } from "vitest";
 
-import type { ObjectLayout } from "../data/types/index.ts";
+import type { ArtManifest } from "../assets/index.ts";
+import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
+import type { ZoneState } from "../rules/zone.ts";
+import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
-import { ZoneScene } from "./ZoneScene.ts";
 
 it("creates a native repeating two-axis clip behind props and keeps its world rectangle across camera changes", () => {
   const item = {
@@ -29,26 +31,34 @@ it("creates a native repeating two-axis clip behind props and keeps its world re
   } as ObjectLayout;
   const tileSprite = vi.fn(() => item);
   const camera = { scrollX: 0, scrollY: 0 };
-  const scene = Object.assign(Object.create(ZoneScene.prototype), {
-    add: { tileSprite },
-    cameras: { main: camera },
-    chunkBackdrops: [],
-    layout: {
-      areas: {
-        main: {
-          chunks: [],
-          entries: { start: { x: 24, y: 600 } },
-          height: 1080,
-          solids: [{ height: 480, width: 1440, x: 0, y: 600 }],
-          width: 1440,
-        },
+  const layout = {
+    areas: {
+      main: {
+        chunks: [],
+        entries: { start: { x: 24, y: 600 } },
+        height: 1080,
+        solids: [{ height: 480, width: 1440, x: 0, y: 600 }],
+        width: 1440,
       },
     },
-    manifest: { backdrops: [{ key: "wall", repeat: "x" }], sprites: [] },
-    scenerySprites: [],
-    zone: { area: "main" },
-  }) as {
+  } as unknown as ZoneLayout;
+  const zone = { area: "main" } as ZoneState;
+  const scene = createZoneObjectArt(
+    { add: { tileSprite }, cameras: { main: camera } } as unknown as Parameters<
+      typeof createZoneObjectArt
+    >[0],
+    {
+      manifest: {
+        backdrops: [{ key: "wall", repeat: "x" }],
+        sprites: [],
+      } as unknown as ArtManifest,
+      sheet: () => new Map(),
+      warning: undefined,
+    },
+  ) as unknown as {
     drawObject(
+      layout: ZoneLayout,
+      zone: ZoneState,
       key: undefined,
       tileset: undefined,
       object: ObjectLayout,
@@ -56,7 +66,10 @@ it("creates a native repeating two-axis clip behind props and keeps its world re
     ): { offset: { x: number; y: number } };
     renderBackdrops(): void;
   };
-  expect(scene.drawObject(undefined, undefined, object, 0).offset).toEqual({ x: 0, y: 0 });
+  expect(scene.drawObject(layout, zone, undefined, undefined, object, 0).offset).toEqual({
+    x: 0,
+    y: 0,
+  });
   expect(tileSprite).toHaveBeenCalledWith(24, 48, 120, 216, "wall");
   expect(item.setScrollFactor).toHaveBeenCalledWith(1, 1);
   expect(item.setDepth).toHaveBeenCalledWith(-3.5);

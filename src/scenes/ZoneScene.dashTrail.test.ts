@@ -1,16 +1,18 @@
 import { afterEach, expect, it, vi } from "vitest";
 
-import { BIRD_FRAME } from "../assets/index.ts";
+import { type ArtManifest, BIRD_FRAME } from "../assets/index.ts";
 import { BIRD } from "../data/bird.ts";
-import type { ObjectLayout } from "../data/types/index.ts";
+import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
 import { startBird } from "../rules/bird.ts";
 import type { SceneryPlaybackState } from "../rules/sceneryPlayback.ts";
+import type { ZoneState } from "../rules/zone.ts";
 
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true) }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
 
+import { createZoneObjectArt } from "./zoneObjectArt.ts";
 import { ZoneScene } from "./ZoneScene.ts";
 
 afterEach(() => {
@@ -123,59 +125,68 @@ it("draws proven world scenery at actual positions without camera compensation o
     seed: 1,
   };
   const camera = { scrollX: 0, scrollY: 0 };
-  const scene = Object.assign(Object.create(ZoneScene.prototype), {
-    add: { sprite: () => sprite },
-    animate: vi.fn(),
-    cameras: { main: camera },
-    chunkBackdrops: [],
-    drawPulses: vi.fn(),
-    drawTransients: vi.fn(),
-    layout: { areas: { main: { objects: [object] } } },
-    manifest: { backdrops: [], sprites: [{ key: "fixture" }] },
-    objectArt: [],
-    scenerySprites: [],
-    zone: world,
-  }) as {
-    drawObject(key: undefined, tileset: undefined, object: ObjectLayout, index: number): unknown;
-    drawObjects(): void;
+  const layout = { areas: { main: { objects: [object] } } } as unknown as ZoneLayout;
+  const state = world as unknown as ZoneState;
+  const scene = Object.assign(
+    createZoneObjectArt(
+      { add: { sprite: () => sprite }, cameras: { main: camera } } as unknown as Parameters<
+        typeof createZoneObjectArt
+      >[0],
+      {
+        manifest: { backdrops: [], sprites: [{ key: "fixture" }] } as unknown as ArtManifest,
+        sheet: () => new Map(),
+        warning: undefined,
+      },
+    ),
+    { animate: vi.fn(), drawPulses: vi.fn(), drawTransients: vi.fn() },
+  ) as unknown as {
+    drawObject(
+      layout: ZoneLayout,
+      zone: ZoneState,
+      key: undefined,
+      tileset: undefined,
+      object: ObjectLayout,
+      index: number,
+    ): unknown;
+    draw(layout: ZoneLayout, openingIndex: number | undefined, zone: ZoneState): void;
     renderBackdrops(): void;
     objectArt: unknown[];
     scenerySprites: unknown[];
   };
-  scene.objectArt = [scene.drawObject(undefined, undefined, object, 0)];
+  scene.objectArt = [scene.drawObject(layout, state, undefined, undefined, object, 0)];
   expect(sprite.setDepth).toHaveBeenLastCalledWith(-2.5);
   expect(sprite.setScrollFactor).toHaveBeenLastCalledWith(1, 1);
   expect(scene.scenerySprites).toEqual([]);
-  scene.drawObjects();
+  scene.draw(layout, undefined, state);
   sprite.setFlipX.mockClear();
   for (const x of [720, -100]) {
     camera.scrollX = x;
     camera.scrollY = 360;
     scene.renderBackdrops();
-    scene.drawObjects();
+    scene.draw(layout, undefined, state);
     expect(sprite.setPosition).toHaveBeenLastCalledWith(200, 140);
   }
   expect(sprite.setCrop).not.toHaveBeenCalled();
   expect(sprite.setFlipX).not.toHaveBeenCalled();
   world.objects[0]!.x = 180;
-  scene.drawObjects();
+  scene.draw(layout, undefined, state);
   expect(sprite.setPosition).toHaveBeenLastCalledWith(180, 140);
   expect(sprite.setFlipX).toHaveBeenLastCalledWith(true);
-  scene.drawObject(undefined, undefined, { ...object, collision: "hazard" }, 0);
+  scene.drawObject(layout, state, undefined, undefined, { ...object, collision: "hazard" }, 0);
   expect(sprite.setDepth).toHaveBeenLastCalledWith(0);
   const ordinary = { ...object };
   delete ordinary.scenerySource;
-  scene.drawObject(undefined, undefined, ordinary, 0);
+  scene.drawObject(layout, state, undefined, undefined, ordinary, 0);
   expect(sprite.setDepth).toHaveBeenLastCalledWith(0);
   const finite = { ...object, motion: { ...object.motion, playback: "once-visible" as const } };
-  scene.objectArt = [scene.drawObject(undefined, undefined, finite, 0)];
+  scene.objectArt = [scene.drawObject(layout, state, undefined, undefined, finite, 0)];
   expect(sprite.setVisible).toHaveBeenLastCalledWith(false);
   Object.assign(object, { motion: finite.motion });
   world.sceneryPlayback = [{ elapsedSeconds: 1, status: "active" }];
-  scene.drawObjects();
+  scene.draw(layout, undefined, state);
   expect(sprite.setVisible).toHaveBeenLastCalledWith(true);
   world.sceneryPlayback = [{ elapsedSeconds: 8, status: "completed" }];
-  scene.drawObjects();
-  scene.drawObjects();
+  scene.draw(layout, undefined, state);
+  scene.draw(layout, undefined, state);
   expect(sprite.destroy).toHaveBeenCalledOnce();
 });
