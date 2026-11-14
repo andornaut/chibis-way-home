@@ -269,6 +269,7 @@ export const TEXT: GameText = {
       woodland: "Woodland",
     },
   },
+  menu: { button: "Menu", title: "Menu" },
   pause: {
     button: "Pause",
     close: "Close",
