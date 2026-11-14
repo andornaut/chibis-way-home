@@ -3,12 +3,12 @@ import type { DomProgressTiming } from "@andornaut/game-kit/web/progress/dom/pro
 
 import palette from "../../public/art/palette.json" with { type: "json" };
 import themes from "../../public/art/zone-themes.json" with { type: "json" };
-import { DEATH_CARD } from "../data/layout.ts";
+import { LOADING_LAYOUT } from "../data/layout.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { SCREEN } from "../data/screen.ts";
 import { zoneTheme } from "../presentation/zoneTheme.ts";
 
-export const PROGRESS_RECT = { height: DEATH_CARD.progressHeight, width: SCREEN.width, x: 0, y: 0 };
+export const PROGRESS_RECT = { height: LOADING_LAYOUT.height, width: SCREEN.width, x: 0, y: 0 };
 
 // The bar's motion: the pending segment, a quarter of the track, crosses it every 1.5 s, and a
 // measured load that finishes holds full for 250 ms, then fades out over 150 ms and hides. Reduced

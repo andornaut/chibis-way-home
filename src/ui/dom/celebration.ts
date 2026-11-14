@@ -5,8 +5,8 @@ import {
 
 import { CARD_CONTENT, PLAY_MARK } from "../../data/layout.ts";
 import { CARD_FRAME } from "../layout/cardFrame.ts";
+import { CELEBRATION } from "../layout/celebrationCard.ts";
 import { FONT_METRICS } from "../layout/fontRoles.ts";
-import { CELEBRATION } from "../layout/restartCard.ts";
 import { type CardView, createCard } from "./card.ts";
 
 export type CelebrationControl = "continue" | "restart";

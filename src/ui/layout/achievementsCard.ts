@@ -2,8 +2,8 @@ import type { LayoutValues } from "@andornaut/game-kit/web/ui/dom/layoutProperti
 
 import { ACHIEVEMENTS_CARD, CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
+import { CARD_CLOSE } from "./cardClose.ts";
 import { capTop, FONT_METRICS, UI_FONT_FACE } from "./fontRoles.ts";
-import { hitAround } from "./hitAreas.ts";
 
 // The Achievements card's geometry in base px (src/ui/dom/achievements.css lays it out): its
 // title over two columns of entries filled down each column then across, a page at a time, and
@@ -13,12 +13,7 @@ import { hitAround } from "./hitAreas.ts";
 const ENTRY_HEIGHT = FONT_METRICS.body.lineHeight * (1 + ACHIEVEMENTS_CARD.descriptionLines);
 
 // The close X's press area, at the card's top right.
-const CLOSE_HIT = hitAround({
-  height: CARD_CONTENT.closeSize,
-  width: CARD_CONTENT.closeSize,
-  x: CARD_CONTENT.closeInset,
-  y: CARD_CONTENT.closeInset,
-});
+const CLOSE_HIT = CARD_CLOSE.hit;
 
 // The top of the list's first line below the card's top edge. The title's cap height sits midway
 // between the frame's inner top edge and the first entry title's cap top, as far from each as the

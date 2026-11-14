@@ -38,6 +38,8 @@ export const CONTROL_VIEW_MARGIN = 8;
 export const TOUCH_LAYOUT = {
   // The move hint's knob moves at most this far left or right of its ring's centre.
   knobReach: 12,
+  // The decorative touch controls' opacity.
+  opacity: 0.85,
   // Use's centre from Jump's centre.
   useFromJump: { x: -77, y: -100 } satisfies Point,
 } as const;
@@ -120,9 +122,10 @@ export const ACTION_HELP_LAYOUT = {
 export const DEATH_CARD = {
   // The statistics divider's width.
   dividerWidth: 2,
-  // The progress bar's height, also the loading bar's.
-  progressHeight: 2,
 } as const;
+
+// The page and in-game loading bar share this height; stage progress has its own style.
+export const LOADING_LAYOUT = { height: 2 } as const;
 
 export const SETTINGS_CARD = {
   // art: each row's leading icon side, and the install steps glyph's.

@@ -6,8 +6,9 @@ import buttonSheet from "../../../public/art/sprites/ui-button.json" with { type
 import resumeSheet from "../../../public/art/sprites/ui-resume.json" with { type: "json" };
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
+import { CELEBRATION } from "./celebrationCard.ts";
 import { pressedArea } from "./hitAreas.ts";
-import { CELEBRATION, type LabelledButton } from "./restartCard.ts";
+import type { LabelledButton } from "./labelledButton.ts";
 
 const SCREEN_RECT: Rect = { ...SCREEN, x: 0, y: 0 };
 const frameOf = (sheet: { frames: Record<string, { frame: { h: number; w: number } }> }) => {

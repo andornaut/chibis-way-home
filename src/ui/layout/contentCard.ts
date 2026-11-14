@@ -1,19 +1,13 @@
 import { CARD_CONTENT } from "../../data/layout.ts";
-import type { Rect, Size } from "../../data/types/index.ts";
-import { hitAround } from "./hitAreas.ts";
+import type { Size } from "../../data/types/index.ts";
+import { CARD_CLOSE } from "./cardClose.ts";
 
 // Title geometry supplied by the native layout's declared type role.
 export interface CardTitle extends Size {
   readonly text: string;
 }
 
-const CLOSE_ART: Rect = {
-  height: CARD_CONTENT.closeSize,
-  width: CARD_CONTENT.closeSize,
-  x: CARD_CONTENT.closeInset,
-  y: CARD_CONTENT.closeInset,
-};
-const CLOSE_HIT = hitAround(CLOSE_ART);
+const CLOSE_HIT = CARD_CLOSE.hit;
 
 // The horizontal clearance on each side of a centred title: the full positioned close target plus
 // the gap, mirrored, or the ordinary padding without a close control.

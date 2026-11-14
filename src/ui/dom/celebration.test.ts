@@ -2,7 +2,7 @@
 import { expect, it } from "vitest";
 
 import { TEXT } from "../../data/text.ts";
-import { CELEBRATION } from "../layout/restartCard.ts";
+import { CELEBRATION } from "../layout/celebrationCard.ts";
 import { createCelebrationView } from "./celebration.ts";
 
 it("retains placeholder words, Continue-first focus order and authored press areas", () => {

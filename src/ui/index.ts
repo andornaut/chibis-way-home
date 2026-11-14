@@ -143,6 +143,7 @@ export {
 export { ACTION_HELP } from "./layout/actionHelp.ts";
 export { buttonFace, type ButtonFaceState } from "./layout/buttonLabel.ts";
 export { CARD_TEXT_SCALE, cardTitleAt } from "./layout/cardFrame.ts";
+export { CELEBRATION } from "./layout/celebrationCard.ts";
 export {
   contactBorder,
   contactCueOn,
@@ -159,11 +160,11 @@ export {
 } from "./layout/dialogueScreen.ts";
 export { FONT_ROLES, FONT_SCALE } from "./layout/fontRoles.ts";
 export { type PressArea, pressedArea } from "./layout/hitAreas.ts";
+export type { LabelledButton } from "./layout/labelledButton.ts";
 export { labelledButton } from "./layout/labelledButton.ts";
 export { MAP_PATH_LOOKS, MAP_SCREEN, mapLabel, type PathLook } from "./layout/mapScreen.ts";
 export { PAUSE_BUTTON } from "./layout/pauseCard.ts";
 export { canvasSize, playView, shifted, viewShift } from "./layout/playView.ts";
-export { CELEBRATION, type LabelledButton } from "./layout/restartCard.ts";
 export { ROOM_SCREEN } from "./layout/roomScreen.ts";
 export {
   RUN_STAT_KEYS,

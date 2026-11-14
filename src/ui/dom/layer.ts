@@ -15,9 +15,10 @@ import { CARD_CONTENT, DEATH_CARD, FOCUS_RING, TEXT_BUTTON } from "../../data/la
 import { SCREEN } from "../../data/screen.ts";
 import type { Point } from "../../data/types/index.ts";
 import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
+import { CARD_CLOSE } from "../layout/cardClose.ts";
 import { cardTitleReserve } from "../layout/contentCard.ts";
 import { FONT_METRICS } from "../layout/fontRoles.ts";
-import { hitAround, hitMargin } from "../layout/hitAreas.ts";
+import { hitMargin } from "../layout/hitAreas.ts";
 import { playView } from "../layout/playView.ts";
 
 // The HTML UI over the canvas (src/ui/dom/ui.css). The layer covers #game, so full-area
@@ -38,13 +39,7 @@ const WHOLE_LENGTHS = [
 ];
 
 // A card's close X, drawn its inset in from the card's top and right edges, and its press area.
-const CLOSE_ART = {
-  height: CARD_CONTENT.closeSize,
-  width: CARD_CONTENT.closeSize,
-  x: CARD_CONTENT.closeInset,
-  y: CARD_CONTENT.closeInset,
-};
-const CLOSE_HIT = hitAround(CLOSE_ART);
+const { art: CLOSE_ART, hit: CLOSE_HIT } = CARD_CLOSE;
 
 // The UI font family and layout constants: unitless base px or whole-px lengths from the view
 // bridge.

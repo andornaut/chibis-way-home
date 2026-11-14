@@ -6,7 +6,7 @@ import { TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
 import { type PressArea, pressedArea } from "./hitAreas.ts";
-import type { LabelledButton } from "./restartCard.ts";
+import type { LabelledButton } from "./labelledButton.ts";
 import { type IconButtonLayout, startScreenLayout } from "./startScreen.ts";
 
 const SCREEN_RECT: Rect = { ...SCREEN, x: 0, y: 0 };

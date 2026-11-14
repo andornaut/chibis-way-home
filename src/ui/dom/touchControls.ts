@@ -3,6 +3,7 @@ import {
   writeLayoutProperties,
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
+import { TOUCH_LAYOUT } from "../../data/layout.ts";
 import type { Point, Size } from "../../data/types/index.ts";
 import {
   TOUCH_CHROME_FRAME,
@@ -18,7 +19,7 @@ import { createPaletteSvg } from "./chrome.ts";
 export const TOUCH_CONTROLS_PROPERTIES: LayoutValues = {
   "--touch-canvas-height": 0,
   "--touch-canvas-width": 0,
-  "--touch-control-opacity": 0.85,
+  "--touch-control-opacity": TOUCH_LAYOUT.opacity,
   "--touch-control-size": TOUCH_CHROME_FRAME,
   "--touch-control-x": 0,
   "--touch-control-y": 0,
