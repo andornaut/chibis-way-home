@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { checkProperties } from "../ai/agentProperties.ts";
 import { BOSS_FAIRNESS } from "../data/bossFairness.ts";
 import { CHARACTERS } from "../data/characters.ts";
+import type { ZoneLayout } from "../data/types/index.ts";
 import { BOSS_SCENARIOS } from "../testing/bossScenarios.ts";
 import { DODGES } from "../testing/dodges.ts";
 import { ORDINARY } from "../testing/encounterLayouts.ts";
@@ -36,6 +37,40 @@ const KNOWN_FAILURES: readonly KnownFailure[] = [];
 const known = (scenario: string, property: string) =>
   KNOWN_FAILURES.find((entry) => entry.scenario === scenario && entry.property === property);
 
+// Register capability-specific checks only where their predicates can examine a boss.
+// Scenario coverage and custom checks remain independent of these plan capabilities.
+function applicableProperties(layout: ZoneLayout) {
+  const bosses = Object.values(layout.areas).flatMap(({ objects }) =>
+    objects.filter((object) => object.character in BOSSES && object.behaviour),
+  );
+  const plans = bosses.map(({ behaviour }) => behaviour!);
+  const flying = plans.map((plan) =>
+    Object.values(plan.states).some(
+      ({ motion }) => motion.kind === "fly" || (motion.kind === "pursue" && motion.mode === "fly"),
+    ),
+  );
+  const ground = flying.some((flies) => !flies);
+  const flight = flying.some(Boolean);
+  const applicable: Readonly<Record<string, boolean>> = {
+    "flight-clearance": flight,
+    "flyer-alive": flight,
+    "ground-footing": ground,
+    "ledge-stop": ground,
+    "recovery-bound": ground,
+    stillness: ground,
+    "supported-completion": flight,
+    "targeted-attack-deferral": bosses.some(
+      ({ character }) => (DEFERRED_ATTACKS[character]?.length ?? 0) > 0,
+    ),
+    "travel-bounded": plans.some((plan) =>
+      Object.values(plan.states).some(
+        ({ motion }) => motion.kind === "move" && motion.distance !== undefined,
+      ),
+    ),
+  };
+  return bossProperties(layout).filter(({ id }) => applicable[id] !== false);
+}
+
 describe.each(BOSS_SCENARIOS.map((group) => [group.scenario.name, group] as const))(
   "boss scenario %s",
   (name, { checks, covers, scenario }) => {
@@ -49,9 +84,10 @@ describe.each(BOSS_SCENARIOS.map((group) => [group.scenario.name, group] as cons
     });
 
     it.each(
-      checkProperties([...bossProperties(layout), ...(checks?.(layout) ?? [])], run.ticks).map(
-        (result) => [result.id, result],
-      ),
+      checkProperties(
+        [...applicableProperties(layout), ...(checks?.(layout) ?? [])],
+        run.ticks,
+      ).map((result) => [result.id, result]),
     )("%s", (id, { violations }) => {
       const entry = known(name, id);
       expect(violations[0]?.tick, JSON.stringify(violations.slice(0, 3))).toBe(entry?.tick);
@@ -59,20 +95,22 @@ describe.each(BOSS_SCENARIOS.map((group) => [group.scenario.name, group] as cons
   },
 );
 
-it("lists known failures only for existing scenarios and checks", () => {
-  for (const { property, scenario } of KNOWN_FAILURES) {
-    const group = BOSS_SCENARIOS.find((entry) => entry.scenario.name === scenario);
-    expect(group, scenario).toBeDefined();
-    const checks = [
-      ...group!.covers.map((coverage) => `covers ${coverage}`),
-      ...[
-        ...bossProperties(group!.scenario.layout()),
-        ...(group!.checks?.(group!.scenario.layout()) ?? []),
-      ].map(({ id }) => id),
-    ];
-    expect(checks).toContain(property);
-  }
-});
+if (KNOWN_FAILURES.length > 0) {
+  it("lists known failures only for existing scenarios and checks", () => {
+    for (const { property, scenario } of KNOWN_FAILURES) {
+      const group = BOSS_SCENARIOS.find((entry) => entry.scenario.name === scenario);
+      expect(group, scenario).toBeDefined();
+      const checks = [
+        ...group!.covers.map((coverage) => `covers ${coverage}`),
+        ...[
+          ...applicableProperties(group!.scenario.layout()),
+          ...(group!.checks?.(group!.scenario.layout()) ?? []),
+        ].map(({ id }) => id),
+      ];
+      expect(checks).toContain(property);
+    }
+  });
+}
 
 it("reads every boss's tells within the shared bounds from its data", () => {
   for (const plan of Object.values(PLANS)) {
