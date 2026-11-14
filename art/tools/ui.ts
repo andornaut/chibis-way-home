@@ -48,6 +48,10 @@
  *   face (dslate pressed), with two pause bars (11x13, each 4 wide, 3 apart) centred on the centre;
  *   no label. Tags as for Use and Jump: rest; press, once (2 frames at 60ms, frame 0 swells 1px);
  *   held.
+ * - ui-menu, 35x35, centre pixel 17,17: the same disc and states as ui-pause, with three menu bars
+ *   from MENU_GLYPH. Tags rest (1 x 100ms), press (2 x 60ms, once; the first expands 1px), and held
+ *   (1 x 100ms). The exported sheet is 140x35. Menu and Pause use the canonical glyph rectangles
+ *   and CONTROL_DISC_FRAME from src/data/layout.ts, without shifting their native pixel centres.
  * - ui-move-hint, 75x75, centre pixel 37,37: a drawing only, with no press area. An open ring 73px
  *   across with no face, a 2px cream band between 1px ink lines, and a 2x chevron (8x10) each side,
  *   22px from the centre, fringed in ink, so it reads on any ground, sky, character or prop. At
@@ -134,6 +138,7 @@
  *   lip).
  */
 
+import { CONTROL_DISC_FRAME, MENU_GLYPH, PAUSE_GLYPH } from "../../src/data/layout.ts";
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { darker, Grid } from "./pixel.ts";
@@ -241,12 +246,13 @@ function nameTab(fill: string): pixel.Frame {
 
 // ---------------------------------------------------------------- touch controls
 
-type ButtonKey = "jump" | "pause" | "use";
+type ButtonKey = "jump" | "menu" | "pause" | "use";
 
-// Disc radius: 73, 73 and 33px across.
-const BUTTON_R: Record<ButtonKey, number> = { use: 36, jump: 36, pause: 16 };
-// The pause disc's cream ring at rest; pressed, it thickens 1px.
-const RING_W = { pause: 2 };
+// Menu and Pause leave one pixel round the 33px resting disc in their canonical frame.
+const DISC_R = (CONTROL_DISC_FRAME - 3) / 2;
+const BUTTON_R: Record<ButtonKey, number> = { use: 36, jump: 36, menu: DISC_R, pause: DISC_R };
+// The menu and pause discs' cream ring at rest; pressed, it thickens 1px.
+const RING_W = { menu: 2, pause: 2 };
 // 21x11, 2px strokes.
 const CARET: Points = [];
 for (let y = 0; y < 11; y++) {
@@ -262,20 +268,10 @@ for (let i = 0; i < 3; i++) {
     DOTS.push([x + i * 9, y]);
   }
 }
-// 11x13, two pause bars.
-const BARS: Points = [];
-for (let i = 0; i < 2; i++) {
-  for (let x = 0; x < 4; x++) {
-    for (let y = 0; y < 13; y++) {
-      BARS.push([x + i * 7, y]);
-    }
-  }
-}
 // Bitmap, top row relative to the centre.
-const ICON: Record<ButtonKey, readonly [Points, number]> = {
+const ICON: Record<Exclude<ButtonKey, "menu" | "pause">, readonly [Points, number]> = {
   use: [DOTS, -3],
   jump: [CARET, -5],
-  pause: [BARS, -6],
 };
 
 function disc(g: Grid, cx: number, cy: number, r: number, c: string): void {
@@ -290,8 +286,8 @@ function disc(g: Grid, cx: number, cy: number, r: number, c: string): void {
 
 /**
  * frame undefined is rest; 0 and 1 the press; 2 held. Use and Jump are the move hint's open ring
- * with the icon fringed in ink and centred; ui-pause is a disc. Pressed, the band and icon turn
- * white; frame 0 swells the ring or disc 1px. The pause disc's ring also thickens 1px and its face
+ * with the icon fringed in ink and centred; ui-menu and ui-pause are discs. Pressed, the band and
+ * icon turn white; frame 0 swells the ring or disc 1px. Each disc's ring thickens 1px and its face
  * lifts to dslate.
  */
 function touchButtonFrame(key: ButtonKey, frame?: number): pixel.Frame {
@@ -300,15 +296,18 @@ function touchButtonFrame(key: ButtonKey, frame?: number): pixel.Frame {
   const hot = frame !== undefined;
   const band = hot ? "white" : "cream";
   const g = new Grid(2 * c + 1, 2 * c + 1);
-  const [pts, top] = ICON[key];
-  const w = Math.max(...pts.map(([x]) => x)) + 1;
-  if (key === "pause") {
+  if (key === "menu" || key === "pause") {
     disc(g, c, c, r, "ink");
     disc(g, c, c, r - 1, band);
     disc(g, c, c, r - 1 - RING_W[key] - (hot ? 1 : 0), hot ? "dslate" : "navy");
-    stamp(g, pts, c - Math.floor(w / 2), c + top, band);
+    const glyph = key === "menu" ? MENU_GLYPH : PAUSE_GLYPH;
+    for (const { height, width, x, y } of glyph.bars) {
+      g.rect(x, y, width, height, band);
+    }
     return g.px;
   }
+  const [pts, top] = ICON[key];
+  const w = Math.max(...pts.map(([x]) => x)) + 1;
   for (let y = 0; y < g.h; y++) {
     for (let x = 0; x < g.w; x++) {
       const d = hypot(x - c, y - c);
@@ -728,6 +727,7 @@ export const SLICES: Record<string, pixel.Margins> = {
 
 // Tags that play once and hold their last frame; every other tag loops.
 export const ONCE: Record<string, readonly string[]> = {
+  "ui-menu": ["press"],
   "ui-pause": ["press"],
   "ui-touch-jump": ["press"],
   "ui-touch-use": ["press"],
@@ -749,6 +749,7 @@ export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["ui-dialogue-box", one(dialogueBox())];
   yield ["ui-focus", one(focus())];
   yield ["ui-icon-button", states(["normal", "pressed"], iconButton)];
+  yield ["ui-menu", touchButton("menu")];
   yield [
     "ui-move-hint",
     [
