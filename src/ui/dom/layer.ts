@@ -14,7 +14,7 @@ import { createViewUnits, slice } from "@andornaut/game-kit/web/ui/dom/viewUnits
 import { CARD_CONTENT, DEATH_CARD, FOCUS_RING, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Point } from "../../data/types/index.ts";
-import { UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
+import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
 import { cardTitleReserve } from "../layout/contentCard.ts";
 import { FONT_METRICS } from "../layout/fontRoles.ts";
 import { hitAround, hitMargin } from "../layout/hitAreas.ts";
@@ -46,8 +46,8 @@ const CLOSE_ART = {
 };
 const CLOSE_HIT = hitAround(CLOSE_ART);
 
-// The layout constants the UI's CSS reads, as unitless base px, or as whole-px lengths from the
-// view bridge.
+// The UI font family and layout constants: unitless base px or whole-px lengths from the view
+// bridge.
 export const UI_LAYOUT: LayoutValues = {
   "--button-height": TEXT_BUTTON.height,
   // A text button's shorter side is its height, so its press area reaches this far past it.
@@ -76,6 +76,7 @@ export const UI_LAYOUT: LayoutValues = {
   "--heading-size": FONT_METRICS.mainHeading.size,
   "--text-line": FONT_METRICS.body.lineHeight,
   "--text-size": FONT_METRICS.body.size,
+  "--ui-font-family": JSON.stringify(UI_FONT_FAMILY),
 };
 
 // The attribute on what the top modal dims.
@@ -252,6 +253,7 @@ function createDimmingModals(root: HTMLElement, dim: ReturnType<typeof createDim
 // The UI layer for document, with frameEdges (art's nine-slice edges, in base px) kept as whole
 // CSS px. The caller appends its element to #game.
 export function createUiLayer(frameEdges: readonly number[], document: Document): UiLayer {
+  registerUiFonts(document);
   const element = document.createElement("div");
   element.className = "ui-layer";
   writeLayoutProperties(UI_LAYOUT, element);
@@ -293,7 +295,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
   };
 }
 
-// Resolves once both UI font weights have loaded through ui.css's @font-face rules, or failed,
+// Resolves once both registered UI font weights have loaded or failed,
 // so no DOM screen first shows in a fallback face. A failure leaves the fallback in place.
 export function loadUiFonts(fonts: Pick<FontFaceSet, "load">): Promise<void> {
   return Promise.all(

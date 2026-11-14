@@ -12,27 +12,11 @@
   pointer-events: none;
 }
 
-@font-face {
-  font-family: "Liberation Sans";
-  font-style: normal;
-  font-weight: 400;
-  font-display: block;
-  src: url("/art/fonts/liberation/LiberationSans-Regular.ttf") format("truetype");
-}
-
-@font-face {
-  font-family: "Liberation Sans";
-  font-style: normal;
-  font-weight: 700;
-  font-display: block;
-  src: url("/art/fonts/liberation/LiberationSans-Bold.ttf") format("truetype");
-}
-
 /* Over the world canvas and the UI overlay canvas, even while a modal lifts the overlay. */
 #game > .ui-layer {
   z-index: 4;
   --ui-refusal-colour: var(--colour-red);
-  font-family: "Liberation Sans", sans-serif;
+  font-family: var(--ui-font-family), sans-serif;
   color: var(--colour-ink);
 
   /* Art's ui-focus ring as box-shadows outside a focused face, in whole CSS px: from the inside
