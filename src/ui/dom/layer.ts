@@ -89,6 +89,7 @@ export interface UiLayer {
   dispose(): void;
   // Places the view for the canvas's fit, the canvas's top-left offset in the layer in CSS px.
   fit(canvasAt: Point, fit: RenderFit): void;
+  menuEntry(button: HTMLButtonElement): () => void;
   // Mounts view as order's layer, above lower orders, and returns its removal.
   mount(order: number, view: HTMLElement): () => void;
   // Sets the dimmed skin: the custom properties (applySkin's) set on what a modal dims.
@@ -214,7 +215,11 @@ function createDim(root: HTMLElement) {
 }
 
 // The kit's modal layer over root, which also dims what the top card covers.
-function createDimmingModals(root: HTMLElement, dim: ReturnType<typeof createDim>): ModalLayer {
+function createDimmingModals(
+  root: HTMLElement,
+  dim: ReturnType<typeof createDim>,
+  globalEntry: HTMLElement,
+): ModalLayer {
   const modals = createModalLayer(root);
   const stack: { readonly dialog: HTMLElement; readonly options: ModalOptions }[] = [];
   const update = () => {
@@ -229,8 +234,10 @@ function createDimmingModals(root: HTMLElement, dim: ReturnType<typeof createDim
       modals.dispose();
     },
     open(options, dialog) {
-      const close = modals.open(options, dialog);
-      const entry = { dialog, options };
+      const live = (options.live ?? []).filter((element) => !globalEntry.contains(element));
+      const liveOptions = { ...options, live: [...live, globalEntry] };
+      const close = modals.open(liveOptions, dialog);
+      const entry = { dialog, options: liveOptions };
       stack.push(entry);
       update();
       return () => {
@@ -255,7 +262,14 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
   const edges = [...new Set([...frameEdges, ...WHOLE_LENGTHS])].sort((a, b) => a - b);
   const update = createViewUnits(edges, element);
   const dim = createDim(element);
-  const modals = createDimmingModals(element, dim);
+  const globalEntry = document.createElement("div");
+  globalEntry.className = "ui-scene global-menu-layer";
+  globalEntry.dataset.uiOrder = String(Infinity);
+  const entryView = document.createElement("div");
+  entryView.className = "ui-view pause-hud-view";
+  globalEntry.append(entryView);
+  element.append(globalEntry);
+  const modals = createDimmingModals(element, dim, globalEntry);
   return {
     dimImage: (lit, dimmed) => dim.image(lit, dimmed),
     dispose() {
@@ -275,6 +289,13 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
           y: canvasAt.y + view.y / fit.r,
         },
       });
+    },
+    menuEntry(button) {
+      if (entryView.childElementCount !== 0) {
+        throw new Error("The global menu entry is already registered");
+      }
+      entryView.append(button);
+      return () => button.remove();
     },
     modals,
     mount(order, view) {

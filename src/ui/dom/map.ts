@@ -78,7 +78,14 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
   title.id = "map-title";
   title.className = "map-title";
   title.textContent = words.title;
-  writeLayoutProperties({ "--map-x": MAP_SCREEN.title.x, "--map-y": MAP_SCREEN.title.y }, title);
+  writeLayoutProperties(
+    {
+      "--map-title-width": MAP_SCREEN.title.width,
+      "--map-x": MAP_SCREEN.title.x,
+      "--map-y": MAP_SCREEN.title.y,
+    },
+    title,
+  );
   content.append(title);
   const buttons = {
     continue: textButton(document, words.continue, true),

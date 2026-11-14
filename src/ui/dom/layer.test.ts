@@ -61,13 +61,17 @@ describe("the UI layer", () => {
       return { element, unmount: layer.mount(order, element) };
     };
     const [, , middle] = [view(17), view(3), view(9)];
-    expect([...layer.element.children].map(({ id }) => id)).toEqual([
-      "scene-3",
-      "scene-9",
-      "scene-17",
-    ]);
+    expect(
+      [...layer.element.children]
+        .filter((child) => !child.classList.contains("global-menu-layer"))
+        .map(({ id }) => id),
+    ).toEqual(["scene-3", "scene-9", "scene-17"]);
     middle.unmount();
-    expect([...layer.element.children].map(({ id }) => id)).toEqual(["scene-3", "scene-17"]);
+    expect(
+      [...layer.element.children]
+        .filter((child) => !child.classList.contains("global-menu-layer"))
+        .map(({ id }) => id),
+    ).toEqual(["scene-3", "scene-17"]);
   });
 });
 
@@ -90,4 +94,48 @@ it("reads only custom properties the layer, the bridge, the skin or a stylesheet
       ),
     );
   expect([...read].filter((name) => !provided(name))).toEqual([]);
+});
+
+it("keeps the one global entry live without duplicating it in modal keyboard order", () => {
+  const layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  const dialog = document.createElement("section"),
+    first = document.createElement("button"),
+    entry = document.createElement("button");
+  dialog.tabIndex = -1;
+  dialog.append(first);
+  layer.mount(0, dialog);
+  const remove = layer.menuEntry(entry);
+  const close = layer.modals.open({ live: [entry] }, dialog);
+  const tab = () =>
+    document.activeElement!.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+    );
+  tab();
+  expect(document.activeElement).toBe(first);
+  tab();
+  expect(document.activeElement).toBe(entry);
+  tab();
+  expect(document.activeElement).toBe(first);
+  close();
+  remove();
+  expect(entry.isConnected).toBe(false);
+  layer.dispose();
+});
+
+it("allows late registration inside the empty global live container and removes the exact entry", () => {
+  const layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  const dialog = document.createElement("section");
+  dialog.tabIndex = -1;
+  layer.mount(0, dialog);
+  const close = layer.modals.open({}, dialog);
+  const entry = document.createElement("button"),
+    remove = layer.menuEntry(entry);
+  expect(entry.closest("[inert]")).toBeNull();
+  expect(() => layer.menuEntry(document.createElement("button"))).toThrow("already registered");
+  remove();
+  expect(entry.isConnected).toBe(false);
+  close();
+  layer.dispose();
 });

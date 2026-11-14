@@ -4,10 +4,11 @@
   left: calc(var(--ui-unit) * (var(--dialogue-frame-inset) + var(--dialogue-portrait) / 2) * 1px);
   width: calc(var(--ui-unit) * var(--room-portrait-width) * 1px);
   height: calc(var(--ui-unit) * var(--room-portrait-height) * 1px);
-  translate: -50% -50%;
+  translate: -50% 0;
 }
 
 .room-name {
+  max-width: calc(var(--ui-unit) * var(--room-title-width) * 1px);
   position: absolute;
   top: calc(var(--ui-unit) * var(--room-name-y) * 1px);
   left: calc(var(--ui-unit) * var(--room-name-x) * 1px);

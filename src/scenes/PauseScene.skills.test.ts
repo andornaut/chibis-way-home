@@ -16,6 +16,7 @@ vi.mock("../pwa/index.ts", () => ({
   coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
+  updateOffer: { defer: vi.fn() },
   zoneShown: vi.fn(),
 }));
 vi.mock("../ui/settings/touchControls.ts", async (importOriginal) => ({
@@ -340,7 +341,7 @@ it("keeps the HUD live beside the open card, where a tap opens details and close
   expect(scenes.pause).toHaveBeenCalledExactlyOnceWith("zone");
 });
 
-it("steps the focus through Resume, Settings, Back to title, the skills and the close X, wrapping", async () => {
+it("steps the focus through Settings, Back to title, Resume, the skills and the close X, wrapping", async () => {
   selection.owned = [...SKILL_IDS];
   const { close, dialog, open, update } = play();
   await open();
@@ -354,12 +355,12 @@ it("steps the focus through Resume, Settings, Back to title, the skills and the 
     return name();
   });
   expect(names).toEqual([
-    TEXT.pause.resume,
     TEXT.pause.settings,
     TEXT.pause.home,
+    TEXT.pause.resume,
     ...SKILL_IDS.map((id) => TEXT.skills[id].title),
     TEXT.pause.close,
-    TEXT.pause.resume,
+    TEXT.pause.settings,
   ]);
   dialog.focus();
   pressKey([], "Tab", { shiftKey: true });
@@ -466,7 +467,7 @@ it.each([
   expect(document.activeElement).toBe(fixture.dialog);
   fixture.update();
   expect(fixture.pauseButton.hidden).toBe(false);
-  expect(fixture.pauseButton.disabled).toBe(true);
+  expect(fixture.pauseButton.disabled).toBe(false);
 });
 
 it.each([

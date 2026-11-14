@@ -101,7 +101,9 @@ function conversation(data: DialogueData | null = { scene: "archie-intro" }) {
 }
 
 it("shows the pause button while a conversation covers play, and never on the map", () => {
-  expect(conversation().pause.pauseButton.hidden).toBe(false);
+  const first = conversation();
+  expect(first.pause.pauseButton.hidden).toBe(false);
+  first.pause.events.emit("shutdown");
   expect(conversation(null).pause.pauseButton.hidden).toBe(true);
 });
 

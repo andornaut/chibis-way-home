@@ -5,6 +5,7 @@ import {
 
 import { SKILL_DETAILS } from "../../data/layout.ts";
 import type { Rect } from "../../data/types/index.ts";
+import { PAGE_TITLE } from "../layout/pageTitle.ts";
 import { ROOM_SCREEN } from "../layout/roomScreen.ts";
 import { SKILL_ROOM } from "../layout/skillDetails.ts";
 import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";
@@ -64,8 +65,9 @@ export function roomProperties(): LayoutValues {
     "--room-footer-width": SKILL_ROOM.footer.width,
     "--room-gift-height": SKILL_ROOM.bounds.height,
     "--room-gift-top": SKILL_ROOM.bounds.y,
-    "--room-name-x": ROOM_SCREEN.nameCentre.x,
-    "--room-name-y": ROOM_SCREEN.nameCentre.y,
+    "--room-name-x": PAGE_TITLE.x,
+    "--room-name-y": PAGE_TITLE.y,
+    "--room-title-width": PAGE_TITLE.width,
   };
 }
 

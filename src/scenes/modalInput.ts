@@ -8,6 +8,8 @@ import type { Input, Scene } from "phaser";
 const gates = new WeakMap<object, ModalInputGate>();
 const owners = new WeakMap<object, object>();
 const inputs = new WeakMap<object, SceneInput>();
+const readiness = new WeakMap<object, () => boolean>();
+const menuRevisions = new WeakMap<object, number>();
 
 export interface SceneInput {
   accepts(event?: object): boolean;
@@ -70,6 +72,9 @@ export function modalInput(scene: Scene): SceneInput {
       scope ??= gameGate.open();
     },
     ready(value) {
+      if (ready !== value) {
+        menuRevisions.set(scene.game, (menuRevisions.get(scene.game) ?? 0) + 1);
+      }
       ready = value;
     },
     subscribe(clear) {
@@ -77,10 +82,12 @@ export function modalInput(scene: Scene): SceneInput {
     },
   };
   inputs.set(scene, input);
+  readiness.set(scene, () => ready);
   scene.events.once("shutdown", () => {
     unsubscribers.forEach((stop) => stop());
     input.close();
     inputs.delete(scene);
+    readiness.delete(scene);
   });
   return input;
 }
@@ -139,4 +146,39 @@ function pointerPresses(scene: Scene): Map<number, () => boolean> {
     scene.events.once("shutdown", () => pointers.delete(scene));
   }
   return found;
+}
+
+// Only the persistent menu entry can open above the current modal owner.
+export function globalMenuInput(
+  scene: Scene,
+  enabled: () => boolean,
+): Pick<SceneInput, "accepts" | "capture"> {
+  modalInput(scene);
+  const gate = gates.get(scene.game)!;
+  let revision = 0;
+  const stop = gate.subscribe(() => {
+    revision++;
+  });
+  scene.events.once("shutdown", stop);
+  return {
+    accepts(event) {
+      if (!enabled()) {
+        return false;
+      }
+      if (event) {
+        owners.set(event, scene);
+      }
+      return true;
+    },
+    capture() {
+      const captured = revision;
+      const sourceRevision = menuRevisions.get(scene.game);
+      return () =>
+        enabled() && captured === revision && sourceRevision === menuRevisions.get(scene.game);
+    },
+  };
+}
+
+export function menuSourceReady(scene: object): boolean {
+  return readiness.get(scene)?.() ?? true;
 }

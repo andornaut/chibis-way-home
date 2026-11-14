@@ -144,6 +144,8 @@ export function conversationControls(scene: Scene): HTMLElement[] {
 // Mounts view in scene's UI layer at the scene's place in the game's scene list, until the
 // scene shuts down. Returns its removal.
 export function mountSceneView(scene: Scene, view: HTMLElement): () => void {
+  view.dataset.menuScene = scene.scene.key;
+  view.dataset.menuScene = scene.scene.key;
   const unmount =
     sceneDomUi(scene)?.mount(scene.game.scene.getIndex(scene.sys.settings.key), view) ??
     (() => view.remove());

@@ -76,3 +76,19 @@ it("keeps the 35px disc, 1px ring and two 4x13 bars, swelling by 1px on a press'
   expect(radii(true)).toEqual([17.5, 16.5, 13.5]);
   expect(radii(false)).toEqual([16.5, 15.5, 12.5]);
 });
+
+it("uses the shared three-bar menu glyph without changing the Pause poses or button geometry", () => {
+  const button = document.createElement("button");
+  showPauseDisc(colours, { expanded: false, tag: "rest" }, button, "menu");
+  const menu = svgLayers(button.querySelector("svg[data-shown]")!);
+  expect(menu.slice(0, 3)).toEqual(pauseChromeLayers(colours, "rest", false).slice(0, 3));
+  expect(menu.slice(3)).toEqual([
+    { colour: colours.cream, kind: "rect", rect: { height: 3, width: 11, x: 12, y: 11 } },
+    { colour: colours.cream, kind: "rect", rect: { height: 3, width: 11, x: 12, y: 16 } },
+    { colour: colours.cream, kind: "rect", rect: { height: 3, width: 11, x: 12, y: 21 } },
+  ]);
+  showPauseDisc(colours, { expanded: false, tag: "rest" }, button, "pause");
+  expect(svgLayers(button.querySelector("svg[data-shown]")!)).toEqual(
+    pauseChromeLayers(colours, "rest", false),
+  );
+});

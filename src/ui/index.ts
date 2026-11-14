@@ -86,6 +86,7 @@ export {
   type PauseDiscPose,
   type PauseView,
   showPauseDisc,
+  showPauseMenu,
   showSkillButton,
   skillPlace,
 } from "./dom/pause.ts";

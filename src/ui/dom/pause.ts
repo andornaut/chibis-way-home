@@ -3,7 +3,7 @@ import {
   writeLayoutProperties,
 } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
 
-import type { Point, SkillId } from "../../data/types/index.ts";
+import type { GameText, Point, SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
 import {
   PAUSE_CHROME_FRAME,
@@ -12,7 +12,7 @@ import {
 } from "../chrome/pauseChrome.ts";
 import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
 import { SKILL_BUTTON } from "../layout/skillHud.ts";
-import { type CardView, createCard } from "./card.ts";
+import { type CardView, type CardWords, createCard } from "./card.ts";
 import { createPaletteSvg } from "./chrome.ts";
 import { UI_COVERED } from "./layer.ts";
 import {
@@ -110,23 +110,19 @@ export function createPauseView(
   const root = element("div", "pause-scene");
   writeLayoutProperties(PAUSE_LAYOUT, root);
   const card = createCard<PauseCardButton>(document, id, {
-    actions: [
-      { key: "resume", label: words.card.resume, primary: true },
-      { key: "settings", label: words.card.settings },
-      { key: "home", label: words.card.home },
-    ],
+    actions: pauseMenuActions(words.card),
     actionsLayout: "stack",
     close: words.card.close,
     title: words.card.title,
   });
   const close = card.close!;
   card.dialog.classList.add("pause-card");
-  // First in the card, so the keyboard's focus steps from the card's buttons through the live
-  // skill HUD and wraps round to the close X: Resume, Settings, Back to title, the skills, close.
+  // The close X wraps after the card actions and live skills in keyboard focus.
   card.dialog.prepend(close);
   card.root.hidden = true;
   const view = element("div", "ui-view pause-hud-view");
   const pauseButton = element("button", "pause-button");
+  writeLayoutProperties(PAUSE_LAYOUT, pauseButton);
   pauseButton.type = "button";
   pauseButton.tabIndex = -1;
   pauseButton.hidden = true;
@@ -169,8 +165,9 @@ export function showPauseDisc(
   colours: PauseColours,
   pose: PauseDiscPose,
   button: HTMLButtonElement,
+  mode: "menu" | "pause" = "pause",
 ): void {
-  const key = `${pose.tag}${pose.expanded ? "-expanded" : ""}`;
+  const key = `${mode}-${pose.tag}${pose.expanded ? "-expanded" : ""}`;
   const poses = [...button.querySelectorAll<SVGSVGElement>(".pause-disc")];
   let shown = poses.find((svg) => svg.dataset.pose === key);
   if (shown === undefined) {
@@ -178,7 +175,7 @@ export function showPauseDisc(
       button.ownerDocument,
       colours,
       { height: PAUSE_CHROME_FRAME, width: PAUSE_CHROME_FRAME },
-      pauseChromeLayers(colours, pose.tag, pose.expanded),
+      pauseChromeLayers(colours, pose.tag, pose.expanded, mode),
     );
     shown.classList.add("pause-disc");
     shown.dataset.pose = key;
@@ -225,4 +222,26 @@ export function showSkillButton(
     button.removeAttribute("aria-describedby");
   }
   paintSkillDisc(colours, state, view.disc);
+}
+
+// Vertical menu actions keep the primary last in both reading and visual order.
+export function pauseMenuActions(words: PauseWords["card"]): CardWords<PauseCardButton>["actions"] {
+  return [
+    { key: "settings", label: words.settings },
+    { key: "home", label: words.home },
+    { key: "resume", label: words.resume, primary: true },
+  ];
+}
+
+export function showPauseMenu(
+  words: Pick<GameText, "menu" | "pause">,
+  mode: "menu" | "pause",
+  homeShown: boolean,
+  view: PauseView,
+): void {
+  view.card.dialog.querySelector(".ui-card-title")!.textContent =
+    mode === "pause" ? words.pause.title : words.menu.title;
+  view.card.buttons.resume.querySelector(".ui-text-button-label")!.textContent =
+    mode === "pause" ? words.pause.resume : words.pause.close;
+  view.card.buttons.home.hidden = !homeShown;
 }

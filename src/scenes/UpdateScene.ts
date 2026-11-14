@@ -8,6 +8,7 @@ import { type CardView, createCard, showPresses } from "../ui/index.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
+import type { PauseScene } from "./PauseScene.ts";
 
 // Pausing the world does not change PWA eligibility: closing this offer cannot reopen it.
 export function installUpdateModalBridge(game: Game): void {
@@ -16,7 +17,7 @@ export function installUpdateModalBridge(game: Game): void {
     if (shown) {
       paused = game.scene
         .getScenes(true)
-        .filter((scene) => scene.scene.key !== "update")
+        .filter((scene) => scene.scene.key !== "update" && scene.scene.key !== "pause")
         .map((scene) => scene.scene.key);
       for (const key of paused) {
         game.scene.pause(key);
@@ -110,7 +111,11 @@ export class UpdateScene extends Scene {
       stops.forEach((stop) => stop());
     });
     mountSceneView(this, card.root);
-    const backdrop = showModalBackdrop(this);
+    const pause =
+      this.scene.isActive("pause") || this.scene.isPaused("pause")
+        ? (this.scene.get("pause") as PauseScene)
+        : undefined;
+    const backdrop = showModalBackdrop(this, pause?.modalBackdropShown() ?? false);
     void backdrop.ready.then(() => {
       this.readyToInteract = shown && this.sys.isActive();
       if (this.readyToInteract) {

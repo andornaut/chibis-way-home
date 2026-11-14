@@ -270,7 +270,7 @@ it.each(
     pause.update();
     // Only the pause card hides the skill HUD over a conversation.
     expect([pause.skill("dash").hidden, pause.pauseButton.hidden]).toEqual([true, false]);
-    expect(pause.pauseButton.disabled).toBe(true);
+    expect(pause.pauseButton.disabled).toBe(false);
     tap(pause.button(TEXT.pause.resume));
     expect(cardShown(pause.dialog)).toBe(false);
     expect(scenes.resume).toHaveBeenCalledExactlyOnceWith(HELD[mode]);

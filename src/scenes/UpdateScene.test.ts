@@ -15,7 +15,7 @@ vi.mock("../pwa/index.ts", () => ({
   updateOffer: offer,
 }));
 vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
-vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => backdrop }));
+vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: vi.fn(() => backdrop) }));
 vi.mock("./domUi.ts", () => ({
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(0, view);
@@ -27,6 +27,7 @@ vi.mock("./domUi.ts", () => ({
 
 import { TEXT } from "../data/text.ts";
 import { createUiLayer, type UiLayer } from "../ui/index.ts";
+import { showModalBackdrop } from "./modalBackdrop.ts";
 import { UpdateScene } from "./UpdateScene.ts";
 
 let layer: UiLayer;
@@ -54,7 +55,7 @@ const settle = async () => {
 };
 
 // The update card, created; shown once its dim is ready unless ready is held.
-async function openCard(hold = false) {
+async function openCard(hold = false, covered = false) {
   let release = () => {};
   if (hold) {
     backdrop.ready = new Promise<void>((resolve) => {
@@ -65,6 +66,11 @@ async function openCard(hold = false) {
   opened.push(events);
   const scene = Object.assign(new UpdateScene(), {
     events,
+    scene: {
+      get: () => ({ modalBackdropShown: () => covered }),
+      isActive: (key: string) => key === "pause" && covered,
+      isPaused: () => false,
+    },
     sys: { isActive: () => true },
   });
   scene.create();
@@ -208,4 +214,9 @@ it("removes the card and gives back the keys and back when the scene shuts down"
   window.dispatchEvent(new Event("test:back"));
   expect(event.defaultPrevented).toBe(false);
   expect(offer.defer).not.toHaveBeenCalled();
+});
+
+it("keeps an already dimmed Pause world at one modal strength", async () => {
+  await openCard(false, true);
+  expect(showModalBackdrop).toHaveBeenCalledWith(expect.anything(), true);
 });

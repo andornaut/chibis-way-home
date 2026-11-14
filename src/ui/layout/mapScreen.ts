@@ -5,6 +5,7 @@ import type { PathStroke } from "../map/mapPath.ts";
 import { FONT_SCALE } from "./fontRoles.ts";
 import { hitAround } from "./hitAreas.ts";
 import { labelledButton } from "./labelledButton.ts";
+import { PAGE_TITLE } from "./pageTitle.ts";
 
 // Art's paper map (art/README.md, Map), in base pixels (MAP_LAYOUT). Offsets are from a node's
 // centre. The paper fills the screen; each marker's centre pixel sits on its node's
@@ -33,7 +34,7 @@ export const MAP_SCREEN = {
   nodeHit: { height: NODE_HIT.height, width: NODE_HIT.width } satisfies Size,
   paper: MAP_LAYOUT.paper,
   textScale: FONT_SCALE,
-  title: MAP_LAYOUT.title,
+  title: PAGE_TITLE,
 } as const;
 
 // Each look a path takes, in a palette colour: unbuilt, built but not yet opened (locked, dimmed a

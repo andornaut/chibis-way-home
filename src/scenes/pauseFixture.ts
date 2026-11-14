@@ -62,7 +62,7 @@ export function createPauseScene(game: { readonly events: EventEmitter }, scenes
     events,
     hud: root.querySelector<HTMLElement>(".skill-hud")!,
     keyboard,
-    pauseButton: root.querySelector<HTMLButtonElement>(".pause-button")!,
+    pauseButton: [...document.querySelectorAll<HTMLButtonElement>(".pause-button")].at(-1)!,
     root,
     scene,
     skill: (skill: SkillId) =>

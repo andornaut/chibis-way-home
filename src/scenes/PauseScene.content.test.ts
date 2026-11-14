@@ -11,6 +11,7 @@ vi.mock("../pwa/index.ts", () => ({
   coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
+  updateOffer: { defer: vi.fn() },
   zoneShown: vi.fn(),
 }));
 vi.mock("./save.ts", () => ({ activeSkill: () => undefined, savedSkills: () => [] }));
@@ -80,7 +81,7 @@ function content() {
   return { active, get, pause, paused, scenes };
 }
 
-it("keeps the top-left overlay visible on fine-pointer content, except title and initial loading", () => {
+it("keeps the top-left overlay visible on fine-pointer content, including title, except initial loading", () => {
   expect(coarsePointer(window)).toBe(false);
   const { active, pause } = content();
   for (const key of [
@@ -96,10 +97,15 @@ it("keeps the top-left overlay visible on fine-pointer content, except title and
     active.add(key);
     pause.update();
     expect(pause.pauseButton.hidden, key).toBe(false);
-    expect(pause.pauseButton.disabled, key).toBe(key === "death");
+    expect(pause.pauseButton.disabled, key).toBe(false);
   }
+  active.clear();
+  active.add("start");
+  pause.update();
+  expect(pause.pauseButton.hidden).toBe(false);
+  expect(pause.pauseButton.getAttribute("aria-label")).toBe(TEXT.menu.button);
   expect(pause.root.dataset.uiOrder).toBe(String(Number.MAX_SAFE_INTEGER));
-  for (const key of ["start", "boot"]) {
+  for (const key of ["boot"]) {
     active.clear();
     active.add(key);
     pause.update();
@@ -107,7 +113,7 @@ it("keeps the top-left overlay visible on fine-pointer content, except title and
   }
 });
 
-it("leaves ordinary cards guarded, then pauses and resumes only the active content", async () => {
+it("keeps card keys guarded and restores only held content", async () => {
   const { active, get, pause, paused, scenes } = content();
   paused.add("zone");
   for (const key of [
@@ -123,8 +129,7 @@ it("leaves ordinary cards guarded, then pauses and resumes only the active conte
     modalInput(card as never).open();
     pause.update();
     expect(pause.pauseButton.hidden, key).toBe(false);
-    expect(pause.pauseButton.disabled, key).toBe(true);
-    tap(pause.pauseButton);
+    expect(pause.pauseButton.disabled, key).toBe(false);
     pressKey([pause.keyboard], "P");
     expect(scenes.pause).not.toHaveBeenCalled();
     modalInput(card as never).close();
@@ -136,12 +141,12 @@ it("leaves ordinary cards guarded, then pauses and resumes only the active conte
   expect(scenes.pause).toHaveBeenCalledExactlyOnceWith("map");
   expect(scenes.bringToTop).toHaveBeenCalledOnce();
   expect(pause.pauseButton.hidden).toBe(false);
-  expect(pause.pauseButton.disabled).toBe(true);
+  expect(pause.pauseButton.disabled).toBe(false);
   tap(pause.button(TEXT.pause.settings));
   expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("settings", { opener: "pause" });
   expect(scenes.resume).not.toHaveBeenCalled();
   pause.scene.settingsClosed();
-  tap(pause.button(TEXT.pause.resume));
+  tap(pause.button(TEXT.pause.close));
   expect(scenes.resume).toHaveBeenCalledExactlyOnceWith("map");
   expect(paused.has("zone")).toBe(true);
 });
