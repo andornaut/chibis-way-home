@@ -1,11 +1,14 @@
 // @vitest-environment happy-dom
+import { readFileSync } from "node:fs";
+
 import { expect, it } from "vitest";
 
 import { DIALOGUES, SPEAKERS } from "../../data/dialogues.ts";
 import { TEXT } from "../../data/text.ts";
 import { dialogueParagraphs } from "../dialogue/conversation.ts";
+import { PAGE_TITLE } from "../layout/pageTitle.ts";
 import { ROOM_SCREEN } from "../layout/roomScreen.ts";
-import { createRoomView } from "./room.ts";
+import { createRoomView, roomProperties } from "./room.ts";
 
 const COLOURS = {
   cream: 0xead4aa,
@@ -58,4 +61,11 @@ it("keeps gift text, helper name, animated portrait slot and primary Continue in
   expect(view.panel?.portrait.alt).toBe("");
   expect(view.root.querySelectorAll(".dialogue-portrait")).toHaveLength(1);
   expect(view.root.querySelector(".room-description")?.textContent).not.toContain("{jump}");
+});
+
+it("centres the portrait in its slot while anchoring the page title at its top inset", () => {
+  const roomCss = readFileSync("src/ui/dom/room.css", "utf8");
+  expect(roomCss).toMatch(/\.room-scene \.dialogue-portrait\s*\{[^}]*translate:\s*-50% -50%;/);
+  expect(roomCss).toMatch(/\.room-name\s*\{[^}]*translate:\s*-50% 0;/);
+  expect(roomProperties()["--room-name-y"]).toBe(PAGE_TITLE.y);
 });

@@ -4,7 +4,7 @@
   left: calc(var(--ui-unit) * (var(--dialogue-frame-inset) + var(--dialogue-portrait) / 2) * 1px);
   width: calc(var(--ui-unit) * var(--room-portrait-width) * 1px);
   height: calc(var(--ui-unit) * var(--room-portrait-height) * 1px);
-  translate: -50% 0;
+  translate: -50% -50%;
 }
 
 .room-name {
@@ -18,7 +18,7 @@
   font-weight: 700;
   line-height: calc(var(--ui-unit) * var(--heading-line) * 1px);
   text-align: center;
-  translate: -50% -50%;
+  translate: -50% 0;
 }
 
 .room-gift-area {
