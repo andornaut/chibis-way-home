@@ -34,7 +34,7 @@ To bring generator output back to the checkout, run that container from the repo
 - Change the generator, never its output: a build overwrites it.
 - `fonts.ts build` writes the private preview-label body bitmap font to `art/generated/fonts/font-body.png` and `.fnt`, and copies the Liberation TTFs and licence from `art/fonts/liberation/` to `public/art/fonts/liberation/`; replace the source fonts only in `art/`. `previewText.ts` deterministically builds its body font before reading it, so standalone previews do not depend on served bitmap fonts. The runtime manifest has no bitmap-font entries.
 - Each generator's header comment is its spec: every asset's size, tags, frame timings and placement.
-- Generators never import or read `src/`. Art writes the data files the game reads: `contact-silhouettes.json`, `palette.json` and `zone-themes.json`, registered under `data` in the manifest.
+- Generators may import the canonical data-only `TILE` from `src/data/screen.ts` and `ROOM_BUILDING_OPENING` from `src/data/roomBuildings.ts` to derive tile and opening geometry. Other `src/` imports and runtime, scene or Phaser dependencies remain excluded. Game-specific art definitions, palettes and manifest policy stay in the client. Art writes the data files the game reads: `contact-silhouettes.json`, `palette.json` and `zone-themes.json`, registered under `data` in the manifest.
 - Keys are kebab-case, named after what the player sees. Internal names match displayed names.
 - Run the relevant art manifest and consumer asset key/tag checks in isolated containers, and format changed Markdown before handoff.
 
