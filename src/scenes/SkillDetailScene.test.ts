@@ -64,6 +64,12 @@ afterEach(() => {
   layer.dispose();
 });
 
+function detailRoot(): HTMLElement {
+  return layer.element
+    .querySelector<HTMLElement>("#skill-details-card")!
+    .closest<HTMLElement>(".ui-card-scene")!;
+}
+
 // The scene for skill, launched and created: its card shows once its dim and glyph are ready.
 function launch(skill: SkillId = "dash") {
   const events = new EventEmitter();
@@ -78,7 +84,7 @@ function launch(skill: SkillId = "dash") {
   });
   scene.init({ onClose, skill });
   scene.create();
-  const root = document.querySelector<HTMLElement>(".ui-scene:last-child")!;
+  const root = detailRoot();
   return { events, onClose, root, scene, stop };
 }
 
@@ -242,5 +248,5 @@ it("takes no close before its dim is ready, and ignores a previous visit's late 
   expect(onClose).not.toHaveBeenCalled();
   expect(current).not.toHaveBeenCalled();
   expect(root.isConnected).toBe(false);
-  expect(document.querySelector<HTMLElement>(".ui-scene:last-child")!.hidden).toBe(true);
+  expect(detailRoot().hidden).toBe(true);
 });
