@@ -36,7 +36,7 @@ import { CHARACTERS } from "../data/characters.ts";
 import { DASH_TRAIL } from "../data/dashTrail.ts";
 import { DEATH } from "../data/death.ts";
 import { ZONE_DIALOGUES } from "../data/dialogues.ts";
-import { CONTACT_CUE } from "../data/feedback.ts";
+import { CONTACT_CUE, ZONE_TRANSITION } from "../data/feedback.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { SCREEN, TILE } from "../data/screen.ts";
 import { SKILLS } from "../data/skills.ts";
@@ -213,10 +213,6 @@ const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
 const BACKGROUND = 0x262b44;
 const INK = 0x181425;
 const TERRAIN = 0x8b9bb4;
-// Leaving an ended zone fades to black, and where the next zone plays in this scene, back, each
-// way this long, with play held still.
-const FADE_MS = 250;
-
 const BIRD_SPRITE = "bird";
 const CONTROL_SPRITES: Readonly<Record<TouchControl, string>> = {
   jump: "ui-touch-jump",
@@ -1260,7 +1256,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private fadeOut(): void {
     this.hold = "fade";
     const camera = this.cameras.main;
-    camera.fadeOut(FADE_MS, 0, 0, 0);
+    camera.fadeOut(ZONE_TRANSITION.fadeMs, 0, 0, 0);
     camera.once("camerafadeoutcomplete", () => this.leave());
   }
 
@@ -1383,7 +1379,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.drawObjects();
     this.drawBird();
     const camera = this.cameras.main;
-    camera.fadeIn(FADE_MS, 0, 0, 0);
+    camera.fadeIn(ZONE_TRANSITION.fadeMs, 0, 0, 0);
     camera.once("camerafadeincomplete", () => {
       this.hold = undefined;
       this.openIntroduction();
