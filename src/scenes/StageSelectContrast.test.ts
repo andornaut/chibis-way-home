@@ -14,7 +14,7 @@ it("keeps every unlocked stage in a legible look on both Apartment pages, dimmin
   const unlocked = destination.stages.slice(0, 4);
   const view = createStageSelect(
     document,
-    { close: "", locked: "", pager: TEXT.map.stagePages, title: "" },
+    { close: "", locked: TEXT.map.stageLocked, pager: TEXT.map.stagePages, title: "" },
     STAGES_PER_PAGE,
     destination.stages.map((id) => ({
       id,
