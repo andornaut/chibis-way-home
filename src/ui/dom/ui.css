@@ -141,11 +141,15 @@
   cursor: pointer;
 }
 
-.ui-text-button:not([hidden]):not(:nth-child(1 of :not([hidden]))) {
+.ui-text-button:where(:not(.ui-button-stack > *)):not([hidden]):not(
+    :nth-child(1 of :not([hidden]))
+  ) {
   padding-left: var(--half-gap);
 }
 
-.ui-text-button:not([hidden]):not(:nth-last-child(1 of :not([hidden]))) {
+.ui-text-button:where(:not(.ui-button-stack > *)):not([hidden]):not(
+    :nth-last-child(1 of :not([hidden]))
+  ) {
   padding-right: var(--half-gap);
 }
 
@@ -156,7 +160,7 @@
 /* A row of two visible buttons, primary then secondary, shows the secondary on the left and the primary on
    the right, though the primary leads the focus order: each press area reaches the full margin on
    its outer side and half the gap on its inner. */
-.ui-card-actions
+.ui-card-actions:not(:where(.ui-button-stack))
   > .ui-text-button-primary:not([hidden]):nth-child(1 of :not([hidden])):nth-last-child(
     2 of :not([hidden])
   ) {
@@ -166,7 +170,7 @@
   padding-left: var(--half-gap);
 }
 
-.ui-card-actions:has(
+.ui-card-actions:not(:where(.ui-button-stack)):has(
     > .ui-text-button-primary:not([hidden]):nth-child(1 of :not([hidden])):nth-last-child(
         2 of :not([hidden])
       )
@@ -176,6 +180,30 @@
   grid-column: 1;
   padding-right: var(--half-gap);
   padding-left: var(--hit);
+}
+
+/* Vertical action groups share their full width and inline press outset. Only the gaps between
+   visible faces change the block padding; horizontal action placement never applies here. */
+.ui-card-actions.ui-button-stack {
+  --half-gap: calc(var(--ui-stack-button-gap) / 2);
+
+  align-self: stretch;
+  grid-auto-flow: row;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ui-button-stack > .ui-text-button {
+  box-sizing: border-box;
+  width: 100%;
+  padding-inline: var(--hit);
+}
+
+.ui-button-stack > .ui-text-button:not([hidden]):not(:nth-child(1 of :not([hidden]))) {
+  padding-top: var(--half-gap);
+}
+
+.ui-button-stack > .ui-text-button:not([hidden]):not(:nth-last-child(1 of :not([hidden]))) {
+  padding-bottom: var(--half-gap);
 }
 
 /* Art's ui-button face, its label centred on the face above the lip and clear of its sides by

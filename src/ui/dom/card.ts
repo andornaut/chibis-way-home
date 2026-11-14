@@ -11,6 +11,8 @@ export interface CardWords<Key extends string> {
     readonly label: string;
     readonly primary?: boolean;
   }[];
+  // Action orientation; stacked actions share full-width faces and canonical spacing.
+  readonly actionsLayout?: "row" | "stack";
   // A card the player must answer (role alertdialog) rather than one they may browse past.
   readonly alert?: boolean;
   // The close X's accessible name, for a card with one. The focus reaches it after the buttons.
@@ -94,6 +96,7 @@ export function createCard<Key extends string>(
     dialog.append(text);
   }
   const actions = element("div", "ui-card-actions");
+  actions.classList.toggle("ui-button-stack", words.actionsLayout === "stack");
   const buttons = Object.fromEntries(
     words.actions.map(({ key, label, primary }) => [key, textButton(document, label, primary)]),
   ) as Record<Key, HTMLButtonElement>;

@@ -2,25 +2,6 @@
    --ui-unit, from the layer's layout properties, PAUSE_LAYOUT on the view and each skill button's
    place. */
 
-/* The card's three buttons stacked the kit's stack button gap apart, filling the card's width between
-   its padding; adjacent press areas meet midway between the faces. */
-.pause-card > .ui-card-actions {
-  --half-gap: calc(var(--ui-stack-button-gap) / 2);
-
-  align-self: stretch;
-  grid-auto-flow: row;
-}
-
-.pause-card .ui-text-button:not(:first-child) {
-  padding-top: var(--half-gap);
-  padding-left: var(--hit);
-}
-
-.pause-card .ui-text-button:not(:last-child) {
-  padding-right: var(--hit);
-  padding-bottom: var(--half-gap);
-}
-
 /* The pause button and the skill HUD over the card's backdrop. They take presses only while they
    act: a press on the HUD while it takes none goes on to the canvas under it. */
 .pause-hud-view {

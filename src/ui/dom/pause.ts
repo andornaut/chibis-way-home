@@ -115,6 +115,7 @@ export function createPauseView(
       { key: "settings", label: words.card.settings },
       { key: "home", label: words.card.home },
     ],
+    actionsLayout: "stack",
     close: words.card.close,
     title: words.card.title,
   });

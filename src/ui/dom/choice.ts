@@ -1,6 +1,6 @@
 import { textButton } from "./card.ts";
 
-// A conversation's required choice in the HTML UI (choice.css, on ui.css's .ui-card): over a
+// A conversation's required choice in the HTML UI (ui.css's shared card and stack): over a
 // full-area backdrop that takes every press outside it, the card on the play view in art's
 // ui-settings-card frame, with the prompt and its answers stacked below it, each in art's
 // ui-button. It has no title, close X or default answer: only an answer leaves it.
@@ -42,7 +42,7 @@ export function createChoiceCard(
   const prompt = element("p", "ui-card-text");
   prompt.id = `${id}-prompt`;
   prompt.textContent = words.prompt;
-  const actions = element("div", "ui-card-actions");
+  const actions = element("div", "ui-card-actions ui-button-stack");
   const buttons = new Map(
     words.options.map(({ id: answer, label }) => {
       const button = textButton(document, label);
