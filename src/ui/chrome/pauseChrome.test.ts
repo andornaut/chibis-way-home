@@ -4,6 +4,7 @@ import { expect, it } from "vitest";
 import palette from "../../../public/art/palette.json" with { type: "json" };
 import { svgLayers } from "../../testing/chromeSvg.ts";
 import { showPauseDisc } from "../dom/pause.ts";
+import { PAUSE_DISC, PAUSE_VISIBLE_DIAMETER } from "../layout/controlChrome.ts";
 import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
 import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./pauseChrome.ts";
 
@@ -52,7 +53,15 @@ it("retains the existing 52.5px Pause target", () => {
 
 it("keeps the 35px disc, 1px ring and two 4x13 bars, swelling by 1px on a press's first frame", () => {
   const centre = { x: 17.5, y: 17.5 };
-  expect(PAUSE_CHROME_FRAME).toBe(35);
+  expect(PAUSE_DISC).toEqual({
+    expandedRadius: 17.5,
+    frame: 35,
+    inset: 1,
+    restDiameter: 33,
+    restRadius: 16.5,
+  });
+  expect(PAUSE_CHROME_FRAME).toBe(PAUSE_DISC.frame);
+  expect(PAUSE_VISIBLE_DIAMETER).toBe(PAUSE_DISC.restDiameter);
   expect(pauseChromeLayers(colours, "rest", false)).toEqual([
     { centre, colour: colours.ink, kind: "disc", radius: 16.5 },
     { centre, colour: colours.cream, kind: "disc", radius: 15.5 },

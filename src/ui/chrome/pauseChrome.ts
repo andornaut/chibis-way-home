@@ -1,6 +1,7 @@
+import { PAUSE_DISC } from "../layout/controlChrome.ts";
 import type { TouchChromeColours, TouchChromeLayer } from "./touchChrome.ts";
 
-export const PAUSE_CHROME_FRAME = 35;
+export const PAUSE_CHROME_FRAME = PAUSE_DISC.frame;
 export type PauseChromePose = "held" | "press" | "rest";
 interface PauseChromeColours extends TouchChromeColours {
   readonly dslate: number;
@@ -13,13 +14,13 @@ export function pauseChromeLayers(
   expanded: boolean,
 ): readonly TouchChromeLayer[] {
   const centre = { x: PAUSE_CHROME_FRAME / 2, y: PAUSE_CHROME_FRAME / 2 };
-  const outer = expanded ? 17.5 : 16.5;
+  const outer = expanded ? PAUSE_DISC.expandedRadius : PAUSE_DISC.restRadius;
   const core = pose === "rest" ? colours.cream : colours.white;
   const face = pose === "rest" ? colours.navy : colours.dslate;
-  const radius = pose === "rest" || expanded ? 13.5 : 12.5;
+  const radius = PAUSE_DISC.restRadius - (pose === "rest" || expanded ? 3 : 4);
   return [
     { centre, colour: colours.ink, kind: "disc", radius: outer },
-    { centre, colour: core, kind: "disc", radius: outer - 1 },
+    { centre, colour: core, kind: "disc", radius: outer - PAUSE_DISC.inset },
     { centre, colour: face, kind: "disc", radius },
     { colour: core, kind: "rect", rect: { height: 13, width: 4, x: 12, y: 11 } },
     { colour: core, kind: "rect", rect: { height: 13, width: 4, x: 19, y: 11 } },
