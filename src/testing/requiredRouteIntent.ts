@@ -89,7 +89,7 @@ export function staticRouteAssist(
   const banks = surfaces.filter(
     (surface) =>
       surface.area === current.area &&
-      surface.left > support.right + EDGE &&
+      surface.left >= support.right - EDGE &&
       surface.right < required.surface.left - EDGE &&
       surface.y > Math.max(support.y, required.surface.y),
   );

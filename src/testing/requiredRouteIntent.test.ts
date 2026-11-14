@@ -11,6 +11,7 @@ import { startZone, stepZone } from "../rules/zone.ts";
 import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "../sim/bot.ts";
 import { type Surface, surfaceAt, zoneSurfaces } from "../sim/zoneWalk.ts";
 import { CATALOGUE } from "./art.ts";
+import { continuousRequiredRoute } from "./continuousRequiredRoute.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
 import {
   currentHazardNode,
@@ -107,6 +108,143 @@ function crossingFixture() {
   const context = { crossing: undefined, crossingSteps: 0, holding: 0, refuge };
   return { context, goal, layout, zone };
 }
+
+it("accepts one touching lower bank within existing EDGE without changing the required goal", () => {
+  const departure = { ...surface, left: 0, right: 96, y: 600 };
+  const required = {
+    index: 2,
+    surface: { ...surface, key: "goal", left: 240, right: 360, y: 600 },
+    window: { max: 336, min: 240 },
+  };
+  const here = { ...current, bird: { ...current.bird, x: 48, y: 564 }, support: departure };
+  const original = structuredClone(required);
+  for (const offset of [-EDGE / 2, 0, EDGE / 2]) {
+    const bank = { ...surface, key: "seam", left: departure.right + offset, right: 216, y: 648 };
+    expect(staticRouteAssist(ORDINARY, here, [bank], required)).toEqual({
+      assist: {
+        index: required.index,
+        surface: bank,
+        window: { max: bank.right - ORDINARY.width, min: bank.left },
+      },
+    });
+  }
+  const overlapping = {
+    ...surface,
+    key: "overlap",
+    left: departure.right - 2 * EDGE,
+    right: 216,
+    y: 648,
+  };
+  expect(staticRouteAssist(ORDINARY, here, [overlapping], required)).toEqual({ assist: undefined });
+  expect(required).toEqual(original);
+});
+
+it("refuses ambiguous or moving touching banks", () => {
+  const departure = { ...surface, left: 0, right: 96, y: 600 };
+  const required = {
+    index: 2,
+    surface: { ...surface, key: "goal", left: 240, right: 360, y: 600 },
+    window: { max: 336, min: 240 },
+  };
+  const here = { ...current, bird: { ...current.bird, x: 48, y: 564 }, support: departure };
+  const bank = { ...surface, key: "seam", left: 96, right: 144, y: 648 };
+  expect(
+    staticRouteAssist(
+      ORDINARY,
+      here,
+      [bank, { ...bank, key: "second", left: 168, right: 216 }],
+      required,
+    ),
+  ).toEqual({ unavailable: { index: required.index, reason: "ambiguous-assist" } });
+  expect(staticRouteAssist(ORDINARY, here, [{ ...bank, mover: 0 }], required)).toEqual({
+    unavailable: { index: required.index, reason: "dynamic-support" },
+  });
+});
+
+function touchingBankFixture() {
+  return zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), {
+    areas: {
+      course: {
+        cols: 60,
+        entries: { start: { col: 4, row: 50 } },
+        objects: [],
+        rows: 60,
+        solids: [
+          { col: 0, cols: 8, row: 50, rows: 10 },
+          { col: 8, cols: 8, row: 54, rows: 6 },
+          { col: 18, cols: 42, row: 50, rows: 10 },
+        ],
+      },
+    },
+    start: { area: "course", entry: "start" },
+  });
+}
+
+it("inhibits a new jump for the bank seam rather than the far goal and preserves native holding", () => {
+  const layout = touchingBankFixture();
+  const start = startZone(ORDINARY, layout, 1);
+  const zone = { ...start, bird: { ...start.bird, grounded: true } };
+  const surfaces = zoneSurfaces(ORDINARY, layout);
+  const required = {
+    index: 0,
+    surface: surfaceAt(TILE, surfaces, "course", { col: 58, row: 50 })!,
+    window: { max: 58 * TILE, min: 58 * TILE },
+  };
+  const here = {
+    area: zone.area,
+    bird: zone.bird,
+    support: surfaceAt(TILE, surfaces, "course", { col: 4, row: 50 }),
+  };
+  const choice = staticRouteAssist(ORDINARY, here, surfaces, required);
+  if (!("assist" in choice) || choice.assist === undefined) {
+    throw new Error("Expected a touching bank");
+  }
+  const intent = requiredRouteIntent(ORDINARY, here, choice.assist);
+  expect(intent).toEqual({ inhibitNewJump: true, move: 1 });
+  expect(requiredRouteIntent(ORDINARY, here, required)).toEqual({ inhibitNewJump: false, move: 1 });
+  if ("unavailable" in intent) {
+    throw new Error("Expected a descent intent");
+  }
+  const bot = newBot(1);
+  bot.holding = 2;
+  const input = botInput(
+    ORDINARY,
+    prepareSensors(layout),
+    layout,
+    DIAGNOSTIC_SKILL,
+    { jump: "never", move: intent.move },
+    zone,
+    bot,
+  );
+  expect(input).toEqual({ jumpHeld: true, move: 1, useHeld: false });
+  expect(bot.holding).toBe(1);
+});
+
+it("records an actual touching-bank landing separately while retaining all required witnesses", () => {
+  const targets = [
+    { area: "course", at: { col: 58, row: 50 } },
+    { area: "course", at: { col: 4, row: 50 } },
+  ];
+  const original = structuredClone(targets);
+  const result = continuousRequiredRoute(touchingBankFixture(), targets);
+  expect(result, JSON.stringify(result)).toMatchObject({
+    missing: [],
+    reason: "cleared",
+    status: "proven",
+  });
+  expect(targets).toEqual(original);
+  expect(result.witnesses).toHaveLength(targets.length);
+  expect(result.assistWitnesses).toHaveLength(1);
+  const assist = result.assistWitnesses[0]!;
+  expect(assist).toMatchObject({
+    area: "course",
+    requiredIndex: 0,
+    y: 54 * TILE - ORDINARY.height,
+  });
+  expect(assist.tick).toBeGreaterThanOrEqual(1);
+  expect(assist.tick).toBeLessThan(result.witnesses.find(({ index }) => index === 0)!.tick);
+  expect(result.ticks).toBeLessThanOrEqual(600);
+});
 
 function staticHazardFixture() {
   const fixture = crossingFixture();
