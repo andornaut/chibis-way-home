@@ -103,6 +103,10 @@ export interface GameText {
     readonly title: string;
     readonly zones: Readonly<Record<string, string>>;
   };
+  readonly menu: {
+    readonly button: string;
+    readonly title: string;
+  };
   // Canonical action names used by control help and the touch buttons.
   readonly buttons: {
     readonly jump: string;
