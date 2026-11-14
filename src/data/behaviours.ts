@@ -9,6 +9,7 @@ import {
   MAUL_SCORE,
   PARCEL_SCORE,
   PEBBLE_SCORER,
+  PIGEON_SWOOP_SETUP_DISTANCE,
   POUNCE_SCORE,
   SWOOP_SCORE,
   TRAP_SCORE,
@@ -924,8 +925,8 @@ const PIGEON_DROP_AHEAD = 8;
 // forces on Pebble does not cancel it.
 export const PIGEON_DROP_COMMIT_TOLERANCE = 0.5;
 const PIGEON_OVERHEAD_CLEARANCE = 6;
-// The swoop's approach: the drop approach's lead plus the swoop setup move's 10 tiles.
-const PIGEON_SWOOP_AHEAD = 18;
+// The swoop's approach adds its setup distance to the drop approach's lead.
+const PIGEON_SWOOP_AHEAD = PIGEON_DROP_AHEAD + PIGEON_SWOOP_SETUP_DISTANCE;
 const PIGEON_SWOOP_MIN_GAP = 12;
 const PIGEON_RELOCATION_SECONDS = 2;
 // An engaged approach that opens no attack within this relocates, sooner out of sight.

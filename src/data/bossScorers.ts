@@ -4,6 +4,8 @@
 // its considerations keep it for moments it can connect and Chibi can still read its tell.
 import type { BossScoredAttack, BossScoredMove, BossScorer } from "./types/index.ts";
 
+export const PIGEON_SWOOP_SETUP_DISTANCE = 10;
+
 // Every boss scorer's shared cadence, pressure and hysteresis. A move holds for 0.6 to 0.9 s, so
 // Chibi can read a heading and turn it; attacks are scored as soon as their gate holds. Pressure
 // starts 2 s after the last attack and is full 6 s later, at a quarter weight. Attacks gain up to
@@ -45,7 +47,7 @@ const STANDOFF: BossScoredMove = {
   move: { distance: 4, kind: "standoff" },
 };
 
-// Approach 10 tiles farther along Chibi's travel, for a swoop, while the special is not due and
+// Approach farther along Chibi's travel for a swoop while the special is not due and
 // Pebble can see him; without sight he flies the drop approach over him instead.
 const SWOOP_SETUP: BossScoredMove = {
   base: 0.5,
@@ -54,7 +56,7 @@ const SWOOP_SETUP: BossScoredMove = {
     { curve: { from: 1, kind: "step", to: 1 }, input: "lineOfSight" },
   ],
   id: "swoop-setup",
-  move: { distance: 10, kind: "ahead" },
+  move: { distance: PIGEON_SWOOP_SETUP_DISTANCE, kind: "ahead" },
 };
 
 export const GROUND_BOSS_SCORER: BossScorer = { ...SHARED, moves: [CHASE, CUT_OFF] };
