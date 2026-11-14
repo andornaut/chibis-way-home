@@ -274,16 +274,6 @@ const ICON: Record<Exclude<ButtonKey, "menu" | "pause">, readonly [Points, numbe
   jump: [CARET, -5],
 };
 
-function disc(g: Grid, cx: number, cy: number, r: number, c: string): void {
-  for (let y = 0; y < g.h; y++) {
-    for (let x = 0; x < g.w; x++) {
-      if ((x - cx) ** 2 + (y - cy) ** 2 <= (r + 0.5) ** 2) {
-        g.p(x, y, c);
-      }
-    }
-  }
-}
-
 /**
  * frame undefined is rest; 0 and 1 the press; 2 held. Use and Jump are the move hint's open ring
  * with the icon fringed in ink and centred; ui-menu and ui-pause are discs. Pressed, the band and
@@ -297,9 +287,12 @@ function touchButtonFrame(key: ButtonKey, frame?: number): pixel.Frame {
   const band = hot ? "white" : "cream";
   const g = new Grid(2 * c + 1, 2 * c + 1);
   if (key === "menu" || key === "pause") {
-    disc(g, c, c, r, "ink");
-    disc(g, c, c, r - 1, band);
-    disc(g, c, c, r - 1 - RING_W[key] - (hot ? 1 : 0), hot ? "dslate" : "navy");
+    // Grid.ell samples pixel centres; adapt the integer-centred disc geometry.
+    const centre = c + 0.5;
+    g.ell(centre, centre, r + 0.5, r + 0.5, "ink");
+    g.ell(centre, centre, r - 0.5, r - 0.5, band);
+    const faceRadius = r - 0.5 - RING_W[key] - (hot ? 1 : 0);
+    g.ell(centre, centre, faceRadius, faceRadius, hot ? "dslate" : "navy");
     const glyph = key === "menu" ? MENU_GLYPH : PAUSE_GLYPH;
     for (const { height, width, x, y } of glyph.bars) {
       g.rect(x, y, width, height, band);
@@ -601,7 +594,7 @@ function moveHint(lit = 0): pixel.Frame {
 function moveKnob(held: boolean): pixel.Frame {
   const g = new Grid(11, 11);
   const marks = new Grid(11, 11);
-  disc(marks, 5, 5, 4, held ? "white" : "cream");
+  marks.ell(5.5, 5.5, 4.5, 4.5, held ? "white" : "cream");
   fringed(g, marks);
   return g.px;
 }
