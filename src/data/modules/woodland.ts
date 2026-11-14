@@ -39,6 +39,35 @@ const raisedBranchChannel: ChunkModule = {
   zones: ["woodland"],
 };
 
+// Three full-jump climbs reach the canopy; two supported descents return to the lower route.
+const canopyReturn: ChunkModule = {
+  difficulty: 2,
+  encounters: 0,
+  entry: { row: 80 },
+  exit: { row: 80 },
+  id: "woodland-canopy-return",
+  objects: [],
+  route: {
+    profile: "recovery",
+    targets: [
+      { at: { col: 8, row: 76 } },
+      { at: { col: 14, row: 72 } },
+      { at: { col: 20, row: 68 } },
+      { at: { col: 24, row: 74 } },
+    ],
+  },
+  sides: ["left", "right"],
+  solids: [
+    floor(0, 6, 80),
+    floor(6, 5, 76),
+    floor(11, 6, 72),
+    floor(17, 6, 68),
+    floor(23, 3, 74),
+    floor(26, 4, 80),
+  ],
+  zones: ["woodland"],
+};
+
 // The gust ravine: from the entry run (row 80), jumps across three 4-col pockets (row 82) by two
 // cover posts (tops at row 77) to the exit run. The emitter stands on the exit run at col 25 and
 // blows left across cols 4 to 25 in rows 76 to 80: Chibi on a post top or in the last pocket is in
@@ -81,5 +110,5 @@ const lookout: ChunkModule = {
 };
 
 export const WOODLAND_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(
-  [lookout, ravine, raisedBranchChannel].map((module) => [module.id, module]),
+  [lookout, ravine, raisedBranchChannel, canopyReturn].map((module) => [module.id, module]),
 );
