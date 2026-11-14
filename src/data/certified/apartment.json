@@ -1,8 +1,8 @@
 {
   "arenas": [
-    { "hash": "1615fa89fe16ca80", "id": "arena-ferret-penthouse", "stage": "penthouse" },
+    { "hash": "bc9801b309110c23", "id": "arena-ferret-penthouse", "stage": "penthouse" },
     {
-      "hash": "0d5c82455f09766f",
+      "hash": "f11c96ef8b33bad3",
       "id": "arena-ferret-residential-floors",
       "stage": "residential-floors"
     }
@@ -186,7 +186,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "5d51cdd207149cc1", "proofs": "7da88270b8593cd3" },
+  "inputs": { "data": "5d51cdd207149cc1", "proofs": "5d7c89faaeda7be7" },
   "version": 1,
   "zone": "apartment"
 }

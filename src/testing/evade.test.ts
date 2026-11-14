@@ -25,12 +25,12 @@ import {
 // Each sample's arena proof: static checks, required route, path out and every evade run, with
 // its hash over the evade trace hashes.
 const HASHES: Readonly<Record<string, string>> = {
-  "arena-bear-sample": "74509d67c10571a3",
-  "arena-dog-sample": "5c40e8814da97e11",
-  "arena-ferret-sample": "46148e9c051b7754",
-  "arena-goose-sample": "e301290ca9d29763",
-  "arena-pigeon-sample": "93757c858966e2ee",
-  "arena-raccoon-sample": "c7b65f0b6a3bb26f",
+  "arena-bear-sample": "dcf77c3cebdec409",
+  "arena-dog-sample": "ff6854c336f3d30b",
+  "arena-ferret-sample": "fb438f6f45975550",
+  "arena-goose-sample": "8b6f065361957935",
+  "arena-pigeon-sample": "31e338224ad1485d",
+  "arena-raccoon-sample": "07f31871aec2d553",
 };
 
 it.each(ARENA_SAMPLES.map((arena) => [arena.id, arena] as const))(
