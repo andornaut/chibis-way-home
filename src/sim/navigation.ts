@@ -4,6 +4,7 @@ import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { contactBox } from "../rules/behaviour.ts";
 import { stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
+import { legacyPlannerJumpHeight } from "./plannerEstimates.ts";
 export interface NavigationConfig {
   readonly profile: "quick" | "validation";
   readonly horizonTicks: number;
@@ -416,7 +417,7 @@ function waypoint(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1, zon
           .filter(
             (rect) =>
               rect.y < foot - 2 &&
-              foot - rect.y <= (tuning.jumpSpeed * tuning.jumpRiseTime) / 2 &&
+              foot - rect.y <= legacyPlannerJumpHeight(tuning) &&
               distance(rect) >= -tuning.width &&
               rect.width >= tuning.width * 2,
           )
@@ -425,7 +426,7 @@ function waypoint(tuning: BirdTuning, layout: ZoneLayout, direction: -1 | 1, zon
     return refuge ? { width: refuge.width, x: refuge.x, y: refuge.y } : undefined;
   }
   const rise = foot - obstacle.y,
-    fullHeight = (tuning.jumpSpeed * tuning.jumpRiseTime) / 2;
+    fullHeight = legacyPlannerJumpHeight(tuning);
   const intermediate =
     rise > fullHeight
       ? nearby
@@ -532,7 +533,7 @@ function followupHold(
   if (clearance < tuning.jumpHopHeight) {
     return 0;
   }
-  if (clearance < (tuning.jumpSpeed * tuning.jumpRiseTime) / 2) {
+  if (clearance < legacyPlannerJumpHeight(tuning)) {
     const front = zone.bird.x + (direction === 1 ? tuning.width : 0);
     const foot = zone.bird.y + tuning.height;
     const hopTravel = tuning.walkSpeed * 2 * Math.sqrt((2 * tuning.jumpHopHeight) / tuning.gravity);
@@ -565,7 +566,7 @@ function runningTakeoff(
     return undefined;
   }
   const stepTravel = tuning.walkSpeed * STEP_SECONDS;
-  const fullHeight = (tuning.jumpSpeed * tuning.jumpRiseTime) / 2;
+  const fullHeight = legacyPlannerJumpHeight(tuning);
   const ceiling = layout.areas[zone.area]!.solids.filter(
     (rect) =>
       rect.x < zone.bird.x + tuning.width &&
@@ -922,7 +923,7 @@ export function plannedInput(
               direction * (centre - zone.bird.x) < -tuning.width &&
               Math.abs(centre - zone.bird.x) <= SCREEN.width / 2 &&
               rise > 0 &&
-              rise <= (tuning.jumpSpeed * tuning.jumpRiseTime) / 2
+              rise <= legacyPlannerJumpHeight(tuning)
             );
           })
           .sort(

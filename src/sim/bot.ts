@@ -14,6 +14,7 @@ import {
   type NavigationState,
   plannedInput,
 } from "./navigation.ts";
+import { legacyPlannerJumpHeight } from "./plannerEstimates.ts";
 export type {
   NavigationConfig,
   NavigationCounters,
@@ -197,7 +198,7 @@ function obstacleAhead(
       nearSupported ||= rectsOverlap(nearFoot, rect);
       const distance = direction === 1 ? rect.x - front : front - rect.x - rect.width;
       const reachableHeight =
-        rect.y >= bird.y + tuning.height - (tuning.jumpSpeed * tuning.jumpRiseTime) / 2 &&
+        rect.y >= bird.y + tuning.height - legacyPlannerJumpHeight(tuning) &&
         rect.y <= bird.y + tuning.height + tuning.height;
       movingLanding ||=
         (sensors.movers[zone.area]?.has(index) ?? false) &&
