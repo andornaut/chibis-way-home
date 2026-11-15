@@ -131,10 +131,16 @@ const WORK_PER_MS = 4;
 // order and a worker starts only one whose estimated time (its cost over the observed rate) ends
 // before the deadline, skipping the rest; results by job index, undefined for a job not started.
 async function proveAll(
+  {
+    costs,
+    deadline = Infinity,
+    observe,
+  }: {
+    readonly costs: readonly number[];
+    readonly deadline?: number;
+    readonly observe?: (index: number, result: Proof | undefined, error?: unknown) => void;
+  },
   jobs: readonly Job[],
-  costs: readonly number[],
-  deadline = Infinity,
-  observe?: (index: number, result: Proof | undefined, error?: unknown) => void,
 ): Promise<(Proof | undefined)[]> {
   const bounded = deadline !== Infinity;
   const order = jobs
@@ -268,8 +274,8 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
     arenas.map((found) => ({ found, job: { arena: true as const, id: found.arena.id, zone } })),
   );
   const results = await proveAll(
+    { costs: [...queued.map(({ cost }) => cost), ...arenaJobs.map(() => ARENA_COST)] },
     [...queued.map(({ job }) => job), ...arenaJobs.map(({ job }) => job)],
-    [...queued.map(({ cost }) => cost), ...arenaJobs.map(() => ARENA_COST)],
   );
   const proven = new Map(queued.map((item, index) => [item, results[index]!]));
   const arenaProofs = new Map(
@@ -375,9 +381,8 @@ async function verify(options: VerifyOptions, zones: readonly ZoneKey[]): Promis
           },
     );
     const results = await proveAll(
+      { costs: targets.map(({ entry }) => ("hash" in entry ? ARENA_COST : entry.work)), deadline },
       jobs,
-      targets.map(({ entry }) => ("hash" in entry ? ARENA_COST : entry.work)),
-      deadline,
     );
     results.forEach((proof, index) => {
       const target = targets[index]!;
@@ -534,6 +539,22 @@ async function proposeCurrent(subject: string): Promise<number> {
   let failure: string | undefined;
   try {
     await proveAll(
+      {
+        costs: plan.jobs.map((job) => (job.kind === "arena" ? ARENA_COST : job.previous.work)),
+        observe: (index, proof, error) => {
+          const job = plan.jobs[index]!;
+          const identity = { id: job.previous.id, zone: job.zone };
+          if (proof === undefined) {
+            results.push({ ...identity, error: String(error), kind: "error" });
+          } else if (job.kind === "arena") {
+            results.push({ ...identity, kind: "arena", proof: proof as ArenaResult });
+          } else {
+            results.push({ ...identity, kind: "entry", proof });
+          }
+          writeSync(journal, `${JSON.stringify(results.at(-1))}\n`);
+          fsyncSync(journal);
+        },
+      },
       plan.jobs.map((job) => ({
         id: job.previous.id,
         zone: job.zone,
@@ -544,21 +565,6 @@ async function proposeCurrent(subject: string): Promise<number> {
               themes: job.themes,
             }),
       })),
-      plan.jobs.map((job) => (job.kind === "arena" ? ARENA_COST : job.previous.work)),
-      Infinity,
-      (index, proof, error) => {
-        const job = plan.jobs[index]!;
-        const identity = { id: job.previous.id, zone: job.zone };
-        if (proof === undefined) {
-          results.push({ ...identity, error: String(error), kind: "error" });
-        } else if (job.kind === "arena") {
-          results.push({ ...identity, kind: "arena", proof: proof as ArenaResult });
-        } else {
-          results.push({ ...identity, kind: "entry", proof });
-        }
-        writeSync(journal, `${JSON.stringify(results.at(-1))}\n`);
-        fsyncSync(journal);
-      },
     );
   } catch (error) {
     failure = String(error);
@@ -695,13 +701,13 @@ async function main(args: readonly string[]): Promise<number> {
         }
         const plan = preparePairProposal(zones[0]!, current, values.id);
         const results = await proveAll(
+          { costs: plan.selected.map(() => 0) },
           plan.selected.map(({ candidate, themes }) => ({
             id: candidate.id,
             proof: ORDINARY_PROOF_PROFILE,
             themes,
             zone: zones[0]!,
           })),
-          plan.selected.map(() => 0),
         );
         const proofs = results.map((proof) => {
           if (proof === undefined) {
