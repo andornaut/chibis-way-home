@@ -5,6 +5,58 @@ import { standsOn, type ZoneInput, type ZoneState } from "../rules/zone.ts";
 import { requiredRouteObservation, type Surface, zoneSurfaces } from "../sim/zoneWalk.ts";
 import type { QualificationController, QualificationDecision } from "./continuousRequiredRoute.ts";
 import type { RequiredRouteIntentTarget } from "./requiredRouteIntent.ts";
+// Layout geometry remains current only for this positively static domain.
+function physicalGap(layout: ZoneLayout, areaName: string, support: Surface): boolean | undefined {
+  const area = layout.areas[areaName];
+  if (
+    ![support.right, support.y].every(Number.isFinite) ||
+    !area ||
+    (area.crumbling?.length ?? 0) > 0 ||
+    area.objects.some(
+      (object) =>
+        object.behaviour !== undefined ||
+        object.orbit !== undefined ||
+        object.contact !== undefined ||
+        object.crumbling !== undefined ||
+        object.forcedTransit !== undefined ||
+        object.motion.algorithm !== "static" ||
+        object.reaction.kind !== "none",
+    )
+  ) {
+    return undefined;
+  }
+  const edge = support.right;
+  const foot = support.y;
+  const continuation = (rect: Rect) =>
+    rect.x <= edge + EDGE &&
+    rect.x + rect.width > edge + EDGE &&
+    rect.y <= foot + EDGE &&
+    rect.y + rect.height > foot + EDGE;
+  const solids = [
+    ...area.solids,
+    ...area.objects.flatMap((object) =>
+      object.collision === "solid" ? [rectAt(object, object.origin)] : [],
+    ),
+  ];
+  const ledges = area.objects.flatMap((object) =>
+    object.collision === "ledge" ? [rectAt(object, object.origin)] : [],
+  );
+  if (
+    [...solids, ...ledges].some(
+      (rect) =>
+        ![rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) ||
+        rect.width <= 0 ||
+        rect.height <= 0,
+    )
+  ) {
+    return undefined;
+  }
+  return (
+    !solids.some(continuation) &&
+    !ledges.some((rect) => Math.abs(rect.y - foot) <= EDGE && continuation(rect))
+  );
+}
+
 export const GROUNDED_GAP_CONTROLLER = "required-route-grounded-gap-v1";
 type Phase = "approach" | "press" | "ascent" | "fall";
 type Gate = { readonly nextVX: number; readonly press: boolean; readonly supportRight: number };
@@ -165,6 +217,14 @@ export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayo
           target.surface.y > support.y
         ) {
           return undefined;
+        }
+        const gap = physicalGap(layout, current.area, support);
+        if (gap === false) {
+          return undefined;
+        }
+        if (gap === undefined) {
+          failure = "unsupported";
+          return unavailable();
         }
         active = { from: support, phase: "approach", target };
         released = false;

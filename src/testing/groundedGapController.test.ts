@@ -1,7 +1,8 @@
 import { expect, it, vi } from "vitest";
 
 import { CERTIFIED_LISTS } from "../data/certified/index.ts";
-import type { Rect, ZoneLayout } from "../data/types/index.ts";
+import { CRUMBLING_SUPPORT_TUNING } from "../data/obstacleTuning.ts";
+import type { ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
 import { startBird } from "../rules/bird.ts";
 import type { ZoneState } from "../rules/zone.ts";
 import * as zoneRules from "../rules/zone.ts";
@@ -64,8 +65,11 @@ const current = (zone: ZoneState) => ({
   bird: zone.bird,
   support: zone.bird.grounded ? support : undefined,
 });
-it("gates the supported press and releases only after observed ascent", () => {
-  const gap = createGroundedGapController(ORDINARY, layout());
+it("keeps a lower-backed physical gap owned through committed ascent and release", () => {
+  const gap = createGroundedGapController(
+    ORDINARY,
+    layout([{ height: 360, width: 132, x: 144, y: 1080 }]),
+  );
   const held = state({ jumpHeld: true });
   const reset = gap.controller.input("none", current(held), target, 1)!;
   if (!("input" in reset)) {
@@ -112,6 +116,73 @@ it("gates the supported press and releases only after observed ascent", () => {
   expect(gap.events.at(-1)?.after.support?.key).toBe(target.surface.key);
   expect(gap.failure()).toBeUndefined();
 });
+it("hands a safe-surface red cut over continuous physical support back to the generic driver", () => {
+  const from = { ...support, key: "main:still:432,924", left: 432, right: 480 };
+  const next = {
+    index: 4,
+    surface: { ...support, key: "main:still:504,924", left: 504, right: 576 },
+    window: { max: 552, min: 504 },
+  };
+  const object = {
+    collision: "solid",
+    height: 516,
+    motion: { algorithm: "static" },
+    origin: { x: 480, y: 924 },
+    reaction: { kind: "none" },
+    width: 24,
+  } as ObjectLayout;
+  const base = layout([{ height: 516, width: 48, x: 432, y: 924 }]);
+  const physical = { ...base, areas: { main: { ...base.areas.main!, objects: [object] } } };
+  const gap = createGroundedGapController(ORDINARY, physical);
+  const zone = state({ x: 437.8 });
+  expect(
+    gap.controller.input("none", { ...current(zone), support: from }, next, 1),
+  ).toBeUndefined();
+  expect(gap.failure()).toBeUndefined();
+  expect(gap.events).toEqual([]);
+  // Terrain continuation uses the same physical boundary as a static solid object.
+  const terrain = createGroundedGapController(
+    ORDINARY,
+    layout([{ height: 516, width: 24, x: 144, y: 924 }]),
+  );
+  expect(terrain.controller.input("none", current(state()), target, 1)).toBeUndefined();
+});
+
+it("rejects stateful or invalid physical geometry while timed ownership still rejects first", () => {
+  const base = layout();
+  const stateful = {
+    ...base,
+    areas: {
+      main: {
+        ...base.areas.main!,
+        crumbling: [
+          {
+            profile: CRUMBLING_SUPPORT_TUNING,
+            supportId: base.areas.main!.solids[0]!,
+            volume: base.areas.main!.solids[0]!,
+          },
+        ],
+      },
+    },
+  } satisfies ZoneLayout;
+  const gap = createGroundedGapController(ORDINARY, stateful);
+  expect(gap.controller.input("none", current(state()), target, 1)).toHaveProperty("unavailable");
+  expect(gap.failure()).toBe("unsupported");
+  const invalid = createGroundedGapController(
+    ORDINARY,
+    layout([{ height: 516, width: Number.NaN, x: 144, y: 924 }]),
+  );
+  expect(invalid.controller.input("none", current(state()), target, 1)).toHaveProperty(
+    "unavailable",
+  );
+  expect(invalid.failure()).toBe("unsupported");
+  const timed = createGroundedGapController(ORDINARY, stateful);
+  expect(timed.controller.input("hold", current(state()), target, 0)).toEqual({
+    unavailable: { index: target.index, reason: "hazard-margin-unavailable" },
+  });
+  expect(timed.failure()).toBe("timed-hazard-owned");
+});
+
 it("marks ceiling interruption separately and fails closed for unsupported carried launches", () => {
   const gap = createGroundedGapController(
     ORDINARY,
