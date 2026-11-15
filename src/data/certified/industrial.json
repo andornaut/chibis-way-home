@@ -1,7 +1,7 @@
 {
   "arenas": [
     {
-      "hash": "f1d48ee93e52d054",
+      "hash": "5f3c01f79cd01391",
       "id": "arena-pigeon-freight-terminal",
       "stage": "freight-terminal"
     }
@@ -443,7 +443,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "71be8d6cfadbcaf9", "proofs": "93b6a925ec88fddc" },
+  "inputs": { "data": "71be8d6cfadbcaf9", "proofs": "b2dd840a875850f5" },
   "version": 1,
   "zone": "industrial"
 }
