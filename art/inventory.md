@@ -17,14 +17,14 @@ Every served art asset. Sizes are in base pixels at 720x360. Tags are in frame o
 | font-body  | BMFont, Liberation Sans Regular | 16px, base 15, line 20; 256x64 PNG  |      |
 | font-title | BMFont, Liberation Sans Bold    | 16px, base 15, line 20; 256x128 PNG |      |
 
-Runtime TTFs, each served beside its SIL OFL 1.1 `OFL.txt`. `node art/tools/fonts.ts build` writes the Liberation files as byte-identical copies of `art/fonts/liberation/`; Vite bundles the crash-page fonts from `art/fonts/`.
+Ordinary UI and the native crash screen share the served Liberation Sans Regular (400) and Bold (700) TTFs. Their URLs appear once in precaching; the served font directory retains their SIL OFL 1.1 `OFL.txt`. `node art/tools/fonts.ts build` copies them byte-identically from `art/fonts/liberation/`. Crash faces use `font-display: swap`, with system-ui/sans-serif fallback for labels and a deliberate monospace fallback for diagnostic stack text. Tiny5 and Silkscreen remain legacy sources without current runtime consumers.
 
-| Font                    | Use                                      | Served file                                                                                                         |
-| ----------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Liberation Sans Bold    | UI font (`src/ui/chrome/uiFonts.ts`)     | [public/art/fonts/liberation/LiberationSans-Bold.ttf](../public/art/fonts/liberation/LiberationSans-Bold.ttf)       |
-| Liberation Sans Regular | UI font (`src/ui/chrome/uiFonts.ts`)     | [public/art/fonts/liberation/LiberationSans-Regular.ttf](../public/art/fonts/liberation/LiberationSans-Regular.ttf) |
-| Silkscreen Regular      | crash-page title (`src/crash/theme.css`) | [art/fonts/silkscreen/Silkscreen-Regular.ttf](fonts/silkscreen/Silkscreen-Regular.ttf)                              |
-| Tiny5                   | crash-page body (`src/crash/theme.css`)  | [art/fonts/tiny5/Tiny5.ttf](fonts/tiny5/Tiny5.ttf)                                                                  |
+| Font                    | Use                                     | File                                                                                                                |
+| ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Liberation Sans Bold    | UI and crash titles/actions, weight 700 | [public/art/fonts/liberation/LiberationSans-Bold.ttf](../public/art/fonts/liberation/LiberationSans-Bold.ttf)       |
+| Liberation Sans Regular | UI and crash body, weight 400           | [public/art/fonts/liberation/LiberationSans-Regular.ttf](../public/art/fonts/liberation/LiberationSans-Regular.ttf) |
+| Silkscreen Regular      | Retained legacy source, no runtime use  | [art/fonts/silkscreen/Silkscreen-Regular.ttf](fonts/silkscreen/Silkscreen-Regular.ttf)                              |
+| Tiny5                   | Retained legacy source, no runtime use  | [art/fonts/tiny5/Tiny5.ttf](fonts/tiny5/Tiny5.ttf)                                                                  |
 
 ## Icons
 
