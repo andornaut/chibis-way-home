@@ -384,6 +384,7 @@ function searchRun(
   // The run so far: pool indexes after the start, and the uses of each maxPerZone chunk.
   const ids: number[] = [];
   const counts = new Int32Array(limits);
+  const countsCodes = Array<number>(limits).fill(0);
   // Per limited class, how many of its members have each use count from 1 to its maxPerZone,
   // flattened: histogramAt[class] + uses - 1.
   const histogramAt = classCaps.map(() => -1);
@@ -455,6 +456,7 @@ function searchRun(
       histogram[at + before - 1]!--;
     }
     counts[chunk.limit] = before + step;
+    countsCodes[chunk.limit] = counts[chunk.limit]!;
     if (before + step > 0) {
       histogram[at + before + step - 1]!++;
     }
@@ -538,7 +540,7 @@ function searchRun(
     }
     if (exact) {
       // A fixed-length tail of one character per count.
-      return `${key}|${String.fromCharCode(...counts)}`;
+      return `${key}|${String.fromCharCode(...countsCodes)}`;
     }
     // Per limited class, its histogram, or SATURATED when its unused members alone can fill
     // every chunk a run can still place: no future run then exhausts it, and any run maps onto
