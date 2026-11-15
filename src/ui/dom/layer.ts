@@ -324,12 +324,17 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
 // Resolves once both registered UI font weights have loaded or failed,
 // so no DOM screen first shows in a fallback face. A failure leaves the fallback in place.
 export function loadUiFonts(fonts: Pick<FontFaceSet, "load">): Promise<void> {
+  let warned = false;
   return Promise.all(
     UI_FONT_RESOURCES.map(({ style, weight }) =>
-      fonts.load(`${style} ${weight} ${FONT_METRICS.body.size}px "${UI_FONT_FAMILY}"`),
+      fonts
+        .load(`${style} ${weight} ${FONT_METRICS.body.size}px "${UI_FONT_FAMILY}"`)
+        .catch((error: unknown) => {
+          if (!warned) {
+            warned = true;
+            console.warn("UI fonts failed to load", error);
+          }
+        }),
     ),
-  ).then(
-    () => undefined,
-    (error: unknown) => console.warn("UI fonts failed to load", error),
-  );
+  ).then(() => undefined);
 }

@@ -95,3 +95,59 @@ it("keeps the existing warning and resolved fallback when a requested face fails
   await expect(loadUiFonts(document.fonts)).resolves.toBeUndefined();
   expect(warning).toHaveBeenCalledExactlyOnceWith("UI fonts failed to load", failure);
 });
+
+it("waits for the other weight after one font fails before allowing the UI to reveal", async () => {
+  const { document, fonts } = fontsDocument();
+  const failure = new Error("Regular font unavailable");
+  let finish!: (faces: FontFace[]) => void;
+  fonts.load.mockRejectedValueOnce(failure).mockImplementationOnce(
+    () =>
+      new Promise<FontFace[]>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+  layers.push(createUiLayer([], document));
+  let ready = false;
+  const loading = loadUiFonts(document.fonts).then(() => {
+    ready = true;
+  });
+  await new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+  expect(ready).toBe(false);
+  expect(warning).toHaveBeenCalledExactlyOnceWith("UI fonts failed to load", failure);
+  finish([]);
+  await loading;
+  expect(ready).toBe(true);
+  expect(fonts.load).toHaveBeenCalledTimes(2);
+});
+
+it("waits for a pending first weight and warns once with the earliest failure", async () => {
+  const { document, fonts } = fontsDocument();
+  const firstFailure = new Error("Bold font unavailable");
+  const laterFailure = new Error("Regular font unavailable");
+  let failFirst!: (reason: unknown) => void;
+  fonts.load
+    .mockImplementationOnce(
+      () =>
+        new Promise<FontFace[]>((_, reject) => {
+          failFirst = reject;
+        }),
+    )
+    .mockRejectedValueOnce(firstFailure);
+  const warning = vi.spyOn(console, "warn").mockImplementation(() => {});
+  layers.push(createUiLayer([], document));
+  let ready = false;
+  const loading = loadUiFonts(document.fonts).then(() => {
+    ready = true;
+  });
+  await new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+  expect(ready).toBe(false);
+  failFirst(laterFailure);
+  await loading;
+  expect(ready).toBe(true);
+  expect(warning).toHaveBeenCalledExactlyOnceWith("UI fonts failed to load", firstFailure);
+});
