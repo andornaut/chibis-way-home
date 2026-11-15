@@ -77,7 +77,7 @@ The named cast uses shared data-driven behaviours.
 - **Exact:** spacing sits on a fixed pixel grid: equal margins, aligned edges, and text clear of its box's edge by the same amount on both sides
 - **Minimal:** show only what the player needs. No heading that repeats a tab's name, no label the picture already gives, and no decoration that competes with play
 - **Options:** art mocks up visual options for the user to pick
-- **Press areas:** apart from Jump, Use and the skill discs (a fixed `SKILL_HUD.target` square in `src/data/layout.ts`), a button's press area is the drawn button plus a share of its shorter side on each side, within a least and most margin, and at least a minimum target size; the values are `HIT_RULE` in `@andornaut/game-kit/ui/hitAreas`. Where press areas overlap, the nearer button wins
+- **Press areas:** apart from Jump, Use and the skill discs (a fixed `SKILL_HUD.target` square in `src/data/layout.ts`), a button's press area is the drawn button plus a share of its shorter side on each side, within a least and most margin, and at least a minimum target size; the values are `HIT_RULE` in `@andornaut/game-kit/runtime/ui/hitAreas`. Where press areas overlap, the nearer button wins
 - **Stage progress:** a thin bar the view's width stays fixed along the screen's bottom edge and has no input target. It shows Chibi's current horizontal position as a fraction of the stage's width, rather than the furthest position reached, so climbing does not move it; on death it shows his death point. Backtracking lowers it; Retry resets it to the stage's beginning
 
 ### Grid
