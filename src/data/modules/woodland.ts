@@ -18,6 +18,70 @@ const red = (col: number, cols: number, row: number): readonly Instance[] => [
   { character: "red-edge-support", col, cols, role: "support", row, rows: ROWS - row },
 ];
 
+// Two successive climbs reach a crown terrace before supported descents to the seam.
+const crownStair: ChunkModule = {
+  difficulty: 2,
+  encounters: 0,
+  entry: { row: 80 },
+  exit: { row: 80 },
+  id: "woodland-crown-stair",
+  objects: [],
+  route: {
+    profile: "recovery",
+    targets: [
+      { at: { col: 9, row: 76 } },
+      { at: { col: 16, row: 71 } },
+      { at: { col: 22, row: 76 } },
+    ],
+  },
+  sides: ["left", "right"],
+  solids: [floor(0, 6, 80), floor(6, 7, 76), floor(13, 6, 71), floor(19, 5, 76), floor(24, 6, 80)],
+  zones: ["woodland"],
+};
+
+// Descending ledges cross a red-floored hollow; the last ledge recovers the exit bank.
+const hollowDescent: ChunkModule = {
+  difficulty: 3,
+  encounters: 0,
+  entry: { row: 80 },
+  exit: { row: 80 },
+  id: "woodland-hollow-descent",
+  objects: [
+    { character: "platform-ledge", col: 6, cols: 6, role: "ledge", row: 84 },
+    { character: "platform-ledge", col: 12, cols: 7, role: "ledge", row: 88 },
+    { character: "platform-ledge", col: 19, cols: 5, role: "ledge", row: 84 },
+    ...red(6, 18, 96),
+  ],
+  route: {
+    profile: "recovery",
+    targets: [
+      { at: { col: 9, row: 84 } },
+      { at: { col: 15, row: 88 } },
+      { at: { col: 22, row: 84 } },
+    ],
+  },
+  sides: ["left", "right"],
+  solids: [floor(0, 6, 80), floor(24, 6, 80)],
+  zones: ["woodland"],
+};
+
+// Staggered islands divide a red-floored ravine wider than an ordinary running jump.
+const dividedRavine: ChunkModule = {
+  difficulty: 3,
+  encounters: 0,
+  entry: { row: 80 },
+  exit: { row: 80 },
+  id: "woodland-divided-ravine",
+  objects: red(6, 20, 90),
+  route: {
+    profile: "recovery",
+    targets: [{ at: { col: 12, row: 76 } }, { at: { col: 22, row: 79 } }],
+  },
+  sides: ["left", "right"],
+  solids: [floor(0, 6, 80), floor(10, 5, 76), floor(20, 4, 79), floor(26, 4, 80)],
+  zones: ["woodland"],
+};
+
 // A short step approaches a gap with a raised landing, then a supported descent.
 const rootGap: ChunkModule = {
   difficulty: 3,
@@ -127,8 +191,14 @@ const lookout: ChunkModule = {
 };
 
 export const WOODLAND_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(
-  [lookout, ravine, raisedBranchChannel, canopyReturn, rootGap].map((module) => [
-    module.id,
-    module,
-  ]),
+  [
+    lookout,
+    ravine,
+    raisedBranchChannel,
+    canopyReturn,
+    rootGap,
+    crownStair,
+    hollowDescent,
+    dividedRavine,
+  ].map((module) => [module.id, module]),
 );
