@@ -15,6 +15,7 @@ import {
 } from "../layout/dialogueScreen.ts";
 import { hitMargin } from "../layout/hitAreas.ts";
 import { textButton } from "./card.ts";
+import { mountUiLayout } from "./layoutTree.ts";
 
 // The dialogue panel in the HTML UI (dialogue.css, on ui.css): art's ui-dialogue-box at the
 // panel's alpha across the top of the view, the portrait in art's ui-portrait-frame at the
@@ -182,6 +183,12 @@ export function createDialogueView(
   buttons.continue.dataset.control = "continue";
   buttons.skip.dataset.control = "skip";
   const footer = element(document, "div", "ui-card-actions dialogue-footer");
+  mountUiLayout(document, document.createElement("div"), {
+    component: "Native",
+    key: "actions",
+    kind: "component",
+    props: { element: footer },
+  });
   footer.toggleAttribute("data-departure", departure);
   footer.append(buttons.continue, buttons.skip);
   dialog.append(panel.element, footer);

@@ -1,4 +1,5 @@
 import { textButton } from "./card.ts";
+import { mountUiLayout } from "./layoutTree.ts";
 
 // A conversation's required choice in the HTML UI (ui.css's shared card and stack): over a
 // full-area backdrop that takes every press outside it, the card on the play view in art's
@@ -43,6 +44,12 @@ export function createChoiceCard(
   prompt.id = `${id}-prompt`;
   prompt.textContent = words.prompt;
   const actions = element("div", "ui-card-actions ui-button-stack");
+  mountUiLayout(document, document.createElement("div"), {
+    component: "Native",
+    key: "actions",
+    kind: "component",
+    props: { element: actions },
+  });
   const buttons = new Map(
     words.options.map(({ id: answer, label }) => {
       const button = textButton(document, label);

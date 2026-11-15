@@ -7,6 +7,7 @@ import { CARD_CONTENT, DEATH_CARD } from "../../data/layout.ts";
 import type { DeathAction } from "../input/deathInput.ts";
 import type { StatsMetricRow } from "../layout/runStats.ts";
 import { textButton } from "./card.ts";
+import { mountUiLayout } from "./layoutTree.ts";
 import { createRunStats } from "./runStats.ts";
 
 // The required death card in the HTML UI (death.css): over a full-area backdrop that takes every
@@ -85,6 +86,12 @@ export function createDeathCard(document: Document, words: DeathCardWords): Deat
     [words.stats, words.totals],
   );
   const actions = element("div", "ui-card-actions ui-death-actions");
+  mountUiLayout(document, document.createElement("div"), {
+    component: "Native",
+    key: "actions",
+    kind: "component",
+    props: { element: actions },
+  });
   const buttons = Object.fromEntries(
     words.actions.map(({ key, label }) => {
       const button = textButton(document, label, key === "retry");
