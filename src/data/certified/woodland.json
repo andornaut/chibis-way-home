@@ -227,6 +227,32 @@
     {
       "encounters": 0,
       "grade": 5,
+      "id": "woodland-woodland-bough-return--woodland-raised-branch-channel",
+      "kind": "pair",
+      "layout": "db5235c69df37b09",
+      "modules": ["woodland-bough-return", "woodland-raised-branch-channel"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "0a89701ea5b72ede",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "36d5a0bc837fe96e:702",
+      "work": 702
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-woodland-bough-return--woodland-vent-terrace",
+      "kind": "pair",
+      "layout": "44292e58933169ca",
+      "modules": ["woodland-bough-return", "woodland-vent-terrace"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "ee490009b191b86d",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "e1c245ac370c4c5f:1947",
+      "work": 1947
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
       "id": "woodland-woodland-canopy-return--woodland-raised-branch-channel",
       "kind": "pair",
       "layout": "dc212b05fe916c72",
@@ -236,6 +262,19 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "37ff020b76bc05fb:809",
       "work": 809
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-woodland-canopy-return--woodland-vent-terrace",
+      "kind": "pair",
+      "layout": "f2def198e24b9a69",
+      "modules": ["woodland-canopy-return", "woodland-vent-terrace"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "07fcdddb77a5bdc9",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "250c5ee342e0f04f:1248",
+      "work": 1248
     },
     {
       "encounters": 0,
@@ -340,9 +379,35 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "1ea9444fe43eb03f:1905",
       "work": 1905
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-woodland-vent-terrace--woodland-bough-return",
+      "kind": "pair",
+      "layout": "5768f4bc9e43ebb1",
+      "modules": ["woodland-vent-terrace", "woodland-bough-return"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "08bd0552e3c80e0a",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b11268725bc2131c:549",
+      "work": 549
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "woodland-woodland-vent-terrace--woodland-canopy-return",
+      "kind": "pair",
+      "layout": "88c55293c64ec72d",
+      "modules": ["woodland-vent-terrace", "woodland-canopy-return"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "dc7bde11dbaf43e4",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "dcab3cda750f3d64:624",
+      "work": 624
     }
   ],
-  "inputs": { "data": "d16615406d515bd4", "proofs": "b2dd840a875850f5" },
+  "inputs": { "data": "f3489572fce16039", "proofs": "b2dd840a875850f5" },
   "version": 1,
   "zone": "woodland"
 }
