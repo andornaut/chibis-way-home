@@ -12,19 +12,20 @@ Every served art asset. Sizes are in base pixels at 720x360. Tags are in frame o
 
 ## Fonts
 
-| Key        | Type                            | Size                                | Tags |
-| ---------- | ------------------------------- | ----------------------------------- | ---- |
-| font-body  | BMFont, Liberation Sans Regular | 16px, base 15, line 20; 256x64 PNG  |      |
-| font-title | BMFont, Liberation Sans Bold    | 16px, base 15, line 20; 256x128 PNG |      |
+The private preview-label body BMFont is a build input under `art/generated/fonts/`, not a served runtime font. The served manifest's `fonts` array is empty.
 
-Ordinary UI and the native crash screen share the served Liberation Sans Regular (400) and Bold (700) TTFs. Their URLs appear once in precaching; the served font directory retains their SIL OFL 1.1 `OFL.txt`. `node art/tools/fonts.ts build` copies them byte-identically from `art/fonts/liberation/`. Crash faces use `font-display: swap`, with system-ui/sans-serif fallback for labels and a deliberate monospace fallback for diagnostic stack text. Tiny5 and Silkscreen remain legacy sources without current runtime consumers.
+| Build input | Type                            | Size                                          | Files                                                                      |
+| ----------- | ------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------- |
+| font-body   | BMFont, Liberation Sans Regular | 16px, base 15, line 20; 96 glyphs; 256x64 PNG | [PNG](generated/fonts/font-body.png), [FNT](generated/fonts/font-body.fnt) |
 
-| Font                    | Use                                     | File                                                                                                                |
-| ----------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Liberation Sans Bold    | UI and crash titles/actions, weight 700 | [public/art/fonts/liberation/LiberationSans-Bold.ttf](../public/art/fonts/liberation/LiberationSans-Bold.ttf)       |
-| Liberation Sans Regular | UI and crash body, weight 400           | [public/art/fonts/liberation/LiberationSans-Regular.ttf](../public/art/fonts/liberation/LiberationSans-Regular.ttf) |
-| Silkscreen Regular      | Retained legacy source, no runtime use  | [art/fonts/silkscreen/Silkscreen-Regular.ttf](fonts/silkscreen/Silkscreen-Regular.ttf)                              |
-| Tiny5                   | Retained legacy source, no runtime use  | [art/fonts/tiny5/Tiny5.ttf](fonts/tiny5/Tiny5.ttf)                                                                  |
+Ordinary UI and the native crash screen share the complete Liberation Sans Regular (400) and Bold (700) WOFF2 faces with CSS format `woff2`. Their two runtime URLs appear once in precaching. Source and served TTFs remain intact for compatibility, with their SIL OFL 1.1 `OFL.txt`; `node art/tools/fonts.ts build` copies the source TTFs and licence byte-identically from `art/fonts/liberation/`. Crash faces use `font-display: swap`, with system-ui/sans-serif fallback for labels and a deliberate monospace fallback for diagnostic stack text. Tiny5 and Silkscreen remain legacy sources without current runtime consumers.
+
+| Font                    | Use                                     | File                                                                                                                    |
+| ----------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Liberation Sans Bold    | UI and crash titles/actions, weight 700 | [public/art/fonts/liberation/LiberationSans-Bold.woff2](../public/art/fonts/liberation/LiberationSans-Bold.woff2)       |
+| Liberation Sans Regular | UI and crash body, weight 400           | [public/art/fonts/liberation/LiberationSans-Regular.woff2](../public/art/fonts/liberation/LiberationSans-Regular.woff2) |
+| Silkscreen Regular      | Retained legacy source, no runtime use  | [art/fonts/silkscreen/Silkscreen-Regular.ttf](fonts/silkscreen/Silkscreen-Regular.ttf)                                  |
+| Tiny5                   | Retained legacy source, no runtime use  | [art/fonts/tiny5/Tiny5.ttf](fonts/tiny5/Tiny5.ttf)                                                                      |
 
 ## Icons
 
