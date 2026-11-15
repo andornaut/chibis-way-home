@@ -104,13 +104,14 @@ export function qualifyGroundedGapRoute(
       status: "not-proven" as const,
     };
   }
-  const { controller, events, failure, guardEvents } = createGroundedGapController(
+  const { controller, decisions, events, failure, guardEvents } = createGroundedGapController(
     ORDINARY,
     layout,
   );
   const route = controlledRequiredRoute(controller, layout, targets);
   return {
     controller: GROUNDED_GAP_CONTROLLER,
+    decisions,
     events,
     guardEvents,
     kind: "qualification" as const,

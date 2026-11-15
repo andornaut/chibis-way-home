@@ -3,10 +3,22 @@ import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";
 import { ordinaryHorizontalVelocity } from "../rules/bird.ts";
 import { standsOn, type ZoneInput, type ZoneState } from "../rules/zone.ts";
 import { requiredRouteObservation, type Surface, zoneSurfaces } from "../sim/zoneWalk.ts";
-import type { QualificationController } from "./continuousRequiredRoute.ts";
+import type { QualificationController, QualificationDecision } from "./continuousRequiredRoute.ts";
 import type { RequiredRouteIntentTarget } from "./requiredRouteIntent.ts";
 export const GROUNDED_GAP_CONTROLLER = "required-route-grounded-gap-v1";
 type Phase = "approach" | "press" | "ascent" | "fall";
+type Gate = { readonly nextVX: number; readonly press: boolean; readonly supportRight: number };
+
+export interface GapDecision extends QualificationDecision {
+  readonly variant: {
+    readonly activeSupport: Surface | undefined;
+    readonly activeTargetIndex: number | undefined;
+    readonly eligibility: "owned" | "not-eligible" | "rejected" | "unknown";
+    readonly gate: Gate | undefined;
+    readonly phaseBefore: Phase | "inactive" | "unknown";
+    readonly phaseAfterInput: Phase | "inactive" | "unknown";
+  };
+}
 export interface GapEvent {
   readonly tick: number;
   readonly kind:
@@ -26,6 +38,10 @@ interface GapFrame {
 }
 // Only current contact geometry is observed; no future state or jump trajectory is sampled.
 export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayout) {
+  // One row per applied decision or final stop, bounded by the existing 600-step loop.
+  const decisions: GapDecision[] = [];
+  let decisionPhase: Phase | "inactive" = "inactive";
+  let decisionGate: Gate | undefined;
   const events: GapEvent[] = [];
   const guardEvents: {
     readonly area: string;
@@ -82,8 +98,35 @@ export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayo
     };
   };
   const controller: QualificationController<typeof GROUNDED_GAP_CONTROLLER> = {
+    decision(row) {
+      decisions.push({
+        ...row,
+        current: {
+          ...row.current,
+          bird: { ...row.current.bird },
+          support: row.current.support && { ...row.current.support },
+        },
+        ...(row.input !== undefined && { input: { ...row.input } }),
+        variant: {
+          activeSupport: active?.from,
+          activeTargetIndex: active?.target.index,
+          eligibility: !row.controllerConsulted
+            ? "unknown"
+            : row.owner === "variant"
+              ? "owned"
+              : row.owner === "generic"
+                ? "not-eligible"
+                : "rejected",
+          gate: row.controllerConsulted ? decisionGate : undefined,
+          phaseAfterInput: row.controllerConsulted ? (active?.phase ?? "inactive") : "unknown",
+          phaseBefore: row.controllerConsulted ? decisionPhase : "unknown",
+        },
+      });
+    },
     id: GROUNDED_GAP_CONTROLLER,
     input(ownership, current, target, move) {
+      decisionPhase = active?.phase ?? "inactive";
+      decisionGate = undefined;
       const { bird, support } = current;
       if (ownership !== "none") {
         failure = "timed-hazard-owned";
@@ -162,6 +205,7 @@ export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayo
         }
         const vx = ordinaryHorizontalVelocity(tuning, STEP_SECONDS, 1, true, bird.vx);
         const press = !bird.jumpHeld && bird.x + vx * STEP_SECONDS >= active.from.right - EDGE;
+        decisionGate = { nextVX: vx, press, supportRight: active.from.right };
         if (press) {
           active.phase = "press";
         }
@@ -231,5 +275,5 @@ export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayo
       }
     },
   };
-  return { controller, events, failure: () => failure, guardEvents };
+  return { controller, decisions, events, failure: () => failure, guardEvents };
 }

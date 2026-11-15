@@ -75,13 +75,27 @@ export function continuousRequiredRoute(
   return controlledRequiredRoute(undefined, layout, targets);
 }
 // Qualification controllers cannot produce the native certification Proof shape.
+export type QualificationCurrent = RouteIntentCurrent & { readonly bird: ZoneState["bird"] };
+
+export interface QualificationDecision {
+  // Current state has completed preStepTick. appliedTick exists only after a returned native step.
+  readonly preStepTick: number;
+  readonly appliedTick?: number;
+  readonly owner: "variant" | "generic" | "guarded-stop";
+  readonly controllerConsulted: boolean;
+  readonly current: QualificationCurrent;
+  readonly target: RequiredRouteIntentTarget | undefined;
+  readonly hazardOwnership?: "none" | "hold" | "cross";
+  readonly input?: ZoneInput;
+  readonly unavailable?: RouteIntentUnavailable;
+}
+
 export interface QualificationController<Controller extends string> {
   readonly id: Controller;
+  decision?(row: QualificationDecision): void;
   input(
     ownership: "none" | "hold" | "cross",
-    current: RouteIntentCurrent & {
-      readonly bird: ZoneState["bird"];
-    },
+    current: QualificationCurrent,
     target: RequiredRouteIntentTarget | undefined,
     move: ZoneInput["move"],
   ):
@@ -143,6 +157,16 @@ export function controlledRequiredRoute<
   let zone = startZone(ORDINARY, layout, 1);
   let observation = requiredRouteObservation(ORDINARY, layout, surfaces, zone);
   let ticks = 0;
+  if (unavailable !== undefined) {
+    controller?.decision?.({
+      controllerConsulted: false,
+      current: { area: zone.area, bird: zone.bird, support: observation?.support },
+      owner: "guarded-stop",
+      preStepTick: ticks,
+      target: undefined,
+      unavailable,
+    });
+  }
   while (
     unavailable === undefined &&
     ticks < ROUTE_TICKS &&
@@ -165,6 +189,14 @@ export function controlledRequiredRoute<
       const choice = staticRouteAssist(ORDINARY, current, surfaces, target);
       if ("unavailable" in choice) {
         unavailable = choice.unavailable;
+        controller?.decision?.({
+          controllerConsulted: false,
+          current,
+          owner: "guarded-stop",
+          preStepTick: ticks,
+          target,
+          unavailable,
+        });
         break;
       }
       assist = choice.assist;
@@ -194,6 +226,14 @@ export function controlledRequiredRoute<
           );
     if ("unavailable" in hazard) {
       unavailable = hazard.unavailable;
+      controller?.decision?.({
+        controllerConsulted: false,
+        current,
+        owner: "guarded-stop",
+        preStepTick: ticks,
+        target: aim,
+        unavailable,
+      });
       break;
     }
     if (hazard.kind === "cross") {
@@ -213,6 +253,15 @@ export function controlledRequiredRoute<
           : requiredRouteIntent(ORDINARY, current, aim);
     if (intent !== undefined && "unavailable" in intent) {
       unavailable = intent.unavailable;
+      controller?.decision?.({
+        controllerConsulted: false,
+        current,
+        hazardOwnership: hazard.kind,
+        owner: "guarded-stop",
+        preStepTick: ticks,
+        target: aim,
+        unavailable,
+      });
       break;
     }
     const policy =
@@ -225,6 +274,15 @@ export function controlledRequiredRoute<
     const controlled = controller?.input(hazard.kind, current, aim, policy.move);
     if (controlled !== undefined && "unavailable" in controlled) {
       unavailable = controlled.unavailable;
+      controller?.decision?.({
+        controllerConsulted: true,
+        current,
+        hazardOwnership: hazard.kind,
+        owner: "guarded-stop",
+        preStepTick: ticks,
+        target: aim,
+        unavailable,
+      });
       break;
     }
     if (controlled !== undefined) {
@@ -235,6 +293,16 @@ export function controlledRequiredRoute<
     const before = zone;
     zone = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
     ticks++;
+    controller?.decision?.({
+      appliedTick: ticks,
+      controllerConsulted: true,
+      current,
+      hazardOwnership: hazard.kind,
+      input,
+      owner: controlled === undefined ? "generic" : "variant",
+      preStepTick: ticks - 1,
+      target: aim,
+    });
     controller?.observe(ticks, input, before, zone);
     observation = observe(ticks, zone);
     if (crossing !== undefined) {

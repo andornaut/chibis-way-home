@@ -159,7 +159,8 @@ it("retains default inputs and the complete result through a mocked native step"
     .spyOn(zoneRules, "stepZone")
     .mockReturnValue({ ...zone, bird: { ...zone.bird, x: 102 }, cleared: true });
   try {
-    expect(continuousRequiredRoute(layout(), [])).toEqual({
+    const result = continuousRequiredRoute(layout(), []);
+    expect(result).toEqual({
       assistWitnesses: [],
       controller: "required-route-intent-v2",
       missing: [],
@@ -172,6 +173,22 @@ it("retains default inputs and the complete result through a mocked native step"
     });
     expect(step).toHaveBeenCalledOnce();
     expect(step.mock.calls[0]?.[4]).toEqual({ jumpHeld: true, move: 1, useHeld: false });
+    const gap = createGroundedGapController(ORDINARY, layout());
+    expect(controlledRequiredRoute(gap.controller, layout(), [])).toEqual({
+      ...result,
+      controller: GROUNDED_GAP_CONTROLLER,
+    });
+    expect(step.mock.calls[1]?.[4]).toEqual(step.mock.calls[0]?.[4]);
+    expect(gap.decisions).toMatchObject([
+      {
+        appliedTick: 1,
+        current: { bird: { x: zone.bird.x } },
+        input: { jumpHeld: true, move: 1, useHeld: false },
+        owner: "generic",
+        preStepTick: 0,
+        variant: { eligibility: "not-eligible", phaseBefore: "inactive" },
+      },
+    ]);
   } finally {
     initialize.mockRestore();
     step.mockRestore();
@@ -249,11 +266,79 @@ it("fails closed before a gap press when timed hazard hold or cross owns input",
           tick: 0,
         },
       ]);
+      expect(gap.decisions).toMatchObject([
+        {
+          controllerConsulted: true,
+          hazardOwnership: ownership,
+          owner: "guarded-stop",
+          preStepTick: 0,
+          variant: { eligibility: "rejected" },
+        },
+      ]);
+      expect(gap.decisions[0]).not.toHaveProperty("appliedTick");
+      expect(gap.decisions[0]).not.toHaveProperty("input");
     }
+    hazard.mockReturnValueOnce({ unavailable: { index: 0, reason: "hazard-margin-unavailable" } });
+    const rejected = createGroundedGapController(ORDINARY, layout());
+    const consult = vi.spyOn(rejected.controller, "input");
+    controlledRequiredRoute(rejected.controller, layout(), [
+      { area: "main", at: { col: 24, row: 74 } },
+    ]);
+    expect(consult).not.toHaveBeenCalled();
+    expect(rejected.decisions).toMatchObject([
+      {
+        controllerConsulted: false,
+        owner: "guarded-stop",
+        preStepTick: 0,
+        variant: { eligibility: "unknown", phaseAfterInput: "unknown", phaseBefore: "unknown" },
+      },
+    ]);
+    expect(rejected.decisions[0]).not.toHaveProperty("input");
+    expect(rejected.decisions[0]).not.toHaveProperty("appliedTick");
     expect(step).not.toHaveBeenCalled();
   } finally {
     initialize.mockRestore();
     step.mockRestore();
     hazard.mockRestore();
+  }
+});
+
+it("records an owned decision without changing the selected input or route result", () => {
+  const zone = state();
+  const initialize = vi.spyOn(zoneRules, "startZone").mockReturnValue(zone);
+  const step = vi.spyOn(zoneRules, "stepZone").mockReturnValue({ ...zone, cleared: true });
+  try {
+    const plain = createGroundedGapController(ORDINARY, layout());
+    const silent = {
+      id: plain.controller.id,
+      input: plain.controller.input,
+      observe: plain.controller.observe,
+    };
+    const targets = [{ area: "main", at: { col: 24, row: 74 } }];
+    const expected = controlledRequiredRoute(silent, layout(), targets);
+    const observed = createGroundedGapController(ORDINARY, layout());
+    expect(controlledRequiredRoute(observed.controller, layout(), targets)).toEqual(expected);
+    expect(step.mock.calls[0]?.[4]).toEqual({ jumpHeld: false, move: 1, useHeld: false });
+    expect(step.mock.calls[1]?.[4]).toEqual(step.mock.calls[0]?.[4]);
+    expect(plain.decisions).toEqual([]);
+    expect(observed.decisions).toMatchObject([
+      {
+        appliedTick: 1,
+        current: { support: { left: 72, right: 144, y: 924 } },
+        input: { jumpHeld: false, move: 1, useHeld: false },
+        owner: "variant",
+        preStepTick: 0,
+        target: { index: 0, surface: { left: 276, right: 312 }, window: { max: 288, min: 276 } },
+        variant: {
+          eligibility: "owned",
+          gate: { nextVX: 240, press: false, supportRight: 144 },
+          phaseAfterInput: "approach",
+          phaseBefore: "inactive",
+        },
+      },
+    ]);
+  } finally {
+    initialize.mockRestore();
+    step.mockRestore();
   }
 });
