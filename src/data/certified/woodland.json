@@ -305,6 +305,19 @@
     {
       "encounters": 0,
       "grade": 5,
+      "id": "woodland-woodland-raised-branch-channel--woodland-hollow-descent",
+      "kind": "pair",
+      "layout": "6c08348c320f30a7",
+      "modules": ["woodland-raised-branch-channel", "woodland-hollow-descent"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "375f16f0994d07f2",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "1137e0453bccbdb3:2161",
+      "work": 2161
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
       "id": "woodland-woodland-raised-branch-channel--woodland-raised-branch-channel",
       "kind": "pair",
       "layout": "6f91ee93fb8f1c67",
