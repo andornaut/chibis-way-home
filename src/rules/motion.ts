@@ -1,6 +1,6 @@
-import { easeProgress, progressAt } from "@andornaut/game-kit/motion";
-import { clamp01, lerp } from "@andornaut/game-kit/numbers";
-import type { Random } from "@andornaut/game-kit/random";
+import { easeProgress, progressAt } from "@andornaut/game-kit/runtime/motion";
+import { clamp01, lerp } from "@andornaut/game-kit/runtime/numbers";
+import type { Random } from "@andornaut/game-kit/runtime/random";
 
 import type { Direction, Motion, Point } from "../data/types/index.ts";
 

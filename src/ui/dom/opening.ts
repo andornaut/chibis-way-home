@@ -1,7 +1,7 @@
 import {
   type LayoutValues,
   writeLayoutProperties,
-} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { CARD_CONTENT, PLAY_MARK, TEXT_BUTTON } from "../../data/layout.ts";
 import { mountUiLayout, type UiLayoutNode } from "./layoutTree.ts";

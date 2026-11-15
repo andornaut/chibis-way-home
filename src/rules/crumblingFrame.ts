@@ -1,10 +1,10 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 import {
   beginCrumblingStep,
   type CrumblingDefinition,
   type CrumblingWorld,
   endCrumblingStep,
-} from "@andornaut/game-kit/terrain/crumbling";
+} from "@andornaut/game-kit/runtime/terrain/crumbling";
 
 import type { CrumblingSupportId } from "../data/types/index.ts";
 import type { CrumblingActor } from "./crumbling.ts";

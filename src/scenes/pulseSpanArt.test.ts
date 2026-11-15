@@ -1,4 +1,4 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
+import { animationKey } from "@andornaut/game-kit/runtime/art/aseprite";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 

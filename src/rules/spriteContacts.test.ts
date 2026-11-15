@@ -1,4 +1,4 @@
-import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
+import type { AsepriteSheet } from "@andornaut/game-kit/runtime/art/aseprite";
 import { describe, expect, it } from "vitest";
 
 import maskJson from "../../public/art/contact-silhouettes.json" with { type: "json" };

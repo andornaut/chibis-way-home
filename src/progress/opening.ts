@@ -1,4 +1,4 @@
-import { clamp01, lerp } from "@andornaut/game-kit/numbers";
+import { clamp01, lerp } from "@andornaut/game-kit/runtime/numbers";
 
 import type { OpeningBeat, OpeningKeyframe, OpeningLayer } from "../data/types/index.ts";
 import type { Progress } from "./save/progress.ts";

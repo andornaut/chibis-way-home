@@ -1,4 +1,4 @@
-import { type AsepriteSheet, sheetTags, tagMs } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags, tagMs } from "@andornaut/game-kit/runtime/art/aseprite";
 
 import birdSheet from "../../public/art/sprites/bird.json" with { type: "json" };
 import { EDGE } from "../core/index.ts";

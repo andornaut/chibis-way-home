@@ -1,4 +1,4 @@
-import { randomStream, shuffled } from "@andornaut/game-kit/random";
+import { randomStream, shuffled } from "@andornaut/game-kit/runtime/random";
 
 import type { AreaPlan, Instance, ThemeBackdrop, ZonePlan } from "../data/types/index.ts";
 import type { ChunkLibrary } from "./assemble.ts";

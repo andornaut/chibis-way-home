@@ -1,4 +1,4 @@
-import { animationKey } from "@andornaut/game-kit/art/aseprite";
+import { animationKey } from "@andornaut/game-kit/runtime/art/aseprite";
 import type { GameObjects } from "phaser";
 
 import type { OpeningKeyframe, OpeningLayer } from "../data/types/index.ts";

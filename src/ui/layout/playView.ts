@@ -1,4 +1,4 @@
-import type { RenderFit } from "@andornaut/game-kit/view/renderScale";
+import type { RenderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 
 import type { Point, Rect, Size } from "../../data/types/index.ts";
 

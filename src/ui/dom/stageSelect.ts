@@ -1,5 +1,5 @@
-import { controlPresentation } from "@andornaut/game-kit/ui/controlPresentation";
-import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard.ts";
 import { closeButton, textButton } from "./card.ts";

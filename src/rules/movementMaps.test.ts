@@ -1,4 +1,4 @@
-import { mapHash } from "@andornaut/game-kit/terrain/movementMap";
+import { mapHash } from "@andornaut/game-kit/runtime/terrain/movementMap";
 import { describe, expect, it } from "vitest";
 
 import type { AreaLayout, ObjectLayout } from "../data/types/index.ts";

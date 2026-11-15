@@ -1,6 +1,6 @@
-import { invokeControl } from "@andornaut/game-kit/ui/controlPresentation";
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { invokeControl } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
 import { ZONE_MAP } from "../data/map.ts";

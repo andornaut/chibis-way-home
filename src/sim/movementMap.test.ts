@@ -1,5 +1,5 @@
 // Path out of an encounter, through src/sim/pathOut.ts.
-import { locate, pathTo } from "@andornaut/game-kit/terrain/movementMap";
+import { locate, pathTo } from "@andornaut/game-kit/runtime/terrain/movementMap";
 import { describe, expect, it } from "vitest";
 
 import { TILE } from "../data/screen.ts";

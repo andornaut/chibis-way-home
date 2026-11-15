@@ -1,7 +1,7 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { readUnit } from "@andornaut/game-kit/web/ui/dom/viewUnits";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
+import { listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 import { Core, Scene } from "phaser";
 
 import { EDGE } from "../core/index.ts";

@@ -6,7 +6,7 @@ import { afterEach, expect, it, vi } from "vitest";
 const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
 const exit = vi.hoisted(() => vi.fn());
 vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scene: class {} }));
-vi.mock("@andornaut/game-kit/web/pwa/dom/exitApp", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/exitApp", () => ({
   browserExitPage: () => "/",
   exitApp: exit,
 }));

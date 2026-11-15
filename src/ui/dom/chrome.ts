@@ -1,4 +1,7 @@
-import { type ChromeLayer, createChromeSvg } from "@andornaut/game-kit/web/ui/dom/vectorChrome";
+import {
+  type ChromeLayer,
+  createChromeSvg,
+} from "@andornaut/game-kit/runtime/web/ui/dom/vectorChrome";
 
 import { UI_COLOURS, type UiColour } from "./skin.ts";
 

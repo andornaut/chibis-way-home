@@ -1,8 +1,16 @@
-import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { frameSteps, startStepClock, type StepClock } from "@andornaut/game-kit/clock/fixedStep";
-import { fillNames } from "@andornaut/game-kit/lines";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import {
+  animationKey,
+  type AsepriteSheet,
+  sheetTags,
+} from "@andornaut/game-kit/runtime/art/aseprite";
+import {
+  frameSteps,
+  startStepClock,
+  type StepClock,
+} from "@andornaut/game-kit/runtime/clock/fixedStep";
+import { fillNames } from "@andornaut/game-kit/runtime/lines";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import { type Cameras, type GameObjects, Scene, Scenes } from "phaser";
 
 import { PLAY_STEP_LIMITS, STEP_SECONDS } from "../core/index.ts";

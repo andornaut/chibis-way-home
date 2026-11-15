@@ -22,6 +22,10 @@ const SESSION: pageSave.SaveSession = {
   skillOverrides: developmentSkillOverrides,
 };
 
+export function probeSaveAge(): ReturnType<typeof pageSave.probeSaveAge> {
+  return pageSave.probeSaveAge();
+}
+
 export function loadProgress(): Promise<pageSave.SaveAge> {
   return pageSave.loadProgress(SESSION);
 }

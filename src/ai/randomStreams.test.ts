@@ -1,4 +1,4 @@
-import { randomStream } from "@andornaut/game-kit/random";
+import { randomStream } from "@andornaut/game-kit/runtime/random";
 import { expect, it } from "vitest";
 
 import { namedStreams, scopedStreams } from "./randomStreams.ts";

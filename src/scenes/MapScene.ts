@@ -1,6 +1,10 @@
-import { animationKey, type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import {
+  animationKey,
+  type AsepriteSheet,
+  sheetTags,
+} from "@andornaut/game-kit/runtime/art/aseprite";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import { type GameObjects, Scene } from "phaser";
 
 import { ART_MANIFEST_KEY, type ArtManifest } from "../assets/index.ts";

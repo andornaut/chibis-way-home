@@ -1,14 +1,14 @@
-import { setPageDivider } from "@andornaut/game-kit/web/ui/dom/controlPresentation";
+import { setPageDivider } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 import {
   type LayoutValues,
   writeLayoutProperties,
-} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import {
   cutFrame,
   setNineSlice,
   type SliceInsets,
-} from "@andornaut/game-kit/web/ui/dom/sheetFrames";
-import { slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
+} from "@andornaut/game-kit/runtime/web/ui/dom/sheetFrames";
+import { slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { DEATH_CARD } from "../../data/layout.ts";
 import type { Rect } from "../../data/types/index.ts";

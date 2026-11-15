@@ -1,5 +1,8 @@
-import { type InstallStepsKind, offersInstall } from "@andornaut/game-kit/web/pwa/installState";
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import {
+  type InstallStepsKind,
+  offersInstall,
+} from "@andornaut/game-kit/runtime/web/pwa/installState";
+import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";

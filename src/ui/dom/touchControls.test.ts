@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { renderFit } from "@andornaut/game-kit/view/renderScale";
+import { renderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import { expect, it } from "vitest";
 
 import palette from "../../../public/art/palette.json" with { type: "json" };

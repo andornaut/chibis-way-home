@@ -1,15 +1,15 @@
-import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
-import type { RenderFit } from "@andornaut/game-kit/view/renderScale";
+import { MODAL_CONTENT } from "@andornaut/game-kit/runtime/modalLayout";
+import type { RenderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import {
   type LayoutValues,
   writeLayoutProperties,
-} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import {
   createModalLayer,
   type ModalLayer,
   type ModalOptions,
-} from "@andornaut/game-kit/web/ui/dom/modalLayer";
-import { createViewUnits, slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
+} from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
+import { createViewUnits, slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT, DEATH_CARD, FOCUS_RING, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";

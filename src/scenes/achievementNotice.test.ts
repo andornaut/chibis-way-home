@@ -2,7 +2,7 @@
 import { EventEmitter } from "node:events";
 import { readdirSync, readFileSync } from "node:fs";
 
-import { fillNames } from "@andornaut/game-kit/lines";
+import { fillNames } from "@andornaut/game-kit/runtime/lines";
 import type { Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 

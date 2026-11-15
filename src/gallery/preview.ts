@@ -1,5 +1,9 @@
-import type { AnimationFrame } from "@andornaut/game-kit/art/aseprite";
-import { advanceWidth, type BitmapFont, laidGlyphs } from "@andornaut/game-kit/text/bitmapFont";
+import type { AnimationFrame } from "@andornaut/game-kit/runtime/art/aseprite";
+import {
+  advanceWidth,
+  type BitmapFont,
+  laidGlyphs,
+} from "@andornaut/game-kit/runtime/text/bitmapFont";
 
 export interface Crop {
   readonly h: number;

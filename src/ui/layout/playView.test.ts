@@ -1,4 +1,8 @@
-import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
+import {
+  MAX_RENDER_SCALE,
+  renderFit,
+  renderScale,
+} from "@andornaut/game-kit/runtime/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import {

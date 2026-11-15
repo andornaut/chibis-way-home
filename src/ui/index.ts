@@ -22,7 +22,7 @@ export {
   type TouchChromePose,
 } from "./chrome/touchChrome.ts";
 export { buttonHeld, centredAt, controlTag, trackPress } from "./chrome/touchControls.ts";
-export { UI_FONT_RESOURCES } from "./chrome/uiFonts.ts";
+export { requiredUiFonts, UI_FONT_RESOURCES } from "./chrome/uiFonts.ts";
 export {
   type DialogueAction,
   dialogueChoice,

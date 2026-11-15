@@ -1,4 +1,4 @@
-import { itemAt } from "@andornaut/game-kit/arrays";
+import { itemAt } from "@andornaut/game-kit/runtime/arrays";
 import type { Scene } from "phaser";
 import atlas from "virtual:atlas-manifest";
 

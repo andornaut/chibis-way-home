@@ -1,7 +1,7 @@
 import {
   type LayoutValues,
   writeLayoutProperties,
-} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SUMMARY } from "../../data/layout.ts";
 import type { DialogueSpeaker } from "../../data/types/index.ts";

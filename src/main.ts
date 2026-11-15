@@ -1,8 +1,8 @@
-import "@andornaut/game-kit/web/view/frameTurnLandscapeGame.css";
-import "@andornaut/game-kit/web/ui/dom/ui.css";
-import "@andornaut/game-kit/web/ui/dom/controls.css";
-import "@andornaut/game-kit/web/ui/dom/controlPresentation.css";
-import "@andornaut/game-kit/web/ui/dom/layoutTree.css";
+import "@andornaut/game-kit/runtime/web/view/frameTurnLandscapeGame.css";
+import "@andornaut/game-kit/runtime/web/ui/dom/ui.css";
+import "@andornaut/game-kit/runtime/web/ui/dom/controls.css";
+import "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation.css";
+import "@andornaut/game-kit/runtime/web/ui/dom/layoutTree.css";
 import "./main.css";
 import "./ui/dom/ui.css";
 import "./ui/dom/achievements.css";
@@ -25,14 +25,15 @@ import "./ui/dom/stageProgress.css";
 import "./ui/dom/touchControls.css";
 import "./dev/panel.css";
 
-import { MENU_FPS } from "@andornaut/game-kit/clock/frameCap";
-import { capFrameRate } from "@andornaut/game-kit/clock/phaser/capFrameRate";
-import { LOADER_CONFIG } from "@andornaut/game-kit/load/loaderConfig";
-import { MAX_RENDER_SCALE } from "@andornaut/game-kit/view/renderScale";
-import { trackInputModality } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { lockGameOrientation } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
-import { followFrameTurn } from "@andornaut/game-kit/web/view/phaser/followFrameTurn";
-import { Game, Scale, WEBGL } from "phaser";
+import { MENU_FPS } from "@andornaut/game-kit/runtime/clock/frameCap";
+import { capFrameRate } from "@andornaut/game-kit/runtime/clock/phaser/capFrameRate";
+import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
+import type { LoadingAttempt } from "@andornaut/game-kit/runtime/load/loadingAttempts";
+import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
+import { trackInputModality } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { lockGameOrientation } from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
+import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn";
+import { Core, Game, Scale, WEBGL } from "phaser";
 
 import { CRASH_SCREEN } from "./crash/crashScreen.ts";
 import { SCREEN } from "./data/screen.ts";
@@ -78,10 +79,34 @@ const INK = "#181425";
 // (mountDomUi, src/ui/dom/) draws the interface over the world canvas at device resolution. The game is
 // constructed after the document's one-time staged-update launch boundary and shows its first
 // screen as soon as it has loaded.
-function startGame(): void {
+let retirement: Promise<void> = Promise.resolve();
+
+function retireGame(game: Game): Promise<void> {
+  return new Promise((resolve) => {
+    game.events.once(Core.Events.DESTROY, () => resolve());
+    game.destroy(true);
+    if (game.loop.started && !game.loop.running) {
+      game.loop.wake();
+    }
+  });
+}
+
+function startGame(attempt: LoadingAttempt): void {
+  const startup = new AbortController();
+  let owned: Game | undefined;
+  attempt.onCancel(() => {
+    startup.abort();
+    // A constructor without a public Game reference supplies no retirement evidence.
+    retirement = owned === undefined ? new Promise<void>(() => {}) : retireGame(owned);
+  });
   const game = new Game({
     // The bars beside the game's view, in the page's ink.
     backgroundColor: INK,
+    callbacks: {
+      preBoot: (game) => {
+        owned = game;
+      },
+    },
     height: SCREEN.height,
     // Three touch pointers: a move touch, Jump and Use can all be held at once.
     input: { activePointers: 3 },
@@ -104,7 +129,7 @@ function startGame(): void {
     // card over the start screen or the celebration, and unlock notices over play and under every
     // card.
     scene: [
-      BootScene,
+      new BootScene(startup.signal),
       StartScene,
       OpeningScene,
       MapScene,
@@ -131,6 +156,7 @@ function startGame(): void {
     type: WEBGL,
     width: SCREEN.width,
   });
+  owned = game;
   installUpdateModalBridge(game);
   const gameHost = document.getElementById("game");
   if (gameHost) {
@@ -166,17 +192,26 @@ function startGame(): void {
   CRASH_SCREEN.stopGameOnCrash(() => game.pause());
 }
 
-trackInputModality(document);
+let launch: ReturnType<typeof setupPhoneApp> | undefined;
+let setupStarted = false;
+let started = false;
 
-// The browser's install prompt can come before the game draws, so the settings card's offer
-// starts listening as the page loads.
-installOffer();
-
-// Asks for landscape, on the game page only; where the browser refuses, the frame turns.
-lockGameOrientation("landscape", screen);
-
-void setupPhoneApp().then((launch) => {
-  if (launch !== "reloading") {
-    startGame();
+// Document services are installed once; only the current attempt may acquire a Game.
+export async function bootstrap(attempt: LoadingAttempt): Promise<void> {
+  if (!setupStarted) {
+    setupStarted = true;
+    trackInputModality(document);
+    installOffer();
+    lockGameOrientation("landscape", screen);
+    launch = setupPhoneApp();
   }
-});
+  if (launch === undefined) {
+    throw new Error("Document startup did not complete");
+  }
+  const result = await launch;
+  await retirement;
+  if (attempt.isCurrent() && !started && result !== "reloading") {
+    startGame(attempt);
+    started = true;
+  }
+}

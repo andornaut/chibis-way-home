@@ -1,6 +1,6 @@
 // Rectangles, points and sizes, in pixels and in tiles.
 
-import type { Point as SharedPoint, Rect as SharedRect } from "@andornaut/game-kit/rect";
+import type { Point as SharedPoint, Rect as SharedRect } from "@andornaut/game-kit/runtime/rect";
 
 // An axis-aligned rectangle in base pixels: x and y are its top-left corner, y grows downward.
 export type Rect = Readonly<SharedRect>;

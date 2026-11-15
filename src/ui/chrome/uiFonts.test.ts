@@ -158,3 +158,41 @@ it("waits for a pending first weight and warns once with the earliest failure", 
   expect(ready).toBe(true);
   expect(warning).toHaveBeenCalledExactlyOnceWith("UI fonts failed to load", firstFailure);
 });
+
+it("retains a successful required weight and recreates only the failed face on explicit retry", async () => {
+  const { requiredUiFonts } = await import("./uiFonts.ts");
+  const document = globalThis.document.implementation.createHTMLDocument();
+  const created: { load: ReturnType<typeof vi.fn>; status: string }[] = [];
+  let failedBold = false;
+  vi.stubGlobal(
+    "FontFace",
+    class {
+      status = "unloaded";
+      load: ReturnType<typeof vi.fn>;
+      constructor(_family: string, _source: string, descriptors: FontFaceDescriptors) {
+        this.load = vi.fn(async () => {
+          if (descriptors.weight === "700" && !failedBold) {
+            failedBold = true;
+            this.status = "error";
+            throw new Error("Font request failed");
+          }
+          this.status = "loaded";
+          return this;
+        });
+        created.push(this);
+      }
+    },
+  );
+  const fonts = Object.assign(new EventTarget(), { add: vi.fn(), delete: vi.fn() });
+  Object.defineProperty(document, "fonts", { value: fonts });
+  const resources = requiredUiFonts(document);
+  await Promise.allSettled(resources.map((resource) => resource.retry()));
+  expect(resources.map((resource) => resource.status())).toEqual(["ready", "failed"]);
+  expect(requiredUiFonts(document)).toBe(resources);
+  await Promise.all(resources.map((resource) => resource.retry()));
+  expect(resources.map((resource) => resource.status())).toEqual(["ready", "ready"]);
+  expect(created).toHaveLength(3);
+  expect(created[0]!.load).toHaveBeenCalledOnce();
+  expect(fonts.delete).toHaveBeenCalledExactlyOnceWith(created[1]);
+  expect(fonts.add).toHaveBeenCalledTimes(3);
+});

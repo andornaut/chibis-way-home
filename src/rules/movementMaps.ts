@@ -8,7 +8,7 @@ import {
   type AirMask,
   buildAirMap,
   type FlightProfile,
-} from "@andornaut/game-kit/terrain/airMap";
+} from "@andornaut/game-kit/runtime/terrain/airMap";
 import {
   buildMovementMap,
   type MapArea,
@@ -17,7 +17,7 @@ import {
   type MapMask,
   type MovementMap,
   type MovementProfile,
-} from "@andornaut/game-kit/terrain/movementMap";
+} from "@andornaut/game-kit/runtime/terrain/movementMap";
 
 import { EDGE, spriteFrameOrigin, STEP_SECONDS } from "../core/index.ts";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";

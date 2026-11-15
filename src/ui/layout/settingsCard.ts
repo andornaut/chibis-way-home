@@ -1,5 +1,5 @@
-import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
-import type { LayoutValues } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
+import type { LayoutValues } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { FOCUS_RING, SETTINGS_CARD } from "../../data/layout.ts";
 import type { Rect } from "../../data/types/index.ts";

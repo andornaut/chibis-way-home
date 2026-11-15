@@ -1,6 +1,6 @@
 // How objects move, react and behave, and the characters and archetypes that carry them.
 
-import type { Consideration, Hysteresis } from "@andornaut/game-kit/ai/utility";
+import type { Consideration, Hysteresis } from "@andornaut/game-kit/runtime/ai/utility";
 
 import type { Direction, Point, Rect } from "./geometry.ts";
 import type { DialogueLine } from "./text.ts";

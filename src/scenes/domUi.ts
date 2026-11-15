@@ -1,11 +1,11 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import {
   createImageCache,
   type ImageCache,
   type Reveal,
   revealWhenDecoded,
-} from "@andornaut/game-kit/web/ui/dom/imageReady";
-import { cutFrame } from "@andornaut/game-kit/web/ui/dom/sheetFrames";
+} from "@andornaut/game-kit/runtime/web/ui/dom/imageReady";
+import { cutFrame } from "@andornaut/game-kit/runtime/web/ui/dom/sheetFrames";
 import { Core, type Game, Scale, type Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json" with { type: "json" };
@@ -17,6 +17,7 @@ import {
   loadUiFonts,
   modalColour,
   remappedFrame,
+  requiredUiFonts,
   type SkinFrame,
   UI_FRAMES,
   type UiLayer,
@@ -31,6 +32,7 @@ import { palette } from "./scenePalette.ts";
 const MANIFEST = manifestJson as ArtManifest;
 const layers = new WeakMap<Game, UiLayer>();
 const imageCaches = new WeakMap<Game, ImageCache>();
+const preparedSkins = new WeakMap<Game, Promise<void>>();
 
 function sceneImages(scene: Scene, document: Document): ImageCache {
   let cache = imageCaches.get(scene.game);
@@ -93,14 +95,18 @@ export function sceneDomUi(scene: Scene): UiLayer | undefined {
 }
 
 // Loads the UI fonts and cuts art's frames into the UI layer, once the scene's loader has the
-// art. Resolves when both are done; a failure is reported and leaves the UI in its fallback font
-// or unskinned.
-export async function prepareDomUi(scene: Scene): Promise<void> {
+// art. Both runtime font weights and the shared skin are required before game entry.
+// Successful skin work is retained when a failed font is retried.
+export async function prepareDomUi(
+  scene: Scene,
+  { required = true }: { readonly required?: boolean } = {},
+): Promise<void> {
   const layer = sceneDomUi(scene);
   if (layer === undefined) {
     return;
   }
   const document = layer.element.ownerDocument;
+  const fonts = required ? requiredUiFonts(document) : undefined;
   const skin = async () => {
     const frames = UI_FRAMES.map(({ art, name, tag, whole }): SkinFrame => {
       const frameName =
@@ -129,10 +135,27 @@ export async function prepareDomUi(scene: Scene): Promise<void> {
     await sceneImages(scene, document).decoded(urls);
     layer.setDimmedSkin(dimmed);
   };
-  await Promise.all([
-    loadUiFonts(document.fonts),
-    skin().catch((error: unknown) => console.warn("The UI skin failed to load", error)),
+  let prepared = preparedSkins.get(scene.game);
+  if (prepared === undefined) {
+    prepared = skin().catch((error: unknown) => {
+      preparedSkins.delete(scene.game);
+      throw error;
+    });
+    preparedSkins.set(scene.game, prepared);
+  }
+  const settled = await Promise.allSettled([
+    prepared,
+    ...(fonts === undefined
+      ? [Promise.resolve().then(() => loadUiFonts(document.fonts))]
+      : fonts.map((resource) => Promise.resolve().then(() => resource.retry()))),
   ]);
+  const failed = settled.find((result) => result.status === "rejected");
+  if (failed?.status === "rejected") {
+    if (required) {
+      throw failed.reason;
+    }
+    console.warn("The recovery UI failed to load", failed.reason);
+  }
 }
 
 // The controls that stay live while a conversation holds the modal layer: the pause button,

@@ -2,7 +2,7 @@ import {
   createModalInputGate,
   type ModalInputGate,
   type ModalInputScope,
-} from "@andornaut/game-kit/input/modalInput";
+} from "@andornaut/game-kit/runtime/input/modalInput";
 import type { Input, Scene } from "phaser";
 
 const gates = new WeakMap<object, ModalInputGate>();

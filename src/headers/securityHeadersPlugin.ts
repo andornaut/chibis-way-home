@@ -1,4 +1,4 @@
-import * as kit from "@andornaut/game-kit/web/headers/vite/securityHeadersPlugin";
+import * as kit from "@andornaut/game-kit/build/securityHeadersPlugin";
 import type { Plugin } from "vite";
 
 import {

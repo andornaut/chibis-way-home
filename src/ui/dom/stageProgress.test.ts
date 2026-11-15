@@ -1,6 +1,10 @@
 // @vitest-environment happy-dom
-import { progressBarLayout } from "@andornaut/game-kit/progress";
-import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
+import { progressBarLayout } from "@andornaut/game-kit/runtime/progress";
+import {
+  MAX_RENDER_SCALE,
+  renderFit,
+  renderScale,
+} from "@andornaut/game-kit/runtime/view/renderScale";
 import { expect, it } from "vitest";
 
 import { SCREEN } from "../../data/screen.ts";

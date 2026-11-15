@@ -27,14 +27,14 @@
 // He moves only by his map: a
 // jump leg holds its actual full-jump profile, then replans from physical support if a landing
 // interrupts its witness. A walk without an edge stays on its span.
-import { type Rect, rectsOverlap } from "@andornaut/game-kit/rect";
+import { type Rect, rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 import {
   type AirMap,
   type AirMask,
   type AirNodeId,
   airPath,
   locateAir,
-} from "@andornaut/game-kit/terrain/airMap";
+} from "@andornaut/game-kit/runtime/terrain/airMap";
 import {
   locate,
   type MapEdge,
@@ -43,7 +43,7 @@ import {
   type MovementMap,
   type NodeRef,
   pathTo,
-} from "@andornaut/game-kit/terrain/movementMap";
+} from "@andornaut/game-kit/runtime/terrain/movementMap";
 
 import { type AgentSample, centre } from "../ai/agentTrace.ts";
 import { traceRecorder } from "../ai/trace.ts";

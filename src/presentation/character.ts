@@ -1,4 +1,4 @@
-import type { Random } from "@andornaut/game-kit/random";
+import type { Random } from "@andornaut/game-kit/runtime/random";
 
 import type { CharacterState, ObjectLayout, Point, Quirk } from "../data/types/index.ts";
 

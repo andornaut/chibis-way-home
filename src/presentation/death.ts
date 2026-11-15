@@ -1,5 +1,5 @@
-import { fillNames } from "@andornaut/game-kit/lines";
-import { clamp, clamp01 } from "@andornaut/game-kit/numbers";
+import { fillNames } from "@andornaut/game-kit/runtime/lines";
+import { clamp, clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
 import type {
   DeathText,

@@ -1,7 +1,7 @@
 // The achievement catalogue's shapes. src/data/achievements.ts fills them; the words are in
 // TEXT.achievements, by achievement id.
 
-import type { AchievementDef, Threshold } from "@andornaut/game-kit/achievements";
+import type { AchievementDef, Threshold } from "@andornaut/game-kit/runtime/achievements";
 
 export type BossId = "archie" | "bini" | "fert" | "kiwi" | "pebble" | "trixi";
 

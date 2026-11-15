@@ -1,5 +1,5 @@
-import { type Random, randomStream } from "@andornaut/game-kit/random";
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { type Random, randomStream } from "@andornaut/game-kit/runtime/random";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import { EDGE, rectAt, STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";

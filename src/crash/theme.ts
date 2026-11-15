@@ -1,4 +1,4 @@
-import type { CrashColours } from "@andornaut/game-kit/web/crash/dom/crashScreen";
+import type { CrashColours } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 
 import palette from "../../public/art/palette.json" with { type: "json" };
 import bird from "../../public/art/sprites/bird.json" with { type: "json" };

@@ -1,4 +1,4 @@
-import type { MapEdge } from "@andornaut/game-kit/terrain/movementMap";
+import type { MapEdge } from "@andornaut/game-kit/runtime/terrain/movementMap";
 
 import { EDGE } from "../core/index.ts";
 import type { BirdTuning, Point } from "../data/types/index.ts";

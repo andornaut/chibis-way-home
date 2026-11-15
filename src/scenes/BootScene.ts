@@ -3,14 +3,19 @@ import {
   type AsepriteSheet,
   sheetTags,
   tagRepeat,
-} from "@andornaut/game-kit/art/aseprite";
-import { watchLoader } from "@andornaut/game-kit/load/phaser/watchLoader";
-import type { ProgressHandle } from "@andornaut/game-kit/progressState";
-import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
+} from "@andornaut/game-kit/runtime/art/aseprite";
+import { createLoadingAttempts } from "@andornaut/game-kit/runtime/load/loadingAttempts";
+import {
+  type LoaderWatch,
+  type LoadFailure,
+  watchLoader,
+} from "@andornaut/game-kit/runtime/load/phaser/watchLoader";
+import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
+import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
 import { Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json" with { type: "json" };
-import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest } from "../assets/index.ts";
+import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest, atlasPageKey } from "../assets/index.ts";
 import { TILE } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
 import {
@@ -19,17 +24,19 @@ import {
   loadingProgress,
   startupLoading,
 } from "../loading/progress.ts";
+import { observeRequiredAttempt, requiredLoading } from "../loading/required.ts";
 import { requiredUpdate, requireNewer } from "../pwa/index.ts";
-import { createMessageCard } from "../ui/index.ts";
+import { createMessageCard, UI_FRAMES } from "../ui/index.ts";
 import { ACHIEVEMENT_NOTICE } from "./achievementNotice.ts";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt.ts";
 import { mountSceneView, prepareDomUi } from "./domUi.ts";
-import { loadProgress } from "./save.ts";
+import { loadProgress, probeSaveAge } from "./save.ts";
 import { filterLoadedArt } from "./textureFilters.ts";
 
 // The manifest ships inside the hashed bundle rather than loading from /art/, so a copy an earlier
 // version cached can never be paired with this code.
 const MANIFEST = manifestJson as ArtManifest;
+const REQUIRED_UI_KEYS = new Set(UI_FRAMES.map(({ art }) => art));
 
 // First scene to run. Loads everything art's manifest lists, makes an animation of every sprite
 // tag, looping unless the manifest lists it as played once, then, once the save is read, opens the
@@ -38,19 +45,44 @@ const MANIFEST = manifestJson as ArtManifest;
 export class BootScene extends Scene {
   // The startup checks' pending phase, after the measured file load.
   private startupChecks?: ProgressHandle;
+  private loaderWatch?: LoaderWatch<string>;
+  private readonly preparedUiArt = new Set<string>();
+  private readonly startupSignal: AbortSignal | undefined;
 
-  constructor() {
+  constructor(startupSignal?: AbortSignal) {
     super("boot");
+    this.startupSignal = startupSignal;
   }
 
-  // A production build loads game art from shared atlas pages. The HTML UI loads its TTF
+  // A production build loads game art from shared atlas pages. The HTML UI loads its font
   // faces through DOM readiness. create filters every world texture (textureFilters.ts).
   // The kit's loader watch measures the file load as one the player waits for, which the bar
   // shows by its settled files, and logs and retries failed files; it ends with the scene.
   preload(): void {
-    watchLoader({ console, progress: loadingProgress, timer: window }, this).waitFor("boot");
+    if (this.startupSignal?.aborted) {
+      return;
+    }
+    const watch = watchLoader(
+      {
+        console,
+        progress: loadingProgress,
+        retryMode: (failure) => (this.requiredFile(failure) ? "manual" : "automatic"),
+        timer: window,
+      },
+      this,
+    );
+    this.loaderWatch = watch;
+    watch.waitFor("boot");
+    const cancel = () => {
+      this.loaderWatch?.dispose();
+      this.startupChecks?.finish();
+    };
+    this.startupSignal?.addEventListener("abort", cancel, { once: true });
+    this.events.once("shutdown", () => this.startupSignal?.removeEventListener("abort", cancel));
     this.load.once("complete", () => {
-      this.startupChecks = beginStartupChecks();
+      if (!this.startupSignal?.aborted) {
+        this.startupChecks = beginStartupChecks();
+      }
     });
     if (ATLAS !== null) {
       queueAtlasPages(this, ATLAS);
@@ -82,8 +114,24 @@ export class BootScene extends Scene {
   }
 
   create(): void {
+    if (this.startupSignal?.aborted) {
+      this.startupChecks?.finish();
+      return;
+    }
+    if (new URLSearchParams(window.location.search).has("stagePreview")) {
+      this.prepareArt();
+      this.scene.start("zone");
+      return;
+    }
+    this.prepareStartup();
+  }
+
+  private prepareArt(): void {
     if (ATLAS !== null) {
-      addAtlasArt(this, ATLAS);
+      addAtlasArt(this, {
+        ...ATLAS,
+        textures: ATLAS.textures.filter(({ key }) => !this.preparedUiArt.has(key)),
+      });
     }
     filterLoadedArt(this, MANIFEST, ATLAS);
     for (const { key, once } of MANIFEST.sprites) {
@@ -96,35 +144,136 @@ export class BootScene extends Scene {
         });
       }
     }
-    if (new URLSearchParams(window.location.search).has("stagePreview")) {
-      this.scene.start("zone");
+  }
+
+  private prepareUiArt(): void {
+    if (ATLAS === null) {
       return;
     }
-    // Read progress and open the start screen at once, with no wait for offline play, once the
-    // HTML UI has its fonts and art. Diagnostic ?zone entry keeps its direct zone route.
-    const domUi = prepareDomUi(this);
-    void loadProgress().then(async (age) => {
-      if (age === "newer") {
-        this.updateForNewerSave(domUi);
+    const keys = new Set(UI_FRAMES.map(({ art }) => art));
+    const textures = ATLAS.textures.filter(({ key }) => keys.has(key));
+    for (const key of keys) {
+      if (!textures.some((texture) => texture.key === key)) {
+        throw new Error(`Missing required UI atlas texture ${key}`);
+      }
+    }
+    for (const page of new Set(textures.map(({ page }) => page))) {
+      if (!this.textures.exists(atlasPageKey(page))) {
+        throw new Error(`Required UI atlas page ${page} failed to load`);
+      }
+    }
+    for (const texture of textures) {
+      if (this.preparedUiArt.has(texture.key)) {
+        continue;
+      }
+      if (this.textures.exists(texture.key)) {
+        throw new Error(`Required UI alias ${texture.key} already exists`);
+      }
+      addAtlasArt(this, { ...ATLAS, textures: [texture] });
+      this.preparedUiArt.add(texture.key);
+    }
+  }
+
+  private requiredFile({ key }: Pick<LoadFailure, "key">): boolean {
+    return ATLAS === null
+      ? REQUIRED_UI_KEYS.has(key)
+      : ATLAS.textures.some(
+          (texture) => REQUIRED_UI_KEYS.has(texture.key) && atlasPageKey(texture.page) === key,
+        );
+  }
+
+  private prepareStartup(): void {
+    let live = true;
+    let stopReady = () => {};
+    let stopAttempt = () => {};
+    const attempts = createLoadingAttempts({
+      load: async (attempt) => {
+        const watch = this.loaderWatch;
+        const required = (failure: LoadFailure) => this.requiredFile(failure);
+        if (attempt.id > 1 && watch?.failures().some(required)) {
+          watch.waitFor("boot");
+          await watch.retryFailures(required);
+          if (!attempt.isCurrent()) {
+            return;
+          }
+          this.startupChecks = beginStartupChecks();
+        }
+        if (watch?.failures().some(required)) {
+          throw new Error("Required UI files failed to load");
+        }
+        this.prepareUiArt();
+        await prepareDomUi(this);
+      },
+      onReady: () => {
+        stopReady = requiredLoading.wait(() => {
+          if (live) {
+            void this.enterGame(() => live);
+          }
+        });
+      },
+      onState: (state) => {
+        if (state.kind === "loading") {
+          this.startupChecks = beginStartupChecks();
+        } else if (state.kind === "failed") {
+          this.startupChecks?.finish();
+        }
+        requiredLoading.invalidate();
+      },
+    });
+
+    const cancel = () => {
+      live = false;
+      stopReady();
+      attempts.dispose();
+      stopAttempt();
+      this.startupChecks?.finish();
+    };
+    this.startupSignal?.addEventListener("abort", cancel, { once: true });
+    this.events.once("shutdown", () => {
+      cancel();
+      this.startupSignal?.removeEventListener("abort", cancel);
+    });
+    void probeSaveAge().then((age) => {
+      if (!live) {
         return;
       }
-      await domUi;
-      const rendered = () => {
-        if (this.game.canvas.style.visibility === "hidden") {
-          this.game.events.once("postrender", rendered);
-        } else {
-          (this.startupChecks ?? startupLoading).finish();
-        }
-      };
-      this.game.events.once("postrender", rendered);
-      this.scene.launch("pause");
-      this.scene.launch(ACHIEVEMENT_NOTICE);
-      if (new URLSearchParams(window.location.search).has("zone")) {
-        this.scene.start("zone");
+      if (age === "newer") {
+        const recoveryUi = Promise.resolve()
+          .then(() => {
+            this.prepareUiArt();
+            return prepareDomUi(this, { required: false });
+          })
+          .catch((error: unknown) => console.warn("The recovery UI failed to load", error));
+        this.updateForNewerSave(recoveryUi);
       } else {
-        this.scene.start("start");
+        stopAttempt = observeRequiredAttempt(() => attempts.retry(), attempts);
+        void attempts.start();
       }
     });
+  }
+
+  // Required UI succeeds before this mutation-capable save load or any playable scene entry.
+  private async enterGame(live: () => boolean): Promise<void> {
+    this.prepareArt();
+    const age = await loadProgress();
+    if (!live()) {
+      return;
+    }
+    if (age === "newer") {
+      this.updateForNewerSave(Promise.resolve());
+      return;
+    }
+    const rendered = () => {
+      if (this.game.canvas.style.visibility === "hidden") {
+        this.game.events.once("postrender", rendered);
+      } else {
+        (this.startupChecks ?? startupLoading).finish();
+      }
+    };
+    this.game.events.once("postrender", rendered);
+    this.scene.launch("pause");
+    this.scene.launch(ACHIEVEMENT_NOTICE);
+    this.scene.start(new URLSearchParams(window.location.search).has("zone") ? "zone" : "start");
   }
 
   // A save a newer version wrote: the game updates by itself (requireNewer), never opens Start
@@ -138,7 +287,8 @@ export class BootScene extends Scene {
     let state: RequiredUpdateState | undefined;
     let updating: ProgressHandle | undefined;
     let message: (() => void) | undefined;
-    requiredUpdate.subscribe((next) => {
+    let live = true;
+    const stop = requiredUpdate.subscribe((next) => {
       state = next;
       if (next === "updating") {
         message?.();
@@ -149,13 +299,24 @@ export class BootScene extends Scene {
       updating?.finish();
       updating = undefined;
       void domUi.then(() => {
-        if (state === "unavailable" && message === undefined) {
+        if (live && state === "unavailable" && message === undefined) {
           message = mountSceneView(
             this,
             createMessageCard(document, "connect-card", TEXT.update.connect),
           );
         }
       });
+    });
+    const cancel = () => {
+      live = false;
+      stop();
+      updating?.finish();
+      message?.();
+    };
+    this.startupSignal?.addEventListener("abort", cancel, { once: true });
+    this.events.once("shutdown", () => {
+      cancel();
+      this.startupSignal?.removeEventListener("abort", cancel);
     });
     requireNewer();
   }

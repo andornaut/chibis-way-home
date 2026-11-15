@@ -1,5 +1,5 @@
-import { progressBarLayout } from "@andornaut/game-kit/progress";
-import { progressBarPixelProperties } from "@andornaut/game-kit/web/progress/dom/progressBar";
+import { progressBarLayout } from "@andornaut/game-kit/runtime/progress";
+import { progressBarPixelProperties } from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
 import { describe, expect, it, vi } from "vitest";
 
 import { LOADING_CSS, loadingHtml } from "./html.ts";

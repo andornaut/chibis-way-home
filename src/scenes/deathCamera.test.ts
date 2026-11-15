@@ -2,7 +2,7 @@ import { EventEmitter } from "node:events";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 
-import { easeProgress } from "@andornaut/game-kit/motion";
+import { easeProgress } from "@andornaut/game-kit/runtime/motion";
 import type { Cameras, Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 

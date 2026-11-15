@@ -1,4 +1,4 @@
-import { SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
+import { SMALL_BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 
 import { HUD_EDGE, SKILL_HUD } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";

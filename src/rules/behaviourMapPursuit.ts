@@ -10,8 +10,8 @@ import {
   type NodeRef,
   pathOrNearest,
   pathTo,
-} from "@andornaut/game-kit/terrain/movementMap";
-import type { TraversalCommand } from "@andornaut/game-kit/terrain/traversal";
+} from "@andornaut/game-kit/runtime/terrain/movementMap";
+import type { TraversalCommand } from "@andornaut/game-kit/runtime/terrain/traversal";
 
 import { collisionCandidates, EDGE } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";

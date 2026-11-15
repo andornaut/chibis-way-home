@@ -1,4 +1,4 @@
-import { type Random, shuffled } from "@andornaut/game-kit/random";
+import { type Random, shuffled } from "@andornaut/game-kit/runtime/random";
 
 import { EDGE } from "../core/index.ts";
 import type { ObjectLayout, Point } from "../data/types/index.ts";

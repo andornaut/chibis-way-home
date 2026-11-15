@@ -1,4 +1,4 @@
-import type { CrumblingPhase } from "@andornaut/game-kit/terrain/crumbling";
+import type { CrumblingPhase } from "@andornaut/game-kit/runtime/terrain/crumbling";
 
 import type { CrumblingSupportId } from "../data/types/index.ts";
 import { crumblingAppearance, type CrumblingSkin } from "../presentation/index.ts";

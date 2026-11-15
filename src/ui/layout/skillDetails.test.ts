@@ -1,7 +1,7 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
-import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
-import { SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
-import { renderFit } from "@andornaut/game-kit/view/renderScale";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
+import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
+import { SMALL_BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
+import { renderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import { CARD_CONTENT, CONTROL_FRAME_INSET, HUD_EDGE, TEXT_BUTTON } from "../../data/layout.ts";

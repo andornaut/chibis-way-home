@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 
-import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
+import type { AsepriteSheet } from "@andornaut/game-kit/runtime/art/aseprite";
 
 import {
   artHitboxes,

@@ -1,5 +1,5 @@
-import { fillNames } from "@andornaut/game-kit/lines";
-import { guardClicks } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { fillNames } from "@andornaut/game-kit/runtime/lines";
+import { guardClicks } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text.ts";

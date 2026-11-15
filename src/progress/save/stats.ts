@@ -1,6 +1,10 @@
-import { saveStore, type StoreLoadResult } from "@andornaut/game-kit/save/saveStore";
-import type { SaveStorage } from "@andornaut/game-kit/save/storage";
-import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
+import { saveStore, type StoreLoadResult } from "@andornaut/game-kit/runtime/save/saveStore";
+import type { SaveStorage } from "@andornaut/game-kit/runtime/save/storage";
+import type {
+  Checked,
+  SaveFormat,
+  StoredObject,
+} from "@andornaut/game-kit/runtime/save/versionedSave";
 
 import type { MapDestination } from "../../data/types/index.ts";
 import type { VisitFirstTries } from "../achievements.ts";

@@ -1,4 +1,4 @@
-import { guardClicks } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { guardClicks } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";

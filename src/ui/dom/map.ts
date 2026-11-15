@@ -1,5 +1,5 @@
-import { controlPresentation } from "@andornaut/game-kit/ui/controlPresentation";
-import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { MAP_LAYOUT } from "../../data/layout.ts";
 import type { Point, Rect } from "../../data/types/index.ts";

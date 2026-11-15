@@ -1,4 +1,4 @@
-import { type Random, randomInt, randomStream, shuffled } from "@andornaut/game-kit/random";
+import { type Random, randomInt, randomStream, shuffled } from "@andornaut/game-kit/runtime/random";
 
 import type {
   BackgroundSection,

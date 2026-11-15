@@ -1,5 +1,5 @@
-import { clamp } from "@andornaut/game-kit/numbers";
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { clamp } from "@andornaut/game-kit/runtime/numbers";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, Point, Rect, Size } from "../data/types/index.ts";

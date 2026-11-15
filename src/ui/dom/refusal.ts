@@ -1,4 +1,4 @@
-import { REFUSAL_ATTRIBUTES, refuse } from "@andornaut/game-kit/web/ui/dom/refusalCue";
+import { REFUSAL_ATTRIBUTES, refuse } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
 import { CONTROL_REFUSAL } from "../../data/feedback.ts";
 

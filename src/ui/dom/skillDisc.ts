@@ -1,7 +1,7 @@
 import {
   type LayoutValues,
   writeLayoutProperties,
-} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import type { Rect } from "../../data/types/index.ts";
 import { skillChromeLayers } from "../chrome/skillChrome.ts";

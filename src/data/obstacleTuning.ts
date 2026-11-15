@@ -1,4 +1,4 @@
-import type { CrumblingProfile } from "@andornaut/game-kit/terrain/crumbling";
+import type { CrumblingProfile } from "@andornaut/game-kit/runtime/terrain/crumbling";
 
 import type { BehaviourAction, CircleOrbit, PendulumOrbit } from "./types/index.ts";
 

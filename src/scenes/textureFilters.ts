@@ -1,4 +1,4 @@
-import { setTextureFilters } from "@andornaut/game-kit/view/phaser/textureFilter";
+import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textureFilter";
 import type { Scene } from "phaser";
 
 import { type ArtManifest, type AtlasManifest, atlasPageKey } from "../assets/index.ts";

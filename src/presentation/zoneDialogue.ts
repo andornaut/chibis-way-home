@@ -1,4 +1,4 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import type { ObjectLayout, Point, Rect } from "../data/types/index.ts";
 import type { ZoneBark } from "../rules/zone.ts";

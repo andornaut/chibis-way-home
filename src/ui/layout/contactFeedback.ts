@@ -1,4 +1,4 @@
-import { insetRect, ringRects } from "@andornaut/game-kit/rect";
+import { insetRect, ringRects } from "@andornaut/game-kit/runtime/rect";
 
 import type { ContactCueTuning, Point, Rect, WorldShakeTuning } from "../../data/types/index.ts";
 

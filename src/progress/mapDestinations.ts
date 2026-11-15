@@ -1,4 +1,4 @@
-import { clampIndex } from "@andornaut/game-kit/arrays";
+import { clampIndex } from "@andornaut/game-kit/runtime/arrays";
 
 import type { MapDestination, ZoneMap } from "../data/types/index.ts";
 import { nodeOf, type OpenMap } from "./map.ts";

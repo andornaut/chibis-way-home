@@ -1,4 +1,4 @@
-import { clamp } from "@andornaut/game-kit/numbers";
+import { clamp } from "@andornaut/game-kit/runtime/numbers";
 
 import type { Point, Size } from "../data/types/index.ts";
 import { askedSeed } from "./pageParams.ts";

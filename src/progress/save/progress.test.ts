@@ -1,4 +1,4 @@
-import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
+import { encodeSave, loadSave } from "@andornaut/game-kit/runtime/save/versionedSave";
 import { describe, expect, it } from "vitest";
 
 import { ZONE_MAP } from "../../data/map.ts";

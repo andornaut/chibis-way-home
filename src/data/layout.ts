@@ -2,8 +2,8 @@
 // derives centres, press areas and measured card sizes from these values. Values marked "art"
 // are fixed by the art drawn at that size; change them only with the art.
 
-import { MODAL_CONTENT } from "@andornaut/game-kit/modalLayout";
-import { BUTTON_GAP, SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
+import { MODAL_CONTENT } from "@andornaut/game-kit/runtime/modalLayout";
+import { BUTTON_GAP, SMALL_BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 
 import type { MapNode, Point, Rect, Size } from "./types/index.ts";
 

@@ -1,5 +1,5 @@
-import { containsPoint } from "@andornaut/game-kit/rect";
-import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
+import { containsPoint } from "@andornaut/game-kit/runtime/rect";
+import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 import { describe, expect, it } from "vitest";
 
 import { TEXT_BUTTON } from "../../data/layout.ts";

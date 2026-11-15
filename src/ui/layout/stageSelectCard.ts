@@ -1,4 +1,4 @@
-import type { LayoutValues } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import type { LayoutValues } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SELECT } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";

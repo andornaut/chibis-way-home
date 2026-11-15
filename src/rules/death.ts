@@ -1,4 +1,4 @@
-import { clamp01 } from "@andornaut/game-kit/numbers";
+import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
 import { EDGE, rectAt } from "../core/index.ts";
 import type { BirdTuning, Point, Rect, ZoneLayout } from "../data/types/index.ts";

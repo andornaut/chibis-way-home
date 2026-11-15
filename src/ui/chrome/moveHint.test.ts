@@ -1,4 +1,4 @@
-import { renderFit } from "@andornaut/game-kit/view/renderScale";
+import { renderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import hintSheet from "../../../public/art/sprites/ui-move-hint.json" with { type: "json" };

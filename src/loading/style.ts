@@ -1,5 +1,5 @@
-import type { ProgressBarStyle } from "@andornaut/game-kit/progress";
-import type { DomProgressTiming } from "@andornaut/game-kit/web/progress/dom/progressBar";
+import type { ProgressBarStyle } from "@andornaut/game-kit/runtime/progress";
+import type { DomProgressTiming } from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
 
 import palette from "../../public/art/palette.json" with { type: "json" };
 import themes from "../../public/art/zone-themes.json" with { type: "json" };

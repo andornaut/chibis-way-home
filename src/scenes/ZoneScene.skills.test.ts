@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 
-import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
-import { renderFit } from "@andornaut/game-kit/view/renderScale";
+import { frameSteps, startStepClock } from "@andornaut/game-kit/runtime/clock/fixedStep";
+import { renderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { STEP_MS } from "../core/index.ts";

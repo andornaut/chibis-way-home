@@ -1,6 +1,9 @@
 // Zones, areas, chunks, themes, recipes and rooms: plans in tiles and layouts in pixels.
 
-import type { CrumblingDefinition, CrumblingProfile } from "@andornaut/game-kit/terrain/crumbling";
+import type {
+  CrumblingDefinition,
+  CrumblingProfile,
+} from "@andornaut/game-kit/runtime/terrain/crumbling";
 
 import type { SEAM_ROWS } from "../seams.ts";
 import type { SpriteContact } from "./art.ts";

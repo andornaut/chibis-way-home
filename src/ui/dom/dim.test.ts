@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { readFileSync } from "node:fs";
 
-import { MODAL_DIM } from "@andornaut/game-kit/view/modalDim";
+import { MODAL_DIM } from "@andornaut/game-kit/runtime/view/modalDim";
 import { afterEach, describe, expect, it } from "vitest";
 
 import palette from "../../../public/art/palette.json" with { type: "json" };

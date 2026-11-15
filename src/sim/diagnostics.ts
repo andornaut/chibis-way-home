@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import { rectAt, STEP_SECONDS } from "../core/index.ts";
 import { SCREEN } from "../data/screen.ts";

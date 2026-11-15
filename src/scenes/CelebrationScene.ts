@@ -1,5 +1,5 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";

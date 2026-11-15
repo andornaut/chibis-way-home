@@ -1,6 +1,6 @@
-import type { EarnedRecord } from "@andornaut/game-kit/achievements";
-import type { SaveStorage } from "@andornaut/game-kit/save/storage";
-import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
+import type { EarnedRecord } from "@andornaut/game-kit/runtime/achievements";
+import type { SaveStorage } from "@andornaut/game-kit/runtime/save/storage";
+import { encodeSave, loadSave } from "@andornaut/game-kit/runtime/save/versionedSave";
 
 import { CHUNKS } from "../../data/chunks.ts";
 import { ZONE_MAP } from "../../data/map.ts";

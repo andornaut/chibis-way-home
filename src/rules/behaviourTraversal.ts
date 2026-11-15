@@ -1,4 +1,4 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 import {
   findTraversal,
   stepTraversal,
@@ -11,7 +11,7 @@ import {
   type TraversalSafety,
   type TraversalState,
   type TraversalStepResult,
-} from "@andornaut/game-kit/terrain/traversal";
+} from "@andornaut/game-kit/runtime/terrain/traversal";
 
 import { collisionCandidates, EDGE, STEP_SECONDS } from "../core/index.ts";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";

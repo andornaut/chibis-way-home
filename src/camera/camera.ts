@@ -1,4 +1,4 @@
-import { clamp, lerp } from "@andornaut/game-kit/numbers";
+import { clamp, lerp } from "@andornaut/game-kit/runtime/numbers";
 
 import type { CameraTuning, Point, Rect, Size } from "../data/types/index.ts";
 

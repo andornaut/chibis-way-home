@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import type { CrashScreenOptions } from "@andornaut/game-kit/web/crash/dom/crashScreen";
+import type { CrashScreenOptions } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json" with { type: "json" };
@@ -15,8 +15,10 @@ const { install, screen } = vi.hoisted(() => {
     screen,
   };
 });
-vi.mock("@andornaut/game-kit/web/crash/dom/crashScreen", () => ({ installCrashScreen: install }));
-vi.mock("@andornaut/game-kit/web/build/buildLabel", () => ({ buildLabel: () => "test build" }));
+vi.mock("@andornaut/game-kit/runtime/web/crash/dom/crashScreen", () => ({
+  installCrashScreen: install,
+}));
+vi.mock("@andornaut/game-kit/runtime/web/buildLabel", () => ({ buildLabel: () => "test build" }));
 
 afterEach(() => {
   vi.unstubAllGlobals();

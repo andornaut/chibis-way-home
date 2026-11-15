@@ -4,18 +4,22 @@ import {
   type AsepriteSheet,
   sheetTags,
   tagMs,
-} from "@andornaut/game-kit/art/aseprite";
-import { frameSteps, startStepClock, type StepClock } from "@andornaut/game-kit/clock/fixedStep";
-import { clampInto } from "@andornaut/game-kit/rect";
-import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
-import { cullToCameraView } from "@andornaut/game-kit/view/phaser/tilemapCull";
+} from "@andornaut/game-kit/runtime/art/aseprite";
+import {
+  frameSteps,
+  startStepClock,
+  type StepClock,
+} from "@andornaut/game-kit/runtime/clock/fixedStep";
+import { clampInto } from "@andornaut/game-kit/runtime/rect";
+import { pageToGame } from "@andornaut/game-kit/runtime/view/pagePoint";
+import { cullToCameraView } from "@andornaut/game-kit/runtime/view/phaser/tilemapCull";
 import {
   clientPoint,
   listenPagePresses,
   onPageControl,
   type PagePointerEvent,
   type PagePress,
-} from "@andornaut/game-kit/web/input/dom/pagePresses";
+} from "@andornaut/game-kit/runtime/web/input/dom/pagePresses";
 import { Core, type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "phaser";
 
 import {

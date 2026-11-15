@@ -1,12 +1,12 @@
 import { createHash } from "node:crypto";
 
-import { progressBarLayout } from "@andornaut/game-kit/progress";
+import { progressBarLayout } from "@andornaut/game-kit/runtime/progress";
 import {
   PROGRESS_BAR_BAND_CLASS,
   PROGRESS_BAR_CLASS,
   PROGRESS_BAR_PROPERTIES,
   progressBarPixelProperties,
-} from "@andornaut/game-kit/web/progress/dom/progressBar";
+} from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
 import type { Plugin } from "vite";
 
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style.ts";

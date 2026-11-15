@@ -2,11 +2,15 @@ import {
   HIT_RULE,
   hitAround as sharedHitAround,
   hitMargin as sharedHitMargin,
-} from "@andornaut/game-kit/ui/hitAreas";
+} from "@andornaut/game-kit/runtime/ui/hitAreas";
 
 import type { Rect } from "../../data/types/index.ts";
 
-export { type PressArea, pressedArea, type PressShape } from "@andornaut/game-kit/ui/hitAreas";
+export {
+  type PressArea,
+  pressedArea,
+  type PressShape,
+} from "@andornaut/game-kit/runtime/ui/hitAreas";
 
 // Bind the shared press-area geometry to the existing rule while keeping local callers unchanged.
 export function hitMargin(art: Rect): number {

@@ -1,4 +1,4 @@
-import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
+import { findTraversal } from "@andornaut/game-kit/runtime/terrain/traversal";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams.ts";
@@ -85,8 +85,8 @@ it.each([
 const search = vi.hoisted(() => ({
   status: undefined as "budget-exhausted" | "geometry-unavailable" | "unreachable" | undefined,
 }));
-vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
-  const actual = await original<typeof import("@andornaut/game-kit/terrain/traversal")>();
+vi.mock("@andornaut/game-kit/runtime/terrain/traversal", async (original) => {
+  const actual = await original<typeof import("@andornaut/game-kit/runtime/terrain/traversal")>();
   return {
     ...actual,
     findTraversal: vi.fn((...args: Parameters<typeof actual.findTraversal>) =>

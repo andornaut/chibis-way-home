@@ -1,4 +1,4 @@
-import type { CrumblingWorld } from "@andornaut/game-kit/terrain/crumbling";
+import type { CrumblingWorld } from "@andornaut/game-kit/runtime/terrain/crumbling";
 
 import { EDGE, rectAt } from "../core/index.ts";
 import type {

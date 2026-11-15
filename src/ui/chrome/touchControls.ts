@@ -1,4 +1,4 @@
-import { type AnimationFrame, tagMs } from "@andornaut/game-kit/art/aseprite";
+import { type AnimationFrame, tagMs } from "@andornaut/game-kit/runtime/art/aseprite";
 
 import type { Point, Size } from "../../data/types/index.ts";
 import type { HeldTouch } from "../input/intent.ts";

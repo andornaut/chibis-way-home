@@ -1,7 +1,11 @@
 import { EventEmitter } from "node:events";
 
-import { pageToGame } from "@andornaut/game-kit/view/pagePoint";
-import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
+import { pageToGame } from "@andornaut/game-kit/runtime/view/pagePoint";
+import {
+  MAX_RENDER_SCALE,
+  renderFit,
+  renderScale,
+} from "@andornaut/game-kit/runtime/view/renderScale";
 import type { Scene } from "phaser";
 import { describe, expect, it, vi } from "vitest";
 

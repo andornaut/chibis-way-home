@@ -3,8 +3,8 @@ import {
   createProgressState,
   type ProgressHandle,
   type ProgressSnapshot,
-} from "@andornaut/game-kit/progressState";
-import { createDomProgressBar } from "@andornaut/game-kit/web/progress/dom/progressBar";
+} from "@andornaut/game-kit/runtime/progressState";
+import { createDomProgressBar } from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
 
 import { SCREEN } from "../data/screen.ts";
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style.ts";

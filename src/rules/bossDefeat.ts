@@ -1,4 +1,4 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import { BOSS_REMOVAL_SECONDS } from "../data/behaviours.ts";
 import type { AreaLayout, ObjectLayout, Point, Rect } from "../data/types/index.ts";

@@ -2,9 +2,9 @@ import {
   scoreActions,
   type ScoreCandidate,
   type ScoreDecision,
-} from "@andornaut/game-kit/ai/utility";
-import { clamp01 } from "@andornaut/game-kit/numbers";
-import type { Random } from "@andornaut/game-kit/random";
+} from "@andornaut/game-kit/runtime/ai/utility";
+import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
+import type { Random } from "@andornaut/game-kit/runtime/random";
 
 import type {
   BehaviourTransition,

@@ -1,9 +1,9 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 import type {
   CrumblingDefinition,
   CrumblingProfile,
   CrumblingWorld,
-} from "@andornaut/game-kit/terrain/crumbling";
+} from "@andornaut/game-kit/runtime/terrain/crumbling";
 
 import { rectAt } from "../core/index.ts";
 import type { AreaLayout, CrumblingSupportId, Rect } from "../data/types/index.ts";

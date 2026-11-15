@@ -1,7 +1,7 @@
 import {
   type LayoutValues,
   writeLayoutProperties,
-} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { SKILL_DETAILS } from "../../data/layout.ts";
 import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";

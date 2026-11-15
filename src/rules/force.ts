@@ -1,4 +1,4 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import type { Point, Rect } from "../data/types/index.ts";
 

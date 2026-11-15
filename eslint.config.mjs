@@ -156,7 +156,7 @@ function folders(path) {
 // An import names a folder only by its path, so the pattern matches only a relative path that
 // climbs straight into a forbidden folder (`../scenes/x`). A module beside the importer
 // (`./camera`), a subfolder of an allowed folder (`../data/scenes/x`) and a package subpath
-// (`@andornaut/game-kit/save/x`) that share a forbidden folder's name stay allowed, and a
+// (`@andornaut/game-kit/runtime/save/x`) that share a forbidden folder's name stay allowed, and a
 // context's own subfolders are never forbidden to it.
 function contextBoundary(context) {
   const allowed = CONTEXTS[context];

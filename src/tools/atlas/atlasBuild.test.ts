@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { decodePng } from "@andornaut/art-kit/build/png";
 import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
-import { itemAt } from "@andornaut/game-kit/arrays";
+import { itemAt } from "@andornaut/game-kit/runtime/arrays";
 import { describe, expect, it } from "vitest";
 
 import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest, BASE_FRAME } from "../../assets/index.ts";

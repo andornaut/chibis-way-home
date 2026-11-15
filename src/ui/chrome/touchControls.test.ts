@@ -1,4 +1,4 @@
-import type { AnimationFrame } from "@andornaut/game-kit/art/aseprite";
+import type { AnimationFrame } from "@andornaut/game-kit/runtime/art/aseprite";
 import { describe, expect, it } from "vitest";
 
 import type { HeldTouch } from "../input/intent.ts";

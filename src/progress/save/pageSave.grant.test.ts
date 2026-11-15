@@ -1,4 +1,4 @@
-import { encodeSave } from "@andornaut/game-kit/save/versionedSave";
+import { encodeSave } from "@andornaut/game-kit/runtime/save/versionedSave";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { CHUNKS } from "../../data/chunks.ts";

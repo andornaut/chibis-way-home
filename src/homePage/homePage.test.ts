@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
 
-import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
-import { wireInstallButton } from "@andornaut/game-kit/web/pwa/dom/installButton";
-import { watchInstall } from "@andornaut/game-kit/web/pwa/dom/installFlow";
+import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
+import { wireInstallButton } from "@andornaut/game-kit/runtime/web/pwa/dom/installButton";
+import { watchInstall } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 import { describe, expect, it, vi } from "vitest";
 
 import manifest from "../../public/art/manifest.json" with { type: "json" };

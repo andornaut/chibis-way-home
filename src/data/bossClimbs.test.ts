@@ -1,4 +1,4 @@
-import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
+import { findTraversal } from "@andornaut/game-kit/runtime/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams.ts";
@@ -28,8 +28,8 @@ import { TILE } from "./screen.ts";
 import { apartmentChunkId } from "./zone6.ts";
 import { RECIPES } from "./zones.ts";
 
-vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
-  const actual = await original<typeof import("@andornaut/game-kit/terrain/traversal")>();
+vi.mock("@andornaut/game-kit/runtime/terrain/traversal", async (original) => {
+  const actual = await original<typeof import("@andornaut/game-kit/runtime/terrain/traversal")>();
   return { ...actual, findTraversal: vi.fn(actual.findTraversal) };
 });
 

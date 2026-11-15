@@ -1,6 +1,8 @@
-import { CelebrationQueue } from "@andornaut/game-kit/achievements";
-import { saveStore } from "@andornaut/game-kit/save/saveStore";
-import { localSaveStorage } from "@andornaut/game-kit/web/save/dom/localSaveStorage";
+import { CelebrationQueue } from "@andornaut/game-kit/runtime/achievements";
+import { saveStore } from "@andornaut/game-kit/runtime/save/saveStore";
+import type { SaveStorage } from "@andornaut/game-kit/runtime/save/storage";
+import { loadSave } from "@andornaut/game-kit/runtime/save/versionedSave";
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 
 import { BOSS_CHARACTERS } from "../../data/achievements.ts";
 import { CHUNKS } from "../../data/chunks.ts";
@@ -18,7 +20,7 @@ import {
 } from "../achievements.ts";
 import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks.ts";
 import { eligibleSkills, resolveActiveSkill, type SkillOverrides } from "../skills.ts";
-import { achievementsStore } from "./achievements.ts";
+import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT, achievementsStore } from "./achievements.ts";
 import {
   BEGINNING,
   mapProgress,
@@ -32,6 +34,8 @@ import { skillGrantEffects, withGrantedSkill } from "./skillGrant.ts";
 import {
   type RunStatsSummary,
   stageStatsStore,
+  STATS_KEYS,
+  statsFormat,
   type WholeRunStatsSummary,
   type ZoneStatsSummary,
 } from "./stats.ts";
@@ -89,6 +93,38 @@ function installStatsLifecycle(): void {
 // Whether the saves on the device are this version's or older ("current"), or any was written by
 // a newer version ("newer").
 export type SaveAge = "current" | "newer";
+
+// This probe does not call SaveStore.load: even a corrupt-save backup is a write.
+export async function probeSaveAge(
+  source: Pick<SaveStorage, "read"> = storage,
+): Promise<SaveAge | "unavailable"> {
+  const probes = [
+    { key: PROGRESS_KEYS.save, status: (raw: string | null) => loadSave(format, raw).status },
+    {
+      key: ACHIEVEMENT_KEYS.save,
+      status: (raw: string | null) => loadSave(ACHIEVEMENTS_FORMAT, raw).status,
+    },
+    {
+      key: STATS_KEYS.save,
+      status: (raw: string | null) =>
+        loadSave(statsFormat(STAGES, ZONE_MAP.destinations), raw).status,
+    },
+  ];
+  const statuses = await Promise.all(
+    probes.map(async ({ key, status }) => {
+      try {
+        return status(await source.read(key));
+      } catch {
+        return "unavailable";
+      }
+    }),
+  );
+  return statuses.includes("newer")
+    ? "newer"
+    : statuses.includes("unavailable")
+      ? "unavailable"
+      : "current";
+}
 
 // Reads the stored progress into savedProgress. Where a newer version wrote any store, it writes
 // nothing, not even an older store's upgrade, and returns "newer" before the session begins.

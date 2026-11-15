@@ -1,4 +1,4 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import type {

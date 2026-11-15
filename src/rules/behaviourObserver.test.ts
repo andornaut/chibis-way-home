@@ -1,5 +1,5 @@
-import { pathOrNearest, pathTo } from "@andornaut/game-kit/terrain/movementMap";
-import { findTraversal } from "@andornaut/game-kit/terrain/traversal";
+import { pathOrNearest, pathTo } from "@andornaut/game-kit/runtime/terrain/movementMap";
+import { findTraversal } from "@andornaut/game-kit/runtime/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams.ts";
@@ -26,12 +26,12 @@ import { pursuitGroundMap } from "./movementMaps.ts";
 import { objectLayout } from "./tiles.ts";
 import { startZone, stepZone, stepZoneObserved } from "./zone.ts";
 
-vi.mock("@andornaut/game-kit/terrain/movementMap", async (original) => {
-  const actual = await original<typeof import("@andornaut/game-kit/terrain/movementMap")>();
+vi.mock("@andornaut/game-kit/runtime/terrain/movementMap", async (original) => {
+  const actual = await original<typeof import("@andornaut/game-kit/runtime/terrain/movementMap")>();
   return { ...actual, pathOrNearest: vi.fn(actual.pathOrNearest), pathTo: vi.fn(actual.pathTo) };
 });
-vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
-  const actual = await original<typeof import("@andornaut/game-kit/terrain/traversal")>();
+vi.mock("@andornaut/game-kit/runtime/terrain/traversal", async (original) => {
+  const actual = await original<typeof import("@andornaut/game-kit/runtime/terrain/traversal")>();
   return { ...actual, findTraversal: vi.fn(actual.findTraversal) };
 });
 

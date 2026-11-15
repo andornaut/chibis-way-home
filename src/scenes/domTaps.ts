@@ -1,4 +1,4 @@
-import { readUnit } from "@andornaut/game-kit/web/ui/dom/viewUnits";
+import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { TOUCH } from "../data/touch.ts";
 import type { SceneInput } from "./modalInput.ts";

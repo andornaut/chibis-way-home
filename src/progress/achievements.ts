@@ -6,7 +6,7 @@ import {
   orderByTier,
   type Progress as AchievementProgress,
   resolveThreshold,
-} from "@andornaut/game-kit/achievements";
+} from "@andornaut/game-kit/runtime/achievements";
 
 import { ACHIEVEMENT_TIERS, ACHIEVEMENTS } from "../data/achievements.ts";
 import { ZONE_MAP } from "../data/map.ts";

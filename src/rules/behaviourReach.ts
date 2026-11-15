@@ -1,4 +1,4 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import type { RandomStreams } from "../ai/randomStreams.ts";
 import { collisionCandidates, EDGE } from "../core/index.ts";

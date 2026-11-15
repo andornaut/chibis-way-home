@@ -1,4 +1,4 @@
-import type { CachePolicy } from "@andornaut/game-kit/web/pwa/cachePolicy";
+import type { CachePolicy } from "@andornaut/game-kit/runtime/web/pwa/cachePolicy";
 
 // The game's caching rules (the kit's pwa/cachePolicy), which the service worker and the precache
 // build share. Content-hashed build output is under /assets/. A controlled page loads every

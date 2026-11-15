@@ -2,7 +2,11 @@
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
-import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
+import {
+  MAX_RENDER_SCALE,
+  renderFit,
+  renderScale,
+} from "@andornaut/game-kit/runtime/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import { SCREEN } from "../../data/screen.ts";
@@ -14,7 +18,7 @@ import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
 const css = readFileSync("src/ui/dom/ui.css", "utf8");
 // The kit's ui.css, which loads first, sets the shared button gaps.
 const kitCss = readFileSync(
-  createRequire(import.meta.url).resolve("@andornaut/game-kit/web/ui/dom/ui.css"),
+  createRequire(import.meta.url).resolve("@andornaut/game-kit/runtime/web/ui/dom/ui.css"),
   "utf8",
 );
 

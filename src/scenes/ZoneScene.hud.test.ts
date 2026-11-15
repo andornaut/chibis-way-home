@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { EventEmitter } from "node:events";
 
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import jumpSheet from "../../public/art/sprites/ui-touch-jump.json" with { type: "json" };

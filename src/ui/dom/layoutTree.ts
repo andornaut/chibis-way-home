@@ -1,9 +1,9 @@
-import type { LayoutNode } from "@andornaut/game-kit/ui/layoutTree";
+import type { LayoutNode } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import {
   type LayoutComponentPorts,
   type LayoutOptions,
   mountLayout,
-} from "@andornaut/game-kit/web/ui/dom/layoutTree";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
 import { setTextButtonRole, setTextButtonSizing, type TextButtonSizing } from "./buttonLayout.ts";
 import {

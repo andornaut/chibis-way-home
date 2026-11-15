@@ -1,4 +1,4 @@
-import { watchFrameTurn } from "@andornaut/game-kit/web/view/dom/watchFrameTurn";
+import { watchFrameTurn } from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
 
 // The game page's frame turn (the kit's web/view/dom/watchFrameTurn): the game is drawn for landscape, so on a
 // touch screen in portrait the frame turns onto its side, by the kit's stylesheet that

@@ -1,4 +1,4 @@
-import type { LayoutValues } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import type { LayoutValues } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { ACHIEVEMENTS_CARD, CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";

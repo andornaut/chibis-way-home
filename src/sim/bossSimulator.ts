@@ -1,4 +1,4 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import type { AgentSample, AgentTick } from "../ai/agentTrace.ts";
 import { simulate, type SimulationController, type SimulationModel } from "../ai/simulation.ts";

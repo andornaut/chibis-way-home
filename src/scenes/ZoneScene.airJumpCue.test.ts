@@ -1,4 +1,4 @@
-import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
+import { frameSteps, startStepClock } from "@andornaut/game-kit/runtime/clock/fixedStep";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { STEP_MS, STEP_SECONDS } from "../core/index.ts";

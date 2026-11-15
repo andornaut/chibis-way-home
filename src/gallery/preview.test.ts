@@ -1,4 +1,4 @@
-import type { BitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import type { BitmapFont } from "@andornaut/game-kit/runtime/text/bitmapFont";
 import { expect, it } from "vitest";
 
 import { fontPreview, galleryFrame } from "./preview.ts";

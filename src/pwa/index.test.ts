@@ -3,7 +3,7 @@ import type {
   OfflinePage,
   OfflinePlay,
   OfflinePlayOptions,
-} from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+} from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const offline = vi.hoisted(() => {
@@ -28,24 +28,30 @@ const offline = vi.hoisted(() => {
     }),
   };
 });
-vi.mock("@andornaut/game-kit/web/pwa/dom/offlinePlay", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay", () => ({
   browserOfflinePage: () => offline.page,
   startOfflinePlay: offline.start,
 }));
-vi.mock("@andornaut/game-kit/web/pwa/backNavigation", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@andornaut/game-kit/web/pwa/backNavigation")>()),
+vi.mock("@andornaut/game-kit/runtime/web/pwa/backNavigation", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@andornaut/game-kit/runtime/web/pwa/backNavigation")>()),
   backCloseWatcher: vi.fn(() => () => new EventTarget()),
   isFirefoxAndroidApp: () => true,
 }));
-vi.mock("@andornaut/game-kit/web/pwa/dom/backNavigation", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@andornaut/game-kit/web/pwa/dom/backNavigation")>()),
+vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/backNavigation", async (importOriginal) => ({
+  ...(await importOriginal<
+    typeof import("@andornaut/game-kit/runtime/web/pwa/dom/backNavigation")
+  >()),
   browserCloseWatcher: vi.fn(),
 }));
-vi.mock("@andornaut/game-kit/web/pwa/dom/installFlow", () => ({ pageRunsAsApp: () => false }));
-vi.mock("@andornaut/game-kit/web/pwa/storagePersistence", () => ({
+vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/installFlow", () => ({
+  pageRunsAsApp: () => false,
+}));
+vi.mock("@andornaut/game-kit/runtime/web/pwa/storagePersistence", () => ({
   requestPersistentStorage: vi.fn(),
 }));
-vi.mock("@andornaut/game-kit/web/pwa/dom/wakeLock", () => ({ createScreenWakeLock: vi.fn() }));
+vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/wakeLock", () => ({
+  createScreenWakeLock: vi.fn(),
+}));
 
 beforeEach(() => {
   vi.resetModules();
@@ -190,9 +196,9 @@ function settled(): Promise<void> {
 // The phone app set up on the kit's own offline play, with whether the loading bar showed the
 // precache at each change.
 async function precacheShown(controller: unknown) {
-  const kit = await vi.importActual<typeof import("@andornaut/game-kit/web/pwa/dom/offlinePlay")>(
-    "@andornaut/game-kit/web/pwa/dom/offlinePlay",
-  );
+  const kit = await vi.importActual<
+    typeof import("@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay")
+  >("@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay");
   offline.start.mockImplementationOnce(kit.startOfflinePlay);
   const fake = kitPage(controller);
   offline.page = fake.page;
@@ -345,7 +351,7 @@ it.each([
 ])(
   "offers Start Exit only with a usable exit path: $name",
   async ({ app, historyLength = 1, shown, ua, watcher = true }) => {
-    const { backCloseWatcher } = await import("@andornaut/game-kit/web/pwa/backNavigation");
+    const { backCloseWatcher } = await import("@andornaut/game-kit/runtime/web/pwa/backNavigation");
     vi.mocked(backCloseWatcher).mockReturnValueOnce(watcher ? () => new EventTarget() : undefined);
     const appNavigator = { maxTouchPoints: 5, standalone: app && /iPhone/.test(ua), userAgent: ua };
     Object.assign(window, {

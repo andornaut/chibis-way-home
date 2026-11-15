@@ -1,4 +1,4 @@
-import { containsPoint } from "@andornaut/game-kit/rect";
+import { containsPoint } from "@andornaut/game-kit/runtime/rect";
 import { describe, expect, it } from "vitest";
 
 import { CAMERA } from "../../data/camera.ts";

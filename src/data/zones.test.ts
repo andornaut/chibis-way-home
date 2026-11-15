@@ -1,4 +1,4 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { describe, expect, it } from "vitest";
 
 import manifestJson from "../../public/art/manifest.json" with { type: "json" };

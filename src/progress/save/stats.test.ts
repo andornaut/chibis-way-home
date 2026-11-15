@@ -1,5 +1,5 @@
-import { encodeSave, loadSave } from "@andornaut/game-kit/save/versionedSave";
-import { storageFixture } from "@andornaut/game-kit/testing/storageFixture";
+import { encodeSave, loadSave } from "@andornaut/game-kit/runtime/save/versionedSave";
+import { storageFixture } from "@andornaut/game-kit/test/storageFixture";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BIRD_FRAME } from "../../assets/index.ts";

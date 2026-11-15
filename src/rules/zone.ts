@@ -1,5 +1,5 @@
-import { randomStream } from "@andornaut/game-kit/random";
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { randomStream } from "@andornaut/game-kit/runtime/random";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import { namedStreams } from "../ai/randomStreams.ts";
 import {

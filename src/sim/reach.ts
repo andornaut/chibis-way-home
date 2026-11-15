@@ -1,4 +1,4 @@
-import { assertNever } from "@andornaut/game-kit/assertNever";
+import { assertNever } from "@andornaut/game-kit/runtime/assertNever";
 
 import { BIRD_FRAME } from "../assets/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";

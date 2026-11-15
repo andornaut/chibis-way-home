@@ -6,7 +6,7 @@ import {
   locateAir,
   reachableAir,
   sinksAir,
-} from "@andornaut/game-kit/terrain/airMap";
+} from "@andornaut/game-kit/runtime/terrain/airMap";
 import {
   locate,
   type MapEdge,
@@ -19,12 +19,12 @@ import {
   pathTo,
   reachableSet,
   sinks,
-} from "@andornaut/game-kit/terrain/movementMap";
+} from "@andornaut/game-kit/runtime/terrain/movementMap";
 import {
   findTraversal,
   stepTraversal,
   type TraversalState,
-} from "@andornaut/game-kit/terrain/traversal";
+} from "@andornaut/game-kit/runtime/terrain/traversal";
 
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";

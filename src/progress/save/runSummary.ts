@@ -1,4 +1,4 @@
-import { fillNames } from "@andornaut/game-kit/lines";
+import { fillNames } from "@andornaut/game-kit/runtime/lines";
 
 import type { StatsText } from "../../data/types/index.ts";
 

@@ -1,4 +1,4 @@
-import { clamp01 } from "@andornaut/game-kit/numbers";
+import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
 import type { DashTrailTuning, Rect } from "../data/types/index.ts";
 import type { BirdDashState } from "../rules/bird.ts";

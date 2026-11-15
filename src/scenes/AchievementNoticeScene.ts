@@ -1,5 +1,5 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { fillNames } from "@andornaut/game-kit/lines";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
+import { fillNames } from "@andornaut/game-kit/runtime/lines";
 import { Scene } from "phaser";
 
 import { ACHIEVEMENT_NOTICE_SECONDS, ACHIEVEMENT_NOTICE_SIDE } from "../data/achievements.ts";

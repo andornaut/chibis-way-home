@@ -1,4 +1,4 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 
 import { prepareSpriteContact } from "../core/index.ts";
 import type { Size, SpriteContact, SpriteSilhouettes } from "../data/types/index.ts";

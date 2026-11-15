@@ -5,7 +5,7 @@ import type {
   MapNode,
   MovementMap,
   NodeId,
-} from "@andornaut/game-kit/terrain/movementMap";
+} from "@andornaut/game-kit/runtime/terrain/movementMap";
 import { expect, it } from "vitest";
 
 import { EDGE, STEP_SECONDS } from "../core/index.ts";

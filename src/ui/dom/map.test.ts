@@ -1,5 +1,9 @@
 // @vitest-environment happy-dom
-import { MAX_RENDER_SCALE, renderFit, renderScale } from "@andornaut/game-kit/view/renderScale";
+import {
+  MAX_RENDER_SCALE,
+  renderFit,
+  renderScale,
+} from "@andornaut/game-kit/runtime/view/renderScale";
 import { expect, it } from "vitest";
 
 import { MAP_LAYOUT } from "../../data/layout.ts";

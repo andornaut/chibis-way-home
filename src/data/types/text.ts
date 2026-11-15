@@ -1,6 +1,6 @@
 // The words the player reads, dialogue and the opening.
 
-import type { InstallStepsKind } from "@andornaut/game-kit/web/pwa/installState";
+import type { InstallStepsKind } from "@andornaut/game-kit/runtime/web/pwa/installState";
 
 import type { AchievementsText } from "./achievements.ts";
 import type { SkillId } from "./bird.ts";

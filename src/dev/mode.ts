@@ -1,4 +1,4 @@
-import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/web/pwa/backNavigation";
+import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
 
 import type { SkillId } from "../data/types/index.ts";
 import { SKILL_IDS, type SkillOverrides } from "../progress/index.ts";

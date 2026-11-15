@@ -5,7 +5,7 @@ import {
   type TraversalRequest,
   type TraversalResult,
   type TraversalSafety,
-} from "@andornaut/game-kit/terrain/traversal";
+} from "@andornaut/game-kit/runtime/terrain/traversal";
 
 import { EDGE } from "../core/index.ts";
 import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";

@@ -1,4 +1,4 @@
-import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/web/pwa/backNavigation";
+import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
 
 import { DEV_TEXT } from "../data/dev.ts";
 import { ZONE_MAP } from "../data/map.ts";

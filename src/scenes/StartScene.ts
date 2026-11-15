@@ -1,6 +1,6 @@
-import { browserExitPage, exitApp } from "@andornaut/game-kit/web/pwa/dom/exitApp";
-import { focusTarget } from "@andornaut/game-kit/web/ui/dom/focusModality";
-import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import { browserExitPage, exitApp } from "@andornaut/game-kit/runtime/web/pwa/dom/exitApp";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";

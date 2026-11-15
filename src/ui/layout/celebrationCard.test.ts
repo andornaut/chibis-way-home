@@ -1,5 +1,5 @@
-import { containsPoint, rectsOverlap } from "@andornaut/game-kit/rect";
-import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
+import { containsPoint, rectsOverlap } from "@andornaut/game-kit/runtime/rect";
+import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import { describe, expect, it } from "vitest";
 
 import buttonSheet from "../../../public/art/sprites/ui-button.json" with { type: "json" };

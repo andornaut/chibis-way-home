@@ -1,9 +1,9 @@
-import { createPageDivider } from "@andornaut/game-kit/web/ui/dom/controlPresentation";
+import { createPageDivider } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 import {
   type LayoutValues,
   writeLayoutProperties,
-} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
-import { slice } from "@andornaut/game-kit/web/ui/dom/viewUnits";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
+import { slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT } from "../../data/layout.ts";
 import type { StatsMetricRow } from "../layout/runStats.ts";

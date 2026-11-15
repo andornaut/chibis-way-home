@@ -1,4 +1,4 @@
-import { modalDimmer } from "@andornaut/game-kit/view/modalDim";
+import { modalDimmer } from "@andornaut/game-kit/runtime/view/modalDim";
 
 import type { Palette } from "./dim.ts";
 

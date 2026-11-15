@@ -1,20 +1,74 @@
-import type { ProgressHandle } from "@andornaut/game-kit/progressState";
-import type { OfflineActivity } from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
+import type { OfflineActivity } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
+import type { DownloadProgress } from "@andornaut/game-kit/runtime/web/pwa/downloadProgress";
 
 import { beginPrecache } from "./progress.ts";
 
-// The loading bar's view of the shared offline-activity callback, which reports activity only,
-// with no download-percentage claim. The kit reports "precaching" for the first visit's precache,
-// which the player waits for and the bar shows as unknown work. "updating" (an update's install,
-// which runs in the background while the game is playable) and "idle" never show the bar.
-export function trackOfflineActivity(): (activity: OfflineActivity) => void {
+// Only first-install precaching may show this background bar. Worker identities are opaque;
+// download callbacks never describe module, font, Phaser or CPU preparation work.
+export function trackOfflineLoading() {
+  let activity: OfflineActivity = "idle";
   let operation: ProgressHandle | undefined;
-  return (activity) => {
-    if (activity === "precaching") {
-      operation ??= beginPrecache();
-    } else {
-      operation?.finish();
-      operation = undefined;
+  let current: Pick<DownloadProgress, "operationId" | "version"> | undefined;
+  let pending: DownloadProgress | undefined;
+  const closed = new Set<string>();
+  const finish = () => {
+    operation?.finish();
+    operation = undefined;
+    if (current !== undefined) {
+      closed.add(current.operationId);
     }
   };
+  const progress = (snapshot: DownloadProgress) => {
+    if (closed.has(snapshot.operationId)) {
+      return;
+    }
+    if (activity !== "precaching") {
+      if (activity === "idle") {
+        pending = snapshot;
+      }
+      return;
+    }
+    if (operation === undefined) {
+      return;
+    }
+    current ??= { operationId: snapshot.operationId, version: snapshot.version };
+    if (snapshot.operationId !== current.operationId || snapshot.version !== current.version) {
+      return;
+    }
+    operation.progress(snapshot.phase === "downloading" ? snapshot.value : undefined);
+    if (snapshot.phase === "complete") {
+      operation.progress(1);
+      finish();
+    } else if (snapshot.phase === "failed") {
+      finish();
+    }
+  };
+  return {
+    activity(next: OfflineActivity) {
+      if (activity === next) {
+        return;
+      }
+      activity = next;
+      if (next === "precaching") {
+        current = undefined;
+        operation = beginPrecache();
+        if (pending !== undefined) {
+          progress(pending);
+        }
+      } else {
+        // An incomplete or unobserved operation ending must not manufacture a full-bar hold.
+        operation?.progress(undefined);
+        finish();
+        current = undefined;
+      }
+      pending = undefined;
+    },
+    progress,
+  };
+}
+
+// Activity-only consumers keep their existing indeterminate first-precache behaviour.
+export function trackOfflineActivity(): (activity: OfflineActivity) => void {
+  return trackOfflineLoading().activity;
 }

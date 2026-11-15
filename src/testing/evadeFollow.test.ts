@@ -1,4 +1,4 @@
-import { locate, type MapMask, pathTo } from "@andornaut/game-kit/terrain/movementMap";
+import { locate, type MapMask, pathTo } from "@andornaut/game-kit/runtime/terrain/movementMap";
 import { expect, it } from "vitest";
 
 import { EDGE, STEP_SECONDS } from "../core/index.ts";

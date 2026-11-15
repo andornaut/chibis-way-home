@@ -1,5 +1,5 @@
-import { memoryStorage } from "@andornaut/game-kit/save/storage";
-import { encodeSave } from "@andornaut/game-kit/save/versionedSave";
+import { memoryStorage } from "@andornaut/game-kit/runtime/save/storage";
+import { encodeSave } from "@andornaut/game-kit/runtime/save/versionedSave";
 import { expect, it, vi } from "vitest";
 
 import { wholeRunSummary } from "./runSummary.ts";

@@ -33,7 +33,7 @@ const SHEETS = readdirSync(DIRECTORY)
 const KIT_CSS = ["ui.css", "controls.css", "controlPresentation.css", "layoutTree.css"]
   .map((name) =>
     readFileSync(
-      createRequire(import.meta.url).resolve(`@andornaut/game-kit/web/ui/dom/${name}`),
+      createRequire(import.meta.url).resolve(`@andornaut/game-kit/runtime/web/ui/dom/${name}`),
       "utf8",
     ),
   )

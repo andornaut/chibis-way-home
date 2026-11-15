@@ -1,8 +1,8 @@
 import "./page.css";
 import "./viewer.css";
 
-import { sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { parseBitmapFont } from "@andornaut/game-kit/text/bitmapFont";
+import { sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
+import { parseBitmapFont } from "@andornaut/game-kit/runtime/text/bitmapFont";
 
 import manifestJson from "../../public/art/manifest.json" with { type: "json" };
 import palette from "../../public/art/palette.json" with { type: "json" };

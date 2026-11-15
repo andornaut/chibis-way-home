@@ -1,6 +1,10 @@
 // Arena checks: the static rules every arena obeys, the coverage of the encounter stages, and the
 // layout and movement maps the proofs and the evade playtest read.
-import { type MapMask, type MovementMap, pathTo } from "@andornaut/game-kit/terrain/movementMap";
+import {
+  type MapMask,
+  type MovementMap,
+  pathTo,
+} from "@andornaut/game-kit/runtime/terrain/movementMap";
 
 import { BIRD_FRAME } from "../assets/index.ts";
 import { ARENA_COUNTERS, ARENA_LOOP_TILES, ARENA_PENDING_STAGES } from "../data/arenas/index.ts";

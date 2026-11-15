@@ -1,4 +1,4 @@
-import type { CrumblingPhase } from "@andornaut/game-kit/terrain/crumbling";
+import type { CrumblingPhase } from "@andornaut/game-kit/runtime/terrain/crumbling";
 
 import { drawsFrom, type Tileset } from "../stage/index.ts";
 import { objectTiles, type PlacedTile } from "./tiles.ts";

@@ -1,7 +1,7 @@
 import {
   type LayoutValues,
   writeLayoutProperties,
-} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { TOUCH_LAYOUT } from "../../data/layout.ts";
 import type { Point, Size } from "../../data/types/index.ts";

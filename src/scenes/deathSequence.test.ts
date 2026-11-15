@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 
-import { frameSteps, startStepClock } from "@andornaut/game-kit/clock/fixedStep";
+import { frameSteps, startStepClock } from "@andornaut/game-kit/runtime/clock/fixedStep";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BIRD_FRAME } from "../assets/index.ts";

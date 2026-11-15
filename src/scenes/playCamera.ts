@@ -1,4 +1,4 @@
-import { type RenderFit, renderFit } from "@andornaut/game-kit/view/renderScale";
+import { type RenderFit, renderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import { type Cameras, type Input, Scale, type Scene } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";

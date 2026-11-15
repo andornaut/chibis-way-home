@@ -1,4 +1,4 @@
-import type { ProgressBarStyle } from "@andornaut/game-kit/progress";
+import type { ProgressBarStyle } from "@andornaut/game-kit/runtime/progress";
 
 import palette from "../../public/art/palette.json" with { type: "json" };
 import { STAGE_PROGRESS } from "../data/stageProgress.ts";

@@ -1,4 +1,4 @@
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { type Game, Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";

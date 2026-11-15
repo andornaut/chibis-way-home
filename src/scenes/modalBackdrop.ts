@@ -1,5 +1,5 @@
-import { mountModalBackdrop } from "@andornaut/game-kit/view/phaser/modalBackdrop";
-import { renderFit } from "@andornaut/game-kit/view/renderScale";
+import { mountModalBackdrop } from "@andornaut/game-kit/runtime/view/phaser/modalBackdrop";
+import { renderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import { type GameObjects, type Scene, Scenes } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";

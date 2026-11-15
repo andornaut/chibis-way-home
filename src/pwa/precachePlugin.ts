@@ -1,4 +1,4 @@
-import { precachePlugin as kitPrecachePlugin } from "@andornaut/game-kit/web/pwa/vite/precachePlugin";
+import { precachePlugin as kitPrecachePlugin } from "@andornaut/game-kit/build/precachePlugin";
 import type { Plugin } from "vite";
 
 import type { ArtManifest } from "../assets/index.ts";

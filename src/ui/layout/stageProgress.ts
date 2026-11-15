@@ -1,4 +1,4 @@
-import type { RenderFit } from "@andornaut/game-kit/view/renderScale";
+import type { RenderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 
 import { SCREEN } from "../../data/screen.ts";
 import { STAGE_PROGRESS } from "../../data/stageProgress.ts";

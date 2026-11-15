@@ -56,7 +56,7 @@ it("reads only custom properties the layer, the skin, the card or the stylesheet
 function footerStyles(): HTMLStyleElement {
   const style = document.createElement("style");
   const kit = readFileSync(
-    createRequire(import.meta.url).resolve("@andornaut/game-kit/web/ui/dom/controls.css"),
+    createRequire(import.meta.url).resolve("@andornaut/game-kit/runtime/web/ui/dom/controls.css"),
     "utf8",
   );
   style.textContent = [kit, uiCss, deathCss].join("\n");

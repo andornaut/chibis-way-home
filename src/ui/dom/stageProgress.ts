@@ -1,6 +1,6 @@
-import type { ProgressBarStyle } from "@andornaut/game-kit/progress";
-import { createDomProgressBar } from "@andornaut/game-kit/web/progress/dom/progressBar";
-import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import type { ProgressBarStyle } from "@andornaut/game-kit/runtime/progress";
+import { createDomProgressBar } from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
+import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { STAGE_PROGRESS } from "../../data/stageProgress.ts";
 import type { Point, Rect, Size } from "../../data/types/index.ts";

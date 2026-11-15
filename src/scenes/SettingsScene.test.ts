@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { EventEmitter } from "node:events";
 
-import type { InstallState } from "@andornaut/game-kit/web/pwa/installState";
+import type { InstallState } from "@andornaut/game-kit/runtime/web/pwa/installState";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const gate = vi.hoisted(() => ({

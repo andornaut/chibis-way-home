@@ -1,4 +1,4 @@
-import { clamp } from "@andornaut/game-kit/numbers";
+import { clamp } from "@andornaut/game-kit/runtime/numbers";
 
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import type {

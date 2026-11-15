@@ -1,4 +1,4 @@
-import { clamp01 } from "@andornaut/game-kit/numbers";
+import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
 import type { Point, Rect } from "../../data/types/index.ts";
 

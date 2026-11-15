@@ -1,4 +1,4 @@
-import type { TraversalSafety } from "@andornaut/game-kit/terrain/traversal";
+import type { TraversalSafety } from "@andornaut/game-kit/runtime/terrain/traversal";
 
 import { sweptContact } from "../core/index.ts";
 import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types/index.ts";

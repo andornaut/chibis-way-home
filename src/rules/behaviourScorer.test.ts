@@ -1,4 +1,4 @@
-import { candidateScore } from "@andornaut/game-kit/ai/utility";
+import { candidateScore } from "@andornaut/game-kit/runtime/ai/utility";
 import { expect, it } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams.ts";

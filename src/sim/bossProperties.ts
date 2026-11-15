@@ -1,4 +1,4 @@
-import { insetRect, rectsOverlap } from "@andornaut/game-kit/rect";
+import { insetRect, rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import {
   attackCadence,

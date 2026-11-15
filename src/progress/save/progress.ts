@@ -1,4 +1,8 @@
-import type { Checked, SaveFormat, StoredObject } from "@andornaut/game-kit/save/versionedSave";
+import type {
+  Checked,
+  SaveFormat,
+  StoredObject,
+} from "@andornaut/game-kit/runtime/save/versionedSave";
 
 import { RECENT_STAGES } from "../../data/stageProgress.ts";
 import type { SkillSelection, ZoneMap } from "../../data/types/index.ts";

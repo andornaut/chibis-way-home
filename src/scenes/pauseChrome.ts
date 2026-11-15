@@ -1,4 +1,4 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 
 import type { PauseChromePose, PauseDiscPose } from "../ui/index.ts";
 

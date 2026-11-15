@@ -1,4 +1,4 @@
-import { locate } from "@andornaut/game-kit/terrain/movementMap";
+import { locate } from "@andornaut/game-kit/runtime/terrain/movementMap";
 import { expect, it } from "vitest";
 
 import { STEP_SECONDS } from "../core/index.ts";

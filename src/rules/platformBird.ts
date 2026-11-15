@@ -1,4 +1,4 @@
-import { rectsOverlap } from "@andornaut/game-kit/rect";
+import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import { collisionCandidates, EDGE } from "../core/index.ts";
 import type { BirdTuning, ObjectLayout, Rect } from "../data/types/index.ts";

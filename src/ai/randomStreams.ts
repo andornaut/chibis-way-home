@@ -1,4 +1,4 @@
-import { type Random, randomStream } from "@andornaut/game-kit/random";
+import { type Random, randomStream } from "@andornaut/game-kit/runtime/random";
 
 // An explicit factory of independent seeded streams, one per decision key. The caller owns the
 // seed and namespace; equal keys replay equal draws without consuming a shared stream.

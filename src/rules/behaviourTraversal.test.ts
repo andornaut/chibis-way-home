@@ -4,7 +4,7 @@ import {
   type TraversalContext,
   type TraversalRequest,
   type TraversalState,
-} from "@andornaut/game-kit/terrain/traversal";
+} from "@andornaut/game-kit/runtime/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams.ts";
@@ -42,8 +42,8 @@ import { objectLayout, zoneLayout } from "./tiles.ts";
 import { activateBehaviour, startZone, stepZone } from "./zone.ts";
 import { CHUNK_LIBRARY } from "./zonePlans.ts";
 
-vi.mock("@andornaut/game-kit/terrain/traversal", async (original) => {
-  const actual = await original<typeof import("@andornaut/game-kit/terrain/traversal")>();
+vi.mock("@andornaut/game-kit/runtime/terrain/traversal", async (original) => {
+  const actual = await original<typeof import("@andornaut/game-kit/runtime/terrain/traversal")>();
   return {
     ...actual,
     findTraversal: vi.fn(actual.findTraversal),

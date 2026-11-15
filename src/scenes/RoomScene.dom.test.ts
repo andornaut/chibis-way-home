@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { EventEmitter } from "node:events";
 
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { afterEach, expect, it, vi } from "vitest";
 
 import pug from "../../public/art/sprites/dog-pug.json" with { type: "json" };

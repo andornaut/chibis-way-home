@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 import paletteData from "../../public/art/palette.json" with { type: "json" };
 
 const capture = vi.hoisted(() => ({ mount: vi.fn() }));
-vi.mock("@andornaut/game-kit/view/phaser/modalBackdrop", () => ({
+vi.mock("@andornaut/game-kit/runtime/view/phaser/modalBackdrop", () => ({
   mountModalBackdrop: capture.mount,
 }));
 vi.mock("phaser", () => ({ Scenes: { Events: { ADDED_TO_SCENE: "addedtoscene" } } }));

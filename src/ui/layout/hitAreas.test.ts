@@ -1,5 +1,5 @@
-import { HIT_RULE } from "@andornaut/game-kit/ui/hitAreas";
-import { renderFit } from "@andornaut/game-kit/view/renderScale";
+import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
+import { renderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import { SCREEN } from "../../data/screen.ts";

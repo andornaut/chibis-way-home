@@ -1,4 +1,4 @@
-import type { RequiredUpdateState } from "@andornaut/game-kit/web/pwa/updateReady";
+import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
 
 // The forced update's state, which the kit reports (onRequireNewer) and the boot scene shows:
 // each report reaches the listener, and a new listener gets the latest at once.

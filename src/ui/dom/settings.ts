@@ -1,4 +1,4 @@
-import { writeLayoutProperties } from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
 import {

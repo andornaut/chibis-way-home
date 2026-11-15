@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { expect, it } from "vitest";
 
 import manifest from "../../../public/art/manifest.json" with { type: "json" };

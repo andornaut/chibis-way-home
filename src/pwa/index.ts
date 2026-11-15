@@ -5,27 +5,30 @@
 // A fresh document may apply a complete waiting version before constructing the game or reading
 // saves. During play, newer versions stage separately and switch only through Update now or the
 // newer-save guard. Returning to Start or showing the page never activates them.
-import { appCannotClose } from "@andornaut/game-kit/web/pwa/appWindow";
-import { backCloseWatcher, isFirefoxAndroidApp } from "@andornaut/game-kit/web/pwa/backNavigation";
+import { appCannotClose } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
+import {
+  backCloseWatcher,
+  isFirefoxAndroidApp,
+} from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
 import {
   browserCloseWatcher,
   guardBackNavigation,
-} from "@andornaut/game-kit/web/pwa/dom/backNavigation";
-import { pageRunsAsApp } from "@andornaut/game-kit/web/pwa/dom/installFlow";
+} from "@andornaut/game-kit/runtime/web/pwa/dom/backNavigation";
+import { pageRunsAsApp } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 import {
   browserOfflinePage,
   type LaunchResult,
   type OfflinePlay,
   startOfflinePlay,
-} from "@andornaut/game-kit/web/pwa/dom/offlinePlay";
+} from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
 import {
   createScreenWakeLock,
   type ScreenWakeLock,
-} from "@andornaut/game-kit/web/pwa/dom/wakeLock";
-import { serviceWorkerUrl } from "@andornaut/game-kit/web/pwa/serviceWorkerUrl";
-import { requestPersistentStorage } from "@andornaut/game-kit/web/pwa/storagePersistence";
+} from "@andornaut/game-kit/runtime/web/pwa/dom/wakeLock";
+import { serviceWorkerUrl } from "@andornaut/game-kit/runtime/web/pwa/serviceWorkerUrl";
+import { requestPersistentStorage } from "@andornaut/game-kit/runtime/web/pwa/storagePersistence";
 
-import { trackOfflineActivity } from "../loading/serviceWorker.ts";
+import { trackOfflineLoading } from "../loading/serviceWorker.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
 import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen.ts";
 import { createRequiredUpdate } from "./requiredUpdate.ts";
@@ -60,9 +63,11 @@ function setupOfflinePlay(): Promise<LaunchResult> {
   if (page === undefined) {
     return Promise.resolve("continue");
   }
+  const loading = trackOfflineLoading();
   const play = startOfflinePlay(
     {
-      onOfflineActivity: trackOfflineActivity(),
+      onDownloadProgress: loading.progress,
+      onOfflineActivity: loading.activity,
       onRequireNewer: requiredUpdate.report,
       onUpdateShown: updateOffer.setVisible,
       serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),

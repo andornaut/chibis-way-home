@@ -1,4 +1,4 @@
-import { easeProgress } from "@andornaut/game-kit/motion";
+import { easeProgress } from "@andornaut/game-kit/runtime/motion";
 import type { Scene } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";

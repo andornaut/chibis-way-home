@@ -1,4 +1,4 @@
-import { renderFit } from "@andornaut/game-kit/view/renderScale";
+import { renderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import { describe, expect, it } from "vitest";
 
 import { TOUCH_CIRCLE_RADIUS } from "../../data/layout.ts";

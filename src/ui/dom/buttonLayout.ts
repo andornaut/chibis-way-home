@@ -1,9 +1,9 @@
-import type { ButtonMetrics } from "@andornaut/game-kit/ui/buttonLayout";
+import type { ButtonMetrics } from "@andornaut/game-kit/runtime/ui/buttonLayout";
 import {
   setButtonFrame,
   setButtonRole,
   setButtonSize,
-} from "@andornaut/game-kit/web/ui/dom/buttonLayout";
+} from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 
 import { TEXT_BUTTON } from "../../data/layout.ts";
 

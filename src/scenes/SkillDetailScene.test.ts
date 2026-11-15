@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { EventEmitter } from "node:events";
 
-import { fillNames } from "@andornaut/game-kit/lines";
+import { fillNames } from "@andornaut/game-kit/runtime/lines";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), capture: vi.fn(), close: vi.fn() }));

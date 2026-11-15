@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 
-import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
+import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 import type { Plugin } from "vite";
 
 import { TEXT } from "../data/text.ts";

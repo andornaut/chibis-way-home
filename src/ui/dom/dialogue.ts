@@ -1,7 +1,7 @@
 import {
   type LayoutValues,
   writeLayoutProperties,
-} from "@andornaut/game-kit/web/ui/dom/layoutProperties";
+} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { DIALOGUE_PANEL_ALPHA } from "../../data/dialogues.ts";
 import { DIALOGUE_LAYOUT } from "../../data/layout.ts";

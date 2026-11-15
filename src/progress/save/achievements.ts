@@ -3,9 +3,9 @@ import {
   type EarnedRecord,
   type EarnedStore,
   earnedStore,
-} from "@andornaut/game-kit/achievements";
-import type { SaveStorage } from "@andornaut/game-kit/save/storage";
-import type { SaveFormat } from "@andornaut/game-kit/save/versionedSave";
+} from "@andornaut/game-kit/runtime/achievements";
+import type { SaveStorage } from "@andornaut/game-kit/runtime/save/storage";
+import type { SaveFormat } from "@andornaut/game-kit/runtime/save/versionedSave";
 
 import type { AchievementId } from "../../data/types/index.ts";
 import { ACHIEVEMENT_IDS } from "../achievements.ts";

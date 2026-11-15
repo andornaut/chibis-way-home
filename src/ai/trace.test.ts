@@ -1,4 +1,4 @@
-import { type Random, randomStream } from "@andornaut/game-kit/random";
+import { type Random, randomStream } from "@andornaut/game-kit/runtime/random";
 import { describe, expect, it } from "vitest";
 
 import { canonicalTrace, fnv1a64, traceRecorder } from "./trace.ts";

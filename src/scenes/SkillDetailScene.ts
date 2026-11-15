@@ -1,6 +1,6 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/art/aseprite";
-import { fillNames } from "@andornaut/game-kit/lines";
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/web/ui/dom/domPress";
+import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
+import { fillNames } from "@andornaut/game-kit/runtime/lines";
+import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
