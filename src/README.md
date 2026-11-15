@@ -199,6 +199,14 @@ Zone and Stage selectors derive from the built catalogue. Load stage sets the se
 
 Native controls are disabled during boot, modal input scopes and covered play. Modal changes invalidate pending presses, so dismissing a modal requires a fresh press before a panel action can activate.
 
+### Single-stage preview capture
+
+`node src/tools/stagePreviewCapture.ts --help` documents prepare/verify around existing browser tools. Prepare requires a clean tracked checkout, explicit stage/seeds/camera/optional area, exact dist and an owner build receipt with `source` and `artifact.treeSha256`. The tree hash is SHA-256 of JSON-serialized, path-sorted `{path, bytes, sha256}` records prefixed `dist/`. It writes one URL/request and `observe.js`; prepared does not mean captured.
+
+The browser owner opens that URL, waits for `canvas[data-stage-preview-ready="true"]`, evaluates `observe.js` in function mode and saves its JSON, then captures the canvas once as an unchanged 720x360 PNG. Actual canvas/play-view dimensions must match; page viewport size alone does not exclude letterboxing or device-resolution scaling. The post-render marker reports actual camera/area, applied seeds, disabled input and frozen steps. Observation records canvas/DPR and served-resource hashes.
+
+Verify rejects missing or mismatched evidence and checks raw PNG dimensions with art-kit's public decoder. Its receipt validates caller-supplied observations, without independently authenticating browser capture. Art consumes the same raw hash, resizes once to 168x84 using nearest-neighbour sampling and applies the existing image key/export policy. Neither prepared requests nor consistency receipts establish visual acceptance. No browser process or sweep is launched by the CLI.
+
 ### Bounded simulations
 
 `npm run simulate -- --help` describes the headless stage runner. Run it only inside the project container. For a small diagnostic run, use `npm run simulate -- --stage street --seed 1 --runs 1 --max-ticks 600 --max-retries 0`. Larger batches require coordination with gameplay; this command is not a routine gate. Both this CLI and `src/sim/playabilityCli.ts` refuse an existing `--out` path.

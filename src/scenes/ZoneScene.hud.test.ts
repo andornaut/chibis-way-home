@@ -199,3 +199,65 @@ it("does not mount a HUD for a stage preview or the title backdrop", () => {
   backdrop.createHud();
   expect(document.querySelector(".touch-controls-scene, .stage-progress-scene")).toBeNull();
 });
+
+it("publishes actual frozen preview camera and steps only after rendering, then clears on shutdown", () => {
+  const camera = {
+    height: 360,
+    scrollX: 0,
+    scrollY: 0,
+    setScroll(x: number, y: number) {
+      this.scrollX = x;
+      this.scrollY = y;
+    },
+    width: 720,
+    x: 0,
+    y: 0,
+    zoom: 1,
+  };
+  const scene = Object.assign(fixture(), {
+    bird: { anims: { isPlaying: false, stop: vi.fn() } },
+    cameras: { main: camera },
+    drawBird: vi.fn(),
+    drawObjects: vi.fn(),
+    input: { enabled: true },
+    layout: { areas: { main: { height: 720, width: 2000 } } },
+    objects: { freezePreviewAnimations: vi.fn() },
+    sys: { pause: vi.fn() },
+    zone: { area: "main", steps: 0 },
+  });
+  const capture = scene as unknown as {
+    freezePreview(preview: {
+      assemblySeed: number;
+      key: string;
+      motionSeed: number;
+      scroll: Point;
+    }): void;
+  };
+  capture.freezePreview({
+    assemblySeed: 1,
+    key: "street",
+    motionSeed: 42,
+    scroll: { x: 1800, y: 500 },
+  });
+  expect(scene.input.enabled).toBe(false);
+  expect(scene.game.canvas.dataset.stagePreviewReady).toBeUndefined();
+  scene.events.emit("create");
+  expect(scene.sys.pause).toHaveBeenCalledOnce();
+  scene.game.events.emit("postrender");
+  expect(scene.game.canvas.dataset.stagePreviewReady).toBe("true");
+  expect(JSON.parse(scene.game.canvas.dataset.stagePreviewMetadata!)).toEqual({
+    area: "main",
+    areaSize: { height: 720, width: 2000 },
+    assemblySeed: 1,
+    camera: { height: 360, width: 720, x: 0, y: 0, zoom: 1 },
+    inputEnabled: false,
+    motionSeed: 42,
+    scroll: { x: 1280, y: 360 },
+    stage: "street",
+    steps: 0,
+  });
+  scene.events.emit("shutdown");
+  expect(scene.game.canvas.dataset.stagePreviewMetadata).toBeUndefined();
+  expect(scene.game.canvas.dataset.stagePreviewReady).toBeUndefined();
+  expect(scene.game.events.listenerCount("postrender")).toBe(0);
+});

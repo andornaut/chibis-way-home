@@ -78,7 +78,7 @@ const CONTEXTS = {
   ],
   sim: ["ai", "assets", "core", "data", "presentation", "progress", "rules", "stage"],
   stage: ["data"],
-  tools: ["assets", "data", "headers", "homePage", "loading", "pwa"],
+  tools: ["assets", "data", "headers", "homePage", "loading", "pwa", "rules/stagePreview.ts"],
   tuningPage: ["data", "gallery"],
   ui: ["data", "progress", "rules"],
 };

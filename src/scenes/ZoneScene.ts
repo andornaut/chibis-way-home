@@ -597,6 +597,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   }
 
   private freezePreview(preview: StagePreview): void {
+    delete this.game.canvas.dataset.stagePreview;
+    delete this.game.canvas.dataset.stagePreviewReady;
+    delete this.game.canvas.dataset.stagePreviewMetadata;
     if (preview.area && preview.area !== this.zone.area) {
       this.zone = enterArea(
         this.movementTuning(),
@@ -623,11 +626,35 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const scroll = stagePreviewScroll(SCREEN, areaOf(this.layout, this.zone.area), preview.scroll);
     this.cameras.main.setScroll(scroll.x, scroll.y);
     const ready = () => {
+      const camera = this.cameras.main;
+      const area = areaOf(this.layout, this.zone.area);
+      this.game.canvas.dataset.stagePreviewMetadata = JSON.stringify({
+        area: this.zone.area,
+        areaSize: { height: area.height, width: area.width },
+        assemblySeed: preview.assemblySeed,
+        camera: {
+          height: camera.height,
+          width: camera.width,
+          x: camera.x,
+          y: camera.y,
+          zoom: camera.zoom,
+        },
+        inputEnabled: this.input.enabled,
+        motionSeed: preview.motionSeed,
+        scroll: { x: camera.scrollX, y: camera.scrollY },
+        stage: preview.key,
+        steps: this.zone.steps,
+      });
       this.game.canvas.dataset.stagePreview = preview.key;
       this.game.canvas.dataset.stagePreviewReady = "true";
     };
     this.game.events.once("postrender", ready);
-    this.events.once("shutdown", () => this.game.events.off("postrender", ready));
+    this.events.once("shutdown", () => {
+      this.game.events.off("postrender", ready);
+      delete this.game.canvas.dataset.stagePreview;
+      delete this.game.canvas.dataset.stagePreviewReady;
+      delete this.game.canvas.dataset.stagePreviewMetadata;
+    });
     this.events.once("create", () => this.sys.pause());
   }
 
