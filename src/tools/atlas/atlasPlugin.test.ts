@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-import { encodeLosslessWebp } from "@andornaut/art-kit/webp";
+import { encodeLosslessWebp } from "@andornaut/art-kit/build/webp";
 import { expect, it, vi } from "vitest";
 
 import art from "../../../public/art/manifest.json" with { type: "json" };
@@ -10,7 +10,7 @@ import type { AtlasManifest } from "../../assets/index.ts";
 import { ATLAS_MODULE, atlasPlugin } from "./atlasPlugin.ts";
 import { atlasPageFileName } from "./hashedArt.ts";
 
-vi.mock("@andornaut/art-kit/webp", () => ({
+vi.mock("@andornaut/art-kit/build/webp", () => ({
   encodeLosslessWebp: vi.fn(async () => new Uint8Array([1, 2, 3])),
 }));
 

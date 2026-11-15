@@ -1,6 +1,6 @@
-import { type AtlasBlit, buildAtlasPages } from "@andornaut/art-kit/atlasBuild";
-import { decodePng } from "@andornaut/art-kit/png";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { type AtlasBlit, buildAtlasPages } from "@andornaut/art-kit/build/atlasBuild";
+import { decodePng } from "@andornaut/art-kit/build/png";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 import { itemAt } from "@andornaut/game-kit/arrays";
 import type { AsepriteSheet } from "@andornaut/game-kit/art/aseprite";
 

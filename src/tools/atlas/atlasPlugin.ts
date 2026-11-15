@@ -1,4 +1,4 @@
-import { encodeLosslessWebp } from "@andornaut/art-kit/webp";
+import { encodeLosslessWebp } from "@andornaut/art-kit/build/webp";
 import type { Plugin } from "vite";
 
 import {
