@@ -57,9 +57,10 @@ describe("artUrls", () => {
 it("includes both self-hosted UI font files in the fingerprinted art emission list", () => {
   const urls = artUrls(EMPTY);
   for (const url of [
-    "/art/fonts/liberation/LiberationSans-Regular.ttf",
-    "/art/fonts/liberation/LiberationSans-Bold.ttf",
+    "/art/fonts/liberation/LiberationSans-Regular.woff2",
+    "/art/fonts/liberation/LiberationSans-Bold.woff2",
   ]) {
     expect(urls.filter((entry) => entry === url)).toHaveLength(1);
   }
+  expect(urls.some((url) => url.endsWith(".ttf"))).toBe(false);
 });

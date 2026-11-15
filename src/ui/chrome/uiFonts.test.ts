@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+import { readFileSync } from "node:fs";
+
 import { afterEach, expect, it, vi } from "vitest";
 
 import { createUiLayer, loadUiFonts } from "../dom/layer.ts";
@@ -39,16 +41,21 @@ it("registers exactly the two former CSS face declarations once per document", (
     {
       descriptors: { display: "block", style: "normal", weight: "400" },
       family: "Liberation Sans",
-      source: 'url("/art/fonts/liberation/LiberationSans-Regular.ttf") format("truetype")',
+      source: 'url("/art/fonts/liberation/LiberationSans-Regular.woff2") format("woff2")',
     },
     {
       descriptors: { display: "block", style: "normal", weight: "700" },
       family: "Liberation Sans",
-      source: 'url("/art/fonts/liberation/LiberationSans-Bold.ttf") format("truetype")',
+      source: 'url("/art/fonts/liberation/LiberationSans-Bold.woff2") format("woff2")',
     },
   ]);
   expect(fonts.add).toHaveBeenCalledTimes(2);
   expect(fonts.load).not.toHaveBeenCalled();
+  const crashCss = readFileSync("src/crash/theme.css", "utf8");
+  for (const { url } of UI_FONT_RESOURCES) {
+    expect(crashCss).toContain(`url("${url}") format("woff2")`);
+  }
+  expect(crashCss).not.toContain(".ttf");
   const other = globalThis.document.implementation.createHTMLDocument();
   const add = vi.fn();
   Object.defineProperty(other, "fonts", { value: { add } });

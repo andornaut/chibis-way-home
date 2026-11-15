@@ -1,13 +1,13 @@
 @font-face {
   font-family: "Chibi crash body";
-  src: url("/art/fonts/liberation/LiberationSans-Regular.ttf") format("truetype");
+  src: url("/art/fonts/liberation/LiberationSans-Regular.woff2") format("woff2");
   font-weight: 400;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Chibi crash title";
-  src: url("/art/fonts/liberation/LiberationSans-Bold.ttf") format("truetype");
+  src: url("/art/fonts/liberation/LiberationSans-Bold.woff2") format("woff2");
   font-weight: 700;
   font-display: swap;
 }

@@ -7,19 +7,19 @@ const UI_FONTS = {
       key: FONT_ROLES.body,
       role: "body",
       style: "normal",
-      url: "/art/fonts/liberation/LiberationSans-Regular.ttf",
+      url: "/art/fonts/liberation/LiberationSans-Regular.woff2",
       weight: "400",
     },
     {
       key: FONT_ROLES.heading,
       role: "heading",
       style: "normal",
-      url: "/art/fonts/liberation/LiberationSans-Bold.ttf",
+      url: "/art/fonts/liberation/LiberationSans-Bold.woff2",
       weight: "700",
     },
   ],
   family: "Liberation Sans",
-  format: "truetype",
+  format: "woff2",
 } as const;
 
 export const UI_FONT_FAMILY = UI_FONTS.family;
