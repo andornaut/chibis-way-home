@@ -7,13 +7,14 @@ import reedSheet from "../../public/art/sprites/background-reeds.json" with { ty
 import swallowSheet from "../../public/art/sprites/background-swallow.json" with { type: "json" };
 import { artOffset, backgroundGroundOffset } from "../presentation/index.ts";
 import { assembleZone } from "../rules/assemble.ts";
-import { objectLayout } from "../rules/tiles.ts";
+import { objectLayout, zoneLayout } from "../rules/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
-import { stageLoader } from "../sim/catalogue.ts";
+import { nodeArt, stageLoader } from "../sim/catalogue.ts";
 import { sceneryParallax, worldScenery } from "../stage/index.ts";
 import { ARCHETYPES } from "./archetypes.ts";
 import { BACKGROUND_SECTIONS } from "./backgrounds.ts";
 import { CAMERA } from "./camera.ts";
+import { CHARACTERS } from "./characters.ts";
 import {
   CHUNKS,
   EXTERIOR_DEPTH_ALIASES,
@@ -308,8 +309,17 @@ it("appends grounded Woodland fauna without changing physical indices or seeded 
     expect(area.chunks).toEqual(original.chunks);
     expect(area.objects.length).toBeGreaterThan(original.objects.length);
   }
-  const prepared = stageLoader("deep-woods")(1);
-  const scenery = Object.values(prepared.layout.areas).flatMap(({ objects }) =>
+  const { birdFrame, hitboxes, tilesets } = nodeArt();
+  const layout = zoneLayout(
+    TILE,
+    birdFrame,
+    { archetypes: ARCHETYPES, characters: CHARACTERS },
+    hitboxes,
+    tilesets,
+    new Set(),
+    after,
+  );
+  const scenery = Object.values(layout.areas).flatMap(({ objects }) =>
     objects.filter((object) => object.art in WOODLAND_SCENERY_CHARACTERS),
   );
   expect(scenery.length).toBeGreaterThan(0);
@@ -319,9 +329,7 @@ it("appends grounded Woodland fauna without changing physical indices or seeded 
     expect(object.contact).toBeUndefined();
     expect(object.interaction.kind).toBe("none");
     if (object.art !== "background-swallow") {
-      const area = Object.values(prepared.layout.areas).find(({ objects }) =>
-        objects.includes(object),
-      )!;
+      const area = Object.values(layout.areas).find(({ objects }) => objects.includes(object))!;
       expect(
         area.solids.some(
           (solid) =>
