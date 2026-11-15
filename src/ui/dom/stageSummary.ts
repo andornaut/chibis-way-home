@@ -172,10 +172,11 @@ export function createStageSummary(
   zone.id = `${id}-zone`;
   const preview = element("img", "stage-summary-preview");
   preview.alt = "";
-  const stats = createRunStats(document, { columnGap: 2 * CARD_CONTENT.padding }, [
-    words.stats,
-    words.totals,
-  ]);
+  const stats = createRunStats(
+    document,
+    { columnGap: 2 * CARD_CONTENT.padding, sizing: { mode: "equal" } },
+    [words.stats, words.totals],
+  );
   dialog.append(
     zone,
     text("p", "stage-summary-stage", words.stage),

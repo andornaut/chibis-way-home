@@ -1,3 +1,4 @@
+import type { LayoutColumnSizing } from "@andornaut/game-kit/runtime/ui/layoutTree";
 import { createPageDivider } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 import {
   type LayoutValues,
@@ -7,6 +8,7 @@ import { slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT } from "../../data/layout.ts";
 import type { StatsMetricRow } from "../layout/runStats.ts";
+import { mountUiLayout } from "./layoutTree.ts";
 
 // Run statistics in the HTML UI (runStats.css): side-by-side columns of equal width, each a
 // description list of metric rows with the label at its left and the value at its right, and an
@@ -18,6 +20,8 @@ export interface RunStatsLayout {
   readonly columnGap: number;
   // The divider's width in base px, kept whole in CSS px; none where undefined.
   readonly divider?: number;
+  // Bounded callers opt into canonical column sizing; content-sized cards retain intrinsic sizing.
+  readonly sizing?: LayoutColumnSizing;
 }
 
 // The layout properties runStats.css reads, written on the statistics' element.
@@ -42,8 +46,6 @@ export function createRunStats(
     created.className = className;
     return created;
   };
-  const stats = element("div", "ui-run-stats");
-  writeLayoutProperties(runStatsProperties(layout), stats);
   const lists = columns.map((rows) => {
     const list = element("dl", "ui-run-stats-column");
     list.append(
@@ -59,21 +61,43 @@ export function createRunStats(
     );
     return list;
   });
-  if (layout.divider === undefined) {
-    stats.append(...lists);
+  const children =
+    layout.divider === undefined
+      ? lists
+      : lists.flatMap((list, index) => {
+          if (index === 0) {
+            return [list];
+          }
+          const divider = createPageDivider(document);
+          divider.classList.add("ui-run-stats-divider");
+          divider.setAttribute("aria-hidden", "true");
+          return [divider, list];
+        });
+  let stats: HTMLElement;
+  if (layout.sizing === undefined) {
+    stats = element("div", "ui-run-stats");
+    stats.append(...children);
   } else {
-    stats.dataset.divider = "";
-    stats.append(
-      ...lists.flatMap((list, index) => {
-        if (index === 0) {
-          return [list];
-        }
-        const divider = createPageDivider(document);
-        divider.classList.add("ui-run-stats-divider");
-        divider.setAttribute("aria-hidden", "true");
-        return [divider, list];
-      }),
-    );
+    const host = document.createElement("div");
+    mountUiLayout(document, host, {
+      children: children.map((element, index) => ({
+        component: "Native",
+        key: String(index),
+        kind: "component",
+        props: { element },
+      })),
+      gap: layout.columnGap,
+      key: "run-stats",
+      kind: "columns",
+      padding: 0,
+      sizing: layout.sizing,
+    });
+    stats = host.firstElementChild as HTMLElement;
+    stats.classList.add("ui-run-stats");
   }
+  if (layout.divider !== undefined) {
+    stats.dataset.divider = "";
+  }
+  writeLayoutProperties(runStatsProperties(layout), stats);
   return stats;
 }

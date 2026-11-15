@@ -1,8 +1,30 @@
+// @vitest-environment happy-dom
 import { expect, it } from "vitest";
 
 import { CARD_CONTENT } from "../../data/layout.ts";
 import { capTop, FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
-import { stageSummaryGaps } from "./stageSummary.ts";
+import { createStageSummary, stageSummaryGaps } from "./stageSummary.ts";
+
+it("opts the fixed-width summary statistics into canonical columns without changing reading order", () => {
+  const view = createStageSummary(document, "summary", {
+    continue: "Continue",
+    progress: "Progress",
+    stage: "Stage",
+    stats: [{ label: "Last time:", value: "1:05" }],
+    totals: [{ label: "Run total:", value: "10:10" }],
+    zone: "Zone",
+  });
+  const stats = view.dialog.querySelector<HTMLElement>(":scope > .ui-run-stats")!;
+  expect(stats.dataset.uiLayoutSizing).toBe("equal");
+  expect(stats.style.getPropertyValue("--ui-layout-gap")).toBe(String(2 * CARD_CONTENT.padding));
+  expect([...stats.querySelectorAll("dt, dd")].map((node) => node.textContent)).toEqual([
+    "Last time:",
+    "1:05",
+    "Run total:",
+    "10:10",
+  ]);
+  expect(view.dialog.getAttribute("aria-labelledby")).toBe("summary-zone");
+});
 
 // Each row's box trims to its cap height and baseline, so its margin adds the ink the previous row
 // drops below its baseline and the ink this row lifts above its cap height to the rule's gap.
