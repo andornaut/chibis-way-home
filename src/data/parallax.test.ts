@@ -10,6 +10,7 @@ import { assembleZone } from "../rules/assemble.ts";
 import { objectLayout, zoneLayout } from "../rules/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
 import { nodeArt, stageLoader } from "../sim/catalogue.ts";
+import type { PreparedStage } from "../sim/simulate.ts";
 import { sceneryParallax, worldScenery } from "../stage/index.ts";
 import { ARCHETYPES } from "./archetypes.ts";
 import { BACKGROUND_SECTIONS } from "./backgrounds.ts";
@@ -28,6 +29,17 @@ import type { ChunkPlan, Instance, ObjectLayout } from "./types/index.ts";
 import { WOODLAND_SCENERY, WOODLAND_SCENERY_CHARACTERS } from "./woodlandScenery.ts";
 import { APARTMENT_WINDOW } from "./zone6.ts";
 import { RECIPES } from "./zones.ts";
+
+const stageFixtures = new Map<string, PreparedStage>();
+const stageFixture = (seed: number, id: string): PreparedStage => {
+  const key = JSON.stringify([seed, id]);
+  let prepared = stageFixtures.get(key);
+  if (prepared === undefined) {
+    prepared = stageLoader(id)(seed);
+    stageFixtures.set(key, prepared);
+  }
+  return prepared;
+};
 
 const depth = (object: Pick<ObjectLayout, "parallax">) =>
   object.parallax !== undefined && (object.parallax.x < 1 || object.parallax.y < 1);
@@ -131,7 +143,7 @@ describe.each(ZONE_MAP.destinations.flatMap(({ stages }) => stages))(
   "stage %s depth coverage",
   (id) => {
     it("covers outdoor areas continuously and preserves authored indoor windows and stage limits", () => {
-      const prepared = stageLoader(id)(1);
+      const prepared = stageFixture(1, id);
       const recipe = RECIPES[id]!;
       let cols = 0;
       let encounters = 0;
@@ -224,7 +236,7 @@ it("uses Woodland depth variants for horizontal challenges while preserving plai
       ),
     );
     expect(factors.size).toBeGreaterThan(0);
-    const area = stageLoader(theme)(1).layout.areas.main!;
+    const area = stageFixture(1, theme).layout.areas.main!;
     for (const cap of [area.chunks[0]!, area.chunks.at(-1)!]) {
       for (const [key, parallax] of factors) {
         const spans = area.objects
@@ -389,7 +401,7 @@ it("uses looping art tags and only stationary animation nodes for decorative wil
 });
 
 it("keeps generated Woodland fills on the authored same-art vertical reference", () => {
-  const prepared = stageLoader("deep-woods")(1);
+  const prepared = stageFixture(1, "deep-woods");
   let compared = 0;
   for (const area of Object.values(prepared.layout.areas)) {
     const authored = area.objects.filter((object) => depth(object) && !object.backdropSpan);
