@@ -32,9 +32,9 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { decodePng, encodeRgbPng } from "@andornaut/art-kit/png";
-import { composite, crop, filledImage } from "@andornaut/art-kit/raster";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { decodePng, encodeRgbPng } from "@andornaut/art-kit/build/png";
+import { composite, crop, filledImage } from "@andornaut/art-kit/build/raster";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { TILE as T } from "../../src/data/screen.ts";
 import { commands, run } from "./cli.ts";

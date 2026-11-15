@@ -10,7 +10,7 @@
  * furniture contact sheet beside the 48x42 bird, not a proposed level layout.
  */
 
-import { paste } from "@andornaut/art-kit/raster";
+import { paste } from "@andornaut/art-kit/build/raster";
 
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";

@@ -16,7 +16,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
+import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/build/png";
 import {
   composite,
   crop,
@@ -24,8 +24,8 @@ import {
   filledImage,
   frameToRgba,
   resizeNearest,
-} from "@andornaut/art-kit/raster";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+} from "@andornaut/art-kit/build/raster";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { commands, run } from "./cli.ts";
 import { frameImage, greyscale, rgba } from "./imageArt.ts";

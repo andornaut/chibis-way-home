@@ -5,8 +5,8 @@
  * contour pass.
  */
 
-import * as draw from "@andornaut/art-kit/draw";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import * as draw from "@andornaut/art-kit/build/draw";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import * as pixel from "./pixel.ts";
 

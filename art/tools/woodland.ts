@@ -34,7 +34,7 @@
  *   loops. The renderer repeats it across the band, bottom on the band bottom.
  */
 
-import { opaque } from "@andornaut/art-kit/raster";
+import { opaque } from "@andornaut/art-kit/build/raster";
 
 import { TILE as T } from "../../src/data/screen.ts";
 import * as backgroundTones from "./backgroundTones.ts";

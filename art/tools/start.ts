@@ -14,10 +14,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, posix } from "node:path";
 
-import { rectangle } from "@andornaut/art-kit/draw";
-import { encodeRgbaPng } from "@andornaut/art-kit/png";
-import { filledImage, resizeNearest, type Rgba } from "@andornaut/art-kit/raster";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { rectangle } from "@andornaut/art-kit/build/draw";
+import { encodeRgbaPng } from "@andornaut/art-kit/build/png";
+import { filledImage, resizeNearest, type Rgba } from "@andornaut/art-kit/build/raster";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { commands, run } from "./cli.ts";
 import { dumpJson, type ManifestEntry, rgb } from "./pixel.ts";

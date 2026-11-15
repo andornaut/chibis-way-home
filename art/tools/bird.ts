@@ -78,8 +78,8 @@
  * each.
  */
 
-import { crop, frameToRgba, paste, rotateNearest } from "@andornaut/art-kit/raster";
-import { blankImage } from "@andornaut/art-kit/rgbaImage";
+import { crop, frameToRgba, paste, rotateNearest } from "@andornaut/art-kit/build/raster";
+import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";

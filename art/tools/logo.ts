@@ -22,8 +22,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { basename, dirname } from "node:path";
 
-import { line, rectangle } from "@andornaut/art-kit/draw";
-import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
+import { line, rectangle } from "@andornaut/art-kit/build/draw";
+import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/build/png";
 import {
   composite,
   crop,
@@ -31,8 +31,8 @@ import {
   opaque,
   paste,
   resizeNearest,
-} from "@andornaut/art-kit/raster";
-import { blankImage, opaqueRect, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
+} from "@andornaut/art-kit/build/raster";
+import { blankImage, opaqueRect, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import * as birdArt from "./bird.ts";
 import { commands, run } from "./cli.ts";

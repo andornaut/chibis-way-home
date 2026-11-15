@@ -30,8 +30,8 @@
  * ink (11.0:1 on lgrey), so no pale fill touches the card face.
  */
 
-import { composite, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { composite, filledImage, resizeNearest } from "@andornaut/art-kit/build/raster";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { commands, run } from "./cli.ts";
 import { frameImage, writeRgbImage } from "./imageArt.ts";

@@ -84,8 +84,8 @@
 
 import { mkdirSync, writeFileSync } from "node:fs";
 
-import { encodeRgbPng } from "@andornaut/art-kit/png";
-import { opaque, resizeNearest } from "@andornaut/art-kit/raster";
+import { encodeRgbPng } from "@andornaut/art-kit/build/png";
+import { opaque, resizeNearest } from "@andornaut/art-kit/build/raster";
 
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";

@@ -11,9 +11,9 @@
  * contact mask, hitbox, portrait, interaction or dialogue.
  */
 
-import { polygon } from "@andornaut/art-kit/draw";
-import { blankImage } from "@andornaut/art-kit/rgbaImage";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
+import { polygon } from "@andornaut/art-kit/build/draw";
+import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
+import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 
 import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";

@@ -40,7 +40,7 @@
  * No red, amber or round pickup shapes.
  */
 
-import { opaque } from "@andornaut/art-kit/raster";
+import { opaque } from "@andornaut/art-kit/build/raster";
 
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";

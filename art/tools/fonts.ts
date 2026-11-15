@@ -22,12 +22,12 @@
 import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename } from "node:path";
 
-import { rasteriseGlyphs } from "@andornaut/art-kit/fonts";
-import { buildBitmapFontFromGlyphs } from "@andornaut/art-kit/glyphAtlas";
-import { encodeRgbaPng } from "@andornaut/art-kit/png";
-import { composite, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
-import { encodeWoff2 } from "@andornaut/art-kit/woff2";
+import { rasteriseGlyphs } from "@andornaut/art-kit/build/fonts";
+import { buildBitmapFontFromGlyphs } from "@andornaut/art-kit/build/glyphAtlas";
+import { encodeRgbaPng } from "@andornaut/art-kit/build/png";
+import { composite, filledImage, resizeNearest } from "@andornaut/art-kit/build/raster";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
+import { encodeWoff2 } from "@andornaut/art-kit/build/woff2";
 
 import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";

@@ -24,7 +24,7 @@
  * makes no physics claim.
  */
 
-import { opaque, paste } from "@andornaut/art-kit/raster";
+import { opaque, paste } from "@andornaut/art-kit/build/raster";
 
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";

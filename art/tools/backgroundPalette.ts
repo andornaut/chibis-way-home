@@ -7,7 +7,12 @@
  * geometry are not paint data.
  */
 
-import { oklchToSrgb, rgb as bytes, srgbToOklab, srgbToOklch } from "@andornaut/art-kit/colour";
+import {
+  oklchToSrgb,
+  rgb as bytes,
+  srgbToOklab,
+  srgbToOklch,
+} from "@andornaut/art-kit/build/colour";
 
 import { THEMES } from "./zoneThemes.ts";
 

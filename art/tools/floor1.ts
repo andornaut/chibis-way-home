@@ -139,7 +139,7 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { encodeRgbPng } from "@andornaut/art-kit/png";
+import { encodeRgbPng } from "@andornaut/art-kit/build/png";
 import {
   composite,
   crop,
@@ -148,8 +148,8 @@ import {
   opaque,
   paste,
   resizeNearest,
-} from "@andornaut/art-kit/raster";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+} from "@andornaut/art-kit/build/raster";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import * as backgroundTones from "./backgroundTones.ts";
 import { commands, run } from "./cli.ts";

@@ -6,17 +6,21 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-import { contrast as hexContrast, rgb as hexRgb } from "@andornaut/art-kit/colour";
-import { flipped as flipFrame, type Frame, Grid as SharedGrid } from "@andornaut/art-kit/grid";
-import { encodeIndexedPng } from "@andornaut/art-kit/indexedPng";
-import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
+import { contrast as hexContrast, rgb as hexRgb } from "@andornaut/art-kit/build/colour";
+import {
+  flipped as flipFrame,
+  type Frame,
+  Grid as SharedGrid,
+} from "@andornaut/art-kit/build/grid";
+import { encodeIndexedPng } from "@andornaut/art-kit/build/indexedPng";
+import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/build/png";
 import {
   composeContactSheet,
   composeSheet,
   type Tag as SpriteSheetTag,
-} from "@andornaut/art-kit/raster";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
-import { writeSpriteSheet } from "@andornaut/art-kit/spriteSheet";
+} from "@andornaut/art-kit/build/raster";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
+import { writeSpriteSheet } from "@andornaut/art-kit/build/spriteSheet";
 
 import { TILE } from "../../src/data/screen.ts";
 import * as backgroundPalette from "./backgroundPalette.ts";

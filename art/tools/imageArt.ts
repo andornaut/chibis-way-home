@@ -7,8 +7,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-import * as draw from "@andornaut/art-kit/draw";
-import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
+import * as draw from "@andornaut/art-kit/build/draw";
+import { decodePng, encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/build/png";
 import {
   composite,
   crop,
@@ -18,8 +18,8 @@ import {
   grayscale,
   opaque,
   type Rgba,
-} from "@andornaut/art-kit/raster";
-import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
+} from "@andornaut/art-kit/build/raster";
+import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import * as pixel from "./pixel.ts";
 

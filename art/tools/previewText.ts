@@ -10,8 +10,8 @@ import {
   drawBitmapText,
   measureBitmapText,
   readBitmapFont,
-} from "@andornaut/art-kit/bitmapFont";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+} from "@andornaut/art-kit/build/bitmapFont";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { buildPreviewFont, PREVIEW_FONT } from "./fonts.ts";
 import { readImage } from "./imageArt.ts";

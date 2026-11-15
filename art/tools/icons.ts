@@ -35,10 +35,10 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-import { encodeIco } from "@andornaut/art-kit/ico";
-import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/png";
-import { composite, filledImage, opaque, resizeNearest } from "@andornaut/art-kit/raster";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { encodeIco } from "@andornaut/art-kit/build/ico";
+import { encodeRgbaPng, encodeRgbPng } from "@andornaut/art-kit/build/png";
+import { composite, filledImage, opaque, resizeNearest } from "@andornaut/art-kit/build/raster";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import * as bird from "./bird.ts";
 import { commands, run } from "./cli.ts";

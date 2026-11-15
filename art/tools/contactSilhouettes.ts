@@ -12,9 +12,9 @@
 
 import { readFileSync, writeFileSync } from "node:fs";
 
-import { decodePng } from "@andornaut/art-kit/png";
-import { channel, crop } from "@andornaut/art-kit/raster";
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { decodePng } from "@andornaut/art-kit/build/png";
+import { channel, crop } from "@andornaut/art-kit/build/raster";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";

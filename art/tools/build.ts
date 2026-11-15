@@ -14,7 +14,12 @@
 //
 // Run from the repository root in the node:24.22.2 check container. It spawns only node and reaches
 // no network.
-import { buildCommand, buildOrder, type BuildSets, nodeBuild } from "@andornaut/art-kit/build";
+import {
+  buildCommand,
+  buildOrder,
+  type BuildSets,
+  nodeBuild,
+} from "@andornaut/art-kit/build/build";
 
 import * as pixel from "./pixel.ts";
 

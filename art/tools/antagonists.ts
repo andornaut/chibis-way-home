@@ -30,9 +30,9 @@
  * ears, red bandana and sky/amber eyes.
  */
 
-import { arc, ellipse, line, point, polygon, rectangle } from "@andornaut/art-kit/draw";
-import { composite, fill, type Rgba } from "@andornaut/art-kit/raster";
-import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { arc, ellipse, line, point, polygon, rectangle } from "@andornaut/art-kit/build/draw";
+import { composite, fill, type Rgba } from "@andornaut/art-kit/build/raster";
+import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { run } from "./cli.ts";
 import { rgba } from "./imageArt.ts";

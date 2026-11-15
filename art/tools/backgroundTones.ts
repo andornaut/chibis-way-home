@@ -13,7 +13,7 @@
  * backdrop keys only.
  */
 
-import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import * as backgroundPalette from "./backgroundPalette.ts";
 import { commands, run } from "./cli.ts";

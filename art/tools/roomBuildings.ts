@@ -15,10 +15,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-import { polygon } from "@andornaut/art-kit/draw";
-import { decodePng, encodeRgbaPng } from "@andornaut/art-kit/png";
-import { composite, crop, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
-import { blankImage, type RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { polygon } from "@andornaut/art-kit/build/draw";
+import { decodePng, encodeRgbaPng } from "@andornaut/art-kit/build/png";
+import { composite, crop, filledImage, resizeNearest } from "@andornaut/art-kit/build/raster";
+import { blankImage, type RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { ROOM_BUILDING_OPENING } from "../../src/data/roomBuildings.ts";
 import { TILE } from "../../src/data/screen.ts";
