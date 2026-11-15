@@ -111,6 +111,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   private frames: MenuFrame[] = [];
   private mode: "menu" | "pause" = "pause";
   private homeShown = true;
+  private returnEntryFocus = false;
   private waitingFor: string | undefined;
   private entryMode: "menu" | "pause" = "pause";
   private live = false;
@@ -140,6 +141,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.menuGeneration++;
     this.state = "closed";
     this.frames = [];
+    this.returnEntryFocus = false;
     this.live = true;
     this.waitingFor = undefined;
     this.overScene = undefined;
@@ -297,11 +299,14 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
         mode: this.mode,
         nestedFocus: this.nestedFocus,
         over: this.overScene,
+        returnEntryFocus: this.returnEntryFocus,
         state: this.state,
         waitFor: this.state === "open" ? context.scene : undefined,
       });
     }
     const generation = ++this.menuGeneration;
+    // Disabling the entry during readiness can blur it before the modal captures its opener.
+    this.returnEntryFocus = document.activeElement === this.view?.pauseButton;
     this.state = "opening";
     this.closeModal?.();
     this.closeModal = undefined;
@@ -332,6 +337,8 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     if (this.state !== "open" || !modalInput(this).accepts()) {
       return;
     }
+    const returnToEntry = this.returnEntryFocus;
+    this.returnEntryFocus = false;
     this.state = "closed";
     modalInput(this).close();
     this.showCard(false);
@@ -344,11 +351,12 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       this.state = frame.state;
       this.heldScenes = frame.held;
       this.overScene = frame.over;
+      this.returnEntryFocus = frame.returnEntryFocus;
       this.mode = frame.mode;
       this.nestedFocus = frame.nestedFocus;
       this.homeShown = frame.homeShown;
       this.waitingFor = frame.waitFor;
-      this.showControls();
+      this.restoreEntryFocus(returnToEntry);
       return;
     }
     this.destroyDim();
@@ -356,6 +364,15 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.heldScenes = [];
     startWakeLock();
     coverZone("pauseCard", false);
+    this.restoreEntryFocus(returnToEntry);
+  }
+
+  private restoreEntryFocus(focused: boolean): void {
+    this.showControls();
+    const entry = this.view?.pauseButton;
+    if (focused && entry?.isConnected && !entry.disabled && !entry.hidden) {
+      focusTarget(entry);
+    }
   }
 
   private syncMenuVisibility(): void {
@@ -378,6 +395,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   private returnHome(): void {
     updateOffer.defer();
     this.frames = [];
+    this.returnEntryFocus = false;
     this.waitingFor = undefined;
     this.state = "closed";
     this.overScene = undefined;

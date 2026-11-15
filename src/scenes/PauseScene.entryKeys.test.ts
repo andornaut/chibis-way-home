@@ -97,6 +97,18 @@ async function startMenu() {
     },
     stop: vi.fn(),
   });
+  // Model native blur when disabling a focused button, which Happy DOM keeps focused.
+  const disabled = Object.getOwnPropertyDescriptor(HTMLButtonElement.prototype, "disabled")!;
+  Object.defineProperty(pause.pauseButton, "disabled", {
+    configurable: true,
+    get: () => disabled.get!.call(pause.pauseButton) as boolean,
+    set: (value: boolean) => {
+      if (value && document.activeElement === pause.pauseButton) {
+        pause.pauseButton.blur();
+      }
+      disabled.set!.call(pause.pauseButton, value);
+    },
+  });
   start.create();
   await settle();
   pause.update();
@@ -170,3 +182,23 @@ it.each(["Enter", " "])(
     expect(exit).not.toHaveBeenCalled();
   },
 );
+
+it("returns keyboard focus to the Menu entry after native disabled-button blur and Escape", async () => {
+  const f = await startMenu();
+  f.key("Tab");
+  f.key("Tab");
+  f.key("Tab");
+  expect(document.activeElement).toBe(f.pause.pauseButton);
+  f.key("Enter");
+  await settle();
+  expect(document.activeElement).toBe(f.pause.dialog);
+  f.key("Escape");
+  await settle();
+  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+  expect(document.activeElement).toBe(f.pause.pauseButton);
+  f.key(" ");
+  await settle();
+  expect(exit).not.toHaveBeenCalled();
+  expect(f.start.scene.start).not.toHaveBeenCalled();
+  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
+});
