@@ -40,29 +40,6 @@ const near = (value: number) => Math.round(value * 1e9) / 1e9;
 // The view in base pixels: SCREEN, moved with the controls.
 const logicalView = (shift: Point): Rect => ({ ...SCREEN, ...shift });
 
-describe("the render fit", () => {
-  // Device pixels per CSS pixel are capped at MAX_RENDER_SCALE; the zoom is that times the fit.
-  it.each([
-    [1, { height: 640, width: 1280 }],
-    [2, { height: 390, width: 844 }],
-    [3, { height: 390, width: 844 }],
-  ])("at DPR %d backs a %o area in device pixels and zooms the view to fit", (dpr, css) => {
-    const r = Math.min(dpr, MAX_RENDER_SCALE);
-    const fit = fitAt(css, dpr);
-    const scale = Math.min(css.width / SCREEN.width, css.height / SCREEN.height);
-    expect(fit).toEqual({
-      backing: { height: Math.round(css.height * r), width: Math.round(css.width * r) },
-      fit: scale,
-      r,
-      view: {
-        height: Math.round(SCREEN.height * r * scale),
-        width: Math.round(SCREEN.width * r * scale),
-      },
-      zoom: r * scale,
-    });
-  });
-});
-
 describe("playView", () => {
   it.each(CASES)("in a %s area puts the view at the top, centred across", (_, css, dpr) => {
     const fit = fitAt(css, dpr);

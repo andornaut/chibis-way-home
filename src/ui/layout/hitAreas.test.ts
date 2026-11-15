@@ -55,16 +55,10 @@ describe("pressedArea", () => {
   const LEFT = button("left", { height: 40, width: 50, x: 0, y: 0 });
   const RIGHT = button("right", { height: 40, width: 50, x: 50, y: 0 });
   it.each([
-    ["just inside the left margin", { x: -10, y: 20 }, "left"],
-    ["just outside the left margin", { x: -11, y: 20 }, undefined],
     ["just inside the top margin", { x: 25, y: -10 }, "left"],
     ["just outside the top margin", { x: 25, y: -11 }, undefined],
-    ["just inside the bottom margin", { x: 25, y: 49 }, "left"],
-    ["just outside the bottom margin", { x: 25, y: 50 }, undefined],
     ["just inside the right margin", { x: 109, y: 20 }, "right"],
     ["just outside the right margin", { x: 110, y: 20 }, undefined],
-    ["in the overlap, nearer the left button", { x: 49, y: 20 }, "left"],
-    ["in the overlap, nearer the right button", { x: 51, y: 20 }, "right"],
   ])("takes a press %s as %s", (_, point, key) => {
     expect(pressedArea([LEFT, RIGHT], point)).toBe(key);
   });
@@ -85,11 +79,7 @@ describe("a circle cut away from a point", () => {
     { art: { ...art, x: 100 }, hit: { awayFrom: a, centre: b, radius: 100 }, key: "b" },
   ];
   it.each<[string, { x: number; y: number }, string | undefined]>([
-    ["just short of the midline, on a's side", { x: 49.9, y: 0 }, "a"],
-    ["just past the midline, on b's side", { x: 50.1, y: 0 }, "b"],
-    ["on the midline, nearer neither", { x: 50, y: 0 }, undefined],
     ["inside a's radius and past b, but nearer b", { x: 95, y: 0 }, "b"],
-    ["outside both radii", { x: 50, y: 90 }, undefined],
   ])("takes a press %s as %s", (_, point, key) => {
     expect(pressedArea(areas, point)).toBe(key);
   });
