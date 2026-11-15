@@ -32,11 +32,3 @@ export const CARD_FRAME = {
 export function cardRect(height: number): Rect {
   return { height, width: CARD_WIDTH, ...CARD_AT };
 }
-
-// Centre title ink in the shared single-line title slot.
-export function cardTitleAt(card: Rect, ink: Rect): Point {
-  return {
-    x: card.x + (card.width - ink.width) / 2 - ink.x,
-    y: card.y + CARD_FRAME.titleY - CARD_AT.y + (CARD_CONTENT.lineHeight - ink.height) / 2 - ink.y,
-  };
-}

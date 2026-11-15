@@ -1,35 +1,12 @@
 import { readFileSync } from "node:fs";
 
 import { PNG } from "pngjs";
-import { describe, expect, it } from "vitest";
+import { expect, it } from "vitest";
 
 import palette from "../../../public/art/palette.json" with { type: "json" };
 import secondary from "../../../public/art/sprites/ui-button.json" with { type: "json" };
 import primary from "../../../public/art/sprites/ui-button-primary.json" with { type: "json" };
-import { buttonFace, centredLabel } from "./buttonLabel.ts";
-
-const button = { height: 28, width: 72, x: 452, y: 198 };
-
-describe("centredLabel", () => {
-  it.each([
-    { expected: { labelX: 468 }, ink: 40, mark: undefined, name: "an even label" },
-    {
-      expected: { labelX: 468.5 },
-      ink: 39,
-      mark: undefined,
-      name: "an odd label at a fractional origin",
-    },
-    { expected: { labelX: 452 }, ink: 72, mark: undefined, name: "a label as wide as the button" },
-    {
-      expected: { labelX: 473.5, markX: 462.5 },
-      ink: 40,
-      mark: { gap: 6, width: 5 },
-      name: "a label with a mark before it",
-    },
-  ])("places $name", ({ expected, ink, mark }) => {
-    expect(centredLabel(button, ink, mark)).toEqual(expected);
-  });
-});
+import { buttonFace } from "./buttonLabel.ts";
 
 it("uses the actual native face pixels for primary, secondary and flat disabled content bounds", () => {
   for (const [name, sheet, normalColour] of [

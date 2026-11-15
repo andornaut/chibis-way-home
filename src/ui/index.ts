@@ -159,7 +159,7 @@ export {
 } from "./layout/achievementsCard.ts";
 export { ACTION_HELP } from "./layout/actionHelp.ts";
 export { buttonFace, type ButtonFaceState } from "./layout/buttonLabel.ts";
-export { CARD_TEXT_SCALE, cardTitleAt } from "./layout/cardFrame.ts";
+export { CARD_TEXT_SCALE } from "./layout/cardFrame.ts";
 export { CELEBRATION } from "./layout/celebrationCard.ts";
 export {
   contactBorder,
