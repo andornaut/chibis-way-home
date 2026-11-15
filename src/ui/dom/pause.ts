@@ -228,8 +228,8 @@ export function showSkillButton(
 // Vertical menu actions keep the primary last in both reading and visual order.
 export function pauseMenuActions(words: PauseWords["card"]): CardWords<PauseCardButton>["actions"] {
   return [
-    { key: "settings", label: words.settings },
     { key: "achievements", label: words.achievements },
+    { key: "settings", label: words.settings },
     { key: "home", label: words.home },
     { key: "resume", label: words.resume, primary: true },
   ];

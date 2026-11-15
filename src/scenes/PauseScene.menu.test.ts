@@ -153,11 +153,26 @@ it("opens the Start Menu with bottom-primary Close and returns focus without cha
     (button) => !button.hidden,
   );
   expect(rows.map((button) => button.textContent)).toEqual([
-    TEXT.pause.settings,
     TEXT.start.achievements,
+    TEXT.pause.settings,
     TEXT.pause.close,
   ]);
   expect(rows.at(-1)?.classList.contains("ui-text-button-primary")).toBe(true);
+  expect(document.activeElement).toBe(f.pause.dialog);
+  const names = Array.from({ length: 5 }, () => {
+    pressKey([], "Tab");
+    return (
+      document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.textContent
+    );
+  });
+  expect(names).toEqual([
+    TEXT.start.achievements,
+    TEXT.pause.settings,
+    TEXT.pause.close,
+    TEXT.pause.close,
+    TEXT.start.achievements,
+  ]);
+  f.pause.dialog.focus();
   pressKey([f.pause.keyboard], "Enter");
   expect(f.active.has("start")).toBe(true);
   expect(f.scenes.resume).toHaveBeenCalledExactlyOnceWith("start");

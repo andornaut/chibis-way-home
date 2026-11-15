@@ -966,7 +966,10 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       if (event.target === dialog && (action === "next" || action === "previous")) {
         event.preventDefault();
         event.stopPropagation();
-        (action === "next" ? view.card.buttons.settings : view.card.close).focus();
+        (action === "next"
+          ? view.card.buttons[this.mode === "menu" ? "achievements" : "settings"]
+          : view.card.close
+        ).focus();
       }
     };
     dialog.addEventListener("keydown", onKeyDown);
