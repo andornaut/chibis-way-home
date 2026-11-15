@@ -28,6 +28,7 @@ import {
 import { serviceWorkerUrl } from "@andornaut/game-kit/runtime/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/runtime/web/pwa/storagePersistence";
 
+import { installationFeedback } from "../loading/required.ts";
 import { trackOfflineLoading } from "../loading/serviceWorker.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
 import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen.ts";
@@ -63,10 +64,16 @@ function setupOfflinePlay(): Promise<LaunchResult> {
   if (page === undefined) {
     return Promise.resolve("continue");
   }
+  const firstVisit = page.container.controller === null;
   const loading = trackOfflineLoading();
   const play = startOfflinePlay(
     {
       onDownloadProgress: loading.progress,
+      onInstallationState: (state) => {
+        if (firstVisit) {
+          installationFeedback.report(state);
+        }
+      },
       onOfflineActivity: loading.activity,
       onRequireNewer: requiredUpdate.report,
       onUpdateShown: updateOffer.setVisible,
@@ -75,6 +82,9 @@ function setupOfflinePlay(): Promise<LaunchResult> {
     page,
   );
   offlinePlay = play;
+  if (firstVisit) {
+    installationFeedback.bind(() => play.retryInstallation());
+  }
   home = trackHomeScreen(
     play.flow.setOfferVisible,
     () => play.registrationReady(),
@@ -126,6 +136,7 @@ export function exitShown(): boolean {
 // offer, reporting through requiredUpdate. Without offline play (the dev server) none can come,
 // so it reports "unavailable" at once.
 export function requireNewer(): void {
+  installationFeedback.suppress();
   if (offlinePlay === undefined) {
     requiredUpdate.report("unavailable");
   } else {

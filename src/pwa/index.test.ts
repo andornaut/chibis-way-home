@@ -1,4 +1,5 @@
 import type {
+  InstallationState,
   LaunchResult,
   OfflinePage,
   OfflinePlay,
@@ -17,6 +18,7 @@ const offline = vi.hoisted(() => {
     },
     launchReady: vi.fn<() => Promise<LaunchResult>>(async () => "continue"),
     registrationReady: vi.fn(),
+    retryInstallation: vi.fn<() => Promise<InstallationState>>(),
   };
   return {
     page: {} as unknown,
@@ -28,6 +30,8 @@ const offline = vi.hoisted(() => {
     }),
   };
 });
+const feedback = vi.hoisted(() => ({ bind: vi.fn(), report: vi.fn(), suppress: vi.fn() }));
+vi.mock("../loading/required.ts", () => ({ installationFeedback: feedback }));
 vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay", () => ({
   browserOfflinePage: () => offline.page,
   startOfflinePlay: offline.start,
@@ -68,7 +72,7 @@ beforeEach(() => {
   );
   vi.stubGlobal("navigator", navigator);
   vi.stubGlobal("document", {});
-  offline.page = {};
+  offline.page = { container: { controller: null } };
 });
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -111,6 +115,7 @@ it("forwards a forced update to the kit and its reports to requiredUpdate", asyn
   pwa.requiredUpdate.subscribe((state) => states.push(state));
   pwa.requireNewer();
   expect(offline.play.flow.requireNewer).toHaveBeenCalledOnce();
+  expect(feedback.suppress).toHaveBeenCalledOnce();
   options.onRequireNewer("updating");
   options.onRequireNewer("unavailable");
   expect(states).toEqual(["updating", "unavailable"]);
@@ -365,3 +370,47 @@ it.each([
     expect(pwa.exitShown()).toBe(shown);
   },
 );
+
+it("retains first-install reports arriving before play binding and delegates only explicit Retry", async () => {
+  const failed: InstallationState = {
+    attempt: 1,
+    error: new Error("install failed"),
+    kind: "failed",
+    operationId: undefined,
+    stage: "installation",
+    version: undefined,
+  };
+  offline.play.retryInstallation.mockResolvedValueOnce(failed);
+  offline.start.mockImplementationOnce((options, page) => {
+    options.onInstallationState!(failed);
+    expect(feedback.bind).not.toHaveBeenCalled();
+    Object.assign(page.container, { controller: {} });
+    return offline.play as unknown as OfflinePlay;
+  });
+  const pwa = await import("./index.ts");
+  await pwa.setupPhoneApp();
+  expect(feedback.report).toHaveBeenCalledExactlyOnceWith(failed);
+  expect(offline.play.registrationReady).not.toHaveBeenCalled();
+  expect(offline.play.retryInstallation).not.toHaveBeenCalled();
+  const retry = feedback.bind.mock.calls[0]![0] as () => Promise<InstallationState>;
+  expect(await retry()).toBe(failed);
+  expect(offline.play.retryInstallation).toHaveBeenCalledOnce();
+  offline.start.mock.calls[0]![0].onInstallationState!({ ...failed, attempt: 2 });
+  expect(feedback.report).toHaveBeenCalledTimes(2);
+});
+
+it("does not expose controlled-page update installations as first-install failures", async () => {
+  offline.page = { container: { controller: {} } };
+  const pwa = await import("./index.ts");
+  await pwa.setupPhoneApp();
+  offline.start.mock.calls[0]![0].onInstallationState!({
+    attempt: 1,
+    error: new Error("update failed"),
+    kind: "failed",
+    operationId: undefined,
+    stage: "installation",
+    version: undefined,
+  });
+  expect(feedback.report).not.toHaveBeenCalled();
+  expect(feedback.bind).not.toHaveBeenCalled();
+});
