@@ -1,18 +1,21 @@
 @font-face {
   font-family: "Chibi crash body";
-  src: url("../../art/fonts/tiny5/Tiny5.ttf") format("truetype");
+  src: url("/art/fonts/liberation/LiberationSans-Regular.ttf") format("truetype");
+  font-weight: 400;
   font-display: swap;
 }
 
 @font-face {
   font-family: "Chibi crash title";
-  src: url("../../art/fonts/silkscreen/Silkscreen-Regular.ttf") format("truetype");
+  src: url("/art/fonts/liberation/LiberationSans-Bold.ttf") format("truetype");
+  font-weight: 700;
   font-display: swap;
 }
 
 .crash {
-  font-family: "Chibi crash body", monospace;
+  font-family: "Chibi crash body", system-ui, sans-serif;
   font-size: 16px;
+  font-weight: 400;
   line-height: 20px;
 }
 
@@ -44,9 +47,9 @@
 
 .crash-title {
   margin: 0 0 8px;
-  font-family: "Chibi crash title", monospace;
+  font-family: "Chibi crash title", system-ui, sans-serif;
   font-size: 16px;
-  font-weight: normal;
+  font-weight: 700;
   line-height: 24px;
 }
 
@@ -55,11 +58,12 @@
 }
 
 .crash-button {
+  font-family: "Chibi crash title", system-ui, sans-serif;
   min-height: 48px;
   padding: 0 16px 4px;
   border: 2px solid var(--crash-ink);
   color: var(--crash-text);
-  font-weight: normal;
+  font-weight: 700;
 }
 
 .crash-button:active {
