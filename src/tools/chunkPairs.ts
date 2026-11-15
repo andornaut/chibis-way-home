@@ -4,7 +4,16 @@
 // worker threads, longest recorded work first; output is sorted and holds no timings, so it is
 // identical for any worker count or machine.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import {
+  closeSync,
+  existsSync,
+  fsyncSync,
+  openSync,
+  readFileSync,
+  realpathSync,
+  writeFileSync,
+  writeSync,
+} from "node:fs";
 import { availableParallelism, tmpdir } from "node:os";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,6 +36,11 @@ import {
   verifyArenas,
   zoneArenas,
 } from "../testing/arenaCertify.ts";
+import {
+  completeCurrentListProposal,
+  type CurrentListResult,
+  prepareCurrentListProposal,
+} from "../testing/currentListCertification.ts";
 import {
   type Candidate,
   dataHash,
@@ -68,6 +82,9 @@ const USAGE = `Usage:
   npm run pairs -- propose --zone ZONE --id ID... --profile ordinary --out SCRATCH_PATH
       prove only new selected pairs with ordinary tuning and write a scratch proposal;
       existing entries and arenas stay unchanged; no arena or assembly-feasibility proofs
+  npm run pairs -- propose-current --out SCRATCH_PATH
+      reprove only the six current lists and their recorded profiles and arenas;
+      write scratch evidence, blocking any missing, failed or changed proof
   npm run pairs -- report --out PATH
       write rejections, grade and encounter counts and distinct layouts per zone; refuses an
       existing PATH`;
@@ -117,6 +134,7 @@ async function proveAll(
   jobs: readonly Job[],
   costs: readonly number[],
   deadline = Infinity,
+  observe?: (index: number, result: Proof | undefined, error?: unknown) => void,
 ): Promise<(Proof | undefined)[]> {
   const bounded = deadline !== Infinity;
   const order = jobs
@@ -140,11 +158,17 @@ async function proveAll(
     }
     const index = order[next++]!;
     const started = performance.now();
-    results[index] = await new Promise<Proof>((resolve, reject) => {
-      worker.once("message", resolve);
-      worker.once("error", reject);
-      worker.postMessage(jobs[index]);
-    });
+    try {
+      results[index] = await new Promise<Proof>((resolve, reject) => {
+        worker.once("message", resolve);
+        worker.once("error", reject);
+        worker.postMessage(jobs[index]);
+      });
+      observe?.(index, results[index]);
+    } catch (error) {
+      observe?.(index, undefined, error);
+      throw error;
+    }
     worker.removeAllListeners("error");
     work += results[index].work;
     spent += performance.now() - started;
@@ -154,16 +178,23 @@ async function proveAll(
     }
     return take(worker);
   };
-  await Promise.all(
-    Array.from({ length: count }, async () => {
-      const worker = new Worker(new URL(import.meta.url));
-      try {
-        await take(worker);
-      } finally {
-        await worker.terminate();
-      }
-    }),
-  );
+  const workers = Array.from({ length: count }, async () => {
+    const worker = new Worker(new URL(import.meta.url));
+    try {
+      await take(worker);
+    } finally {
+      await worker.terminate();
+    }
+  });
+  if (observe === undefined) {
+    await Promise.all(workers);
+  } else {
+    const settled = await Promise.allSettled(workers);
+    const failed = settled.find((result) => result.status === "rejected");
+    if (failed?.status === "rejected") {
+      throw failed.reason;
+    }
+  }
   return results;
 }
 
@@ -457,6 +488,108 @@ function report(zones: readonly ZoneKey[], out: string): number {
   return 0;
 }
 
+function scratchOutput(subject: string): string {
+  const out = resolve(subject);
+  const scratch = realpathSync(tmpdir());
+  const parent = realpathSync(dirname(out));
+  const checkout = realpathSync(fileURLToPath(new URL("../../", import.meta.url)));
+  const inside = (root: string, path: string) => {
+    const part = relative(root, path);
+    return !isAbsolute(part) && part !== ".." && !part.startsWith(`..${sep}`);
+  };
+  if (!inside(scratch, parent) || inside(checkout, parent) || existsSync(out)) {
+    throw new Error(
+      "Proposal output must be a new file within the scratch directory and outside the checkout",
+    );
+  }
+  return out;
+}
+
+async function proposeCurrent(subject: string): Promise<number> {
+  const out = scratchOutput(subject);
+  const plan = prepareCurrentListProposal(
+    ZONES.map((zone) => ({
+      contents: readFileSync(listUrl(zone), "utf8"),
+      zone,
+    })),
+  );
+  console.error(
+    JSON.stringify({
+      inventory: plan.lists.map(({ current, sha256 }) => ({
+        arenas: current.arenas,
+        entries: current.entries.map(({ id, proof }) => ({
+          id,
+          ...(proof !== undefined && { proof }),
+        })),
+        inputs: current.inputs,
+        sha256,
+        zone: current.zone,
+      })),
+      jobs: plan.jobs.length,
+    }),
+  );
+  writeFileSync(out, `${JSON.stringify({ plan, status: "running" }, null, 2)}\n`, { flag: "wx" });
+  const journal = openSync(`${out}.results.jsonl`, "wx");
+  const results: CurrentListResult[] = [];
+  let failure: string | undefined;
+  try {
+    await proveAll(
+      plan.jobs.map((job) => ({
+        id: job.previous.id,
+        zone: job.zone,
+        ...(job.kind === "arena"
+          ? { arena: true as const }
+          : {
+              ...(job.previous.proof !== undefined && { proof: job.previous.proof }),
+              themes: job.themes,
+            }),
+      })),
+      plan.jobs.map((job) => (job.kind === "arena" ? ARENA_COST : job.previous.work)),
+      Infinity,
+      (index, proof, error) => {
+        const job = plan.jobs[index]!;
+        const identity = { id: job.previous.id, zone: job.zone };
+        if (proof === undefined) {
+          results.push({ ...identity, error: String(error), kind: "error" });
+        } else if (job.kind === "arena") {
+          results.push({ ...identity, kind: "arena", proof: proof as ArenaResult });
+        } else {
+          results.push({ ...identity, kind: "entry", proof });
+        }
+        writeSync(journal, `${JSON.stringify(results.at(-1))}\n`);
+        fsyncSync(journal);
+      },
+    );
+  } catch (error) {
+    failure = String(error);
+  } finally {
+    closeSync(journal);
+  }
+  const changed = plan.lists.filter(
+    ({ contents, current }) => readFileSync(listUrl(current.zone), "utf8") !== contents,
+  );
+  const completed = completeCurrentListProposal(plan, results);
+  const proposal =
+    changed.length === 0
+      ? completed
+      : {
+          ...completed,
+          problems: [
+            ...completed.problems,
+            ...changed.map(
+              ({ current }) => `${current.zone}: certificate preimage changed during execution`,
+            ),
+          ],
+          proposed: undefined,
+          status: "blocked",
+        };
+  writeFileSync(
+    out,
+    `${JSON.stringify({ ...proposal, ...(failure !== undefined && { failure }) }, null, 2)}\n`,
+  );
+  return proposal.status === "proposal" && failure === undefined ? 0 : 1;
+}
+
 async function main(args: readonly string[]): Promise<number> {
   let parsed;
   try {
@@ -497,6 +630,17 @@ async function main(args: readonly string[]): Promise<number> {
     return 2;
   }
   switch (command) {
+    case "propose-current":
+      if (values.out === undefined || Object.keys(values).some((key) => key !== "out")) {
+        console.error(`propose-current accepts only a scratch --out path\n${USAGE}`);
+        return 2;
+      }
+      try {
+        return await proposeCurrent(values.out);
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : String(error));
+        return 2;
+      }
     case "certify":
       return certify(zones, values.all ?? false);
     case "verify": {

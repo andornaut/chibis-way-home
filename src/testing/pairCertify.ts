@@ -527,6 +527,15 @@ export function verifyStructure(context: CertifyContext, list: CertifiedChunks):
   if (list.inputs.proofs !== proofsHash()) {
     problems.push(`${list.zone}: proofs hash is stale; rerun certify --all`);
   }
+  return [...problems, ...verifyEntryFacts(candidates, list)];
+}
+
+// Validate recorded entry facts independently of proof provenance freshness.
+export function verifyEntryFacts(
+  candidates: readonly Candidate[],
+  list: CertifiedChunks,
+): string[] {
+  const problems: string[] = [];
   const ids = list.entries.map(({ id }) => id);
   if (ids.some((id, index) => index > 0 && ids[index - 1]! >= id)) {
     problems.push(`${list.zone}: entries are not sorted by unique id`);
