@@ -57,6 +57,7 @@ export interface PauseDiscPose {
 
 export interface PauseWords {
   readonly card: {
+    readonly achievements: string;
     readonly close: string;
     readonly home: string;
     readonly resume: string;
@@ -72,7 +73,7 @@ export interface PauseWords {
   readonly skills: Readonly<Record<SkillId, string>>;
 }
 
-export type PauseCardButton = "home" | "resume" | "settings";
+export type PauseCardButton = "achievements" | "home" | "resume" | "settings";
 
 export interface SkillButtonView {
   readonly button: HTMLButtonElement;
@@ -228,6 +229,7 @@ export function showSkillButton(
 export function pauseMenuActions(words: PauseWords["card"]): CardWords<PauseCardButton>["actions"] {
   return [
     { key: "settings", label: words.settings },
+    { key: "achievements", label: words.achievements },
     { key: "home", label: words.home },
     { key: "resume", label: words.resume, primary: true },
   ];
@@ -244,4 +246,5 @@ export function showPauseMenu(
   view.card.buttons.resume.querySelector(".ui-text-button-label")!.textContent =
     mode === "pause" ? words.pause.resume : words.pause.close;
   view.card.buttons.home.hidden = !homeShown;
+  view.card.buttons.achievements.hidden = mode === "pause";
 }

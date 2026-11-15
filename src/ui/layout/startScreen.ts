@@ -33,8 +33,6 @@ export interface IconButtonLayout {
 }
 
 export interface StartScreenLayout {
-  // Always present, immediately left of Exit when shown.
-  readonly achievements: IconButtonLayout;
   // Present where the start screen offers to leave the game (exitShown in src/pwa).
   readonly exit?: IconButtonLayout;
   readonly logo: Rect;
@@ -59,8 +57,8 @@ function iconButton(slot: number): IconButtonLayout {
   };
 }
 
-// The start screen with Achievements then Exit at the nav's right end, or Achievements alone
-// where Exit is hidden; Start alone, or with saved progress, Restart then
+// The start screen with Exit at the nav's right end where supported;
+// Start alone, or with saved progress, Restart then
 // Continue. The natural logo frame fits above the unchanged actions at its original aspect ratio.
 export function startScreenLayout(
   logoSize: Size,
@@ -78,7 +76,6 @@ export function startScreenLayout(
   );
   const logoWidth = logoSize.width * scale;
   return {
-    achievements: iconButton(exitShown ? 1 : 0),
     ...(exitShown ? { exit: iconButton(0) } : {}),
     logo: {
       height: logoSize.height * scale,

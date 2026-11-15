@@ -35,7 +35,6 @@ vi.mock("./domUi.ts", () => ({
 import { TEXT } from "../data/text.ts";
 import { achievementsPerPage, createUiLayer, type UiLayer } from "../ui/index.ts";
 import { AchievementsScene } from "./AchievementsScene.ts";
-import { StartScene } from "./StartScene.ts";
 
 const WORDS = TEXT.achievements;
 const PER_PAGE = achievementsPerPage();
@@ -268,14 +267,4 @@ it("never shows the card when the scene shuts down before its dim is ready", asy
   events.emit("shutdown");
   await settle();
   expect(document.querySelector("[role=dialog]")).toBeNull();
-});
-
-it("opens from the start screen with the start screen as its opener", () => {
-  const launch = vi.fn();
-  const scene = Object.assign(new StartScene(), {
-    drawFocus: vi.fn(),
-    scene: { key: "start", launch },
-  }) as unknown as { act(control: "achievements"): void };
-  scene.act("achievements");
-  expect(launch).toHaveBeenCalledExactlyOnceWith("achievements", { opener: "start" });
 });

@@ -15,11 +15,6 @@ import {
   type StartView,
   stepFocus,
 } from "../ui/index.ts";
-import type {
-  AchievementsData,
-  AchievementsOpener,
-  AchievementsScene,
-} from "./AchievementsScene.ts";
 import { followTaps } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { captureTab } from "./keyboardCapture.ts";
@@ -29,24 +24,22 @@ import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts
 import { savedProgress } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
 
-const ACHIEVEMENTS = "achievements";
 const BACKGROUND = "start-background";
 const LOGO = "logo";
 const RESTART = "restart";
 
-type Control = "achievements" | "exit" | "restart" | "start";
+type Control = "exit" | "restart" | "start";
 // The card over the start screen, if one shows.
-type Card = "achievements" | "restart";
+type Card = "restart";
 
 // The screen the game opens on without saved progress, and that Back to title goes to: the Start
 // button, which opens the map (Continue, with him where he stands, once progress is saved),
-// under a nav bar with Achievements and Exit at its right end. Achievements opens the
-// Achievements card over this screen, and Restart the restart card;
+// under a nav bar with Exit at its right end. Restart opens the restart card;
 // the card that shows takes the keys and back until it closes. Exit, and back with no card open,
 // leave the browser game. Installed app windows omit Exit when closing is
 // unsupported (exitShown), and back there is the browser's own. A control acts when a press lands
 // on it and lifts on it.
-export class StartScene extends Scene implements AchievementsOpener, RestartOpener {
+export class StartScene extends Scene implements RestartOpener {
   private layout!: StartScreenLayout;
   private focus: Control | undefined;
   private card: Card | undefined;
@@ -100,12 +93,6 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
   }
 
   restartClosed(): void {
-    this.card = undefined;
-    coverZone("startCard", false);
-    this.drawFocus();
-  }
-
-  achievementsClosed(): void {
     this.card = undefined;
     coverZone("startCard", false);
     this.drawFocus();
@@ -180,7 +167,6 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
     view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
     view.root.addEventListener("touchend", keep, { capture: true, passive: false });
     const art = {
-      achievements: "icon-achievements",
       exit: "ui-quit",
       logo: LOGO,
     };
@@ -253,7 +239,6 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
     return [
       "start",
       ...(this.layout.restart === undefined ? [] : ["restart" as const]),
-      "achievements",
       ...(this.layout.exit === undefined ? [] : ["exit" as const]),
     ];
   }
@@ -275,11 +260,6 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
       this.starting = true;
       // Unseen new games show the opening; Continue returns directly to the map.
       this.scene.start(openingDestination(savedProgress()));
-    } else if (control === "achievements") {
-      this.card = "achievements";
-      coverZone("startCard", true);
-      this.drawFocus();
-      this.scene.launch(ACHIEVEMENTS, { opener: this.scene.key } satisfies AchievementsData);
     } else if (control === "restart") {
       this.card = "restart";
       coverZone("startCard", true);
@@ -291,9 +271,8 @@ export class StartScene extends Scene implements AchievementsOpener, RestartOpen
   }
 
   // The card that shows, which takes back.
-  private cardScene(): AchievementsScene | RestartScene {
-    const key = this.card === "achievements" ? ACHIEVEMENTS : RESTART;
-    return this.scene.get(key) as AchievementsScene | RestartScene;
+  private cardScene(): RestartScene {
+    return this.scene.get(RESTART) as RestartScene;
   }
 
   private colour(name: string): number {

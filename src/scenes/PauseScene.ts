@@ -39,6 +39,7 @@ import {
   touchSettings,
 } from "../ui/index.ts";
 import { FRAME_TURN } from "../ui/input/frameTurn.ts";
+import type { AchievementsOpener, AchievementsScene } from "./AchievementsScene.ts";
 import { artFrameUrl, sceneDomUi } from "./domUi.ts";
 import { MENU_CONTENT_SCENES, menuContext, type MenuFrame } from "./menuContext.ts";
 import { menuEntryFocus } from "./menuEntryFocus.ts";
@@ -80,7 +81,6 @@ const BLOCKING_CARDS = [
   "update",
 ] as const;
 const ZONE = "zone";
-const SETTINGS = "settings";
 const START = "start";
 // A conversation scene says whether it still waits for the player, so the card may open over it.
 interface PausableConversation {
@@ -102,10 +102,10 @@ interface ControlPress {
 // One persistent entry opens Pause over active pausable content and Menu elsewhere.
 // Only this entry can open above a modal owner. Each visit retains the underlying scopes,
 // focus and already-paused scenes, and resumes only its own held subset when it closes.
-// Settings is a row of this shared card; nested visits return to its existing subview.
+// Settings and Menu Achievements return to their existing nested subviews.
 // The bottom primary action resumes Pause or closes Menu. The skill HUD keeps its existing
 // play and conversation guards; no other control crosses the modal boundary.
-export class PauseScene extends Scene implements SettingsOpener {
+export class PauseScene extends Scene implements AchievementsOpener, SettingsOpener {
   private skillVisit = 0;
   private menuGeneration = 0;
   private frames: MenuFrame[] = [];
@@ -118,13 +118,13 @@ export class PauseScene extends Scene implements SettingsOpener {
   private colours!: PauseColours;
   private timeline!: PauseDiscTimeline;
   private dim: ReturnType<typeof showModalBackdrop> | undefined;
-  private state: "closed" | "open" | "opening" | "settings" | "skill" = "closed";
+  private state: "achievements" | "closed" | "open" | "opening" | "settings" | "skill" = "closed";
   // The conversation scene the card opened over, which it paused in the zone's place.
   private overScene: string | undefined;
   private heldScenes: string[] = [];
   private closeModal: (() => void) | undefined;
-  // The card control the keyboard's focus was on when Settings opened.
-  private settingsFocus: HTMLElement | undefined;
+  // The card control to restore after a nested card closes.
+  private nestedFocus: HTMLElement | undefined;
   private press: ControlPress | undefined;
   private stopPausePress: (() => void) | undefined;
   // Each skill glyph's ready and muted sources, once cut.
@@ -159,7 +159,7 @@ export class PauseScene extends Scene implements SettingsOpener {
     const words = TEXT.pause;
     const view = createPauseView(document, this.colours, "pause-card", {
       button: words.button,
-      card: words,
+      card: { ...words, achievements: TEXT.start.achievements },
       ready: TEXT.skillHud.ready,
       recharging: TEXT.skillHud.recharging,
       skills: Object.fromEntries(
@@ -227,8 +227,8 @@ export class PauseScene extends Scene implements SettingsOpener {
       if (this.blocked()) {
         return;
       }
-      if (this.state === "settings") {
-        const card = this.settings();
+      if (this.state === "settings" || this.state === "achievements") {
+        const card = this.nestedCard(this.state);
         if (modalInput(card).accepts(event)) {
           card.back();
         }
@@ -295,6 +295,7 @@ export class PauseScene extends Scene implements SettingsOpener {
         held: this.heldScenes,
         homeShown: this.homeShown,
         mode: this.mode,
+        nestedFocus: this.nestedFocus,
         over: this.overScene,
         state: this.state,
         waitFor: this.state === "open" ? context.scene : undefined,
@@ -344,6 +345,7 @@ export class PauseScene extends Scene implements SettingsOpener {
       this.heldScenes = frame.held;
       this.overScene = frame.over;
       this.mode = frame.mode;
+      this.nestedFocus = frame.nestedFocus;
       this.homeShown = frame.homeShown;
       this.waitingFor = frame.waitFor;
       this.showControls();
@@ -400,13 +402,13 @@ export class PauseScene extends Scene implements SettingsOpener {
     }
   }
 
-  // Hides the pause card under the settings card, which SettingsScene draws over the dim.
-  private openSettings(): void {
+  // Nested cards keep the held scenes and return focus to their originating action.
+  private openNested(key: "achievements" | "settings"): void {
     const view = this.view;
     if (view === undefined) {
       return;
     }
-    if (this.scene.isActive(SETTINGS) || this.scene.isPaused(SETTINGS)) {
+    if (this.scene.isActive(key) || this.scene.isPaused(key)) {
       const update = this.overScene === "update";
       this.close();
       if (update) {
@@ -414,32 +416,40 @@ export class PauseScene extends Scene implements SettingsOpener {
       }
       return;
     }
-    this.state = "settings";
+    this.state = key;
     const focused = document.activeElement;
-    this.settingsFocus =
+    this.nestedFocus =
       focused instanceof HTMLElement && view.card.dialog.contains(focused) ? focused : undefined;
     view.card.root.hidden = true;
     this.closeModal?.();
     this.closeModal = undefined;
     modalInput(this).close();
-    this.scene.launch(SETTINGS, { opener: this.scene.key } satisfies SettingsData);
+    this.scene.launch(key, { opener: this.scene.key } satisfies SettingsData);
   }
 
-  // The settings card has closed: the pause card shows again, the keyboard's focus where it was.
+  // Closing either nested card returns to the same shared menu.
   settingsClosed(): void {
+    this.nestedClosed("settings");
+  }
+
+  achievementsClosed(): void {
+    this.nestedClosed("achievements");
+  }
+
+  private nestedClosed(key: "achievements" | "settings"): void {
     const view = this.view;
-    if (!this.live || this.state !== "settings" || view === undefined) {
+    if (!this.live || this.state !== key || view === undefined) {
       return;
     }
     this.state = "open";
     modalInput(this).open();
     this.showCard(true);
-    focusTarget(this.settingsFocus ?? view.card.dialog);
-    this.settingsFocus = undefined;
+    focusTarget(this.nestedFocus ?? view.card.dialog);
+    this.nestedFocus = undefined;
   }
 
-  private settings(): SettingsScene {
-    return this.scene.get(SETTINGS) as SettingsScene;
+  private nestedCard(key: "achievements" | "settings"): AchievementsScene | SettingsScene {
+    return this.scene.get(key) as AchievementsScene | SettingsScene;
   }
 
   private enabledSkills(): readonly SkillId[] {
@@ -856,7 +866,9 @@ export class PauseScene extends Scene implements SettingsOpener {
     } else if (control === close || control === buttons.resume) {
       this.close();
     } else if (control === buttons.settings && this.state === "open") {
-      this.openSettings();
+      this.openNested("settings");
+    } else if (control === buttons.achievements && this.state === "open" && this.mode === "menu") {
+      this.openNested("achievements");
     } else if (control === buttons.home && this.state === "open") {
       this.returnHome();
     } else if (skill !== undefined && this.skillHudLive()) {

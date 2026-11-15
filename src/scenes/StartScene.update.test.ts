@@ -45,22 +45,21 @@ it("shows Start on each create, not again on resume, and covers it before openin
     sys: { isActive: () => true },
     textures: { getFrame: () => ({ realHeight: 239, realWidth: 558 }) },
   }) as unknown as {
-    act(control: "achievements" | "restart"): void;
+    act(control: "restart"): void;
     create(): void;
     restartClosed(): void;
-    achievementsClosed(): void;
   };
   scene.create();
   expect(launch).not.toHaveBeenCalled();
   expect(lifecycle.shown).toHaveBeenCalledExactlyOnceWith(true);
   events.emit("resume");
-  for (const card of ["achievements", "restart"] as const) {
+  for (const card of ["restart"] as const) {
     scene.act(card);
     expect(lifecycle.cover).toHaveBeenLastCalledWith("startCard", true);
     expect(lifecycle.cover.mock.invocationCallOrder.at(-1)).toBeLessThan(
       launch.mock.invocationCallOrder.at(-1)!,
     );
-    scene[card === "achievements" ? "achievementsClosed" : "restartClosed"]();
+    scene.restartClosed();
     expect(lifecycle.cover).toHaveBeenLastCalledWith("startCard", false);
   }
   expect(lifecycle.shown).toHaveBeenCalledOnce();

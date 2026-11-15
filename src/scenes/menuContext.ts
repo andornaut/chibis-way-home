@@ -52,7 +52,8 @@ export interface MenuFrame {
   readonly held: string[];
   readonly homeShown: boolean;
   readonly mode: "menu" | "pause";
+  readonly nestedFocus: HTMLElement | undefined;
   readonly over: string | undefined;
-  readonly state: "open" | "settings" | "skill";
+  readonly state: "achievements" | "open" | "settings" | "skill";
   readonly waitFor: string | undefined;
 }

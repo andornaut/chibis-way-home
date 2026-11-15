@@ -139,7 +139,7 @@ function menu(initial: string) {
   };
 }
 
-it("opens the two-row Start Menu with bottom-primary Close and returns focus without changing Start", async () => {
+it("opens the Start Menu with bottom-primary Close and returns focus without changing Start", async () => {
   const f = menu("start");
   const origin = document.createElement("button");
   document.body.append(origin);
@@ -152,7 +152,11 @@ it("opens the two-row Start Menu with bottom-primary Close and returns focus wit
   const rows = [...f.pause.dialog.querySelectorAll<HTMLButtonElement>(".ui-text-button")].filter(
     (button) => !button.hidden,
   );
-  expect(rows.map((button) => button.textContent)).toEqual([TEXT.pause.settings, TEXT.pause.close]);
+  expect(rows.map((button) => button.textContent)).toEqual([
+    TEXT.pause.settings,
+    TEXT.start.achievements,
+    TEXT.pause.close,
+  ]);
   expect(rows.at(-1)?.classList.contains("ui-text-button-primary")).toBe(true);
   pressKey([f.pause.keyboard], "Enter");
   expect(f.active.has("start")).toBe(true);
@@ -337,4 +341,88 @@ it("returns to existing Settings beneath Update through its existing defer route
   expect(f.active.has("settings")).toBe(true);
   expect(f.paused.has("zone")).toBe(true);
   expect(document.activeElement).toBe(settings.button);
+});
+
+it.each(["start", "map"])(
+  "opens Achievements from %s Menu and restores its action focus and held subset",
+  async (source) => {
+    const f = menu(source);
+    f.paused.add("zone");
+    f.pause.update();
+    tap(f.pause.pauseButton);
+    await settle();
+    const action = f.pause.button(TEXT.start.achievements);
+    action.focus();
+    tap(action);
+    expect(f.scenes.launch).toHaveBeenCalledExactlyOnceWith("achievements", { opener: "pause" });
+    const achievements = f.card("achievements");
+    expect(modalInput(f.pause.scene).accepts()).toBe(false);
+    tap(f.pause.pauseButton);
+    await settle();
+    tap(f.pause.button(TEXT.start.achievements));
+    expect(f.scenes.launch).toHaveBeenCalledOnce();
+    expect(document.activeElement).toBe(achievements.button);
+    expect(modalInput(achievements.owner as never).accepts()).toBe(true);
+    const back = vi.fn(() => {
+      achievements.close();
+      modalInput(achievements.owner as never).close();
+      f.active.delete("achievements");
+      f.pause.scene.achievementsClosed();
+    });
+    Object.assign(achievements.owner, { back });
+    window.dispatchEvent(new Event("phone-back"));
+    expect(back).toHaveBeenCalledOnce();
+    expect(document.activeElement).toBe(action);
+    expect(modalInput(f.pause.scene).accepts()).toBe(true);
+    tap(f.pause.button(TEXT.pause.close));
+    expect(f.active.has(source)).toBe(true);
+    expect(f.paused.has("zone")).toBe(true);
+  },
+);
+
+it("keeps gameplay Pause actions unchanged and resumes without offering Achievements", async () => {
+  const f = menu("zone");
+  tap(f.pause.pauseButton);
+  await settle();
+  const rows = [...f.pause.dialog.querySelectorAll<HTMLButtonElement>(".ui-text-button")].filter(
+    (button) => !button.hidden,
+  );
+  expect(rows.map((button) => button.textContent)).toEqual([
+    TEXT.pause.settings,
+    TEXT.pause.home,
+    TEXT.pause.resume,
+  ]);
+  tap(f.pause.button(TEXT.pause.resume));
+  expect(f.active.has("zone")).toBe(true);
+  expect(f.scenes.launch).not.toHaveBeenCalled();
+});
+
+it("preserves both originating action focuses across Achievements and Settings nesting", async () => {
+  const f = menu("start");
+  tap(f.pause.pauseButton);
+  await settle();
+  const achievementsAction = f.pause.button(TEXT.start.achievements);
+  achievementsAction.focus();
+  tap(achievementsAction);
+  const achievements = f.card("achievements");
+  tap(f.pause.pauseButton);
+  await settle();
+  const settingsAction = f.pause.button(TEXT.pause.settings);
+  settingsAction.focus();
+  tap(settingsAction);
+  const settings = f.card("settings");
+  settings.close();
+  modalInput(settings.owner as never).close();
+  f.active.delete("settings");
+  f.pause.scene.settingsClosed();
+  expect(document.activeElement).toBe(settingsAction);
+  tap(f.pause.button(TEXT.pause.close));
+  expect(document.activeElement).toBe(achievements.button);
+  achievements.close();
+  modalInput(achievements.owner as never).close();
+  f.active.delete("achievements");
+  f.pause.scene.achievementsClosed();
+  expect(document.activeElement).toBe(achievementsAction);
+  tap(f.pause.button(TEXT.pause.close));
+  expect(f.active.has("start")).toBe(true);
 });

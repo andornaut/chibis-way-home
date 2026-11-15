@@ -1,5 +1,5 @@
 import { containsPoint } from "@andornaut/game-kit/rect";
-import { BUTTON_GAP, SMALL_BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
+import { BUTTON_GAP } from "@andornaut/game-kit/ui/spacing";
 import { describe, expect, it } from "vitest";
 
 import { TEXT_BUTTON } from "../../data/layout.ts";
@@ -35,7 +35,6 @@ describe.each([
       : [["restart", layout.restart] as [string, LabelledButton]]),
   ];
   const buttons: [string, IconButtonLayout][] = [
-    ["achievements", layout.achievements],
     ...(layout.exit === undefined ? [] : [["exit", layout.exit] as [string, IconButtonLayout]]),
   ];
   const areas: PressArea<string>[] = [
@@ -52,14 +51,12 @@ describe.each([
     expect(corners.map((point) => pressedArea(areas, point))).toEqual([key, key]);
   });
 
-  it("ends the nav with Exit, or Achievements when Exit is absent", () => {
-    const last = layout.exit ?? layout.achievements;
+  it("keeps Exit at its existing position and omits standalone menu actions", () => {
     const withExit = startScreenLayout(SCREEN, true, saved).exit!;
-    expect(last.at.x).toBe(withExit.at.x);
     if (layout.exit !== undefined) {
-      expect(layout.exit.art.x - right(layout.achievements.art)).toBe(SMALL_BUTTON_GAP);
-      expect(layout.achievements.art.y).toBe(layout.exit.art.y);
+      expect(layout.exit).toEqual(withExit);
     }
+    expect("achievements" in layout).toBe(false);
     expect("settings" in layout).toBe(false);
   });
 
