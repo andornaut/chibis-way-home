@@ -1,0 +1,172 @@
+// @vitest-environment happy-dom
+import { EventEmitter } from "node:events";
+
+import { afterEach, expect, it, vi } from "vitest";
+
+const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
+const exit = vi.hoisted(() => vi.fn());
+vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scene: class {} }));
+vi.mock("@andornaut/game-kit/web/pwa/dom/exitApp", () => ({
+  browserExitPage: () => "/",
+  exitApp: exit,
+}));
+vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { onChange: () => () => {} } }));
+vi.mock("../pwa/index.ts", () => ({
+  PHONE_EVENTS: { backPressed: "phone-back" },
+  coverZone: vi.fn(),
+  exitShown: () => true,
+  startScreenShown: vi.fn(),
+  startWakeLock: vi.fn(),
+  stopWakeLock: vi.fn(),
+  updateOffer: { defer: vi.fn() },
+  zoneShown: vi.fn(),
+}));
+vi.mock("./save.ts", () => ({
+  activeSkill: () => undefined,
+  savedProgress: () => ({ at: "beginning" }),
+  savedSkills: () => [],
+}));
+vi.mock("./keyboardCapture.ts", () => ({ captureTab: vi.fn() }));
+vi.mock("./playCamera.ts", () => ({ fitPlayCamera: vi.fn() }));
+vi.mock("./modalBackdrop.ts", () => ({
+  showModalBackdrop: () => ({ destroy: vi.fn(), ready: Promise.resolve(), setVisible: vi.fn() }),
+}));
+vi.mock("./domUi.ts", () => ({
+  artFrameUrl: () => Promise.resolve("blob:art"),
+  mountSceneView: (scene: { events: EventEmitter; scene: { key: string } }, root: HTMLElement) => {
+    root.dataset.menuScene = scene.scene.key;
+    const unmount = (dom.layer as UiLayer).mount(0, root);
+    scene.events.once("shutdown", unmount);
+    return unmount;
+  },
+  revealSceneView: () => ({ cancel: vi.fn(), revealed: Promise.resolve(true) }),
+  sceneDomUi: () => dom.layer,
+}));
+
+import { TEXT } from "../data/text.ts";
+import { createUiLayer, type UiLayer } from "../ui/index.ts";
+import { modalInput } from "./modalInput.ts";
+import { createPauseScene, settle, tap } from "./pauseFixture.ts";
+import { StartScene } from "./StartScene.ts";
+
+const cleanup: (() => void)[] = [];
+afterEach(() => {
+  cleanup.splice(0).forEach((stop) => stop());
+  exit.mockClear();
+});
+
+async function startMenu() {
+  const layer = createUiLayer([], document);
+  dom.layer = layer;
+  document.body.append(layer.element);
+  const game = { events: new EventEmitter() };
+  const active = new Set(["start", "pause"]),
+    paused = new Set<string>();
+  const events = new EventEmitter(),
+    keyboard = new EventEmitter();
+  const start = Object.assign(new StartScene(), {
+    add: { image: () => ({ setOrigin: vi.fn() }) },
+    cache: { json: { get: () => ({ colours: { ink: "#000000" } }) } },
+    cameras: { main: { setBackgroundColor: vi.fn() } },
+    events,
+    game,
+    input: { keyboard },
+    scene: { key: "start", start: vi.fn() },
+    sys: { isActive: () => active.has("start") },
+    textures: { getFrame: () => ({ realHeight: 239, realWidth: 558 }) },
+  });
+  const pause = createPauseScene(game, {
+    get: (key) =>
+      key === "start"
+        ? start
+        : {
+            playCovered: () => false,
+            skillState: () => undefined,
+          },
+    isActive: (key) => active.has(key),
+    isPaused: (key) => paused.has(key),
+    key: "pause",
+    launch: vi.fn(),
+    pause: (key) => {
+      active.delete(key);
+      paused.add(key);
+    },
+    resume: (key) => {
+      paused.delete(key);
+      active.add(key);
+    },
+    stop: vi.fn(),
+  });
+  start.create();
+  await settle();
+  pause.update();
+  // Phaser's KeyboardManager listens on window after the DOM controller handlers.
+  const forward = (event: KeyboardEvent) => {
+    if (!event.defaultPrevented) {
+      keyboard.emit("keydown", event);
+    }
+  };
+  window.addEventListener("keydown", forward);
+  cleanup.push(() => {
+    window.removeEventListener("keydown", forward);
+    events.emit("shutdown");
+    pause.events.emit("shutdown");
+    game.events.emit("destroy");
+    layer.dispose();
+  });
+  const key = (value: string, repeat = false) => {
+    const event = new KeyboardEvent("keydown", {
+      bubbles: true,
+      cancelable: true,
+      key: value,
+      repeat,
+    });
+    document.activeElement!.dispatchEvent(event);
+    return event;
+  };
+  return { key, pause, start };
+}
+
+it.each(["Enter", " "])(
+  "owns %j on the focused global Menu entry before the underlying Start Exit handler",
+  async (activation) => {
+    const f = await startMenu();
+    f.key("Tab");
+    expect(document.activeElement?.textContent).toBe(TEXT.start.start);
+    f.key("Tab");
+    expect(document.activeElement?.getAttribute("aria-label")).toBe(TEXT.start.exit);
+    f.key("Tab");
+    expect(document.activeElement).toBe(f.pause.pauseButton);
+    expect(f.key(activation, true).defaultPrevented).toBe(true);
+    expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+    modalInput(f.start).ready(false);
+    expect(f.key(activation).defaultPrevented).toBe(true);
+    expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+    expect(exit).not.toHaveBeenCalled();
+    modalInput(f.start).ready(true);
+    const activationEvent = f.key(activation);
+    expect(exit).not.toHaveBeenCalled();
+    expect(activationEvent.defaultPrevented).toBe(true);
+    await settle();
+    expect(f.start.scene.start).not.toHaveBeenCalled();
+    expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
+    expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.menu.title);
+    expect(document.activeElement).toBe(f.pause.dialog);
+    expect(f.key(activation, true).defaultPrevented).toBe(true);
+    const release = new KeyboardEvent("keyup", {
+      bubbles: true,
+      cancelable: true,
+      key: activation,
+    });
+    document.activeElement!.dispatchEvent(release);
+    if (activation === " ") {
+      expect(release.defaultPrevented).toBe(true);
+    }
+    expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
+    tap(f.pause.button(TEXT.pause.close));
+    expect(document.activeElement).toBe(f.pause.pauseButton);
+    expect(f.key(activation, true).defaultPrevented).toBe(true);
+    expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+    expect(exit).not.toHaveBeenCalled();
+  },
+);

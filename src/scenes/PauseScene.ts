@@ -923,13 +923,13 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
           menuEntryFocus(view.root.ownerDocument, view.pauseButton, root, event);
         }
       }
-      if (
-        event.target === view.pauseButton &&
-        event.repeat &&
-        (event.key === "Enter" || event.key === " ")
-      ) {
+      if (event.target === view.pauseButton && (event.key === "Enter" || event.key === " ")) {
+        // Own entry activation before page controllers and native button defaults.
         event.preventDefault();
         event.stopImmediatePropagation();
+        if (!event.repeat) {
+          view.pauseButton.click();
+        }
       }
     };
     document.addEventListener("keydown", onEntryKey, true);
