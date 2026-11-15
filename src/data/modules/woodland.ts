@@ -18,6 +18,23 @@ const red = (col: number, cols: number, row: number): readonly Instance[] => [
   { character: "red-edge-support", col, cols, role: "support", row, rows: ROWS - row },
 ];
 
+// A short step approaches a gap with a raised landing, then a supported descent.
+const rootGap: ChunkModule = {
+  difficulty: 3,
+  encounters: 0,
+  entry: { row: 80 },
+  exit: { row: 80 },
+  id: "woodland-root-gap",
+  objects: red(12, 11, 90),
+  route: {
+    profile: "recovery",
+    targets: [{ at: { col: 9, row: 77 } }, { at: { col: 24, row: 74 } }],
+  },
+  sides: ["left", "right"],
+  solids: [floor(0, 6, 80), floor(6, 6, 77), floor(23, 3, 74), floor(26, 4, 80)],
+  zones: ["woodland"],
+};
+
 // A short climb reaches two red gaps beneath a raised branch, with a landing between them.
 const raisedBranchChannel: ChunkModule = {
   difficulty: 5,
@@ -110,5 +127,8 @@ const lookout: ChunkModule = {
 };
 
 export const WOODLAND_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(
-  [lookout, ravine, raisedBranchChannel, canopyReturn].map((module) => [module.id, module]),
+  [lookout, ravine, raisedBranchChannel, canopyReturn, rootGap].map((module) => [
+    module.id,
+    module,
+  ]),
 );

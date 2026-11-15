@@ -262,9 +262,22 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "2fe8140e9077af14:663",
       "work": 663
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "woodland-woodland-root-gap--woodland-raised-branch-channel",
+      "kind": "pair",
+      "layout": "a989f72809882b99",
+      "modules": ["woodland-root-gap", "woodland-raised-branch-channel"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "70a77c1d45685f04",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "1ea9444fe43eb03f:1905",
+      "work": 1905
     }
   ],
-  "inputs": { "data": "00def711a9653b32", "proofs": "5d7c89faaeda7be7" },
+  "inputs": { "data": "89b374e4b02c0dee", "proofs": "5d7c89faaeda7be7" },
   "version": 1,
   "zone": "woodland"
 }
