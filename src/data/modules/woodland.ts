@@ -18,6 +18,47 @@ const red = (col: number, cols: number, row: number): readonly Instance[] => [
   { character: "red-edge-support", col, cols, role: "support", row, rows: ROWS - row },
 ];
 
+// A broad root terrace holds safe observation and recovery on either side of a warned vent.
+const ventTerrace: ChunkModule = {
+  difficulty: 4,
+  encounters: 0,
+  entry: { row: 80 },
+  exit: { row: 80 },
+  id: "woodland-vent-terrace",
+  objects: [{ character: "warned-vent", col: 14, row: 70 }],
+  route: {
+    profile: "recovery",
+    targets: [
+      { at: { col: 11, row: 76 }, xRange: { max: 11, min: 10 } },
+      { at: { col: 20, row: 76 }, xRange: { max: 21, min: 20 } },
+    ],
+  },
+  sides: ["left", "right"],
+  solids: [floor(0, 6, 80), floor(6, 18, 76), floor(24, 6, 80)],
+  zones: ["woodland"],
+};
+
+// A raised bough returns to grounded recovery before a separate root climb.
+const boughReturn: ChunkModule = {
+  difficulty: 2,
+  encounters: 0,
+  entry: { row: 80 },
+  exit: { row: 80 },
+  id: "woodland-bough-return",
+  objects: [{ character: "platform-ledge", col: 6, cols: 6, role: "ledge", row: 76 }],
+  route: {
+    profile: "recovery",
+    targets: [
+      { at: { col: 9, row: 76 } },
+      { at: { col: 15, row: 80 }, xRange: { max: 15, min: 14 } },
+      { at: { col: 21, row: 75 } },
+    ],
+  },
+  sides: ["left", "right"],
+  solids: [floor(0, 18, 80), floor(18, 6, 75), floor(24, 6, 80)],
+  zones: ["woodland"],
+};
+
 // Two successive climbs reach a crown terrace before supported descents to the seam.
 const crownStair: ChunkModule = {
   difficulty: 2,
@@ -200,5 +241,7 @@ export const WOODLAND_MODULES: Readonly<Record<string, ChunkModule>> = Object.fr
     crownStair,
     hollowDescent,
     dividedRavine,
+    ventTerrace,
+    boughReturn,
   ].map((module) => [module.id, module]),
 );
