@@ -1,8 +1,11 @@
+import { readFileSync } from "node:fs";
+
 import type { CrashScreenOptions } from "@andornaut/game-kit/web/crash/dom/crashScreen";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json" with { type: "json" };
 import bird from "../../public/art/sprites/bird.json" with { type: "json" };
+import { BIRD_SHEET_URL } from "../assets/index.ts";
 import { TEXT } from "../data/text.ts";
 
 const { install, screen } = vi.hoisted(() => {
@@ -46,6 +49,10 @@ describe("native crash screen adapter", () => {
       });
       expect(properties.get("--chibi-crash-card-face")).toBe(palette.colours.lgrey);
       expect(properties.get("--chibi-crash-focus")).toBe(palette.colours.yellow);
+      expect(properties.get("--chibi-crash-bird-image")).toBe(`url("${BIRD_SHEET_URL}")`);
+      expect(readFileSync("src/crash/theme.css", "utf8")).toContain(
+        "background-image: var(--chibi-crash-bird-image)",
+      );
 
       // The fallback crops the seated end of the death tag, without animation or canvas access.
       const death = bird.meta.frameTags.find((tag) => tag.name === "death")!;

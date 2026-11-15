@@ -1,9 +1,9 @@
-import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest } from "../assets/index.ts";
+import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest, BIRD_SHEET_URL } from "../assets/index.ts";
 import { UI_FONT_RESOURCES } from "../ui/index.ts";
 
 export const ART_MANIFEST_URL = `${ART_PATH}${ART_MANIFEST_FILE}`;
 
-// Standalone manifest resources and the UI's two explicit typefaces are emitted for caching.
+// Standalone resources, the native crash bird and the UI's two typefaces are emitted for caching.
 // Boot loads data and tileset descriptions; site images remain standalone.
 // Other PNGs are on the build's atlas pages
 // (src/tools/atlas/atlasPlugin.ts), which the build lists apart.
@@ -16,6 +16,7 @@ export function artUrls(manifest: ArtManifest): string[] {
   return [
     ART_MANIFEST_URL,
     ...files.map((file) => `${ART_PATH}${file}`),
+    BIRD_SHEET_URL,
     ...UI_FONT_RESOURCES.map(({ url }) => url),
   ];
 }

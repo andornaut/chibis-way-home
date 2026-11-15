@@ -38,7 +38,7 @@
   width: var(--chibi-crash-bird-width);
   height: var(--chibi-crash-bird-height);
   margin: 0 auto 8px;
-  background-image: url("/art/sprites/bird.png");
+  background-image: var(--chibi-crash-bird-image);
   background-position: var(--chibi-crash-bird-position);
   background-repeat: no-repeat;
   background-size: var(--chibi-crash-bird-sheet-size);

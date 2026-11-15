@@ -16,5 +16,5 @@ export {
   type AtlasTexture,
   BASE_FRAME,
 } from "./atlasManifest.ts";
-export { BIRD_FRAME } from "./birdFrame.ts";
+export { BIRD_FRAME, BIRD_SHEET_URL } from "./birdFrame.ts";
 export { CONTACT_SILHOUETTES, spriteContacts } from "./spriteContacts.ts";

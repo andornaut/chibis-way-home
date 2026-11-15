@@ -51,7 +51,7 @@ const CONTEXTS = {
   assets: ["core", "data"],
   camera: ["data"],
   core: ["data"],
-  crash: ["data"],
+  crash: ["assets", "data"],
   data: [],
   dev: ["data", "progress", "rules"],
   gallery: ["assets"],
@@ -89,7 +89,7 @@ const CONTEXTS = {
 // indexes, so importing an index has no side effects, and the loading entry imports only what
 // the loading strip draws, which keeps that entry small.
 const INDEXED = {
-  assets: {},
+  assets: { crash: ["./birdFrame.ts"] },
   camera: {},
   core: {},
   presentation: { loading: ["./zoneTheme.ts"] },

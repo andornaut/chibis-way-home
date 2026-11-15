@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ART_PATH, type ArtManifest } from "../assets/index.ts";
+import { ART_PATH, type ArtManifest, BIRD_SHEET_URL } from "../assets/index.ts";
 import { UI_FONT_RESOURCES } from "../ui/index.ts";
 import { ART_MANIFEST_URL, artUrls } from "./precacheArt.ts";
 
@@ -49,14 +49,16 @@ describe("artUrls", () => {
     expect(artUrls(manifest)).toEqual([
       ART_MANIFEST_URL,
       ...files.map((file) => ART_PATH + file),
+      BIRD_SHEET_URL,
       ...UI_FONT_RESOURCES.map(({ url }) => url),
     ]);
   });
 });
 
-it("includes both self-hosted UI font files in the fingerprinted art emission list", () => {
+it("includes the native crash bird and both UI font files in the fingerprinted art emission list", () => {
   const urls = artUrls(EMPTY);
   for (const url of [
+    BIRD_SHEET_URL,
     "/art/fonts/liberation/LiberationSans-Regular.woff2",
     "/art/fonts/liberation/LiberationSans-Bold.woff2",
   ]) {
