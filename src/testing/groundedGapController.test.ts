@@ -6,11 +6,12 @@ import { startBird } from "../rules/bird.ts";
 import type { ZoneState } from "../rules/zone.ts";
 import * as zoneRules from "../rules/zone.ts";
 import type { Surface } from "../sim/zoneWalk.ts";
-import { continuousRequiredRoute } from "./continuousRequiredRoute.ts";
+import { continuousRequiredRoute, controlledRequiredRoute } from "./continuousRequiredRoute.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
 import { createGroundedGapController, GROUNDED_GAP_CONTROLLER } from "./groundedGapController.ts";
 import { groundedGapSourceFiles, qualifyGroundedGapRoute } from "./groundedGapQualification.ts";
 import type { Proof } from "./pairCertify.ts";
+import * as routeIntent from "./requiredRouteIntent.ts";
 import { completePairProposal, preparePairProposal } from "./selectedCertification.ts";
 const support: Surface = {
   area: "main",
@@ -66,17 +67,17 @@ const current = (zone: ZoneState) => ({
 it("gates the supported press and releases only after observed ascent", () => {
   const gap = createGroundedGapController(ORDINARY, layout());
   const held = state({ jumpHeld: true });
-  const reset = gap.controller.input(current(held), target, 1)!;
+  const reset = gap.controller.input("none", current(held), target, 1)!;
   if (!("input" in reset)) {
     throw new Error("Expected release before takeoff");
   }
   gap.controller.observe(0, reset.input, held, state());
   expect(gap.events).toEqual([]);
-  expect(gap.controller.input(current(state()), target, 1)).toEqual({
+  expect(gap.controller.input("none", current(state()), target, 1)).toEqual({
     input: { jumpHeld: false, move: 1, useHeld: false },
   });
   const before = state({ x: 142 });
-  const press = gap.controller.input(current(before), target, 1)!;
+  const press = gap.controller.input("none", current(before), target, 1)!;
   expect(press).toEqual({ input: { jumpHeld: true, move: 1, useHeld: false } });
   if (!("input" in press)) {
     throw new Error("Expected press");
@@ -90,10 +91,10 @@ it("gates the supported press and releases only after observed ascent", () => {
     y: 883,
   });
   gap.controller.observe(1, press.input, before, rising);
-  expect(gap.controller.input(current(rising), target, 1)).toEqual(press);
+  expect(gap.controller.input("none", current(rising), target, 1)).toEqual(press);
   const apex = state({ grounded: false, jumpHeld: true, jumpRise: "free", vy: 0, x: 210, y: 810 });
   gap.controller.observe(2, press.input, rising, apex);
-  const release = gap.controller.input(current(apex), target, 1)!;
+  const release = gap.controller.input("none", current(apex), target, 1)!;
   expect(release).toEqual({ input: { jumpHeld: false, move: 1, useHeld: false } });
   if (!("input" in release)) {
     throw new Error("Expected release");
@@ -117,7 +118,7 @@ it("marks ceiling interruption separately and fails closed for unsupported carri
     layout([{ height: 60, width: 100, x: 120, y: 820 }]),
   );
   const before = state({ x: 142 });
-  const press = gap.controller.input(current(before), target, 1)!;
+  const press = gap.controller.input("none", current(before), target, 1)!;
   if (!("input" in press)) {
     throw new Error("Expected press");
   }
@@ -129,12 +130,12 @@ it("marks ceiling interruption separately and fails closed for unsupported carri
   );
   expect(gap.events.map(({ kind }) => kind)).toEqual(["takeoff", "interrupted"]);
   expect(gap.failure()).toBe("interrupted");
-  expect(gap.controller.input(current(before), target, 1)).toHaveProperty("unavailable");
+  expect(gap.controller.input("none", current(before), target, 1)).toHaveProperty("unavailable");
   const wall = createGroundedGapController(
     ORDINARY,
     layout([{ height: 100, width: 12, x: 168, y: 800 }]),
   );
-  wall.controller.input(current(before), target, 1);
+  wall.controller.input("none", current(before), target, 1);
   wall.controller.observe(
     1,
     press.input,
@@ -143,12 +144,12 @@ it("marks ceiling interruption separately and fails closed for unsupported carri
   );
   expect(wall.failure()).toBe("interrupted");
   const carried = createGroundedGapController(ORDINARY, layout());
-  expect(carried.controller.input(current(state({ carryVx: 10 })), target, 1)).toHaveProperty(
-    "unavailable",
-  );
+  expect(
+    carried.controller.input("none", current(state({ carryVx: 10 })), target, 1),
+  ).toHaveProperty("unavailable");
   const overspeed = createGroundedGapController(ORDINARY, layout());
   expect(
-    overspeed.controller.input(current(state({ vx: ORDINARY.walkSpeed + 1 })), target, 1),
+    overspeed.controller.input("none", current(state({ vx: ORDINARY.walkSpeed + 1 })), target, 1),
   ).toHaveProperty("unavailable");
 });
 it("retains default inputs and the complete result through a mocked native step", () => {
@@ -206,5 +207,53 @@ it("rejects incomplete source metadata before any route and cannot be submitted 
     expect(() => completePairProposal(plan, [result as unknown as Proof])).toThrow();
   } finally {
     step.mockRestore();
+  }
+});
+
+it("fails closed before a gap press when timed hazard hold or cross owns input", () => {
+  const initialize = vi.spyOn(zoneRules, "startZone").mockReturnValue(state({ x: 142 }));
+  const step = vi.spyOn(zoneRules, "stepZone");
+  const hazard = vi.spyOn(routeIntent, "routeHazardIntent");
+  try {
+    for (const ownership of ["hold", "cross"] as const) {
+      if (ownership === "hold") {
+        hazard.mockReturnValueOnce({ kind: "hold" });
+      } else {
+        hazard.mockReturnValueOnce({
+          crossing: {
+            clearX: 300,
+            floor: { height: 516, width: 72, x: 72, y: 924 },
+            hazards: [],
+            requiredIndex: 0,
+            upperTicks: 1,
+          },
+          kind: "cross",
+        });
+      }
+      const gap = createGroundedGapController(ORDINARY, layout());
+      const result = controlledRequiredRoute(gap.controller, layout(), [
+        { area: "main", at: { col: 24, row: 74 } },
+      ]);
+      expect(result).toMatchObject({
+        status: "not-proven",
+        ticks: 0,
+        unavailable: { index: 0, reason: "hazard-margin-unavailable" },
+      });
+      expect(gap.failure()).toBe("timed-hazard-owned");
+      expect(gap.events).toEqual([]);
+      expect(gap.guardEvents).toMatchObject([
+        {
+          bird: { grounded: true, x: 142 },
+          move: ownership === "hold" ? 0 : 1,
+          ownership,
+          tick: 0,
+        },
+      ]);
+    }
+    expect(step).not.toHaveBeenCalled();
+  } finally {
+    initialize.mockRestore();
+    step.mockRestore();
+    hazard.mockRestore();
   }
 });

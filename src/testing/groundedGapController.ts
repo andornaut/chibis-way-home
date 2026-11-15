@@ -27,6 +27,16 @@ interface GapFrame {
 // Only current contact geometry is observed; no future state or jump trajectory is sampled.
 export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayout) {
   const events: GapEvent[] = [];
+  const guardEvents: {
+    readonly area: string;
+    readonly bird: ZoneState["bird"];
+    readonly body: Rect;
+    readonly move: ZoneInput["move"];
+    readonly ownership: "hold" | "cross";
+    readonly support: Surface | undefined;
+    readonly tick: number;
+  }[] = [];
+  let observedTick = 0;
   const surfaces = zoneSurfaces(tuning, layout);
   let active:
     | {
@@ -35,7 +45,7 @@ export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayo
         phase: Phase;
       }
     | undefined;
-  let failure: "interrupted" | "unsupported" | undefined;
+  let failure: "interrupted" | "timed-hazard-owned" | "unsupported" | undefined;
   let released = false;
   let fell = false;
   const frame = (zone: ZoneState): GapFrame => {
@@ -73,8 +83,26 @@ export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayo
   };
   const controller: QualificationController<typeof GROUNDED_GAP_CONTROLLER> = {
     id: GROUNDED_GAP_CONTROLLER,
-    input(current, target, move) {
+    input(ownership, current, target, move) {
       const { bird, support } = current;
+      if (ownership !== "none") {
+        failure = "timed-hazard-owned";
+        guardEvents.push({
+          area: current.area,
+          bird: { ...bird },
+          body: { height: tuning.height, width: tuning.width, x: bird.x, y: bird.y },
+          move,
+          ownership,
+          support,
+          tick: observedTick,
+        });
+        return {
+          unavailable: {
+            index: target?.index ?? active?.target.index ?? -1,
+            reason: "hazard-margin-unavailable",
+          },
+        };
+      }
       const unavailable = () => ({
         unavailable: {
           index: target?.index ?? active?.target.index ?? -1,
@@ -144,6 +172,7 @@ export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayo
       };
     },
     observe(tick, input, before, after) {
+      observedTick = tick;
       const emit = (kind: GapEvent["kind"]) =>
         events.push({
           after: frame(after),
@@ -202,5 +231,5 @@ export function createGroundedGapController(tuning: BirdTuning, layout: ZoneLayo
       }
     },
   };
-  return { controller, events, failure: () => failure };
+  return { controller, events, failure: () => failure, guardEvents };
 }

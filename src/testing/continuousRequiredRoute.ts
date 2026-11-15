@@ -78,6 +78,7 @@ export function continuousRequiredRoute(
 export interface QualificationController<Controller extends string> {
   readonly id: Controller;
   input(
+    ownership: "none" | "hold" | "cross",
     current: RouteIntentCurrent & {
       readonly bird: ZoneState["bird"];
     },
@@ -221,7 +222,7 @@ export function controlledRequiredRoute<
             jump: intent.inhibitNewJump ? ("never" as const) : ("reactive" as const),
             move: intent.move,
           };
-    const controlled = controller?.input(current, aim, policy.move);
+    const controlled = controller?.input(hazard.kind, current, aim, policy.move);
     if (controlled !== undefined && "unavailable" in controlled) {
       unavailable = controlled.unavailable;
       break;
