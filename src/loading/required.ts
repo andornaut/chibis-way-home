@@ -39,11 +39,18 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
   let listening = false;
   let state = requiredLoading.state;
   let pending: Promise<void> | undefined;
+  let startingRetry = false;
   let unit: number | undefined;
   let view: LoadingFailureView | undefined;
   const onRetry = () => {
-    const flight = requiredLoading.retry();
-    pending = flight;
+    let flight: Promise<void>;
+    startingRetry = true;
+    try {
+      flight = requiredLoading.retry();
+      pending = flight;
+    } finally {
+      startingRetry = false;
+    }
     const settled = () => {
       if (live && pending === flight) {
         pending = undefined;
@@ -54,7 +61,7 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
     return flight;
   };
   const refit = () => {
-    if (!live || state.kind !== "failed" || pending !== undefined) {
+    if (!live || state.kind !== "failed" || startingRetry || pending !== undefined) {
       return;
     }
     const nextUnit = readUnit(parent.closest("#game")?.querySelector(".ui-layer") ?? parent);

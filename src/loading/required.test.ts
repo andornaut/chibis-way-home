@@ -59,11 +59,13 @@ it("refits only the native presentation while preserving resource ownership and 
   expect(requiredLoading.state).toBe(state);
   expect(retry).not.toHaveBeenCalled();
   expect(successfulRetry).not.toHaveBeenCalled();
+  layer.style.setProperty("--ui-unit", "3");
   secondButton.click();
+  expect(host.querySelector(".loading-failure")).toBe(second);
+  expect(secondButton.disabled).toBe(true);
   const flight = requiredLoading.retry();
   expect(requiredLoading.retry()).toBe(flight);
   expect(retry).toHaveBeenCalledOnce();
-  layer.style.setProperty("--ui-unit", "3");
   window.dispatchEvent(new Event("resize"));
   expect(host.querySelector(".loading-failure")).toBe(second);
   expect(secondButton.disabled).toBe(true);
