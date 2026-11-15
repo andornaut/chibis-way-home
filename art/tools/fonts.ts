@@ -1,7 +1,7 @@
 /**
  * Build the private native 16px Liberation Sans body BMFont for generator preview labels.
  *
- * font-body uses Liberation Sans Regular at native 1x. Runtime UI uses the served TTF faces. The line
+ * font-body uses Liberation Sans Regular at native 1x. Runtime faces retain TTF and full WOFF2. The line
  * height is the ascent plus the descent plus one pixel of leading, and the base is the ascent. The
  * exported FNT metrics own layout. Printable ASCII and the middle dot cover current player text.
  * Native glyph bearings and rounded pair kerning are retained. White RGBA glyphs use grayscale
@@ -15,16 +15,19 @@
  * Usage, from the repository root:
  *   node art/tools/fonts.ts build             write art/generated/fonts/font-body.png and .fnt,
  *                                             copy the TTFs and licence to public/art/fonts/liberation/
+ *                                             and encode complete Regular and Bold WOFF2 faces
  *   node art/tools/fonts.ts preview OUT.png   every face with sample lines, 3x
  */
 
-import { copyFileSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { basename } from "node:path";
 
 import { rasteriseGlyphs } from "@andornaut/art-kit/fonts";
 import { buildBitmapFontFromGlyphs } from "@andornaut/art-kit/glyphAtlas";
 import { encodeRgbaPng } from "@andornaut/art-kit/png";
 import { composite, filledImage, resizeNearest } from "@andornaut/art-kit/raster";
 import type { RgbaImage } from "@andornaut/art-kit/rgbaImage";
+import { encodeWoff2 } from "@andornaut/art-kit/woff2";
 
 import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
@@ -123,12 +126,18 @@ function buildFont(key: string, face: string, size: number, path: string): void 
   writeFileSync(`${OUT}/${key}.fnt`, xml);
 }
 
-/** Copy every file in art/fonts/liberation/ byte for byte to public/art/fonts/liberation/. */
-function copyLiberation(): void {
+/** Copy the originals unchanged and encode both complete runtime faces as WOFF2. */
+async function copyLiberation(): Promise<void> {
   mkdirSync(SERVED_LIBERATION, { recursive: true });
   for (const name of readdirSync(LIBERATION).sort()) {
     copyFileSync(`${LIBERATION}/${name}`, `${SERVED_LIBERATION}/${name}`);
   }
+  await Promise.all(
+    Object.values(FONTS).map(async ([, path]) => {
+      const encoded = await encodeWoff2(readFileSync(path));
+      writeFileSync(`${SERVED_LIBERATION}/${basename(path, ".ttf")}.woff2`, encoded);
+    }),
+  );
 }
 
 /** Deterministic prerequisite for standalone preview commands as well as the full art build. */
@@ -137,9 +146,9 @@ export function buildPreviewFont(): void {
   buildFont("font-body", face, size, path);
 }
 
-export function build(): void {
+export async function build(): Promise<void> {
   buildPreviewFont();
-  copyLiberation();
+  await copyLiberation();
   const manifest = pixel.readManifest();
   manifest.fonts = [];
   pixel.writeJson({}, pixel.MANIFEST, manifest);
