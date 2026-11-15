@@ -2,7 +2,7 @@ import { STEP_SECONDS } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { startZone, stepZone, type ZoneState } from "../rules/zone.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
 import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "../sim/bot.ts";
 import {
   requiredRouteObservation,
@@ -19,12 +19,11 @@ import {
   requiredRouteIntent,
   type RequiredRouteIntentTarget,
   routeHazardIntent,
+  type RouteIntentCurrent,
   type RouteIntentUnavailable,
   staticRouteAssist,
 } from "./requiredRouteIntent.ts";
-
 const ROUTE_TICKS = 600;
-
 type RouteReason =
   | "budget-exhausted"
   | "cleared"
@@ -32,8 +31,9 @@ type RouteReason =
   | "intent-unavailable"
   | "missing-targets"
   | "turned-back";
-
-export interface ContinuousRouteResult {
+export interface ContinuousRouteResult<
+  Controller extends string = typeof REQUIRED_ROUTE_CONTROLLER,
+> {
   readonly assistWitnesses: readonly {
     readonly area: string;
     readonly requiredIndex: number;
@@ -42,8 +42,11 @@ export interface ContinuousRouteResult {
     readonly x: number;
     readonly y: number;
   }[];
-  readonly controller: typeof REQUIRED_ROUTE_CONTROLLER;
-  readonly missing: readonly { readonly index: number; readonly target: WalkRouteTarget }[];
+  readonly controller: Controller;
+  readonly missing: readonly {
+    readonly index: number;
+    readonly target: WalkRouteTarget;
+  }[];
   readonly reason: RouteReason;
   readonly status: "not-proven" | "proven";
   readonly terminal: {
@@ -63,13 +66,40 @@ export interface ContinuousRouteResult {
     readonly y: number;
   }[];
 }
-
 // One ordinary continuous trajectory with required-target intent over the native reactive bot.
 // Missing witnesses or a policy failure do not establish that the authored geometry is impossible.
 export function continuousRequiredRoute(
   layout: ZoneLayout,
   targets: readonly WalkRouteTarget[],
 ): ContinuousRouteResult {
+  return controlledRequiredRoute(undefined, layout, targets);
+}
+// Qualification controllers cannot produce the native certification Proof shape.
+export interface QualificationController<Controller extends string> {
+  readonly id: Controller;
+  input(
+    current: RouteIntentCurrent & {
+      readonly bird: ZoneState["bird"];
+    },
+    target: RequiredRouteIntentTarget | undefined,
+    move: ZoneInput["move"],
+  ):
+    | {
+        readonly input: ZoneInput;
+      }
+    | {
+        readonly unavailable: RouteIntentUnavailable;
+      }
+    | undefined;
+  observe(tick: number, input: ZoneInput, before: ZoneState, after: ZoneState): void;
+}
+export function controlledRequiredRoute<
+  Controller extends string = typeof REQUIRED_ROUTE_CONTROLLER,
+>(
+  controller: QualificationController<Controller> | undefined,
+  layout: ZoneLayout,
+  targets: readonly WalkRouteTarget[],
+): ContinuousRouteResult<Controller | typeof REQUIRED_ROUTE_CONTROLLER> {
   const surfaces = zoneSurfaces(ORDINARY, layout);
   const resolved = targets.map((target, index) => ({
     index,
@@ -191,9 +221,20 @@ export function continuousRequiredRoute(
             jump: intent.inhibitNewJump ? ("never" as const) : ("reactive" as const),
             move: intent.move,
           };
-    const input = botInput(ORDINARY, sensors, layout, DIAGNOSTIC_SKILL, policy, zone, bot);
+    const controlled = controller?.input(current, aim, policy.move);
+    if (controlled !== undefined && "unavailable" in controlled) {
+      unavailable = controlled.unavailable;
+      break;
+    }
+    if (controlled !== undefined) {
+      bot.holding = 0;
+    }
+    const input =
+      controlled?.input ?? botInput(ORDINARY, sensors, layout, DIAGNOSTIC_SKILL, policy, zone, bot);
+    const before = zone;
     zone = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
     ticks++;
+    controller?.observe(ticks, input, before, zone);
     observation = observe(ticks, zone);
     if (crossing !== undefined) {
       crossingSteps++;
@@ -229,7 +270,7 @@ export function continuousRequiredRoute(
               : "cleared";
   return {
     assistWitnesses,
-    controller: REQUIRED_ROUTE_CONTROLLER,
+    controller: controller?.id ?? REQUIRED_ROUTE_CONTROLLER,
     missing,
     reason,
     status: reason === "cleared" ? "proven" : "not-proven",
