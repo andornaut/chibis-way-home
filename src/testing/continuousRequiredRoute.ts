@@ -250,7 +250,7 @@ export function controlledRequiredRoute<
         ? { inhibitNewJump: true, move: hazard.kind === "cross" ? (1 as const) : (0 as const) }
         : aim === undefined
           ? undefined
-          : requiredRouteIntent(ORDINARY, current, aim);
+          : requiredRouteIntent(ORDINARY, { ...current, surfaces }, aim);
     if (intent !== undefined && "unavailable" in intent) {
       unavailable = intent.unavailable;
       controller?.decision?.({

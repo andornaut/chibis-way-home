@@ -696,6 +696,47 @@ it("allows a contiguous grounded descent instead of jumping over its landing", (
   ).toEqual({ inhibitNewJump: false, move: 1 });
 });
 
+it("walks an intervening static bank toward a lower landing without a new jump", () => {
+  const support = { ...surface, key: "departure", left: 240, right: 300, y: 924 };
+  const bank = { ...surface, key: "bank", left: 300, right: 432, y: 960 };
+  const goal = {
+    index: 0,
+    surface: { ...surface, key: "lower", left: 432, right: 504, y: 1008 },
+    window: { max: 480, min: 432 },
+  };
+  const approach = {
+    ...current,
+    bird: { ...current.bird, vx: 0, x: 245.4, y: 888 },
+    support,
+    surfaces: [support, bank, goal.surface],
+  };
+  const original = structuredClone({ approach, goal });
+  expect(requiredRouteIntent(ORDINARY, approach, goal)).toEqual({
+    inhibitNewJump: true,
+    move: 1,
+  });
+  expect({ approach, goal }).toEqual(original);
+  const withoutContext = { ...current, bird: approach.bird, support };
+  expect(requiredRouteIntent(ORDINARY, withoutContext, goal)).toEqual({
+    inhibitNewJump: false,
+    move: 1,
+  });
+  expect(
+    requiredRouteIntent(
+      ORDINARY,
+      { ...approach, surfaces: [support, { ...bank, mover: 0 }, goal.surface] },
+      goal,
+    ),
+  ).toEqual({ inhibitNewJump: false, move: 1 });
+  expect(
+    requiredRouteIntent(
+      ORDINARY,
+      { ...approach, surfaces: [support, { ...bank, right: 420 }, goal.surface] },
+      goal,
+    ),
+  ).toEqual({ inhibitNewJump: false, move: 1 });
+});
+
 it("reports overshoot and descending below a missed support without changing the target", () => {
   expect(
     requiredRouteIntent(ORDINARY, { ...current, bird: { ...current.bird, x: 121 } }, target),

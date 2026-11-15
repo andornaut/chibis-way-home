@@ -15,7 +15,7 @@ import { timedHazardRect } from "../rules/timedHazard.ts";
 import type { ZoneState } from "../rules/zone.ts";
 import type { Surface } from "../sim/zoneWalk.ts";
 
-export const REQUIRED_ROUTE_CONTROLLER = "required-route-intent-v2";
+export const REQUIRED_ROUTE_CONTROLLER = "required-route-intent-v3";
 
 export type RouteHazardProvenance = "non-hazard" | "static" | "timed" | "unsupported";
 
@@ -404,6 +404,7 @@ export interface RouteIntentCurrent {
   readonly area: string;
   readonly bird: Pick<BirdState, "carryVx" | "grounded" | "vx" | "vy" | "x" | "y">;
   readonly support: Surface | undefined;
+  readonly surfaces?: readonly Surface[];
 }
 
 export type RequiredRouteIntentDecision =
@@ -455,7 +456,22 @@ export function requiredRouteIntent(
   }
   const onTarget = support?.key === surface.key;
   const supportedDescent =
-    support !== undefined && surface.y > support.y && surface.left <= support.right + EDGE;
+    support !== undefined &&
+    surface.y > support.y &&
+    (surface.left <= support.right + EDGE ||
+      (current.surfaces?.includes(support) === true &&
+        current.surfaces.includes(surface) &&
+        current.surfaces.some(
+          (bank) =>
+            bank.area === current.area &&
+            bank.mover === undefined &&
+            [bank.left, bank.right, bank.y].every(Number.isFinite) &&
+            bank.y >= support.y &&
+            bank.y <= surface.y &&
+            bank.right - bank.left >= tuning.width &&
+            bank.left <= support.right + EDGE &&
+            bank.right >= surface.left - EDGE,
+        )));
   const inhibitNewJump = bird.grounded && (onTarget || supportedDescent);
   const above = bird.y + tuning.height <= surface.y + EDGE;
   if (!onTarget && !above) {

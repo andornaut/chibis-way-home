@@ -233,7 +233,7 @@ it("retains default inputs and the complete result through a mocked native step"
     const result = continuousRequiredRoute(layout(), []);
     expect(result).toEqual({
       assistWitnesses: [],
-      controller: "required-route-intent-v2",
+      controller: routeIntent.REQUIRED_ROUTE_CONTROLLER,
       missing: [],
       reason: "cleared",
       status: "proven",
