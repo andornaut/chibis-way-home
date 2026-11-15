@@ -29,7 +29,7 @@
     "phaser": "^4.2.1"
   },
   "devDependencies": {
-    "@andornaut/art-kit": "https://github.com/andornaut/art-kit/releases/download/v0.24.0/art-kit-0.24.0.tgz",
+    "@andornaut/art-kit": "https://github.com/andornaut/art-kit/releases/download/v0.26.0/art-kit-0.26.0.tgz",
     "@andornaut/delivery-kit": "https://github.com/andornaut/delivery-kit/releases/download/v4.2.2/delivery-kit-4.2.2.tgz",
     "@eslint/js": "^10.0.1",
     "@jsquash/webp": "1.5.0",
@@ -51,6 +51,7 @@
     "typescript-eslint": "^8.72.2",
     "vite": "^8.3.8",
     "vitest": "^5.1.0",
+    "wawoff2": "2.0.1",
     "wrangler": "^4.160.1"
   },
   "overrides": {
