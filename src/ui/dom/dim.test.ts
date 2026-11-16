@@ -81,8 +81,7 @@ describe("the dim under the top card", () => {
   let layer: UiLayer;
   afterEach(() => layer.dispose());
 
-  // Three scene views in order, the middle one holding the card and a live element, and the
-  // lowest holding a live element inside a group beside an image.
+  // Three scene views in order, with controls and an image outside the middle card.
   function views() {
     layer = createUiLayer([], document);
     document.body.append(layer.element);
@@ -107,9 +106,9 @@ describe("the dim under the top card", () => {
     return { dialog, group, high: high!, hud, image, low: low!, lowLive, middle: middle!, sibling };
   }
 
-  const dimmed = (element: Element) => element.hasAttribute(UI_DIMMED);
+  const dimmed = (element: Element) => element.closest(`[${UI_DIMMED}]`) !== null;
 
-  it("dims what lies under the card, apart from its live elements, and lifts it on close", () => {
+  it("dims all branches outside the top card despite live requests, and restores them on close", () => {
     const parts = views();
     const close = layer.modals.open({ live: [parts.hud, parts.lowLive] }, parts.dialog);
     expect({
@@ -120,14 +119,14 @@ describe("the dim under the top card", () => {
       low: dimmed(parts.low),
       lowLive: dimmed(parts.lowLive),
       middle: dimmed(parts.middle),
-      sibling: [dimmed(parts.sibling), parts.sibling.style.getPropertyValue("--colour-ink")],
+      sibling: [dimmed(parts.sibling), parts.low.style.getPropertyValue("--colour-ink")],
     }).toEqual({
-      group: false,
-      high: false,
-      hud: false,
+      group: true,
+      high: true,
+      hud: true,
       image: [true, "blob:dimmed"],
-      low: false,
-      lowLive: false,
+      low: true,
+      lowLive: true,
       middle: false,
       sibling: [true, "#000001"],
     });
@@ -138,13 +137,13 @@ describe("the dim under the top card", () => {
     }).toEqual({ image: [false, "blob:lit"], sibling: [false, ""] });
   });
 
-  it("dims every view under the card, and only under the top one of a stack", () => {
+  it("dims every view outside the top card and restores the previous stack", () => {
     const parts = views();
     const closeMiddle = layer.modals.open({}, parts.dialog);
     expect([dimmed(parts.low), dimmed(parts.middle), dimmed(parts.high)]).toEqual([
       true,
       false,
-      false,
+      true,
     ]);
     const card = document.createElement("section");
     parts.high.append(card);
@@ -161,7 +160,7 @@ describe("the dim under the top card", () => {
     expect(dimmed(parts.low)).toBe(false);
   });
 
-  it("dims a covered element in a view over the card, unless the card keeps it live", () => {
+  it("dims covered controls outside the active dialog even when requested live", () => {
     const parts = views();
     const covered = document.createElement("div");
     const lit = document.createElement("button");
@@ -169,16 +168,16 @@ describe("the dim under the top card", () => {
     parts.high.append(lit, covered);
     const state = () => [covered, lit, parts.high].map(dimmed);
     const close = layer.modals.open({ live: [lit] }, parts.dialog);
-    expect(state()).toEqual([true, false, false]);
-    expect(covered.style.getPropertyValue("--colour-ink")).toBe("#000001");
+    expect(state()).toEqual([true, true, true]);
+    expect(parts.high.style.getPropertyValue("--colour-ink")).toBe("#000001");
     close();
     const closeLive = layer.modals.open({ live: [lit, covered] }, parts.dialog);
-    expect(state()).toEqual([false, false, false]);
+    expect(state()).toEqual([true, true, true]);
     closeLive();
     const card = document.createElement("section");
     parts.high.append(card);
     layer.modals.open({}, card);
-    expect(state()).toEqual([false, false, false]);
+    expect(state()).toEqual([true, true, false]);
   });
 
   it("shows the dimmed source of an image given its lit one while it is dimmed", async () => {
