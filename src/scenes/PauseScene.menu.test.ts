@@ -180,20 +180,19 @@ it("opens the Start Menu with bottom-primary Close and returns focus without cha
   origin.remove();
 });
 
-it("opens Menu over required Death while its card stays guarded, then restores its scope and focus", async () => {
+it("keeps Menu covered by required Death without changing its scope, focus or held zone", async () => {
   const f = menu("death");
   f.paused.add("zone");
   const death = f.card("death");
   expect(death.root.inert).toBe(false);
-  expect(f.pause.pauseButton.closest("[inert]")).toBeNull();
+  expect(f.pause.pauseButton.closest("[inert]")).not.toBeNull();
   tap(f.pause.pauseButton);
   await settle();
-  expect(modalInput(death.owner as never).accepts()).toBe(false);
-  expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.menu.title);
-  tap(f.pause.button(TEXT.pause.close));
   expect(modalInput(death.owner as never).accepts()).toBe(true);
+  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
   expect(f.paused.has("zone")).toBe(true);
   expect(document.activeElement).toBe(death.button);
+  expect(f.scenes.pause).not.toHaveBeenCalled();
 });
 
 it("retains the existing Settings subview across Menu", async () => {
@@ -232,30 +231,36 @@ it("invalidates held entry gestures on modal changes and removes the sole entry 
   expect(f.scenes.pause).not.toHaveBeenCalled();
 });
 
-it("keeps the global owner active through Update, then defers through the existing flow before Home", async () => {
+it("keeps Menu covered through Update and retains the existing defer route before Home", async () => {
   const f = menu("zone");
   const sceneManager = {
     ...f.scenes,
     getScenes: () => [...f.active].map((key) => ({ scene: { key } })),
     start: (key: string) => f.active.add(key),
   };
-  const game = Object.assign(f.game, { scene: sceneManager });
-  installUpdateModalBridge(game as unknown as Game);
+  installUpdateModalBridge(Object.assign(f.game, { scene: sceneManager }) as unknown as Game);
   offer.listener!(true);
   expect(f.scenes.pause).toHaveBeenCalledWith("zone");
   expect(f.scenes.pause).not.toHaveBeenCalledWith("pause");
   const update = f.card("update");
   tap(f.pause.pauseButton);
   await settle();
-  tap(f.pause.button(TEXT.pause.home));
-  expect(offer.defer).toHaveBeenCalledOnce();
-  expect(f.scenes.launch).toHaveBeenCalledWith("start");
+  expect(document.activeElement).toBe(update.button);
+  expect(offer.defer).not.toHaveBeenCalled();
+  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+  offer.defer();
+  f.pause.update();
   expect(f.active.has("update")).toBe(false);
-  expect(f.paused.has("update")).toBe(false);
   expect(update.root.isConnected).toBe(false);
+  tap(f.pause.pauseButton);
+  await settle();
+  tap(f.pause.button(TEXT.pause.home));
+  expect(offer.defer).toHaveBeenCalledTimes(2);
+  expect(f.scenes.launch).toHaveBeenCalledWith("start");
+  expect(f.paused.has("update")).toBe(false);
 });
 
-it("restores Pause after Update covers it and a temporary Menu visit closes", async () => {
+it("restores Pause after Update covers it without allowing a covered Menu visit", async () => {
   const f = menu("zone");
   tap(f.pause.pauseButton);
   await settle();
@@ -263,15 +268,14 @@ it("restores Pause after Update covers it and a temporary Menu visit closes", as
   expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
   tap(f.pause.pauseButton);
   await settle();
-  expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.menu.title);
-  tap(f.pause.button(TEXT.pause.close));
   expect(document.activeElement).toBe(update.button);
+  expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.pause.title);
   expect(f.paused.has("zone")).toBe(true);
   f.active.delete("update");
   update.close();
   modalInput(update.owner as never).close();
   f.pause.update();
-  expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.pause.title);
+  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
   tap(f.pause.button(TEXT.pause.resume));
   expect(f.active.has("zone")).toBe(true);
   expect(f.scenes.resume.mock.calls.filter(([key]) => key === "zone")).toHaveLength(1);
@@ -334,7 +338,7 @@ it("uses Menu for an active story phase that declines Pause, without advancing t
   expect(f.scenes.launch).not.toHaveBeenCalled();
 });
 
-it("returns to existing Settings beneath Update through its existing defer route", async () => {
+it("keeps Settings beneath Update and returns through its existing defer route", async () => {
   const f = menu("zone");
   tap(f.pause.pauseButton);
   await settle();
@@ -347,10 +351,12 @@ it("returns to existing Settings beneath Update through its existing defer route
   };
   installUpdateModalBridge(Object.assign(f.game, { scene: sceneManager }) as unknown as Game);
   offer.listener!(true);
-  f.card("update");
+  const update = f.card("update");
   tap(f.pause.pauseButton);
   await settle();
-  tap(f.pause.button(TEXT.pause.settings));
+  expect(document.activeElement).toBe(update.button);
+  expect(offer.defer).not.toHaveBeenCalled();
+  offer.defer();
   expect(f.scenes.launch).toHaveBeenCalledExactlyOnceWith("settings", { opener: "pause" });
   expect(offer.defer).toHaveBeenCalledOnce();
   expect(f.active.has("settings")).toBe(true);
@@ -412,7 +418,7 @@ it("keeps gameplay Pause actions unchanged and resumes without offering Achievem
   expect(f.scenes.launch).not.toHaveBeenCalled();
 });
 
-it("preserves both originating action focuses across Achievements and Settings nesting", async () => {
+it("preserves originating action focus when returning from Achievements and then Settings", async () => {
   const f = menu("start");
   tap(f.pause.pauseButton);
   await settle();
@@ -422,6 +428,12 @@ it("preserves both originating action focuses across Achievements and Settings n
   const achievements = f.card("achievements");
   tap(f.pause.pauseButton);
   await settle();
+  expect(document.activeElement).toBe(achievements.button);
+  achievements.close();
+  modalInput(achievements.owner as never).close();
+  f.active.delete("achievements");
+  f.pause.scene.achievementsClosed();
+  expect(document.activeElement).toBe(achievementsAction);
   const settingsAction = f.pause.button(TEXT.pause.settings);
   settingsAction.focus();
   tap(settingsAction);
@@ -431,13 +443,6 @@ it("preserves both originating action focuses across Achievements and Settings n
   f.active.delete("settings");
   f.pause.scene.settingsClosed();
   expect(document.activeElement).toBe(settingsAction);
-  tap(f.pause.button(TEXT.pause.close));
-  expect(document.activeElement).toBe(achievements.button);
-  achievements.close();
-  modalInput(achievements.owner as never).close();
-  f.active.delete("achievements");
-  f.pause.scene.achievementsClosed();
-  expect(document.activeElement).toBe(achievementsAction);
   tap(f.pause.button(TEXT.pause.close));
   expect(f.active.has("start")).toBe(true);
 });

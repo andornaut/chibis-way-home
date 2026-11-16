@@ -743,7 +743,10 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   // acts while that input accepts. A tap on the backdrop closes the card.
   private watchPresses(view: PauseView): void {
     const document = view.root.ownerDocument;
-    const entry = globalMenuInput(this, () => this.entryAvailable());
+    const entry = globalMenuInput(
+      this,
+      () => this.entryAvailable() && view.pauseButton.closest("[inert]") === null,
+    );
     const gate = {
       accepts: () => !this.blocked() && this.cardInput().accepts(),
       capture: () => {
@@ -755,6 +758,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       const control = target instanceof Element ? target.closest("button") : null;
       return control !== null &&
         !control.disabled &&
+        control.closest("[inert]") === null &&
         (view.root.contains(control) || control === view.pauseButton)
         ? control
         : undefined;
@@ -926,6 +930,9 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       this.input.keyboard?.off("keydown", onPauseKey);
     });
     const onEntryKey = (event: KeyboardEvent) => {
+      if (view.pauseButton.closest("[inert]") !== null) {
+        return;
+      }
       const context = this.context();
       if (
         this.state === "closed" &&

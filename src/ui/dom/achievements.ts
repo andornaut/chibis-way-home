@@ -6,7 +6,7 @@ import { closeButton, textButton } from "./card.ts";
 // The Achievements card in the HTML UI (achievements.css, on ui.css's .ui-card): its title, a
 // list of every entry, a page of them at a time, Previous, the page count and Next, and the close
 // X. The close X comes last in the card, so the keyboard's focus moves through Previous, Next and
-// the close X in that order.
+// Back and the close X in that order.
 
 // One entry's words and state: its progress is a locked entry's count, where it has one.
 export interface AchievementsCardEntry {
@@ -17,6 +17,7 @@ export interface AchievementsCardEntry {
 }
 
 export interface AchievementsCardWords {
+  readonly back: string;
   readonly close: string;
   readonly locked: string;
   readonly next: string;
@@ -25,7 +26,7 @@ export interface AchievementsCardWords {
   readonly unlocked: string;
 }
 
-export type AchievementsTarget = "close" | "next" | "previous";
+export type AchievementsTarget = "back" | "close" | "next" | "previous";
 
 export interface AchievementsCardView {
   readonly backdrop: HTMLElement;
@@ -94,12 +95,17 @@ export function createAchievementsCard(
   const pageCount = element("p", "achievements-page");
   pageCount.setAttribute("aria-live", "polite");
   const buttons = {
+    back: textButton(document, words.back, true),
     close: closeButton(document, words.close),
     next: textButton(document, words.next),
     previous: textButton(document, words.previous),
   };
   pager.append(buttons.previous, pageCount, buttons.next);
-  dialog.append(header, list, pager, buttons.close);
+  const footer = element("div", "achievements-footer");
+  const back = element("div", "ui-card-actions achievements-return");
+  back.append(buttons.back);
+  footer.append(pager, back);
+  dialog.append(header, list, footer, buttons.close);
   view.append(dialog);
   root.append(backdrop, view);
   return { backdrop, buttons, dialog, entries: shown, pageCount, root };

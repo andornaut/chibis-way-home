@@ -118,3 +118,10 @@ it("spaces neighbouring buttons by the button and stack gaps", () => {
     "--half-gap: calc(var(--ui-unit) * var(--card-gap) / 2 * 1px);",
   );
 });
+
+it("keeps Achievements pagination centred with a separate right-aligned return slot", () => {
+  const css = SHEETS.find(([name]) => name === "achievements.css")![1];
+  expect(css).toContain("grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);");
+  expect(css).toContain(".achievements-footer > .achievements-pager {\n  grid-column: 2;");
+  expect(css).toContain(".achievements-return {\n  grid-column: 3;\n  justify-self: end;");
+});

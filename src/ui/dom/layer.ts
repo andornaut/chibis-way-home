@@ -225,14 +225,25 @@ function createDimmingModals(
   root: HTMLElement,
   dim: ReturnType<typeof createDim>,
   globalEntry: HTMLElement,
-): ModalLayer {
+) {
   const modals = createModalLayer(root);
   const stack: { readonly dialog: HTMLElement; readonly options: ModalOptions }[] = [];
+  // An explicitly live Pause entry stays above its conversation. Ordinary Menu is covered.
+  const placeEntry = (dialog?: HTMLElement, live: readonly HTMLElement[] = []) => {
+    const covered = dialog !== undefined && !live.includes(globalEntry);
+    const before = covered
+      ? [...root.children].find((view) => view !== globalEntry && view.contains(dialog))
+      : undefined;
+    if (globalEntry.nextElementSibling !== (before ?? null)) {
+      root.insertBefore(globalEntry, before ?? null);
+    }
+  };
   const update = () => {
     const top = stack.at(-1);
+    placeEntry(top?.dialog, top?.options.live);
     dim.apply(top === undefined ? new Set() : dimTargets(root, top.dialog, top.options.live ?? []));
   };
-  return {
+  const layer: ModalLayer = {
     back: () => modals.back(),
     dispose() {
       stack.length = 0;
@@ -241,7 +252,9 @@ function createDimmingModals(
     },
     open(options, dialog) {
       const live = (options.live ?? []).filter((element) => !globalEntry.contains(element));
-      const liveOptions = { ...options, live: [...live, globalEntry] };
+      const entryLive = options.live?.some((element) => globalEntry.contains(element)) ?? false;
+      const liveOptions = { ...options, live: entryLive ? [...live, globalEntry] : live };
+      placeEntry(dialog, liveOptions.live);
       const close = modals.open(liveOptions, dialog);
       const entry = { dialog, options: liveOptions };
       stack.push(entry);
@@ -256,6 +269,7 @@ function createDimmingModals(
       };
     },
   };
+  return { modals: layer, refresh: update };
 }
 
 // The UI layer for document, with frameEdges (art's nine-slice edges, in base px) kept as whole
@@ -277,7 +291,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
   entryView.className = "ui-view pause-hud-view";
   globalEntry.append(entryView);
   element.append(globalEntry);
-  const modals = createDimmingModals(element, dim, globalEntry);
+  const { modals, refresh } = createDimmingModals(element, dim, globalEntry);
   return {
     dimImage: (lit, dimmed) => dim.image(lit, dimmed),
     dispose() {
@@ -312,10 +326,14 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
       view.classList.add("ui-scene");
       view.dataset.uiOrder = String(order);
       const after = [...element.children].find(
-        (child) => Number((child as HTMLElement).dataset.uiOrder) > order,
+        (child) => child !== globalEntry && Number((child as HTMLElement).dataset.uiOrder) > order,
       );
       element.insertBefore(view, after ?? null);
-      return () => view.remove();
+      refresh();
+      return () => {
+        view.remove();
+        refresh();
+      };
     },
     setDimmedSkin: (properties) => dim.skin(properties),
   };

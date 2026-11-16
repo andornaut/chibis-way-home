@@ -136,7 +136,7 @@ async function startMenu() {
     document.activeElement!.dispatchEvent(event);
     return event;
   };
-  return { key, pause, start };
+  return { key, layer, pause, start };
 }
 
 it.each(["Enter", " "])(
@@ -201,4 +201,23 @@ it("returns keyboard focus to the Menu entry after native disabled-button blur a
   expect(exit).not.toHaveBeenCalled();
   expect(f.start.scene.start).not.toHaveBeenCalled();
   expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
+});
+
+it("cannot activate or route Tab to Menu underneath an ordinary modal", async () => {
+  const f = await startMenu();
+  const dialog = document.createElement("section");
+  const action = document.createElement("button");
+  dialog.append(action);
+  f.layer.mount(1, dialog);
+  const close = f.layer.modals.open({}, dialog);
+  f.pause.update();
+  expect(f.pause.pauseButton.closest("[inert]")).not.toBeNull();
+  f.pause.pauseButton.click();
+  await settle();
+  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+  action.focus();
+  f.key("Tab");
+  expect(document.activeElement).toBe(action);
+  expect(exit).not.toHaveBeenCalled();
+  close();
 });

@@ -28,8 +28,8 @@ export interface AchievementsData {
   readonly opener: string;
 }
 
-type Target = "close" | "next" | "previous";
-const TARGETS: readonly Target[] = ["close", "next", "previous"];
+type Target = "back" | "close" | "next" | "previous";
+const TARGETS: readonly Target[] = ["back", "close", "next", "previous"];
 const ICON = "icon-achievement";
 
 // The Achievements card over the scene that opened it: every achievement in tier order, none
@@ -136,7 +136,7 @@ export class AchievementsScene extends Scene {
     if (this.closed || !this.sys.isActive() || !modalInput(this).accepts()) {
       return;
     }
-    if (target === "close") {
+    if (target === "back" || target === "close") {
       this.back();
       return;
     }

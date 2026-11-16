@@ -110,3 +110,21 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+
+/* The pager stays centred while the return action occupies the footer's right edge. */
+.achievements-footer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  align-self: stretch;
+  column-gap: var(--ui-button-gap);
+}
+
+.achievements-footer > .achievements-pager {
+  grid-column: 2;
+}
+
+.achievements-return {
+  grid-column: 3;
+  justify-self: end;
+}

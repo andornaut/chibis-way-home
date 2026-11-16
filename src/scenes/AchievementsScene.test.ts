@@ -147,7 +147,7 @@ it("states each entry's state in its icon's text and shows a locked entry's prog
   );
 });
 
-it("moves the keyboard's focus through the enabled pager buttons then the close X, wrapping", async () => {
+it("moves the keyboard's focus through the enabled pager buttons, Back and the close X, wrapping", async () => {
   const { button, focused, key } = await openCard();
   const steps = (values: readonly string[]) =>
     values.map((value) => {
@@ -157,13 +157,13 @@ it("moves the keyboard's focus through the enabled pager buttons then the close 
   const { next, previous } = WORDS.pages;
   expect(steps(["Tab", "ArrowRight", "Tab", "ArrowLeft"])).toEqual([
     next,
+    WORDS.back,
     WORDS.close,
-    next,
-    WORDS.close,
+    WORDS.back,
   ]);
   button(next).focus();
   key("Enter");
-  expect(steps(["Tab", "Tab", "Tab"])).toEqual([WORDS.close, previous, next]);
+  expect(steps(["Tab", "Tab", "Tab"])).toEqual([WORDS.back, WORDS.close, previous]);
 });
 
 it("pages with Next and Previous, and moves the focus off Next on the last page", async () => {
@@ -188,6 +188,7 @@ it("keeps the gate's refusals: no page change or close while the gate refuses", 
   gate.accepts.mockReturnValue(false);
   button(WORDS.pages.next).click();
   button(WORDS.close).click();
+  button(WORDS.back).click();
   key("Escape");
   expect({ closed: achievementsClosed.mock.calls.length, shown: shown() }).toEqual({
     closed: 0,
@@ -267,4 +268,18 @@ it("never shows the card when the scene shuts down before its dim is ready", asy
   events.emit("shutdown");
   await settle();
   expect(document.querySelector("[role=dialog]")).toBeNull();
+});
+
+it("returns to the same opener through the bottom-right primary Back action once", async () => {
+  const { achievementsClosed, button, dialog, scene, stop } = await openCard();
+  const back = button(WORDS.back);
+  expect(back.classList.contains("ui-text-button-primary")).toBe(true);
+  expect(back.closest(".achievements-return")?.parentElement?.className).toBe(
+    "achievements-footer",
+  );
+  expect(dialog.querySelector(".achievements-footer .achievements-pager")).not.toBeNull();
+  back.click();
+  scene.back();
+  expect(achievementsClosed).toHaveBeenCalledOnce();
+  expect(stop).toHaveBeenCalledExactlyOnceWith();
 });

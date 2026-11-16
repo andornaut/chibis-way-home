@@ -127,7 +127,7 @@ it("keeps the one global entry live without duplicating it in modal keyboard ord
   layer.dispose();
 });
 
-it("allows late registration inside the empty global live container and removes the exact entry", () => {
+it("keeps a late ordinary Menu entry covered and removes the exact registration", () => {
   const layer = createUiLayer([], document);
   document.body.append(layer.element);
   const dialog = document.createElement("section");
@@ -136,10 +136,44 @@ it("allows late registration inside the empty global live container and removes 
   const close = layer.modals.open({}, dialog);
   const entry = document.createElement("button"),
     remove = layer.menuEntry(entry);
-  expect(entry.closest("[inert]")).toBeNull();
+  expect(entry.closest("[inert]")).not.toBeNull();
   expect(() => layer.menuEntry(document.createElement("button"))).toThrow("already registered");
   remove();
   expect(entry.isConnected).toBe(false);
   close();
+  layer.dispose();
+});
+
+it("stacks and dims ordinary Menu below nested cards, restoring only an explicit Pause exception", () => {
+  const layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  const entry = document.createElement("button");
+  layer.menuEntry(entry);
+  const conversation = document.createElement("section");
+  layer.mount(0, conversation);
+  const closeConversation = layer.modals.open({ live: [entry] }, conversation);
+  const entryLayer = entry.closest(".global-menu-layer")!;
+  expect(layer.element.lastElementChild).toBe(entryLayer);
+  expect(entry.closest("[inert]")).toBeNull();
+  const dialog = document.createElement("section");
+  const action = document.createElement("button");
+  dialog.append(action);
+  layer.mount(1, dialog);
+  const close = layer.modals.open({}, dialog);
+  expect(dialog.previousElementSibling).toBe(entryLayer);
+  expect(entry.closest("[inert]")).not.toBeNull();
+  expect(entry.closest("[data-ui-dimmed]")).not.toBeNull();
+  const later = document.createElement("div");
+  layer.mount(2, later);
+  expect(dialog.previousElementSibling).toBe(entryLayer);
+  action.focus();
+  action.dispatchEvent(
+    new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
+  );
+  expect(document.activeElement).toBe(action);
+  close();
+  expect(layer.element.lastElementChild).toBe(entryLayer);
+  expect(entry.closest("[inert], [data-ui-dimmed]")).toBeNull();
+  closeConversation();
   layer.dispose();
 });
