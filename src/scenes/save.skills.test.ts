@@ -19,7 +19,7 @@ it("persists each room grant once through progress writes and reopen, then reset
   await save.loadProgress();
   SKILL_IDS.forEach((skill) => expect(save.grantSkill(skill)).toBe(true));
   await save.loadProgress();
-  expect(save.activeSkill()).toBeNull();
+  expect(save.activeSkill()).toBe(SKILL_IDS[0]);
   expect(save.selectActiveSkill("speedy")).toBe(true);
   expect(save.activeSkill()).toBe("speedy");
   const writes = write.mock.calls.length;
@@ -41,17 +41,25 @@ it("persists each room grant once through progress writes and reopen, then reset
   expect(save.activeSkill()).toBeNull();
 });
 
-it("starts with nothing selected, never selects a grant and rejects unowned selection", async () => {
-  const write = vi.fn();
-  vi.stubGlobal("localStorage", { getItem: () => null, setItem: write });
+it("selects the first gift, retains it for later gifts and rejects unowned selection", async () => {
+  const values = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
   const save = await import("./save.ts");
   await save.loadProgress();
   expect(save.activeSkill()).toBeNull();
   expect(save.selectActiveSkill("speedy")).toBe(false);
   save.grantSkill("doubleJump");
-  expect(save.activeSkill()).toBeNull();
+  expect(save.savedSkills()).toEqual(["doubleJump"]);
+  expect(save.activeSkill()).toBe("doubleJump");
   expect(save.selectActiveSkill("dash")).toBe(false);
-  expect(save.selectActiveSkill("doubleJump")).toBe(true);
+  expect(save.selectActiveSkill("doubleJump")).toBe(false);
+  expect(save.activeSkill()).toBe("doubleJump");
+  save.beginStageRun(ZONE_MAP.start);
+  await save.loadProgress();
+  expect(save.activeSkill()).toBe("doubleJump");
   save.grantSkill("dash");
   expect(save.activeSkill()).toBe("doubleJump");
 });
@@ -68,14 +76,14 @@ it("queues one tip per new grant in grant order, behind unlock notices, dropping
   expect(save.nextSkillTip(open)).toBeUndefined();
   expect(save.nextAchievementNotice(open)).toBe("gift-rooms");
   expect(save.nextSkillTip(() => true)).toBeUndefined();
-  expect(save.nextSkillTip(open)).toBe("dash");
+  expect(save.nextSkillTip(open)).toBe("doubleJump");
   expect(save.selectActiveSkill("doubleJump")).toBe(true);
   expect(save.nextSkillTip(open)).toBe("speedy");
   expect(save.nextSkillTip(open)).toBeUndefined();
   save.grantSkill("dash");
   save.clearProgress();
   save.grantSkill("speedy");
-  expect(save.nextSkillTip(open)).toBe("speedy");
+  expect(save.nextSkillTip(open)).toBeUndefined();
   expect(save.nextSkillTip(open)).toBeUndefined();
 });
 

@@ -27,7 +27,7 @@ export function eligibleSkills(
   ];
 }
 
-// The selected skill while it is eligible, or none: nothing selects a skill but the player.
+// The selected skill while it is eligible, or none.
 export function resolveActiveSkill(
   eligible: readonly SkillId[],
   selected: SkillId | null,

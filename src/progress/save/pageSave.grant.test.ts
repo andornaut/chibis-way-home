@@ -11,6 +11,41 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.resetModules();
 });
+
+it("keeps an owned but unselected save unselected when a later gift arrives", async () => {
+  const raw = encodeSave(progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS))), {
+    ...BEGINNING,
+    skills: ["dash"],
+  });
+  if (!raw.ok) {
+    throw new Error(raw.reason);
+  }
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => (key === PROGRESS_KEYS.save ? raw.value : null),
+    setItem: vi.fn(),
+  });
+  const page = await import("./pageSave.ts");
+  const session = { development: () => false, skillOverrides: () => ({}) };
+  await page.loadProgress(session);
+  expect(page.grantSkill(session, "doubleJump")).toBe(true);
+  expect(page.activeSkill(session)).toBeNull();
+  expect(page.savedSkills()).toEqual(["dash", "doubleJump"]);
+});
+
+it("keeps a developer's temporary selection when the first real gift arrives", async () => {
+  vi.stubGlobal("localStorage", { getItem: () => null, setItem: vi.fn() });
+  const page = await import("./pageSave.ts");
+  const overrides = { dash: true };
+  const session = { development: () => true, skillOverrides: () => overrides };
+  await page.loadProgress(session);
+  expect(page.selectActiveSkill(session, "dash")).toBe(true);
+  expect(page.grantSkill(session, "doubleJump")).toBe(true);
+  expect(page.activeSkill(session)).toBe("dash");
+  expect(page.savedSkills()).toEqual(["doubleJump"]);
+  overrides.dash = false;
+  expect(page.activeSkill(session)).toBeNull();
+});
+
 it("grants stored ownership independently while run-only cheats preserve normal saves", async () => {
   const profile = {
     ...BEGINNING,

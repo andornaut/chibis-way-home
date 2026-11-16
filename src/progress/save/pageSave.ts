@@ -309,10 +309,14 @@ export function selectActiveSkill(session: SaveSession, skill: SkillId): boolean
 }
 
 export function grantSkill(session: SaveSession, skill: SkillId): boolean {
-  const next = withGrantedSkill(progress, skill);
-  if (next === progress) {
+  const granted = withGrantedSkill(progress, skill);
+  if (granted === progress) {
     return false;
   }
+  const next =
+    progress.skills.length === 0 && activeSkill(session) === null
+      ? { ...granted, activeSkill: skill }
+      : granted;
   const effects = skillGrantEffects(earnedIds, stats.skillUsed(), next);
   write(session, next);
   skillTips.push(skill);
