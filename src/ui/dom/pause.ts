@@ -32,6 +32,7 @@ import {
 // The layout properties pause.css reads, in base px.
 export const PAUSE_LAYOUT: LayoutValues = {
   "--pause-button-inset": PAUSE_BUTTON.art.x - PAUSE_BUTTON.hit.x,
+  "--pause-button-inset-y": PAUSE_BUTTON.art.y - PAUSE_BUTTON.hit.y,
   "--pause-button-size": PAUSE_BUTTON.hit.width,
   "--pause-button-x": PAUSE_BUTTON.hit.x,
   "--pause-button-y": PAUSE_BUTTON.hit.y,

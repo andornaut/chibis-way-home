@@ -17,7 +17,7 @@
   width: calc(var(--ui-unit) * var(--pause-button-size) * 1px);
   height: calc(var(--ui-unit) * var(--pause-button-size) * 1px);
   margin: 0;
-  padding: calc(var(--ui-unit) * var(--pause-button-inset) * 1px);
+  padding: 0;
   border: 0;
   background: none;
   pointer-events: auto;
@@ -40,6 +40,9 @@
 }
 
 .pause-disc {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--pause-button-inset-y) * 1px);
+  left: calc(var(--ui-unit) * var(--pause-button-inset) * 1px);
   display: block;
   width: calc(var(--ui-unit) * var(--pause-disc-size) * 1px);
   height: calc(var(--ui-unit) * var(--pause-disc-size) * 1px);

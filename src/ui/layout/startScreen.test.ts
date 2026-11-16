@@ -2,11 +2,12 @@ import { containsPoint } from "@andornaut/game-kit/runtime/rect";
 import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 import { describe, expect, it } from "vitest";
 
-import { TEXT_BUTTON } from "../../data/layout.ts";
+import { START_SCREEN, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
-import { type PressArea, pressedArea } from "./hitAreas.ts";
+import { hitAround, type PressArea, pressedArea } from "./hitAreas.ts";
 import type { LabelledButton } from "./labelledButton.ts";
+import { PAUSE_BUTTON } from "./pauseCard.ts";
 import { type IconButtonLayout, startScreenLayout } from "./startScreen.ts";
 
 const SCREEN_RECT: Rect = { ...SCREEN, x: 0, y: 0 };
@@ -41,6 +42,20 @@ describe.each([
     ...texts.map(([key, { button, hit }]) => ({ art: button, hit, key })),
     ...buttons.map(([key, { art, hit }]) => ({ art, hit, key })),
   ];
+
+  it("centres visible Menu and Exit faces in the shared top section with usable press targets", () => {
+    const centre = layout.nav.y + layout.nav.height / 2;
+    expect(PAUSE_BUTTON.art.y + PAUSE_BUTTON.art.height / 2).toBe(centre);
+    expect(PAUSE_BUTTON.hit.y).toBeGreaterThanOrEqual(0);
+    expect(PAUSE_BUTTON.hit.width).toBe(hitAround(PAUSE_BUTTON.art).width);
+    if (layout.exit !== undefined) {
+      const { art, hit } = layout.exit;
+      expect(art.y + (art.height - TEXT_BUTTON.lipHeight) / 2).toBe(centre);
+      expect(hit.y).toBeGreaterThanOrEqual(0);
+      expect(hit.height).toBe(hitAround(art).height);
+      expect(art.x).toBe(START_SCREEN.rightIconX);
+    }
+  });
 
   // A press anywhere on a drawn button takes that button, however the press areas overlap.
   it.each(areas)("takes every press on $key's drawn button as $key", ({ art, key }) => {

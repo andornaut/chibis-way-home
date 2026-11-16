@@ -1,8 +1,8 @@
 import { START_SCREEN, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Point, Rect, Size } from "../../data/types/index.ts";
-import { hitAround } from "./hitAreas.ts";
 import { type LabelledButton, labelledButton } from "./labelledButton.ts";
+import { topBarButton } from "./topBar.ts";
 
 // Art's start screen (art/README.md, Start screen), in base pixels (START_SCREEN): the nav bar
 // across the top, with square icon buttons at its right end, each with its icon inset (sunk while
@@ -47,13 +47,13 @@ export interface StartScreenLayout {
 function iconButton(slot: number): IconButtonLayout {
   const { icon, size, y } = ICON_BUTTON;
   const x = RIGHT_BUTTON_X - slot * BUTTON_SLOT;
-  const art = { height: size, width: size, x, y };
+  const { art, hit } = topBarButton(TEXT_BUTTON.lipHeight, { height: size, width: size, x, y });
   return {
     art,
-    at: { x, y },
-    hit: hitAround(art),
-    icon: { x: x + icon.x, y: y + icon.y },
-    pressedIcon: { x: x + icon.x, y: y + icon.y + PRESSED_SINK },
+    at: { x, y: art.y },
+    hit,
+    icon: { x: x + icon.x, y: art.y + icon.y },
+    pressedIcon: { x: x + icon.x, y: art.y + icon.y + PRESSED_SINK },
   };
 }
 

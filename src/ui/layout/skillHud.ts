@@ -5,6 +5,7 @@ import { SCREEN } from "../../data/screen.ts";
 import type { Point, Rect, SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
 import { PAUSE_DISC } from "./controlChrome.ts";
+import { TOP_BAR_CENTRE_Y } from "./topBar.ts";
 
 // A skill button's drawn disc, glyph and square target sides.
 export const SKILL_BUTTON = {
@@ -32,7 +33,7 @@ export function skillHud(shown: readonly SkillId[]): ReadonlyMap<SkillId, Point>
           right -
           SKILL_BUTTON.target -
           (row.length - 1 - index) * (SKILL_BUTTON.target + SKILL_TARGET_GAP),
-        y: HUD_EDGE - DISC_MARGIN,
+        y: TOP_BAR_CENTRE_Y - SKILL_BUTTON.target / 2,
       },
     ]),
   );

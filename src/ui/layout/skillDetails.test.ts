@@ -13,6 +13,7 @@ import { shifted, viewShift } from "./playView.ts";
 import { ROOM_SCREEN } from "./roomScreen.ts";
 import { SKILL_ROOM } from "./skillDetails.ts";
 import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud.ts";
+import { TOP_BAR_CENTRE_Y } from "./topBar.ts";
 
 const inside = (
   outer: { x: number; y: number; width: number; height: number },
@@ -30,7 +31,7 @@ describe("native skill presentation", () => {
     expect(SCREEN.width - footer.x - footer.width).toBe(CARD_CONTENT.padding);
     expect(SCREEN.height - footer.y - footer.height).toBe(CARD_CONTENT.padding);
     expect(SKILL_ROOM.bounds.y + SKILL_ROOM.bounds.height).toBeLessThan(footer.y);
-    expect(ROOM_SCREEN.leave.art).toEqual({ height: 28, width: 72, x: 640, y: 10 });
+    expect(ROOM_SCREEN.leave.art).toMatchObject({ height: 28, width: 72, x: 640 });
   });
   it.each([
     { shown: ["doubleJump"] },
@@ -38,7 +39,7 @@ describe("native skill presentation", () => {
     { shown: ["dash", "doubleJump"] },
     { shown: [...SKILL_IDS] },
   ] satisfies { shown: SkillId[] }[])(
-    "packs $shown into one top row with its discs HUD_EDGE in from the view's top and right, clear of Pause",
+    "centres $shown in the top section, HUD_EDGE from the right and clear of Pause",
     ({ shown }) => {
       [SCREEN, { height: SCREEN.height + 120, width: SCREEN.width + 300 }].forEach((css) => {
         const shift = viewShift(renderFit(SCREEN, 1, css));
@@ -49,7 +50,7 @@ describe("native skill presentation", () => {
         const pause = { ...PAUSE_BUTTON.hit, ...shifted(shift, PAUSE_BUTTON.hit) };
         buttons.forEach(({ disc, hit }, index) => {
           expect(inside(view, hit)).toBe(true);
-          expect(disc.y - view.y).toBeCloseTo(HUD_EDGE, 9);
+          expect(disc.y - view.y + SKILL_BUTTON.disc / 2).toBeCloseTo(TOP_BAR_CENTRE_Y, 9);
           // The target stays centred on its disc.
           expect(disc.x - hit.x).toBeCloseTo(hit.x + hit.width - disc.x - SKILL_BUTTON.disc, 9);
           expect(disc.y - hit.y).toBeCloseTo(hit.y + hit.height - disc.y - SKILL_BUTTON.disc, 9);
@@ -79,11 +80,11 @@ describe("native skill presentation", () => {
       expect({ x: SCREEN.width - pause.x - SKILL_BUTTON.disc, y: pause.y }).toEqual(last);
     },
   );
-  it("places all three targets at art's origins in the base view", () => {
+  it("retains the three horizontal target origins while centring their top row", () => {
     expect([...skillHud(SKILL_IDS).values()]).toEqual([
-      { x: 553.5, y: 4.5 },
-      { x: 610.5, y: 4.5 },
-      { x: 667.5, y: 4.5 },
+      { x: 553.5, y: 0 },
+      { x: 610.5, y: 0 },
+      { x: 667.5, y: 0 },
     ]);
   });
   it("gives hidden skills no slot", () => {

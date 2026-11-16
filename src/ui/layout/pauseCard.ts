@@ -1,21 +1,19 @@
 import { HUD_EDGE } from "../../data/layout.ts";
 import type { Point, Rect } from "../../data/types/index.ts";
 import { PAUSE_DISC } from "./controlChrome.ts";
-import { hitAround } from "./hitAreas.ts";
+import { topBarButton } from "./topBar.ts";
 
 // Art's pause button in the game's top-left corner: where its frame is drawn, and the area a
-// press must land in, its frame grown by hitAreas.ts's rule. Art draws the disc
-// PAUSE_DISC.inset inside its frame, so the disc's edge sits HUD_EDGE in from the view's top
-// and left.
-const PAUSE_ART: Rect = {
+// press must land in, its frame grown by hitAreas.ts's rule. The disc is centred in the top
+// section, with its left edge HUD_EDGE in from the view's left.
+const button = topBarButton(0, {
   height: PAUSE_DISC.frame,
   width: PAUSE_DISC.frame,
   x: HUD_EDGE - PAUSE_DISC.inset,
   y: HUD_EDGE - PAUSE_DISC.inset,
-};
+} satisfies Rect);
 
 export const PAUSE_BUTTON = {
-  art: PAUSE_ART,
-  at: { x: PAUSE_ART.x, y: PAUSE_ART.y } satisfies Point,
-  hit: hitAround(PAUSE_ART),
+  ...button,
+  at: { x: button.art.x, y: button.art.y } satisfies Point,
 } as const;

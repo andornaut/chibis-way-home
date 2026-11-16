@@ -2,10 +2,12 @@ import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 import { describe, expect, it } from "vitest";
 
 import buttonSheet from "../../../public/art/sprites/ui-button.json" with { type: "json" };
+import { TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
 import { PAUSE_BUTTON } from "./pauseCard.ts";
 import { ROOM_SCREEN } from "./roomScreen.ts";
+import { TOP_BAR_CENTRE_Y } from "./topBar.ts";
 
 const inside = (outer: Rect, inner: Rect) =>
   inner.x >= outer.x &&
@@ -24,6 +26,8 @@ describe("the room screen", () => {
       inside: inside(VIEW, leave.art),
       large: leave.art.width >= w && leave.art.height >= h,
     }).toEqual({ clear: false, inside: true, large: true });
+    expect(leave.art.y + (leave.art.height - TEXT_BUTTON.lipHeight) / 2).toBe(TOP_BAR_CENTRE_Y);
+    expect(leave.hit.y).toBeGreaterThanOrEqual(0);
   });
 
   it("keeps the placeholder frame inside the view and below Leave", () => {
