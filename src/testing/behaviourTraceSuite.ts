@@ -19,7 +19,7 @@ import {
 } from "../rules/zone.ts";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_DEFAULTS } from "../sim/bot.ts";
 import { stageLoader } from "../sim/catalogue.ts";
-import { simulateStage } from "../sim/simulate.ts";
+import { type RunResult, simulateStage } from "../sim/simulate.ts";
 import { walkRequiredRoutes, walkZone } from "../sim/zoneWalk.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 import { TRACE } from "./behaviourTraceHook.ts";
@@ -40,7 +40,7 @@ import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes.ts";
 // Each scenario must be deterministic: fixed seeds, fixed inputs and no wall-clock budgets.
 interface TraceScenario {
   readonly name: string;
-  readonly run: () => void;
+  readonly run: () => void | RunResult;
 }
 
 const FIXTURES = new URL("../sim/fixtures/behaviourTraces/", import.meta.url);
@@ -115,7 +115,7 @@ export function stageTraceScenarios(): TraceScenario[] {
   return STAGE_RUNS.map(([stage, seed, jump]) => ({
     name: `stage ${stage} seed ${seed} ${jump}`,
     run: () => {
-      simulateStage(BIRD, stageLoader(stage)(seed), {
+      return simulateStage(BIRD, stageLoader(stage)(seed), {
         maxRetries: 2,
         maxSteps: 3600,
         policy: { ...FORWARD_POLICY, jump },
@@ -190,18 +190,20 @@ export function registerTraceSuite(group: string, scenarios: readonly TraceScena
       (name, { run }) => {
         const recorder = traceRecorder({ retain: DUMP !== undefined });
         TRACE.active = recorder;
+        let result: void | RunResult;
         try {
-          run();
+          result = run();
         } finally {
           TRACE.active = undefined;
         }
         observed[name] = recorder.hash();
         if (DUMP !== undefined) {
           mkdirSync(DUMP, { recursive: true });
-          writeFileSync(
-            `${DUMP}/${name.replace(/[^A-Za-z0-9.-]+/g, "_")}.trace`,
-            `${recorder.lines()!.join("\n")}\n`,
-          );
+          const path = `${DUMP}/${name.replace(/[^A-Za-z0-9.-]+/g, "_")}`;
+          writeFileSync(`${path}.trace`, `${recorder.lines()!.join("\n")}\n`);
+          if (result !== undefined) {
+            writeFileSync(`${path}.result.json`, `${JSON.stringify(result, null, 2)}\n`);
+          }
         }
         expect(recorder.ticks()).toBeGreaterThan(0);
         if (!UPDATE) {
