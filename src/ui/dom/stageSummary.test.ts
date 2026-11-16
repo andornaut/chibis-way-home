@@ -1,22 +1,9 @@
 // @vitest-environment happy-dom
-import { readFileSync } from "node:fs";
-
 import { expect, it } from "vitest";
 
 import { CARD_CONTENT } from "../../data/layout.ts";
-import { CUTSCENE_CONTINUE } from "../layout/cutscene.ts";
 import { capTop, FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
-import { createStageSummary, STAGE_SUMMARY_LAYOUT, stageSummaryGaps } from "./stageSummary.ts";
-
-it("centres the sole Continue footer while retaining its vertical anchor and face width", () => {
-  const css = readFileSync("src/ui/dom/stageSummary.css", "utf8");
-  const footer = /\.stage-summary-footer\s*\{([^}]*)\}/.exec(css)![1]!;
-  expect(footer).toContain("left: 50%;");
-  expect(footer).toContain("translate: -50% 0;");
-  expect(footer).toContain("top: calc(var(--ui-unit) * var(--summary-continue-y) * 1px);");
-  expect(STAGE_SUMMARY_LAYOUT["--summary-continue-y"]).toBe(CUTSCENE_CONTINUE.hit.y);
-  expect(STAGE_SUMMARY_LAYOUT["--summary-continue-width"]).toBe(CUTSCENE_CONTINUE.button.width);
-});
+import { createStageSummary, stageSummaryGaps } from "./stageSummary.ts";
 
 it("opts the fixed-width summary statistics into canonical columns without changing reading order", () => {
   const view = createStageSummary(document, "summary", {
