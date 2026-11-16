@@ -540,7 +540,7 @@ function searchRun(
     }
     if (exact) {
       // A fixed-length tail of one character per count.
-      return `${key}|${String.fromCharCode(...countsCodes)}`;
+      return [key, String.fromCharCode(...countsCodes)].join("|");
     }
     // Per limited class, its histogram, or SATURATED when its unused members alone can fill
     // every chunk a run can still place: no future run then exhausts it, and any run maps onto
