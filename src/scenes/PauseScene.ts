@@ -55,7 +55,6 @@ import type { ZoneScene } from "./ZoneScene.ts";
 // The scenes that show a conversation over the paused zone, each holding its modal input in turn:
 // a line, the line's required choice, and the departure.
 const CONVERSATIONS = ["dialogue", "dialogueChoice", "zoneDeparture"] as const;
-type Conversation = (typeof CONVERSATIONS)[number];
 // Frontmost content first; already-paused content never takes priority over active content.
 const CONTENT_SCENES = [
   "dialogueChoice",
@@ -100,9 +99,9 @@ interface ControlPress {
 }
 
 // One persistent entry opens Pause over active pausable content and Menu elsewhere.
-// Only this entry can open above a modal owner. Each visit retains the underlying scopes,
+// Covered entries stay inactive. Each visit retains the underlying scopes,
 // focus and already-paused scenes, and resumes only its own held subset when it closes.
-// Settings and Menu Achievements return to their existing nested subviews.
+// Settings and Achievements return to their originating shared card.
 // The bottom primary action resumes Pause or closes Menu. The skill HUD keeps its existing
 // play and conversation guards; no other control crosses the modal boundary.
 export class PauseScene extends Scene implements AchievementsOpener, SettingsOpener {
@@ -271,9 +270,11 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     const context = this.context();
     return (
       this.live &&
+      this.state === "closed" &&
+      modalInput(this).accepts() &&
+      this.view?.pauseButton.closest("[inert]") === null &&
       context !== undefined &&
       menuSourceReady(this.scene.get(context.scene)) &&
-      this.state !== "opening" &&
       (context.scene !== ZONE || !this.playCovered())
     );
   }
@@ -478,7 +479,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
 
   private openSkill(skill: SkillId): void {
     if (
-      (this.state !== "closed" && this.state !== "open") ||
+      this.state !== "closed" ||
       this.playCovered() ||
       !this.enabledSkills().includes(skill) ||
       !modalInput(this).accepts()
@@ -493,7 +494,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     modalInput(this).open();
     this.destroyDim();
     this.showCard(false);
-    // Under the card the zone is already paused.
+    // Details hold active play until their own close callback.
     if (this.scene.isActive(ZONE)) {
       this.scene.pause(ZONE);
     }
@@ -522,6 +523,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       this.scene.resume(ZONE);
       startWakeLock();
     }
+    this.showControls();
   }
 
   private skillReady(skill: SkillId): boolean {
@@ -543,23 +545,25 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       : true;
   }
 
-  // The skill buttons show while they take presses, and over a conversation the card may open
-  // over, where they take none.
+  // World ownership controls visibility; modal cover changes input and dimming.
   private skillHudShown(): boolean {
-    return this.skillHudLive() || this.openableConversation() !== undefined;
+    return (
+      (this.scene.isActive(ZONE) || this.scene.isPaused(ZONE)) &&
+      ((this.scene.get(ZONE) as ZoneScene).skillState()?.shown === true ||
+        CONVERSATIONS.some((key) => this.scene.isActive(key) || this.scene.isPaused(key)))
+    );
   }
 
-  // Whether the skill buttons take presses: in play, and under the open pause card.
+  // Skill actions belong only to uncovered active play.
   private skillHudLive(): boolean {
     if (!modalInput(this).accepts() || this.playCovered()) {
       return false;
     }
-    return this.state === "open"
-      ? this.scene.isPaused(ZONE) &&
-          (this.overScene === ZONE || CONVERSATIONS.includes(this.overScene as Conversation))
-      : this.state === "closed" &&
-          this.scene.isActive(ZONE) &&
-          (this.scene.get(ZONE) as ZoneScene).skillState()?.shown === true;
+    return (
+      this.state === "closed" &&
+      this.scene.isActive(ZONE) &&
+      (this.scene.get(ZONE) as ZoneScene).skillState()?.shown === true
+    );
   }
 
   // The pause button and the skill HUD as the state leaves them.
@@ -601,6 +605,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
         selected: skill === selected,
       };
       const glyph = this.glyphs.get(skill);
+      view.skills[skill].button.disabled = !live;
       const key = [at?.x, at?.y, glyph?.ready, look.ready, look.selected, tabbable].join();
       if (this.shownSkills.get(skill) === key) {
         continue;
@@ -639,7 +644,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.dim = undefined;
   }
 
-  // Shows or hides the card in the UI layer's modal layer, the skill HUD live beside it.
+  // Opens the card above the painted, inactive HUD.
   private showCard(open: boolean): void {
     const view = this.view;
     if (view === undefined) {
@@ -650,7 +655,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     if (open) {
       showPauseMenu(TEXT, this.mode, this.homeShown, view);
       this.closeModal ??= sceneDomUi(this)?.modals.open(
-        { close: () => this.close(), live: this.mode === "pause" ? [view.hud] : [] },
+        { close: () => this.close() },
         view.card.dialog,
       );
     } else {
@@ -689,12 +694,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       return undefined;
     }
     return key;
-  }
-
-  // Only an active conversation exposes the otherwise covered skill HUD.
-  private openableConversation(): Conversation | undefined {
-    const key = this.state === "closed" ? this.pausableScene() : undefined;
-    return CONVERSATIONS.includes(key as Conversation) ? (key as Conversation) : undefined;
   }
 
   private blocked(): boolean {
@@ -874,7 +873,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   }
 
   // A control's action: the pause button opens the card, and the card's controls act while it is
-  // open. A skill under the card opens its details; in play a tap selects it, and a press held
+  // open. In uncovered play a skill tap selects it, and a press held
   // long enough (since pressedAt, for a pointer's press) opens its details instead.
   private activate(
     view: PauseView,
@@ -889,15 +888,12 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       this.close();
     } else if (control === buttons.settings && this.state === "open") {
       this.openNested("settings");
-    } else if (control === buttons.achievements && this.state === "open" && this.mode === "menu") {
+    } else if (control === buttons.achievements && this.state === "open") {
       this.openNested("achievements");
     } else if (control === buttons.home && this.state === "open") {
       this.returnHome();
     } else if (skill !== undefined && this.skillHudLive()) {
-      if (
-        this.state === "open" ||
-        (pressedAt !== undefined && this.time.now - pressedAt >= SKILL_GESTURE.holdMilliseconds)
-      ) {
+      if (pressedAt !== undefined && this.time.now - pressedAt >= SKILL_GESTURE.holdMilliseconds) {
         this.openSkill(skill);
       } else {
         selectActiveSkill(skill);
@@ -973,10 +969,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       if (event.target === dialog && (action === "next" || action === "previous")) {
         event.preventDefault();
         event.stopPropagation();
-        (action === "next"
-          ? view.card.buttons[this.mode === "menu" ? "achievements" : "settings"]
-          : view.card.close
-        ).focus();
+        (action === "next" ? view.card.buttons.achievements : view.card.close).focus();
       }
     };
     dialog.addEventListener("keydown", onKeyDown);

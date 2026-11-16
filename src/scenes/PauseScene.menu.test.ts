@@ -401,7 +401,7 @@ it.each(["start", "map"])(
   },
 );
 
-it("keeps gameplay Pause actions unchanged and resumes without offering Achievements", async () => {
+it("opens Achievements above gameplay Pause and returns to its held context before Resume", async () => {
   const f = menu("zone");
   tap(f.pause.pauseButton);
   await settle();
@@ -409,13 +409,30 @@ it("keeps gameplay Pause actions unchanged and resumes without offering Achievem
     (button) => !button.hidden,
   );
   expect(rows.map((button) => button.textContent)).toEqual([
+    TEXT.start.achievements,
     TEXT.pause.settings,
     TEXT.pause.home,
     TEXT.pause.resume,
   ]);
+  const action = f.pause.button(TEXT.start.achievements);
+  action.focus();
+  tap(action);
+  expect(f.scenes.launch).toHaveBeenCalledExactlyOnceWith("achievements", { opener: "pause" });
+  const child = f.card("achievements");
+  expect(f.paused.has("zone")).toBe(true);
+  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+  pressKey([f.pause.keyboard], "p");
+  expect(document.activeElement).toBe(child.button);
+  expect(f.scenes.resume).not.toHaveBeenCalled();
+  child.close();
+  f.active.delete("achievements");
+  modalInput(child.owner as never).close();
+  f.pause.scene.achievementsClosed();
+  expect(document.activeElement).toBe(action);
+  expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.pause.title);
   tap(f.pause.button(TEXT.pause.resume));
   expect(f.active.has("zone")).toBe(true);
-  expect(f.scenes.launch).not.toHaveBeenCalled();
+  expect(f.scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
 });
 
 it("preserves originating action focus when returning from Achievements and then Settings", async () => {

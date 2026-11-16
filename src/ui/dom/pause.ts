@@ -26,8 +26,7 @@ import {
 // the pause button at the view's top-left corner and the skill HUD along its top-right, each
 // button's box its press area. The HUD sits over the card's backdrop, so a press on it is never a
 // tap outside the card. A card under this view (a conversation, its choice or a summary) covers
-// the HUD, which takes no presses there, so the HUD dims under it; the pause button, which it
-// keeps live, stays lit.
+// the HUD and entry, which stay painted but dim and take no presses beneath the top card.
 
 // The layout properties pause.css reads, in base px.
 export const PAUSE_LAYOUT: LayoutValues = {
@@ -85,8 +84,7 @@ export interface PauseView {
   // The card in its own wrapper, hidden while the card is closed: the backdrop that takes taps
   // outside the card, and the dialog.
   readonly card: CardView<PauseCardButton> & { readonly close: HTMLButtonElement };
-  // The skill HUD's buttons' container, which stays live under the card and dims under a card
-  // below this view.
+  // The skill HUD remains painted while modal cover disables its controls.
   readonly hud: HTMLElement;
   readonly pauseButton: HTMLButtonElement;
   // The descriptions of the selected skill's readiness, by whether it is ready.
@@ -119,7 +117,7 @@ export function createPauseView(
   });
   const close = card.close!;
   card.dialog.classList.add("pause-card");
-  // The close X wraps after the card actions and live skills in keyboard focus.
+  // The close X wraps after the card actions in keyboard focus.
   card.dialog.prepend(close);
   card.root.hidden = true;
   const view = element("div", "ui-view pause-hud-view");
@@ -247,5 +245,5 @@ export function showPauseMenu(
   view.card.buttons.resume.querySelector(".ui-text-button-label")!.textContent =
     mode === "pause" ? words.pause.resume : words.pause.close;
   view.card.buttons.home.hidden = !homeShown;
-  view.card.buttons.achievements.hidden = mode === "pause";
+  view.card.buttons.achievements.hidden = false;
 }

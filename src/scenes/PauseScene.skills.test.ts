@@ -155,7 +155,7 @@ it("captures the world once while touch settings update inside the single DOM mo
     expect([chrome.inert, chrome.hasAttribute(UI_DIMMED)]).toEqual([true, true]);
     expect(
       [move, actions, progress, pause.hud].map((part) => part.hasAttribute(UI_DIMMED)),
-    ).toEqual([false, false, false, false]);
+    ).toEqual([false, false, false, true]);
     pause.scene.setTouchSetting("moveControls", false);
     pause.scene.setTouchSetting("actionButtons", true);
     expect([move.hidden, actions.hidden, chrome.inert, chrome.hasAttribute(UI_DIMMED)]).toEqual([
@@ -324,24 +324,43 @@ it("keeps presses on its controls from Phaser, which handles presses off the can
   }
 });
 
-it("keeps the HUD live beside the open card, where a tap opens details and closes no card", async () => {
-  const { details, dialog, hud, open, scenes, skill } = play();
+it("keeps selected Speedy painted and dimmed while Pause refuses direct skill actions", async () => {
+  selection.active = "speedy";
+  const { details, dialog, hud, open, pauseButton, scenes, skill, time, update } = play();
   await open();
+  const selected = skill("speedy");
   expect({
     cardShown: !dialog.closest<HTMLElement>(".ui-card-scene")!.hidden,
+    dimmed: selected.closest(`[${UI_DIMMED}]`) !== null,
+    disabled: selected.disabled,
+    entryDisabled: pauseButton.disabled,
     live: hud.hasAttribute("data-live"),
-    shown: !skill("dash").hidden,
-    tabIndex: skill("dash").tabIndex,
-  }).toEqual({ cardShown: true, live: true, shown: true, tabIndex: 0 });
-  tap(skill("dash"));
-  expect(details().map((data) => data.skill)).toEqual(["dash"]);
+    selected: selected.getAttribute("aria-pressed"),
+    shown: !selected.hidden,
+    tabIndex: selected.tabIndex,
+  }).toEqual({
+    cardShown: true,
+    dimmed: true,
+    disabled: true,
+    entryDisabled: true,
+    live: false,
+    selected: "true",
+    shown: true,
+    tabIndex: -1,
+  });
+  tap(selected);
+  selected.click();
+  press(selected);
+  time.now += SKILL_GESTURE.holdMilliseconds;
+  update();
+  selected.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1 }));
+  expect(details()).toEqual([]);
   expect(selection.select).not.toHaveBeenCalled();
   expect(scenes.resume).not.toHaveBeenCalled();
-  // The card had paused the zone; details do not pause it again.
   expect(scenes.pause).toHaveBeenCalledExactlyOnceWith("zone");
 });
 
-it("steps the focus through Settings, Back to title, Resume, the skills and the close X, wrapping", async () => {
+it("steps the focus through Achievements, Settings, Back to title, Resume and the close X, wrapping", async () => {
   selection.owned = [...SKILL_IDS];
   const { close, dialog, open, update } = play();
   await open();
@@ -350,44 +369,50 @@ it("steps the focus through Settings, Back to title, Resume, the skills and the 
   const name = () =>
     (document.activeElement as HTMLElement).getAttribute("aria-label") ??
     document.activeElement?.textContent;
-  const names = Array.from({ length: 8 }, () => {
+  const names = Array.from({ length: 6 }, () => {
     pressKey([], "Tab");
     return name();
   });
   expect(names).toEqual([
+    TEXT.start.achievements,
     TEXT.pause.settings,
     TEXT.pause.home,
     TEXT.pause.resume,
-    ...SKILL_IDS.map((id) => TEXT.skills[id].title),
     TEXT.pause.close,
-    TEXT.pause.settings,
+    TEXT.start.achievements,
   ]);
   dialog.focus();
   pressKey([], "Tab", { shiftKey: true });
   expect(document.activeElement).toBe(close);
 });
 
-it("opens a focused skill's details on Enter under the card", async () => {
+it("keeps keyboard focus in the top card when a disabled skill is asked to focus", async () => {
   const { details, open, scenes, skill } = play();
   await open();
+  expect(skill("speedy").disabled).toBe(true);
   skill("speedy").focus();
+  expect(document.activeElement).not.toBe(skill("speedy"));
   pressKey([], "Enter");
-  expect(details().map((data) => data.skill)).toEqual(["speedy"]);
-  expect(scenes.resume).not.toHaveBeenCalled();
+  expect(details()).toEqual([]);
+  expect(scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
 });
 
 it.each(["closed", "open"] as const)(
-  "replaces %s Pause with one detail and resumes play once without reopening Pause",
+  "respects %s Pause ownership when a skill is pressed",
   async (state) => {
     const { details, dialog, open, scenes, skill, time, update, zone } = play();
     if (state === "open") {
       await open();
       tap(skill("dash"));
-    } else {
-      press(skill("dash"));
-      time.now += SKILL_GESTURE.holdMilliseconds;
-      update();
+      expect(details()).toEqual([]);
+      expect(dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
+      expect(scenes.resume).not.toHaveBeenCalled();
+      return;
     }
+    press(skill("dash"));
+    time.now += SKILL_GESTURE.holdMilliseconds;
+    update();
+
     tap(skill("dash"));
     expect(details()).toHaveLength(1);
     expect(dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
@@ -467,7 +492,7 @@ it.each([
   expect(document.activeElement).toBe(fixture.dialog);
   fixture.update();
   expect(fixture.pauseButton.hidden).toBe(false);
-  expect(fixture.pauseButton.disabled).toBe(false);
+  expect(fixture.pauseButton.disabled).toBe(true);
 });
 
 it.each([
