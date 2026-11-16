@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { zonePlanFor } from "./zonePlans.ts";
+import { CHUNK_LIBRARY, STAGE_RECIPES, zonePlanFor } from "./zonePlans.ts";
 
 // Seeds whose assembly backtracks through many states. A change to the search must keep these
 // runs; update them only with a deliberate change to the chunks or recipes.
@@ -74,6 +74,37 @@ const PINNED: readonly (readonly [string, number, readonly string[]])[] = [
 ];
 
 describe("zonePlanFor", () => {
+  it("keeps City seed 2's assigned gift in its declared fixed start door", () => {
+    const recipe = STAGE_RECIPES["city-boundary"]!;
+    if ("sections" in recipe) {
+      throw new Error("City has no flat start recipe");
+    }
+    const room = recipe.doors[0]!.room;
+    expect(recipe.startDoors).toEqual([room]);
+    const area = zonePlanFor(2, "city-boundary").areas.main!;
+    const start = area.chunks![0]!;
+    expect(start.chunk).toBe(recipe.start);
+    const declaredSlot = CHUNK_LIBRARY.chunks[recipe.start]!.slots!.find(
+      ({ kind }) => kind === "door",
+    )!;
+    const filled = area.slots!.filter(({ fill }) => fill === room);
+    expect(filled).toHaveLength(1);
+    expect(filled[0]).toMatchObject({ chunk: 0, id: declaredSlot.id });
+    const doors = area.objects.filter((object) => object.room === room);
+    expect(doors).toHaveLength(1);
+    expect(doors[0]!.col).toBeLessThan(start.cols);
+  });
+
+  it("retains the lobby's single assigned room without adding a start placement policy", () => {
+    const recipe = STAGE_RECIPES.lobby!;
+    if ("sections" in recipe) {
+      throw new Error("Lobby has no flat recipe");
+    }
+    const room = recipe.doors[0]!.room;
+    const area = zonePlanFor(1, "lobby").areas.main!;
+    expect(area.slots!.filter(({ fill }) => fill === room)).toHaveLength(1);
+    expect(area.objects.filter((object) => object.room === room)).toHaveLength(1);
+  });
   it.each(PINNED)("assembles %s seed %i from its pinned chunks", (key, seed, chunks) => {
     expect(zonePlanFor(seed, key).areas.main?.chunks?.map(({ chunk }) => chunk)).toEqual(chunks);
   });
