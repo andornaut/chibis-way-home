@@ -3,6 +3,7 @@ import type { GameText, StatsScopeText } from "./types/index.ts";
 
 export const TEXT: GameText = {
   achievements: {
+    back: "Back",
     cardTitle: "Achievements",
     close: "Close",
     entries: {
