@@ -93,6 +93,8 @@ it("detects an unregistered discrete control while inactive actions and native e
   range.type = "range";
   root.append(button, text, range, document.createElement("select"));
   document.body.append(root);
+  button.disabled = true;
+  button.hidden = true;
   const action = { activate: vi.fn(), available: () => false, element: button };
   const stop = bindGameActions(
     { guard: { gate }, resolve: (target) => (target === button ? action : null) },

@@ -195,7 +195,17 @@ describe("refusals", () => {
     vi.useFakeTimers();
     const { stage, stageSelected } = await openPicker();
     const locked = stage(residential);
-    locked.click();
+    for (const type of ["pointerdown", "pointerup"]) {
+      locked.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          pointerId: 1,
+        }),
+      );
+    }
+    locked.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
     const shaking = locked.getAttribute("data-ui-refusal-shake");
     vi.advanceTimersByTime(CONTROL_REFUSAL.flashMs);
     locked.click();
