@@ -33,6 +33,13 @@ export const COMMON_RULE = {
 // Headers for files rather than pages. Cloudflare sets a header a rule names, replacing its own.
 export const FILE_RULES = [
   {
+    comment: "The playable game excludes automatic response-body analytics injection.",
+    headers: [
+      ["Cache-Control", "public, max-age=0, must-revalidate, no-transform"],
+    ] satisfies HeaderList,
+    path: "/play/*",
+  },
+  {
     comment:
       "Bitmap font descriptors, which are XML. Cloudflare types files by extension and serves " +
       "an unknown one untyped, which it does not compress.",
@@ -49,11 +56,10 @@ export const FILE_RULES = [
 ] as const;
 
 // Every page's policy before its rule's sources and hashes are added. Phaser loads images
-// through blob: URLs and its default textures as data: URIs. Cloudflare Web Analytics injects
-// its beacon script into every page, which reports to its own origin.
+// through blob: URLs and its default textures as data: URIs.
 export const BASE_DIRECTIVES: Directives = {
   "base-uri": ["'self'"],
-  "connect-src": ["'self'", "https://cloudflareinsights.com"],
+  "connect-src": ["'self'"],
   "default-src": ["'self'"],
   "font-src": ["'self'"],
   "form-action": ["'self'"],
@@ -62,18 +68,24 @@ export const BASE_DIRECTIVES: Directives = {
   "manifest-src": ["'self'"],
   "media-src": ["'self'", "blob:"],
   "object-src": ["'none'"],
-  "script-src": ["'self'", "https://static.cloudflareinsights.com"],
+  "script-src": ["'self'"],
   "style-src": ["'self'"],
   "worker-src": ["'self'"],
+};
+
+// Analytics are permitted on the surrounding website, outside the playable game.
+const WEBSITE_DIRECTIVES: Directives = {
+  "connect-src": ["https://cloudflareinsights.com"],
+  "script-src": ["https://static.cloudflareinsights.com"],
 };
 
 // Each built HTML page must match exactly one of these, or the build fails: two matching
 // policies would join into one header and the browser would enforce both.
 export const PAGE_RULES: readonly PageRule[] = [
-  { comment: "The art gallery.", directives: {}, path: "/art/*" },
-  { comment: "The home page.", directives: {}, path: "/" },
+  { comment: "The art gallery.", directives: WEBSITE_DIRECTIVES, path: "/art/*" },
+  { comment: "The home page.", directives: WEBSITE_DIRECTIVES, path: "/" },
   { comment: "The game.", directives: {}, path: "/play/*" },
-  { comment: "The tuning reference.", directives: {}, path: "/tuning/*" },
+  { comment: "The tuning reference.", directives: WEBSITE_DIRECTIVES, path: "/tuning/*" },
 ];
 
 const NAV_SCRIPT_PATTERN = /<script\b[^>]*\ssrc\s*=\s*["']?\/nav\.js["'\s>]/i;
