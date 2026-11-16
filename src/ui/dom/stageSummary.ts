@@ -15,7 +15,7 @@ import { createRunStats } from "./runStats.ts";
 // The full-page stage summary in the HTML UI (stageSummary.css, after runStats.css): over a black
 // view, the zone's name, the stage and progress lines, the cleared stage's preview, the stage's
 // metrics beside the totals, the antagonist's clear statement where there is one, and Continue
-// at the bottom-right. The cutscene between stages and the departure from a zone show it.
+// centred in the footer. The cutscene between stages and the departure from a zone show it.
 
 const { body } = FONT_METRICS;
 // How far a metric's cap height starts below its line box, and its baseline sits above the box's
@@ -30,7 +30,6 @@ const continueAt = CUTSCENE_CONTINUE;
 export const STAGE_SUMMARY_LAYOUT: LayoutValues = {
   "--summary-continue-hit": continueAt.button.x - continueAt.hit.x,
   "--summary-continue-width": continueAt.button.width,
-  "--summary-continue-x": continueAt.hit.x,
   "--summary-continue-y": continueAt.hit.y,
   "--summary-heading-line": FONT_METRICS.compactMainHeading.lineHeight,
   "--summary-heading-size": FONT_METRICS.compactMainHeading.size,

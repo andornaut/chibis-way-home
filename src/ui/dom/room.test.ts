@@ -73,6 +73,18 @@ it("centres the portrait in its slot while anchoring the page title at its top i
   expect(roomProperties()["--room-name-y"]).toBe(PAGE_TITLE.y);
 });
 
+it("centres the sole gift action while retaining its bottom inset and intrinsic width", () => {
+  const roomCss = readFileSync("src/ui/dom/room.css", "utf8");
+  const action = /\.room-scene\[data-gift\] \.room-leave\s*\{([^}]*)\}/.exec(roomCss)![1]!;
+  expect(action).toContain("left: 50%;");
+  expect(action).toContain("translate: -50% 0;");
+  expect(action).toContain("width: max-content;");
+  expect(action).toContain(
+    "bottom: calc(var(--ui-unit) * var(--card-padding) * 1px - var(--hit));",
+  );
+  expect(action).not.toContain("right:");
+});
+
 it("keeps authoring gift glyphs and dialogue portraits independent of a live room", () => {
   const skill = TEXT.skills.dash;
   const paragraph = dialogueParagraphs(SPEAKERS, TEXT, DIALOGUES["dash-gift"]!)[0]!;

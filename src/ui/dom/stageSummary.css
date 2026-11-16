@@ -112,13 +112,14 @@
   color: var(--colour-tan);
 }
 
-/* Continue at its place in the view's bottom-right, the button's box its press area. */
+/* The sole Continue centres in the footer, with the button's box its press area. */
 .stage-summary-footer {
   --hit: calc(var(--ui-unit) * var(--summary-continue-hit) * 1px);
 
   position: absolute;
   top: calc(var(--ui-unit) * var(--summary-continue-y) * 1px);
-  left: calc(var(--ui-unit) * var(--summary-continue-x) * 1px);
+  left: 50%;
+  translate: -50% 0;
 }
 
 .stage-summary-footer .ui-text-button-face {

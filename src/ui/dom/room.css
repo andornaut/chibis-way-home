@@ -63,18 +63,18 @@
   height: calc(var(--ui-unit) * var(--room-action-height) * 1px);
 }
 
-/* The gift action keeps its footer anchor and press outset; native text supplies its width. */
+/* The sole gift action centres in its footer with its press outset and native text width. */
 .room-scene[data-gift] .room-leave {
   --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
 
   top: auto;
-  right: calc(var(--ui-unit) * var(--card-padding) * 1px - var(--hit));
   bottom: calc(var(--ui-unit) * var(--card-padding) * 1px - var(--hit));
-  left: auto;
+  left: 50%;
   width: max-content;
   max-width: calc(var(--ui-unit) * var(--room-footer-width) * 1px + 2 * var(--hit));
   height: auto;
   padding: var(--hit);
+  translate: -50% 0;
 }
 
 .room-scene[data-gift] .room-leave > .ui-text-button-face {
