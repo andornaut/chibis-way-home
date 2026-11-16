@@ -271,7 +271,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     return (
       this.live &&
       this.state === "closed" &&
-      modalInput(this).accepts() &&
       this.view?.pauseButton.closest("[inert]") === null &&
       context !== undefined &&
       menuSourceReady(this.scene.get(context.scene)) &&

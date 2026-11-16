@@ -129,7 +129,7 @@ it("keeps card keys guarded and restores only held content", async () => {
     modalInput(card as never).open();
     pause.update();
     expect(pause.pauseButton.hidden, key).toBe(false);
-    expect(pause.pauseButton.disabled, key).toBe(true);
+    expect(pause.pauseButton.disabled, key).toBe(false);
     pressKey([pause.keyboard], "P");
     expect(scenes.pause).not.toHaveBeenCalled();
     modalInput(card as never).close();
