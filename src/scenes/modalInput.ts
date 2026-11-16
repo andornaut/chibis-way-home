@@ -224,9 +224,7 @@ export function globalMenuInput(
       const captured = revision;
       const sourceRevision = menuRevisions.get(scene.game);
       return () =>
-        enabled() &&
-        captured === revision &&
-        sourceRevision === menuRevisions.get(scene.game);
+        enabled() && captured === revision && sourceRevision === menuRevisions.get(scene.game);
     },
   };
 }
