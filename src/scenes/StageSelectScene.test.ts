@@ -19,6 +19,14 @@ const gate = vi.hoisted(() => ({
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
+vi.mock("../ui/input/actionBinding.ts", async (original) => {
+  const actual = await original<typeof import("../ui/input/actionBinding.ts")>();
+  return { ...actual, bindGameActions: vi.fn(actual.bindGameActions) };
+});
+vi.mock("../ui/input/actionBinding.ts", async (original) => {
+  const actual = await original<typeof import("../ui/input/actionBinding.ts")>();
+  return { ...actual, bindGameActions: vi.fn(actual.bindGameActions) };
+});
 vi.mock("./save.ts", () => ({ savedMap: () => ({ completed: COMPLETED }) }));
 vi.mock("./modalInput.ts", async (original) => ({
   ...(await original<typeof import("./modalInput.ts")>()),
@@ -36,7 +44,7 @@ vi.mock("./domUi.ts", () => ({
 }));
 
 import { TEXT } from "../data/text.ts";
-import { createUiLayer, setReducedMotion, type UiLayer } from "../ui/index.ts";
+import { bindGameActions, createUiLayer, setReducedMotion, type UiLayer } from "../ui/index.ts";
 import { StageSelectScene } from "./StageSelectScene.ts";
 
 let layer: UiLayer;
@@ -195,6 +203,26 @@ describe("refusals", () => {
     vi.useFakeTimers();
     const { stage, stageSelected } = await openPicker();
     const locked = stage(residential);
+    const options = vi.mocked(bindGameActions).mock.calls.at(-1)![0];
+    const action = options.resolve(locked)!;
+    expect(action.element).toBe(locked);
+    expect({
+      available: action.available(),
+      captured: options.guard.gate.capture()(),
+      current: options.guard.gate.accepts(),
+      inert: locked.closest("[inert]") !== null,
+      inheritedDisabled: locked.parentElement!.closest('[aria-disabled="true"]') !== null,
+      nativeDisabled: locked.disabled,
+      ownDisabled: locked.getAttribute("aria-disabled"),
+    }).toEqual({
+      available: true,
+      captured: true,
+      current: true,
+      inert: false,
+      inheritedDisabled: false,
+      nativeDisabled: false,
+      ownDisabled: "true",
+    });
     for (const type of ["pointerdown", "pointerup"]) {
       locked.dispatchEvent(
         new PointerEvent(type, {
@@ -202,6 +230,7 @@ describe("refusals", () => {
           button: 0,
           isPrimary: true,
           pointerId: 1,
+          pointerType: "mouse",
         }),
       );
     }
