@@ -908,6 +908,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       if (
         action === undefined ||
         this.state !== "closed" ||
+        !this.entryAvailable() ||
         this.blocked() ||
         !this.cardInput().accepts(event)
       ) {

@@ -258,38 +258,33 @@ it.each(
     ["P", "Escape", "back", "frame turn", "pause button"].map((route) => ({ mode, route })),
   ),
 )(
-  "opens over the $mode by $route, keeping its state and focus, and resumes to it",
+  "leaves the physical $mode modal in control when $route requests Pause",
   async ({ mode, route }) => {
     const { acted, pause, routes, scene, scenes, state } = await conversation(mode);
     const before = state();
     routes[route]!();
     await settle();
-    expect(cardShown(pause.dialog)).toBe(true);
-    expect(scenes.pause).toHaveBeenCalledExactlyOnceWith(HELD[mode]);
-    expect(modalInput(scene as never).accepts()).toBe(false);
-    pause.update();
-    // Only the pause card hides the skill HUD over a conversation.
-    expect([pause.skill("dash").hidden, pause.pauseButton.hidden]).toEqual([true, false]);
-    expect(pause.pauseButton.disabled).toBe(false);
-    tap(pause.button(TEXT.pause.resume));
     expect(cardShown(pause.dialog)).toBe(false);
-    expect(scenes.resume).toHaveBeenCalledExactlyOnceWith(HELD[mode]);
+    expect(scenes.pause).not.toHaveBeenCalled();
+    expect(scenes.resume).not.toHaveBeenCalled();
+    expect(modalInput(scene as never).accepts()).toBe(true);
+    pause.update();
+    expect([pause.skill("dash").hidden, pause.pauseButton.hidden]).toEqual([false, false]);
+    expect(pause.pauseButton.disabled).toBe(true);
     expect(state()).toEqual(before);
     expect(acted).not.toHaveBeenCalled();
-    expect(modalInput(scene as never).accepts()).toBe(true);
   },
 );
 
 it.each(MODES.flatMap((mode) => ["p", "P", "Escape"].map((name) => ({ mode, name }))))(
-  "captures $name for Pause over the $mode without a story action",
+  "leaves $name with the physical $mode modal without a story action",
   async ({ mode, name }) => {
     const { acted, key, pause, state } = await conversation(mode);
     const before = state();
-    expect(key(name).stopped()).toBe(true);
+    key(name);
     await settle();
-    expect(cardShown(pause.dialog)).toBe(true);
+    expect(cardShown(pause.dialog)).toBe(false);
     expect(acted).not.toHaveBeenCalled();
-    tap(pause.button(TEXT.pause.resume));
     expect(state()).toEqual(before);
   },
 );
@@ -316,7 +311,7 @@ it.each(["choice", "departure"] as const)(
 );
 
 it.each(MODES)(
-  "shows the pause button lit and the skill HUD dimmed over the %s, the HUD taking no presses",
+  "keeps the pause button and skill HUD painted and dimmed over the %s, the HUD taking no presses",
   async (mode) => {
     const { acted, pause, scenes } = await conversation(mode);
     expect({
@@ -328,7 +323,7 @@ it.each(MODES)(
       pauseButton: !pause.pauseButton.hidden,
       tabIndex: [pause.pauseButton.tabIndex, pause.skill("dash").tabIndex],
     }).toEqual({
-      dimmed: [false, true, true],
+      dimmed: [true, true, true],
       hud: true,
       live: false,
       pauseButton: true,
