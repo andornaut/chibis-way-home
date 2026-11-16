@@ -1,6 +1,6 @@
 {
   "arenas": [
-    { "hash": "77904de1d269cae2", "id": "arena-dog-city-boundary", "stage": "city-boundary" }
+    { "hash": "a3ef8aee896bae71", "id": "arena-dog-city-boundary", "stage": "city-boundary" }
   ],
   "entries": [
     {
@@ -3267,7 +3267,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "bb781c7df76ea3ac", "proofs": "44e543861da1ed3a" },
+  "inputs": { "data": "bb781c7df76ea3ac", "proofs": "c413e879cdb3836b" },
   "version": 1,
   "zone": "blue"
 }
