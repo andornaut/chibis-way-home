@@ -576,12 +576,15 @@ function searchRun(
       );
     }
     const last = ids.length === 0 ? -1 : ids[ids.length - 1]!;
+    const prev = last < 0 ? undefined : chunks[last]!;
+    const exitRow = prev ? prev.exitRow : start.exit.row;
+    if (width + minCols + finishCols > max && exitRow !== finish.entry.row) {
+      return false;
+    }
     const key = keyOf(width, last, events, doors, remaining, quietChunks);
     if (failed.has(key)) {
       return false;
     }
-    const prev = last < 0 ? undefined : chunks[last]!;
-    const exitRow = prev ? prev.exitRow : start.exit.row;
     const prevEncounters = prev ? prev.encounters : start.encounters;
     if (!exact && hopeless(width, events, doors, remaining, quietChunks, prevEncounters, exitRow)) {
       failed.add(key);
