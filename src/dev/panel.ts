@@ -4,6 +4,7 @@ import { DEV_TEXT } from "../data/dev.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { TEXT } from "../data/text.ts";
 import { type SavedSkillGrantResult, SKILL_IDS } from "../progress/index.ts";
+import { bindGameActions, bindNativeGameActions } from "../ui/input/actionBinding.ts";
 import {
   changeInvulnerability,
   changeSkillOverride,
@@ -34,6 +35,11 @@ export function panelInputGate(blocked: () => boolean) {
   let armed: number | undefined;
   return {
     accepts: () => !blocked() && armed === generation,
+    capture: () => {
+      const captured = generation;
+      const accepted = !blocked() && armed === captured;
+      return () => accepted && !blocked() && armed === captured && generation === captured;
+    },
     invalidate: () => {
       generation++;
       armed = undefined;
@@ -96,6 +102,7 @@ export function mountDeveloperPanel(
     const label = document.createElement("label");
     label.append(document.createTextNode(text), control);
     runFields.append(label);
+    return label;
   };
   const zones = document.createElement("select");
   const stages = document.createElement("select");
@@ -130,19 +137,26 @@ export function mountDeveloperPanel(
   const invulnerable = document.createElement("input");
   invulnerable.type = "checkbox";
   invulnerable.checked = developmentFlags(page.location.search).invulnerable;
-  labelled(DEV_TEXT.invulnerable, invulnerable);
+  const nativeActions: {
+    readonly checkbox: HTMLInputElement;
+    readonly label: HTMLLabelElement;
+    readonly apply: () => void;
+  }[] = [];
+  const invulnerableLabel = labelled(DEV_TEXT.invulnerable, invulnerable);
   for (const skill of SKILL_IDS) {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.checked = skillOverridesFromSearch(page.location.search)[skill] === true;
-    labelled(TEXT.skills[skill].title, checkbox);
-    checkbox.addEventListener("change", () => {
+    const label = labelled(TEXT.skills[skill].title, checkbox);
+    const apply = () => {
       if (!gate.accepts()) {
         checkbox.checked = skillOverridesFromSearch(page.location.search)[skill] === true;
         return;
       }
       changeSkillOverride(page, checkbox.checked, skill);
-    });
+    };
+    checkbox.addEventListener("change", apply);
+    nativeActions.push({ apply, checkbox, label });
   }
   section.append(toggle, fields);
   container.append(section);
@@ -152,7 +166,9 @@ export function mountDeveloperPanel(
   const unavailable = () =>
     blocked() || !regularBrowser(page) || document.visibilityState === "hidden";
   const gate = panelInputGate(() => unavailable() || pending || disposed);
+  let cancelActions = () => {};
   const invalidate = () => {
+    cancelActions();
     revision++;
     gate.invalidate();
   };
@@ -171,7 +187,7 @@ export function mountDeveloperPanel(
     sync();
   });
   observer.observe(host, { attributeFilter: ["data-modal-open"], attributes: true });
-  section.addEventListener("pointerdown", () => gate.press());
+  section.addEventListener("pointerdown", () => gate.press(), true);
   section.addEventListener("keydown", (event) => {
     event.stopPropagation();
     gate.press();
@@ -197,7 +213,7 @@ export function mountDeveloperPanel(
       fillStages();
     }
   });
-  load.addEventListener("click", () => {
+  const onLoad = () => {
     if (
       !gate.accepts() ||
       !catalogue.some((zone) => zone.stages.some((stage) => stage.id === stages.value))
@@ -206,15 +222,17 @@ export function mountDeveloperPanel(
     }
     changeInvulnerability(page, developmentFlags(page.location.search).invulnerable);
     page.location.assign(stageDevelopmentUrl(page.location.href, stages.value));
-  });
-  invulnerable.addEventListener("change", () => {
+  };
+  const applyInvulnerability = () => {
     if (!gate.accepts()) {
       invulnerable.checked = developmentFlags(page.location.search).invulnerable;
       return;
     }
     changeInvulnerability(page, invulnerable.checked);
-  });
-  grant.addEventListener("click", () => {
+  };
+  invulnerable.addEventListener("change", applyInvulnerability);
+  nativeActions.push({ apply: applyInvulnerability, checkbox: invulnerable, label: invulnerableLabel });
+  const onGrant = () => {
     if (!gate.accepts() || fields.hidden) {
       return;
     }
@@ -251,7 +269,32 @@ export function mountDeveloperPanel(
           sync();
         }
       });
-  });
+  };
+  const available = () => !unavailable() && !pending && !disposed && !fields.hidden;
+  const nativeBinding = bindNativeGameActions(
+    { gate },
+    (target) => {
+      const control = nativeActions.find(({ label }) => target instanceof page.Node && label.contains(target));
+      return control === undefined ? null : {
+        activate: () => {
+          control.checkbox.checked = !control.checkbox.checked;
+          control.apply();
+        },
+        available: () => available() && !fields.disabled && !control.checkbox.disabled,
+        element: control.label,
+      };
+    },
+    section,
+  );
+  const buttons = [{ activate: onLoad, element: load }, { activate: onGrant, element: grant }];
+  const actions = bindGameActions({
+    guard: { gate },
+    resolve: (target) => {
+      const action = buttons.find(({ element }) => target instanceof page.Node && element.contains(target));
+      return action === undefined ? null : { ...action, available };
+    },
+  }, section);
+  cancelActions = () => { nativeBinding.cancel(); actions.cancel(); };
   const resume = () => {
     invalidate();
     sync();
@@ -268,6 +311,8 @@ export function mountDeveloperPanel(
     disposed = true;
     invalidate();
     unsubscribe();
+    actions();
+    nativeBinding();
     observer.disconnect();
     media.removeEventListener("change", sync);
     document.removeEventListener("fullscreenchange", sync);

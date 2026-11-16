@@ -279,3 +279,31 @@ it("waits for a measured failure frame without inventing a unit or changing read
   expect(host.querySelector<HTMLButtonElement>("button")!.style.height).toBe("24px");
   expect(requiredLoading.state).toBe(state);
 });
+
+it("holds Retry through its guarded factory callback once and suppresses release while busy", async () => {
+  const { TOUCH } = await import("../data/touch.ts");
+  vi.useFakeTimers();
+  let now = 0;
+  vi.spyOn(window.performance, "now").mockImplementation(() => now);
+  const view = failureHost();
+  const retry = vi.fn(() => new Promise<void>(() => {}));
+  resources.push(requiredLoading.observe({ retry, status: () => "failed" }));
+  const button = view.button();
+  const pointer = (type: string) => button.dispatchEvent(new PointerEvent(type, {
+    bubbles: true, button: 0, clientX: 1, clientY: 1, isPrimary: true, pointerId: 1,
+  }));
+  pointer("pointerdown");
+  expect(retry).not.toHaveBeenCalled();
+  now = TOUCH.actionHoldMilliseconds;
+  vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
+  expect(retry).toHaveBeenCalledOnce();
+  expect(button.disabled).toBe(true);
+  pointer("pointerup");
+  button.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, detail: 1 }));
+  expect(retry).toHaveBeenCalledOnce();
+  stopView();
+  now += TOUCH.actionHoldMilliseconds;
+  vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
+  expect(retry).toHaveBeenCalledOnce();
+  vi.useRealTimers();
+});

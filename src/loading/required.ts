@@ -10,6 +10,7 @@ import {
 import type { InstallationState } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
 
 import { SCREEN } from "../data/screen.ts";
+import { bindFactoryAction } from "../ui/input/actionBinding.ts";
 import { loadingFailurePresentation, loadingUnit } from "./presentation.ts";
 
 // One page registry shares the kit's required-resource failure and explicit Retry lifecycle.
@@ -113,6 +114,7 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
     }
     view = mountLoadingFailure(
       {
+        bindHoldAction: bindFactoryAction,
         onRetry,
         presentation,
       },
