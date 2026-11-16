@@ -18,7 +18,7 @@ Docs state current decisions; git keeps their history. An undecided proposal sta
 
 ## Scope
 
-Gameplay owns the rulebook and the values and content in the data value files (every `src/data/*.ts` except `screen.ts` and the tests). Every number (speeds, jump and flutter heights, timings, counts) and every string a player sees lives in those files, never in code. Reusable behaviour patterns for animals and moving inanimate objects are gameplay-owned values in `src/data/`: their primitives, sequences or states, transitions, timing, animations and tuning. Tech owns the schema, primitives, condition evaluation and shared executor. A new field, key or shape goes through tech.
+Gameplay owns the rulebook and the values and content in the data value files (`src/data/*.ts` except `screen.ts`, `layout.ts` and tests). Gameplay tuning (speeds, jump and flutter heights, timings and counts) and every string a player sees live in those files; Tech owns screen and UI layout geometry, schemas and algorithm limits. Reusable behaviour patterns for animals and moving inanimate objects are gameplay-owned values in `src/data/`: their primitives, sequences or states, transitions, timing, animations and tuning. Tech owns the schema, primitives, condition evaluation and shared executor. A new field, key or shape goes through tech.
 
 ## Method
 
@@ -29,7 +29,7 @@ Gameplay owns the rulebook and the values and content in the data value files (e
 - **Difficulty:** the rulebook's [Stages](design.md#stages) and [Chunks](design.md#chunks) rules own the zone bands, weights, fixed caps and challenge variety.
 - **Jump tuning:** the rulebook's [Chibi](design.md#chibi) jump rules and [Grid](design.md#grid) reaches apply. Keep those reaches aligned with the simulator
 - **Phone playtesting:** judge jump feel, touch input and readability on a landscape phone. The user performs device playtesting.
-- **Required-route verification:** the rulebook's [chunk fairness](design.md#chunks) rule applies. Passing a scoped route check does not establish that every generated stage or a human pacing target passed
+- **Required-route verification:** the rulebook's [chunk fairness](design.md#chunks) rule applies. Continuous qualification uses ordinary controls and preserves every indexed grounded target within 600 executed ticks, unless an explicit exception is approved. A successful trajectory is not a native certification proof or pool admission. Native producers retain their own compiled search limits and source, target and profile provenance. Passing a scoped route check does not establish that every generated stage or a human pacing target passed
 - **Tune to the targets:** a result inside its band needs no tuning. The user declares when the goal is met.
 
 ## Current scope
