@@ -3,6 +3,7 @@ import {
   type ModalInputGate,
   type ModalInputScope,
 } from "@andornaut/game-kit/runtime/input/modalInput";
+import type { HoldActionsBinding } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 import type { Input, Scene } from "phaser";
 
 const gates = new WeakMap<object, ModalInputGate>();
@@ -10,6 +11,28 @@ const owners = new WeakMap<object, object>();
 const inputs = new WeakMap<object, SceneInput>();
 const readiness = new WeakMap<object, () => boolean>();
 const menuRevisions = new WeakMap<object, number>();
+const actionBindings = new WeakMap<SceneInput, Set<HoldActionsBinding>>();
+
+export function trackActionBinding(
+  input: SceneInput,
+  binding: HoldActionsBinding,
+): HoldActionsBinding {
+  let bindings = actionBindings.get(input);
+  if (bindings === undefined) {
+    bindings = new Set();
+    actionBindings.set(input, bindings);
+    const registered = bindings;
+    input.subscribe(() => registered.forEach((current) => current.cancel()));
+  }
+  bindings.add(binding);
+  const registered = bindings;
+  const dispose = () => {
+    registered.delete(binding);
+    binding();
+  };
+  dispose.cancel = binding.cancel;
+  return dispose;
+}
 
 export interface SceneInput {
   accepts(event?: object): boolean;
@@ -72,10 +95,14 @@ export function modalInput(scene: Scene): SceneInput {
       scope ??= gameGate.open();
     },
     ready(value) {
-      if (ready !== value) {
+      const changed = ready !== value;
+      if (changed) {
         menuRevisions.set(scene.game, (menuRevisions.get(scene.game) ?? 0) + 1);
       }
       ready = value;
+      if (changed) {
+        actionBindings.get(input)?.forEach((binding) => binding.cancel());
+      }
     },
     subscribe(clear) {
       unsubscribers.push(gameGate.subscribe(clear));
@@ -84,6 +111,8 @@ export function modalInput(scene: Scene): SceneInput {
   inputs.set(scene, input);
   readiness.set(scene, () => ready);
   scene.events.once("shutdown", () => {
+    actionBindings.get(input)?.forEach((binding) => binding());
+    actionBindings.delete(input);
     unsubscribers.forEach((stop) => stop());
     input.close();
     inputs.delete(scene);

@@ -51,9 +51,9 @@ const CONTEXTS = {
   assets: ["core", "data"],
   camera: ["data"],
   core: ["data"],
-  crash: ["assets", "data"],
+  crash: ["assets", "data", "ui/input/actionBinding.ts"],
   data: [],
-  dev: ["data", "progress", "rules"],
+  dev: ["data", "progress", "rules", "ui/input/actionBinding.ts"],
   gallery: ["assets"],
   headers: [],
   homePage: ["data", "ui"],
@@ -96,6 +96,9 @@ const INDEXED = {
   progress: { scenes: ["./save/pageSave.ts"] },
   stage: {},
   ui: {
+    crash: ["./input/actionBinding.ts"],
+    dev: ["./input/actionBinding.ts"],
+    loading: ["./input/actionBinding.ts"],
     "*": [
       "./dom/achievements.css",
       "./dom/actionHelp.css",

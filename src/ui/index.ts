@@ -141,6 +141,12 @@ export {
   type TouchControlVisual,
 } from "./dom/touchControls.ts";
 export { focusKeyAction, stepFocus } from "./focus/index.ts";
+export {
+  bindFactoryAction,
+  bindGameActions,
+  type GameAction,
+  type GameActionOptions,
+} from "./input/actionBinding.ts";
 export { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "./input/deathInput.ts";
 export {
   combineIntents,
