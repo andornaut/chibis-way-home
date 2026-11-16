@@ -7,7 +7,6 @@ import {
 import {
   createModalLayer,
   type ModalLayer,
-  type ModalOptions,
 } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 import { createViewUnits, slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
@@ -82,8 +81,7 @@ export const UI_LAYOUT: LayoutValues = {
 
 // The attribute on what the top modal dims.
 export const UI_DIMMED = "data-ui-dimmed";
-// The attribute on an element that a card in a view under its own still covers, since it takes
-// no presses there: it dims with the views under the card, unless the card keeps it live.
+// The marker on independently drawn UI chrome.
 export const UI_COVERED = "data-ui-covered";
 
 export interface UiLayer {
@@ -102,42 +100,74 @@ export interface UiLayer {
   setDimmedSkin(properties: LayoutValues): void;
 }
 
-// Cards dim lower views and marked branches beside or above their dialog. Explicit live paths
-// retain their existing paint; dialog content stays undimmed.
-function dimTargets(
-  root: HTMLElement,
-  dialog: HTMLElement,
-  live: readonly HTMLElement[],
-): Set<Element> {
-  const views = [...root.children];
-  const at = views.findIndex((view) => view.contains(dialog));
-  const below = views.slice(0, Math.max(0, at));
-  const covered = at < 0 ? [] : views.slice(at);
-  const paths = new Set<Element>();
-  for (const element of live) {
-    for (let at: Element | null = element; at !== null && at !== root; at = at.parentElement) {
-      paths.add(at);
-    }
-  }
-  const targets = new Set<Element>();
-  const visit = (elements: readonly Element[]) => {
-    for (const element of elements) {
-      if (!paths.has(element)) {
-        targets.add(element);
-      } else if (!live.includes(element as HTMLElement)) {
-        visit([...element.children]);
+// Paint follows the shared input layer's actual coverage, including siblings in one scene.
+// Existing inert attributes remain owned by that layer or their original caller.
+function dimTargets(root: HTMLElement, dialog: HTMLElement): Set<Element> {
+  return new Set(
+    [...root.querySelectorAll("[inert]")].filter(
+      (element) =>
+        !element.contains(dialog) &&
+        !dialog.contains(element) &&
+        element.parentElement?.closest("[inert]") === null,
+    ),
+  );
+}
+
+// Modal paint changes stacking only. Scene nodes retain their DOM order and layout.
+function createModalPaint(root: HTMLElement, globalEntry: HTMLElement) {
+  const owned = new Map<
+    HTMLElement,
+    { readonly before: string; readonly priority: string; value: string }
+  >();
+  const apply = (values: ReadonlyMap<HTMLElement, number>) => {
+    for (const [element, state] of owned) {
+      if (!values.has(element)) {
+        if (
+          element.style.zIndex === state.value &&
+          element.style.getPropertyPriority("z-index") === ""
+        ) {
+          element.style.setProperty("z-index", state.before, state.priority);
+        }
+        owned.delete(element);
       }
+    }
+    for (const [element, value] of values) {
+      const text = String(value);
+      const state = owned.get(element) ?? {
+        before: element.style.zIndex,
+        priority: element.style.getPropertyPriority("z-index"),
+        value: text,
+      };
+      state.value = text;
+      owned.set(element, state);
+      element.style.setProperty("z-index", text);
     }
   };
-  visit(below);
-  for (const view of covered) {
-    for (const element of view.querySelectorAll(`[${UI_COVERED}]`)) {
-      if (!paths.has(element) && !element.contains(dialog) && !dialog.contains(element)) {
-        targets.add(element);
+  return {
+    show(dialogs: readonly HTMLElement[]) {
+      const values = new Map<HTMLElement, number>();
+      const views = [...root.children] as HTMLElement[];
+      const modalViews = dialogs
+        .map((dialog) => views.find((view) => view.contains(dialog)))
+        .filter((view): view is HTMLElement => view !== undefined)
+        .filter((view, index, all) => all.lastIndexOf(view) === index);
+      if (dialogs.length > 0) {
+        const below = views.filter((view) => view !== globalEntry && !modalViews.includes(view));
+        below.sort((left, right) => Number(left.dataset.uiOrder) - Number(right.dataset.uiOrder));
+        [...below, globalEntry, ...modalViews].forEach((view, index) => values.set(view, index));
+        let child = dialogs.at(-1)!;
+        const scene = views.find((view) => view.contains(child));
+        while (child !== scene && child.parentElement !== null && root.contains(child)) {
+          const siblings = [...child.parentElement.children] as HTMLElement[];
+          [...siblings.filter((sibling) => sibling !== child), child].forEach((sibling, index) =>
+            values.set(sibling, index),
+          );
+          child = child.parentElement;
+        }
       }
-    }
-  }
-  return targets;
+      apply(values);
+    },
+  };
 }
 
 // The dim under the top modal (src/ui/dom/ui.css): what it covers takes the dimmed skin's
@@ -147,6 +177,10 @@ function createDim(root: HTMLElement) {
   let skin: LayoutValues = {};
   const images = new Map<string, string>();
   const dimmed = new Set<Element>();
+  const saved = new Map<
+    Element,
+    Map<string, { readonly before: string; readonly priority: string; value: string }>
+  >();
   // Shows an image's dimmed source while it is under the dim, and its lit one otherwise.
   const showImage = (image: HTMLImageElement) => {
     const lit = image.dataset.uiLitSrc ?? image.getAttribute("src") ?? "";
@@ -168,12 +202,29 @@ function createDim(root: HTMLElement) {
   const set = (element: Element, on: boolean) => {
     const { style } = element as HTMLElement;
     element.toggleAttribute(UI_DIMMED, on);
-    for (const [name, value] of Object.entries(skin)) {
-      if (on) {
-        style.setProperty(name, String(value));
-      } else {
-        style.removeProperty(name);
+    if (on) {
+      const properties = saved.get(element) ?? new Map();
+      for (const [name, value] of Object.entries(skin)) {
+        const state = properties.get(name) ?? {
+          before: style.getPropertyValue(name),
+          priority: style.getPropertyPriority(name),
+          value: String(value),
+        };
+        state.value = String(value);
+        properties.set(name, state);
+        style.setProperty(name, state.value);
       }
+      saved.set(element, properties);
+    } else {
+      for (const [name, state] of saved.get(element) ?? []) {
+        if (
+          style.getPropertyValue(name) === state.value &&
+          style.getPropertyPriority(name) === ""
+        ) {
+          style.setProperty(name, state.before, state.priority);
+        }
+      }
+      saved.delete(element);
     }
     showImages(element);
   };
@@ -225,35 +276,26 @@ function createDimmingModals(
   globalEntry: HTMLElement,
 ) {
   const modals = createModalLayer(root);
-  const stack: { readonly dialog: HTMLElement; readonly options: ModalOptions }[] = [];
-  // Physical modal cards cover the global entry.
-  const placeEntry = (dialog?: HTMLElement, live: readonly HTMLElement[] = []) => {
-    const covered = dialog !== undefined && !live.includes(globalEntry);
-    const before = covered
-      ? [...root.children].find((view) => view !== globalEntry && view.contains(dialog))
-      : undefined;
-    if (globalEntry.nextElementSibling !== (before ?? null)) {
-      root.insertBefore(globalEntry, before ?? null);
-    }
-  };
+  const stack: { readonly dialog: HTMLElement }[] = [];
+  const paint = createModalPaint(root, globalEntry);
   const update = () => {
     const top = stack.at(-1);
-    placeEntry(top?.dialog, top?.options.live);
-    dim.apply(top === undefined ? new Set() : dimTargets(root, top.dialog, top.options.live ?? []));
+    paint.show(stack.map(({ dialog }) => dialog));
+    dim.apply(top === undefined ? new Set() : dimTargets(root, top.dialog));
   };
+  const observer = new MutationObserver(update);
+  observer.observe(root, { attributeFilter: ["inert"], attributes: true, subtree: true });
   const layer: ModalLayer = {
     back: () => modals.back(),
     dispose() {
+      observer.disconnect();
       stack.length = 0;
       update();
       modals.dispose();
     },
     open(options, dialog) {
-      const live = (options.live ?? []).filter((element) => !globalEntry.contains(element));
-      const liveOptions = { ...options, live };
-      placeEntry(dialog, liveOptions.live);
-      const close = modals.open(liveOptions, dialog);
-      const entry = { dialog, options: liveOptions };
+      const close = modals.open({ ...options, isolation: "dialog", live: [] }, dialog);
+      const entry = { dialog };
       stack.push(entry);
       update();
       return () => {
@@ -325,7 +367,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
       const after = [...element.children].find(
         (child) => child !== globalEntry && Number((child as HTMLElement).dataset.uiOrder) > order,
       );
-      element.insertBefore(view, after ?? null);
+      element.insertBefore(view, after ?? globalEntry);
       refresh();
       return () => {
         view.remove();

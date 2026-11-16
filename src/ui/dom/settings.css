@@ -1,6 +1,12 @@
 /* The settings card and the install steps card (settings.ts), on ui.css's .ui-card: lengths are
    base px times --ui-unit, from the layout properties SETTINGS_LAYOUT writes on the card's view. */
 
+/* Both cards retain their geometry when the steps cover their parent. */
+.settings-card,
+.settings-steps {
+  grid-area: 1 / 1;
+}
+
 .settings-card[hidden],
 .settings-steps[hidden],
 .settings-icon[hidden] {

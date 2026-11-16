@@ -100,7 +100,7 @@ it("reads only custom properties the layer, the bridge, the skin or a stylesheet
   expect([...read].filter((name) => !provided(name))).toEqual([]);
 });
 
-it("covers the global entry only while a physical modal is open, ignoring entry live requests", () => {
+it("keeps global chrome outside modal keyboard order even if a caller requests it live", () => {
   const layer = createUiLayer([], document);
   document.body.append(layer.element);
   const dialog = document.createElement("section"),
@@ -114,8 +114,6 @@ it("covers the global entry only while a physical modal is open, ignoring entry 
   expect(document.activeElement).toBe(entry);
   expect(entry.closest("[inert], [data-ui-dimmed]")).toBeNull();
   const close = layer.modals.open({ live: [entry] }, dialog);
-  expect(entry.closest("[inert]")).not.toBeNull();
-  expect(entry.closest("[data-ui-dimmed]")).not.toBeNull();
   const tab = () =>
     document.activeElement!.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
@@ -124,6 +122,7 @@ it("covers the global entry only while a physical modal is open, ignoring entry 
   expect(document.activeElement).toBe(first);
   tab();
   expect(document.activeElement).toBe(first);
+  expect(entry.closest("[inert]")).not.toBeNull();
   tab();
   expect(document.activeElement).toBe(first);
   close();
@@ -152,83 +151,139 @@ it("keeps a late ordinary Menu entry covered and removes the exact registration"
   layer.dispose();
 });
 
-it("keeps the global entry covered through nested physical modals and restores it after both close", () => {
+it("composites nested cards above the highest scene without reparenting or hiding their UI", () => {
   const layer = createUiLayer([], document);
   document.body.append(layer.element);
-  const entry = document.createElement("button");
-  layer.menuEntry(entry);
-  const conversation = document.createElement("section");
-  layer.mount(0, conversation);
-  const closeConversation = layer.modals.open({ live: [entry] }, conversation);
-  const entryLayer = entry.closest(".global-menu-layer")!;
-  expect(conversation.previousElementSibling).toBe(entryLayer);
-  expect(entry.closest("[inert]")).not.toBeNull();
-  const dialog = document.createElement("section");
-  const action = document.createElement("button");
-  dialog.append(action);
-  layer.mount(1, dialog);
-  const close = layer.modals.open({}, dialog);
-  expect(dialog.previousElementSibling).toBe(entryLayer);
-  expect(entry.closest("[inert]")).not.toBeNull();
-  expect(entry.closest("[data-ui-dimmed]")).not.toBeNull();
-  const later = document.createElement("div");
-  layer.mount(2, later);
-  expect(dialog.previousElementSibling).toBe(entryLayer);
-  action.focus();
-  action.dispatchEvent(
-    new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
-  );
-  expect(document.activeElement).toBe(action);
-  close();
-  expect(conversation.previousElementSibling).toBe(entryLayer);
-  expect(entry.closest("[inert]")).not.toBeNull();
-  expect(entry.closest("[data-ui-dimmed]")).not.toBeNull();
-  closeConversation();
-  expect(layer.element.lastElementChild).toBe(entryLayer);
-  expect(entry.closest("[inert], [data-ui-dimmed]")).toBeNull();
+  const parent = document.createElement("section");
+  const child = document.createElement("section");
+  const parentRoot = document.createElement("div");
+  const childRoot = document.createElement("div");
+  parentRoot.append(parent);
+  childRoot.append(child);
+  parentRoot.style.setProperty("z-index", "77", "important");
+  layer.mount(Number.MAX_SAFE_INTEGER, parentRoot);
+  layer.mount(2, childRoot);
+  const order = [...layer.element.children];
+  const closeParent = layer.modals.open({}, parent);
+  const closeChild = layer.modals.open({}, child);
+  expect(Number(childRoot.style.zIndex)).toBeGreaterThan(Number(parentRoot.style.zIndex));
+  expect([...layer.element.children]).toEqual(order);
+  expect([parentRoot.hidden, childRoot.hidden]).toEqual([false, false]);
+  expect(parentRoot.hasAttribute("data-ui-dimmed")).toBe(true);
+  expect(childRoot.hasAttribute("data-ui-dimmed")).toBe(false);
+  closeChild();
+  expect(Number(parentRoot.style.zIndex)).toBeGreaterThan(Number(childRoot.style.zIndex));
+  expect([...layer.element.children]).toEqual(order);
+  expect([parentRoot.hidden, childRoot.hidden]).toEqual([false, false]);
+  closeParent();
+  expect(parentRoot.style.zIndex).toBe("77");
+  expect(parentRoot.style.getPropertyPriority("z-index")).toBe("important");
+  expect(childRoot.style.zIndex).toBe("");
   layer.dispose();
 });
 
-it("dims marked same-scene chrome outside the dialog and restores nested coverage", () => {
+it("dims same-scene HUD with canonical isolation and restores its original palette and image", () => {
   const layer = createUiLayer([], document);
   document.body.append(layer.element);
-  layer.setDimmedSkin({ "--colour-cream": "dimmed" });
-  const root = document.createElement("div");
-  const hud = document.createElement("div");
-  hud.setAttribute("data-ui-covered", "");
-  const image = document.createElement("img");
-  image.src = "blob:lit";
-  layer.dimImage("blob:lit", "blob:dim");
-  hud.append(image);
+  const scene = document.createElement("div");
   const dialog = document.createElement("section");
-  dialog.setAttribute("data-ui-covered", "");
-  const action = document.createElement("button");
-  action.setAttribute("data-ui-covered", "");
-  dialog.append(action);
-  root.append(hud, dialog);
-  layer.mount(0, root);
-  const closeLive = layer.modals.open({ live: [hud] }, dialog);
-  expect(hud.hasAttribute("data-ui-dimmed")).toBe(false);
-  closeLive();
-  const close = layer.modals.open({}, dialog);
+  const hud = document.createElement("div");
+  const button = document.createElement("button");
+  const image = document.createElement("img");
+  hud.style.setProperty("--colour-cream", "original", "important");
+  image.src = "blob:lit";
+  button.append(image);
+  hud.append(button);
+  scene.append(dialog, hud);
+  layer.mount(0, scene);
+  layer.dimImage("blob:lit", "blob:dim");
+  layer.setDimmedSkin({ "--colour-cream": "dimmed" });
+  button.inert = true;
+  const close = layer.modals.open({ live: [hud] }, dialog);
+  expect(hud.inert).toBe(true);
   expect(hud.hasAttribute("data-ui-dimmed")).toBe(true);
-  expect(image.getAttribute("src")).toBe("blob:dim");
-  expect([dialog, action].map((element) => element.hasAttribute("data-ui-dimmed"))).toEqual([
-    false,
-    false,
-  ]);
-  const nested = document.createElement("section");
-  layer.mount(1, nested);
-  const closeNested = layer.modals.open({}, nested);
-  expect(root.hasAttribute("data-ui-dimmed")).toBe(true);
-  closeNested();
-  expect(root.hasAttribute("data-ui-dimmed")).toBe(false);
-  expect(hud.hasAttribute("data-ui-dimmed")).toBe(true);
+  expect(button.hasAttribute("data-ui-dimmed")).toBe(false);
   expect(hud.style.getPropertyValue("--colour-cream")).toBe("dimmed");
   expect(image.getAttribute("src")).toBe("blob:dim");
-  expect([root.hidden, hud.hidden, dialog.hidden]).toEqual([false, false, false]);
+  layer.setDimmedSkin({ "--colour-cream": "dimmed-again" });
   close();
+  expect(hud.inert).toBe(false);
+  expect(button.inert).toBe(true);
   expect(hud.hasAttribute("data-ui-dimmed")).toBe(false);
+  expect(hud.style.getPropertyValue("--colour-cream")).toBe("original");
+  expect(hud.style.getPropertyPriority("--colour-cream")).toBe("important");
   expect(image.getAttribute("src")).toBe("blob:lit");
+  expect([dialog.hidden, hud.hidden, button.hidden]).toEqual([false, false, false]);
+  layer.dispose();
+});
+
+it("never invents dismissal for a mandatory top choice or delegates Back to its covered parent", () => {
+  const layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  const parent = document.createElement("section");
+  const mandatory = document.createElement("section");
+  let closes = 0;
+  layer.mount(0, parent);
+  layer.mount(1, mandatory);
+  const closeParent = layer.modals.open(
+    {
+      close: () => {
+        closes++;
+      },
+    },
+    parent,
+  );
+  const closeMandatory = layer.modals.open({}, mandatory);
+  expect(layer.modals.back()).toBe(true);
+  expect(closes).toBe(0);
+  expect(parent.hidden).toBe(false);
+  expect(parent.inert).toBe(true);
+  closeMandatory();
+  expect(layer.modals.back()).toBe(true);
+  expect(closes).toBe(1);
+  closeParent();
+  layer.dispose();
+});
+
+it("admits only the actual backdrop outside the top dialog and preserves Cancel", () => {
+  const layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  const scene = document.createElement("div");
+  const dialog = document.createElement("section");
+  const backdrop = document.createElement("div");
+  const covered = document.createElement("button");
+  let coveredClicks = 0;
+  let cancels = 0;
+  covered.addEventListener("click", () => {
+    coveredClicks++;
+  });
+  backdrop.addEventListener("click", () => {
+    cancels++;
+  });
+  scene.append(backdrop, dialog, covered);
+  layer.mount(0, scene);
+  const close = layer.modals.open(
+    {
+      backdrop,
+      close: () => {
+        cancels++;
+      },
+    },
+    dialog,
+  );
+  expect(covered.inert).toBe(true);
+  expect(covered.hasAttribute("data-ui-dimmed")).toBe(true);
+  expect(backdrop.inert).toBe(false);
+  expect(backdrop.hasAttribute("data-ui-dimmed")).toBe(false);
+  expect(dialog.hasAttribute("data-ui-dimmed")).toBe(false);
+  covered.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+  expect(coveredClicks).toBe(0);
+  backdrop.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+  expect(cancels).toBe(1);
+  expect(layer.modals.back()).toBe(true);
+  expect(cancels).toBe(2);
+  close();
+  expect(covered.inert).toBe(false);
+  expect(covered.hasAttribute("data-ui-dimmed")).toBe(false);
   layer.dispose();
 });
