@@ -138,7 +138,10 @@ const outdoorRecipe = (
 // Generated stages use one continuous area or ordered floor sections.
 export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "back-streets": outdoorRecipe("home", "second", "back-streets"),
-  "city-boundary": outdoorRecipe("blue", "third", "city-boundary"),
+  "city-boundary": {
+    ...outdoorRecipe("blue", "third", "city-boundary"),
+    startDoors: [STAGE_GIFTS.third],
+  },
   "city-outskirts": outdoorRecipe("home", "first", "city-outskirts"),
   "city-streets": outdoorRecipe("blue", "second", "city-streets"),
   "country-lanes": outdoorRecipe("countryside", "second", "country-lanes"),
