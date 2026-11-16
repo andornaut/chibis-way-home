@@ -1,5 +1,5 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
-import { listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
+import type { HoldActionsBinding } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 import { Core, Scene } from "phaser";
@@ -31,7 +31,6 @@ import {
   setTouchSettingShown,
   showPauseDisc,
   showPauseMenu,
-  showPresses,
   showSkillButton,
   SKILL_ART,
   skillHud,
@@ -40,11 +39,18 @@ import {
 } from "../ui/index.ts";
 import { FRAME_TURN } from "../ui/input/frameTurn.ts";
 import type { AchievementsOpener, AchievementsScene } from "./AchievementsScene.ts";
+import { bindSceneActions, bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, sceneDomUi } from "./domUi.ts";
 import { MENU_CONTENT_SCENES, menuContext, type MenuFrame } from "./menuContext.ts";
 import { menuEntryFocus } from "./menuEntryFocus.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
-import { globalMenuInput, menuSourceReady, modalInput, type SceneInput } from "./modalInput.ts";
+import {
+  globalMenuInput,
+  menuSourceReady,
+  modalInput,
+  trackMenuActionBinding,
+  type SceneInput,
+} from "./modalInput.ts";
 import { type PauseDiscTimeline, pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome.ts";
 import { activeSkill, savedSkills, selectActiveSkill } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
@@ -68,6 +74,7 @@ const CONTENT_SCENES = [
   "map",
   "zoneIntroduction",
   "zone",
+  "start",
 ] as const;
 // These required or browsing cards retain their own input guards.
 const BLOCKING_CARDS = [
@@ -86,20 +93,8 @@ interface PausableConversation {
   pausable(): boolean;
 }
 
-// The press a pointer holds on a control, from where and when it landed; a refused one travelled
-// too far or left the control, and acts on nothing.
-interface ControlPress {
-  readonly check: () => boolean;
-  readonly control: HTMLButtonElement;
-  readonly pointerId: number;
-  refused: boolean;
-  readonly startedAt: number;
-  readonly x: number;
-  readonly y: number;
-}
-
 // One persistent entry opens Pause over active pausable content and Menu elsewhere.
-// Covered entries stay inactive. Each visit retains the underlying scopes,
+// The entry respects the top modal owner. Each visit retains the underlying scopes,
 // focus and already-paused scenes, and resumes only its own held subset when it closes.
 // Settings and Achievements return to their originating shared card.
 // The bottom primary action resumes Pause or closes Menu. The skill HUD keeps its existing
@@ -125,7 +120,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   private closeModal: (() => void) | undefined;
   // The card control to restore after a nested card closes.
   private nestedFocus: HTMLElement | undefined;
-  private press: ControlPress | undefined;
+  private actionBindings: HoldActionsBinding[] = [];
   private stopPausePress: (() => void) | undefined;
   // Each skill glyph's ready and muted sources, once cut.
   private glyphs = new Map<SkillId, { readonly muted: string; readonly ready: string }>();
@@ -176,7 +171,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     });
     this.watchPresses(view);
     modalInput(this).subscribe(() => {
-      this.press = undefined;
+      this.cancelPresses();
       this.releasePauseButton();
       this.syncMenuVisibility();
     });
@@ -184,7 +179,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.watchBackAndTurns();
     this.loadGlyphs();
     this.events.once("shutdown", () => {
-      this.press = undefined;
+      this.cancelPresses();
       this.releasePauseButton();
       this.closeModal?.();
       this.closeModal = undefined;
@@ -386,9 +381,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       this.waitingFor = undefined;
       modalInput(this).open();
       this.showCard(true);
-      return;
     }
-    this.view.card.root.hidden = !modalInput(this).accepts();
   }
 
   // Ends content and shows the start screen, keeping the persistent pause overlay.
@@ -438,10 +431,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     const focused = document.activeElement;
     this.nestedFocus =
       focused instanceof HTMLElement && view.card.dialog.contains(focused) ? focused : undefined;
-    view.card.root.hidden = true;
-    this.closeModal?.();
-    this.closeModal = undefined;
-    modalInput(this).close();
     this.scene.launch(key, { opener: this.scene.key } satisfies SettingsData);
   }
 
@@ -544,7 +533,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       : true;
   }
 
-  // World ownership controls visibility; modal cover changes input and dimming.
+  // Modal cover changes input and dimming, while the zone's presentation owns HUD visibility.
   private skillHudShown(): boolean {
     return (
       (this.scene.isActive(ZONE) || this.scene.isPaused(ZONE)) &&
@@ -573,12 +562,12 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     }
     const pauseShown = this.context() !== undefined;
     view.pauseButton.disabled = !this.entryAvailable();
-    const mode = this.state === "closed" && this.context()?.mode === "pause" ? "pause" : "menu";
+    const mode = this.state === "closed" ? (this.context()?.mode ?? "menu") : this.mode;
     view.pauseButton.tabIndex =
       mode === "pause" || (this.state === "open" && modalInput(this).accepts()) ? -1 : 0;
     if (mode !== this.entryMode) {
       this.entryMode = mode;
-      this.press = undefined;
+      this.cancelPresses();
       this.releasePauseButton();
       showPauseDisc(this.colours, this.timeline.rest, view.pauseButton, mode);
     }
@@ -618,32 +607,12 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     }
   }
 
-  // A press held on a skill in play opens its details once held long enough, and then acts on
-  // nothing more.
-  private updateSkillHold(): void {
-    const press = this.press;
-    const skill = press?.control.dataset.skill as SkillId | undefined;
-    if (
-      !this.sys.isActive() ||
-      press === undefined ||
-      press.refused ||
-      skill === undefined ||
-      this.state !== "closed" ||
-      !this.skillHudLive() ||
-      this.time.now - press.startedAt < SKILL_GESTURE.holdMilliseconds
-    ) {
-      return;
-    }
-    this.press = undefined;
-    this.openSkill(skill);
-  }
-
   private destroyDim(): void {
     this.dim?.destroy();
     this.dim = undefined;
   }
 
-  // Opens the card above the painted, inactive HUD.
+  // Actual entry and exit own card visibility; nested modal cover keeps its parent painted.
   private showCard(open: boolean): void {
     const view = this.view;
     if (view === undefined) {
@@ -670,7 +639,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   }
 
   private foregroundScene(): string | undefined {
-    if (this.scene.isActive(START) || this.scene.isActive("boot")) {
+    if (this.scene.isActive("boot")) {
       return undefined;
     }
     return (
@@ -689,19 +658,20 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     }
     const scene = this.scene.get(key);
     const pausable = scene as unknown as Partial<PausableConversation>;
-    if (pausable.pausable?.() === false || !modalInput(key === ZONE ? this : scene).accepts()) {
+    if (pausable.pausable?.() === false || !modalInput(key === ZONE ? this : scene).accepts() || !menuSourceReady(scene)) {
       return undefined;
     }
     return key;
   }
 
   private blocked(): boolean {
-    return this.state === "closed" && this.pausableScene() === undefined;
+    return (
+      this.state === "closed" && (!this.entryAvailable() || this.pausableScene() === undefined)
+    );
   }
 
   override update(): void {
     this.syncMenuVisibility();
-    this.updateSkillHold();
     this.showControls();
   }
 
@@ -719,9 +689,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     }
   }
 
-  // The modal input a press, key, back or frame turn here answers to: the card's own, or, while
-  // the card is closed over a conversation scene that holds the input, that scene's, so they
-  // open the card over it.
   private cardInput(): SceneInput {
     const content = this.state === "closed" ? this.pausableScene() : undefined;
     return modalInput(content === undefined || content === ZONE ? this : this.scene.get(content));
@@ -733,152 +700,118 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     stop?.();
   }
 
-  // A control acts when a press lands on it and lifts on it without travelling past the tap
-  // distance or leaving it, under the modal input of the card or of the conversation it opens
-  // over, captured when the press lands, so a press never crosses a stack change. One press is
-  // followed at a time, by its own pointer: another finger held on the canvas leaves it alone, and
-  // the browser need not make the tap a click. A click with no pointer behind it (Enter or Space)
-  // acts while that input accepts. A tap on the backdrop closes the card.
+  private cancelPresses(): void {
+    this.actionBindings.forEach((binding) => binding.cancel());
+    this.releasePauseButton();
+  }
+
   private watchPresses(view: PauseView): void {
     const document = view.root.ownerDocument;
+    const input = modalInput(this);
     const entry = globalMenuInput(
       this,
       () => this.entryAvailable() && view.pauseButton.closest("[inert]") === null,
     );
     const gate = {
-      accepts: () => !this.blocked() && this.cardInput().accepts(),
+      accepts: () => !this.blocked() && modalInput(this).accepts(),
       capture: () => {
-        const check = this.cardInput().capture();
+        const check = input.capture();
         return () => !this.blocked() && check();
       },
     };
-    const controlOf = (target: EventTarget | null) => {
+    const controlAt = (event: PointerEvent): HTMLButtonElement | null => {
+      const target =
+        event.target instanceof Node && !event.target.isConnected
+          ? document.elementFromPoint(event.clientX, event.clientY)
+          : event.target;
       const control = target instanceof Element ? target.closest("button") : null;
       return control !== null &&
         !control.disabled &&
         control.closest("[inert]") === null &&
         (view.root.contains(control) || control === view.pauseButton)
         ? control
-        : undefined;
+        : null;
     };
-    // The control under a pointer: its event's target, or what is at its point where a redraw
-    // took the target out of the page.
-    const controlAt = (event: PointerEvent) =>
-      controlOf(
-        event.target instanceof Node && !event.target.isConnected
-          ? document.elementFromPoint(event.clientX, event.clientY)
-          : event.target,
-      );
-    // A press on the view is the view's alone: Phaser handles a press off the canvas unless its
-    // default is prevented, which also keeps the keyboard's focus where it is and holds back the
-    // mouse events a press would send.
-    const keep = (event: Event) => event.preventDefault();
-    const onDown = (event: PointerEvent) => {
-      keep(event);
-      const { pointerId, target } = event;
-      const control = controlOf(target);
-      if (control === undefined || this.press !== undefined) {
-        return;
-      }
-      if (target instanceof Element && target.hasPointerCapture(pointerId)) {
-        target.releasePointerCapture(pointerId);
-      }
-      const input = control === view.pauseButton ? entry : gate;
-      if (!input.accepts()) {
-        return;
-      }
-      this.press = {
-        check: input.capture(),
-        control,
-        pointerId,
-        refused: false,
-        startedAt: this.time.now,
-        x: event.clientX,
-        y: event.clientY,
-      };
-      if (control === view.pauseButton) {
-        this.stopPausePress = playPauseDiscPress(this.timeline, (pose) =>
-          showPauseDisc(this.colours, pose, view.pauseButton, this.entryMode),
-        );
-      }
-    };
-    const onMove = (event: PointerEvent) => {
-      const press = this.press;
-      if (press?.pointerId !== event.pointerId || press.refused) {
-        return;
-      }
-      const travel = Math.hypot(event.clientX - press.x, event.clientY - press.y);
-      if (
-        travel > TOUCH.tapMaxDistance * readUnit(view.root) ||
-        controlAt(event) !== press.control
-      ) {
-        press.refused = true;
-        this.releasePauseButton();
-      }
-    };
-    const onEnd = (event: PointerEvent) => {
-      const press = this.press;
-      if (press?.pointerId !== event.pointerId) {
-        return;
-      }
-      this.press = undefined;
-      this.releasePauseButton();
-      if (
-        event.type === "pointerup" &&
-        !press.refused &&
-        controlAt(event) === press.control &&
-        press.check()
-      ) {
-        this.activate(view, press.control, press.startedAt);
-      }
-    };
-    const onClick = (event: MouseEvent) => {
-      const control = controlOf(event.target);
-      if (
-        control !== undefined &&
-        event.detail === 0 &&
-        (control === view.pauseButton ? entry : gate).accepts(event)
-      ) {
-        this.activate(view, control, undefined);
-      }
-    };
-    view.root.addEventListener("pointerdown", onDown, true);
-    view.pauseButton.addEventListener("pointerdown", onDown, true);
-    view.pauseButton.addEventListener("click", onClick);
-    view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
-    view.root.addEventListener("touchend", keep, { capture: true, passive: false });
-    view.pauseButton.addEventListener("touchstart", keep, { capture: true, passive: false });
-    view.pauseButton.addEventListener("touchend", keep, { capture: true, passive: false });
-    document.addEventListener("pointermove", onMove, true);
-    document.addEventListener("pointerup", onEnd, true);
-    document.addEventListener("pointercancel", onEnd, true);
-    view.root.addEventListener("click", onClick);
-    const stops = [
-      listenOutsideTaps({ gate }, TOUCH.tapMaxDistance, () => this.close(), view.card.backdrop),
-      showPresses(() => gate.accepts(), view.card.root),
-      () => view.root.removeEventListener("pointerdown", onDown, true),
-      () => view.pauseButton.removeEventListener("pointerdown", onDown, true),
-      () => view.pauseButton.removeEventListener("click", onClick),
-      () => view.root.removeEventListener("touchstart", keep, true),
-      () => view.root.removeEventListener("touchend", keep, true),
-      () => view.pauseButton.removeEventListener("touchstart", keep, true),
-      () => view.pauseButton.removeEventListener("touchend", keep, true),
-      () => document.removeEventListener("pointermove", onMove, true),
-      () => document.removeEventListener("pointerup", onEnd, true),
-      () => document.removeEventListener("pointercancel", onEnd, true),
-      () => view.root.removeEventListener("click", onClick),
+    this.actionBindings = [
+      trackMenuActionBinding(
+        this,
+        bindSceneActions(
+          { preventDefault: true, target: view.pauseButton, view: view.pauseButton },
+          input,
+          {
+            activate: () => {
+              void this.open(true);
+            },
+            controlAt: (event) => (controlAt(event) === view.pauseButton ? view.pauseButton : null),
+            controls: [view.pauseButton],
+            element: (button) => button,
+            guard: { gate: entry },
+            show: (button) => {
+              this.releasePauseButton();
+              if (button !== undefined) {
+                this.stopPausePress = playPauseDiscPress(this.timeline, (pose) =>
+                  showPauseDisc(this.colours, pose, view.pauseButton, this.entryMode),
+                );
+              }
+            },
+          },
+        ),
+      ),
+      bindSceneButtons(
+        input,
+        { gate },
+        [
+          ...[...Object.values(view.card.buttons), view.card.close].map((button) => ({
+            activate: () => this.activate(view, button),
+            available: () => this.state === "open" && !button.hidden,
+            element: button,
+          })),
+          {
+            activate: () => this.close(),
+            available: () => this.state === "open",
+            element: view.card.backdrop,
+          },
+        ],
+        view.card.root,
+      ),
+      bindSceneActions<SkillId>({ preventDefault: true, target: view.hud, view: view.hud }, input, {
+        activate: (skill) => this.activate(view, view.skills[skill].button),
+        available: (skill) =>
+          this.sys.isActive() && this.skillHudLive() && !view.skills[skill].button.hidden,
+        controlAt: (event) => {
+          const skill = controlAt(event)?.dataset.skill as SkillId | undefined;
+          return skill !== undefined && SKILL_IDS.includes(skill) ? skill : null;
+        },
+        controls: SKILL_IDS,
+        element: (skill) => view.skills[skill].button,
+        guard: { gate },
+        hold: (skill) => this.openSkill(skill),
+        rule: () => ({
+          holdMs: SKILL_GESTURE.holdMilliseconds,
+          slopPx: TOUCH.tapMaxDistance * readUnit(view.root),
+        }),
+      }),
     ];
-    this.events.once("shutdown", () => stops.forEach((stop) => stop()));
+    const keep = (event: Event) => event.preventDefault();
+    for (const root of [view.root, view.pauseButton]) {
+      root.addEventListener("pointerdown", keep, true);
+      root.addEventListener("touchstart", keep, { capture: true, passive: false });
+      root.addEventListener("touchend", keep, { capture: true, passive: false });
+    }
+    this.events.once("shutdown", () => {
+      this.actionBindings.forEach((binding) => binding());
+      this.actionBindings = [];
+      for (const root of [view.root, view.pauseButton]) {
+        root.removeEventListener("pointerdown", keep, true);
+        root.removeEventListener("touchstart", keep, true);
+        root.removeEventListener("touchend", keep, true);
+      }
+    });
   }
 
   // A control's action: the pause button opens the card, and the card's controls act while it is
-  // open. In uncovered play a skill tap selects it, and a press held
-  // long enough (since pressedAt, for a pointer's press) opens its details instead.
-  private activate(
-    view: PauseView,
-    control: HTMLButtonElement,
-    pressedAt: number | undefined,
-  ): void {
+  // open. During uncovered play a skill tap selects it and its explicit hold opens details.
+  private activate(view: PauseView, control: HTMLButtonElement): void {
     const { buttons, close } = view.card;
     const skill = control.dataset.skill as SkillId | undefined;
     if (control === view.pauseButton) {
@@ -892,11 +825,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     } else if (control === buttons.home && this.state === "open") {
       this.returnHome();
     } else if (skill !== undefined && this.skillHudLive()) {
-      if (pressedAt !== undefined && this.time.now - pressedAt >= SKILL_GESTURE.holdMilliseconds) {
-        this.openSkill(skill);
-      } else {
-        selectActiveSkill(skill);
-      }
+      selectActiveSkill(skill);
     }
   }
 

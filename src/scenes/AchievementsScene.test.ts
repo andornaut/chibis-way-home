@@ -10,12 +10,16 @@ const gate = vi.hoisted(() => ({
   accepts: vi.fn(() => true),
   capture: vi.fn(),
   invalidate: vi.fn(),
+  subscribe: vi.fn(),
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/index.ts", () => ({ coverZone: vi.fn() }));
 vi.mock("./save.ts", () => ({ achievementCard: () => saved.entries }));
-vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalInput.ts", async (original) => ({
+  ...(await original<typeof import("./modalInput.ts")>()),
+  modalInput: () => gate,
+}));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
 vi.mock("./AchievementNoticeScene.ts", () => ({
   achievementIconFrame: (_scene: unknown, earned: boolean, id: string) =>
@@ -33,7 +37,8 @@ vi.mock("./domUi.ts", () => ({
 }));
 
 import { TEXT } from "../data/text.ts";
-import { achievementsPerPage, createUiLayer, type UiLayer } from "../ui/index.ts";
+import { TOUCH } from "../data/touch.ts";
+import { achievementsPerPage, bindGameActions, createUiLayer, type UiLayer } from "../ui/index.ts";
 import { AchievementsScene } from "./AchievementsScene.ts";
 
 const WORDS = TEXT.achievements;
@@ -56,6 +61,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   layer.dispose();
 });
 
@@ -217,13 +223,22 @@ it("closes on a tap outside the card, never on one that lands on it or travels",
   const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
   const tap = (target: HTMLElement, travel: number) => {
     target.dispatchEvent(
-      new PointerEvent("pointerdown", { bubbles: true, clientX: 5, clientY: 5, pointerId: 1 }),
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        clientX: 5,
+        clientY: 5,
+        isPrimary: true,
+        pointerId: 1,
+      }),
     );
     target.dispatchEvent(
       new PointerEvent("pointerup", {
         bubbles: true,
+        button: 0,
         clientX: 5 + travel,
         clientY: 5,
+        isPrimary: true,
         pointerId: 1,
       }),
     );
@@ -238,7 +253,9 @@ it("closes on a tap outside the card, never on one that lands on it or travels",
 it("never shows a disabled pager button pressed", async () => {
   const { button } = await openCard();
   const press = (target: HTMLElement) =>
-    target.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1 }));
+    target.dispatchEvent(
+      new PointerEvent("pointerdown", { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+    );
   press(button(WORDS.pages.previous));
   press(button(WORDS.pages.next));
   expect({
@@ -282,4 +299,51 @@ it("returns to the same opener through the bottom-right primary Back action once
   scene.back();
   expect(achievementsClosed).toHaveBeenCalledOnce();
   expect(stop).toHaveBeenCalledExactlyOnceWith();
+});
+
+it("consumes a closing Back hold before release reaches the newly exposed action", async () => {
+  const { achievementsClosed, button, dialog, events, stop } = await openCard();
+  const root = document.createElement("div");
+  const underlying = document.createElement("button");
+  underlying.textContent = TEXT.start.start;
+  root.append(underlying);
+  const unmount = layer.mount(-1, root);
+  const activate = vi.fn();
+  const action = { activate, available: () => true, element: underlying };
+  const dispose = bindGameActions(
+    { guard: { gate }, resolve: (target) => (target === underlying ? action : null) },
+    root,
+  );
+  stop.mockImplementation(() => events.emit("shutdown"));
+  const pointer = (target: HTMLElement, type: string) =>
+    target.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        isPrimary: true,
+        pointerId: 1,
+      }),
+    );
+  vi.useFakeTimers();
+  try {
+    const back = button(WORDS.back);
+    pointer(back, "pointerdown");
+    vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
+    expect(achievementsClosed).toHaveBeenCalledOnce();
+    expect(stop).toHaveBeenCalledOnce();
+    expect(dialog.isConnected).toBe(false);
+    expect(root.closest("[inert]")).toBeNull();
+    pointer(underlying, "pointerup");
+    underlying.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    expect(activate).not.toHaveBeenCalled();
+    expect(achievementsClosed).toHaveBeenCalledOnce();
+    pointer(underlying, "pointerdown");
+    pointer(underlying, "pointerup");
+    underlying.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    expect(activate).toHaveBeenCalledOnce();
+  } finally {
+    events.emit("shutdown");
+    dispose();
+    unmount();
+  }
 });

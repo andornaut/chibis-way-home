@@ -34,7 +34,7 @@ import {
   type RoomView,
   SKILL_ART,
 } from "../ui/index.ts";
-import { followTaps } from "./domTaps.ts";
+import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
@@ -300,11 +300,6 @@ export class RoomScene extends Scene {
 
   private watchDomInput(view: RoomView): () => void {
     const input = modalInput(this);
-    const onClick = (event: MouseEvent) => {
-      if (event.detail === 0 && this.domReady && input.accepts(event)) {
-        this.act({ down: "leave", kind: "press", up: "leave" });
-      }
-    };
     const onKey = (event: KeyboardEvent) => {
       if (!this.domReady || !input.accepts(event)) {
         return;
@@ -322,24 +317,24 @@ export class RoomScene extends Scene {
       event.stopPropagation();
       this.act({ key: event.key, kind: "key", repeat: event.repeat, shift: event.shiftKey });
     };
-    view.leave.addEventListener("click", onClick);
     view.root.addEventListener("keydown", onKey);
-    const stopTaps = followTaps(
+    const stopTaps = bindSceneActions<"leave">(
       { preventDefault: true, target: view.root, view: view.root },
       input,
       {
         accepts: () => this.domReady && !this.leaving,
+        activate: () => this.act({ down: "leave", kind: "press", up: "leave" }),
         controlAt: (event) => (event.composedPath().includes(view.leave) ? "leave" : null),
+        controls: ["leave"],
+        element: () => view.leave,
         show: (pressed) => {
           this.pressed = pressed;
           this.render();
         },
-        tap: () => this.act({ down: "leave", kind: "press", up: "leave" }),
       },
     );
     return () => {
       stopTaps();
-      view.leave.removeEventListener("click", onClick);
       view.root.removeEventListener("keydown", onKey);
     };
   }

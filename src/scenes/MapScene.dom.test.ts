@@ -73,7 +73,7 @@ function setup() {
 }
 
 function tap(target: Element) {
-  const at = { bubbles: true, clientX: 0, clientY: 0, pointerId: 1 };
+  const at = { bubbles: true, button: 0, clientX: 0, clientY: 0, isPrimary: true, pointerId: 1 };
   target.dispatchEvent(new PointerEvent("pointerdown", at));
   target.dispatchEvent(new PointerEvent("pointerup", at));
 }
@@ -112,10 +112,14 @@ it("rejects a tap crossing modal ownership and leaves travel input locked", asyn
   ready.finish!(true);
   await Promise.resolve();
   const next = root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
-  next.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1 }));
+  next.dispatchEvent(
+    new PointerEvent("pointerdown", { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+  );
   modalInput(scene).open();
   modalInput(scene).close();
-  next.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1 }));
+  next.dispatchEvent(
+    new PointerEvent("pointerup", { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+  );
   expect(route.launch).not.toHaveBeenCalled();
   Object.assign(scene, { travelling: true });
   tap(next);

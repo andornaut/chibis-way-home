@@ -9,6 +9,7 @@ const gate = vi.hoisted(() => ({
   capture: vi.fn(),
   invalidate: vi.fn(),
   open: vi.fn(),
+  subscribe: vi.fn(),
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 const offer = vi.hoisted(() => ({
@@ -20,7 +21,10 @@ const offer = vi.hoisted(() => ({
 const backdrop = vi.hoisted(() => vi.fn(() => ({ ready: Promise.resolve() })));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/installOffer.ts", () => ({ installOffer: () => offer }));
-vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalInput.ts", async (original) => ({
+  ...(await original<typeof import("./modalInput.ts")>()),
+  modalInput: () => gate,
+}));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: backdrop }));
 vi.mock("./scenePalette.ts", async () => {
   const { default: palette } = await import("../../public/art/palette.json");
@@ -263,13 +267,22 @@ it("closes on a tap outside the card, never on one that lands on it or travels",
   const outside = document.querySelector<HTMLElement>(".ui-backdrop")!;
   const tap = (target: HTMLElement, travel: number) => {
     target.dispatchEvent(
-      new PointerEvent("pointerdown", { bubbles: true, clientX: 5, clientY: 5, pointerId: 1 }),
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        clientX: 5,
+        clientY: 5,
+        isPrimary: true,
+        pointerId: 1,
+      }),
     );
     target.dispatchEvent(
       new PointerEvent("pointerup", {
         bubbles: true,
+        button: 0,
         clientX: 5 + travel,
         clientY: 5,
+        isPrimary: true,
         pointerId: 1,
       }),
     );
@@ -281,7 +294,7 @@ it("closes on a tap outside the card, never on one that lands on it or travels",
   expect(owner.settingsClosed).toHaveBeenCalledOnce();
 });
 
-it("shows the install steps in the card's place, which Escape, back and its X close in turn", async () => {
+it("keeps Settings painted beneath the install steps, which Escape, back and its X close in turn", async () => {
   const { control, dialog, focused, key, owner, scene, steps } = await openCard("pause", true);
   control(WORDS.install).focus();
   key("Enter");
@@ -298,7 +311,7 @@ it("shows the install steps in the card's place, which Escape, back and its X cl
     focused: WORDS.close,
     glyph: "blob:icon-ios-share",
     name: title,
-    showing: { settings: false, steps: true },
+    showing: { settings: true, steps: true },
     text,
   });
   key("Escape");

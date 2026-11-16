@@ -1,5 +1,7 @@
 import { EventEmitter } from "node:events";
 
+import { vi } from "vitest";
+
 import palette from "../../public/art/palette.json" with { type: "json" };
 import dash from "../../public/art/sprites/icon-skill-dash.json" with { type: "json" };
 import doubleJump from "../../public/art/sprites/icon-skill-double-jump.json" with { type: "json" };
@@ -74,6 +76,9 @@ export function createPauseScene(game: { readonly events: EventEmitter }, scenes
 
 // Lets every pending promise settle.
 export function settle(): Promise<void> {
+  if (vi.isFakeTimers()) {
+    return vi.advanceTimersByTimeAsync(0).then(() => undefined);
+  }
   return new Promise<void>((resolve) => {
     setTimeout(resolve, 0);
   });
@@ -81,8 +86,16 @@ export function settle(): Promise<void> {
 
 // A pointer's press on target, as the browser sends it: its pointerdown, then, once lifted, its
 // pointerup and, unless other fingers are down, the click that follows.
-export function press(target: Element, pointerId = 1) {
-  const pointer = { bubbles: true, clientX: 5, clientY: 5, pointerId };
+export function press(target: Element, pointerId = 1, options: PointerEventInit = {}) {
+  const pointer = {
+    bubbles: true,
+    button: 0,
+    clientX: 5,
+    clientY: 5,
+    isPrimary: true,
+    pointerId,
+    ...options,
+  };
   target.dispatchEvent(new PointerEvent("pointerdown", pointer));
   return {
     lift(at: Element = target, x = 5, click = true) {

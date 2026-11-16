@@ -6,7 +6,11 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const saved = vi.hoisted(() => ({
   progress: { at: "beginning" as "beginning" | "map", openingSeen: false },
 }));
-const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), capture: vi.fn() }));
+const gate = vi.hoisted(() => ({
+  accepts: vi.fn(() => true),
+  capture: vi.fn(),
+  subscribe: vi.fn(),
+}));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/index.ts", () => ({ coverZone: vi.fn() }));
@@ -15,7 +19,10 @@ vi.mock("./save.ts", () => ({
   resetWholeRunStats: vi.fn(),
   savedProgress: () => saved.progress,
 }));
-vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalInput.ts", async (original) => ({
+  ...(await original<typeof import("./modalInput.ts")>()),
+  modalInput: () => gate,
+}));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
 vi.mock("./domUi.ts", () => ({
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
@@ -162,13 +169,22 @@ it("closes on a tap outside the card, never on one that lands on it or travels",
   const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
   const tap = (target: HTMLElement, travel: number) => {
     target.dispatchEvent(
-      new PointerEvent("pointerdown", { bubbles: true, clientX: 5, clientY: 5, pointerId: 1 }),
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        clientX: 5,
+        clientY: 5,
+        isPrimary: true,
+        pointerId: 1,
+      }),
     );
     target.dispatchEvent(
       new PointerEvent("pointerup", {
         bubbles: true,
+        button: 0,
         clientX: 5 + travel,
         clientY: 5,
+        isPrimary: true,
         pointerId: 1,
       }),
     );

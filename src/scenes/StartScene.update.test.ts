@@ -123,9 +123,15 @@ it("enables Start input only after the native view decodes, then cancels on shut
   expect(repeat.defaultPrevented).toBe(true);
   expect(start).not.toHaveBeenCalled();
   root.style.setProperty("--ui-unit", "1");
-  button.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1 }));
-  button.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerId: 1 }));
-  button.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1 }));
+  button.dispatchEvent(
+    new PointerEvent("pointerdown", { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+  );
+  button.dispatchEvent(
+    new PointerEvent("pointercancel", { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+  );
+  button.dispatchEvent(
+    new PointerEvent("pointerup", { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+  );
   expect(start).not.toHaveBeenCalled();
   root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
   expect(start).toHaveBeenCalledExactlyOnceWith("map");

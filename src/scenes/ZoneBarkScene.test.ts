@@ -86,7 +86,14 @@ function shownText(): string | null | undefined {
 
 function pointer(type: string, at: { readonly x: number; readonly y: number }, pointerId = 1) {
   document.body.dispatchEvent(
-    new PointerEvent(type, { bubbles: true, clientX: at.x, clientY: at.y, pointerId }),
+    new PointerEvent(type, {
+      bubbles: true,
+      button: 0,
+      clientX: at.x,
+      clientY: at.y,
+      isPrimary: true,
+      pointerId,
+    }),
   );
 }
 

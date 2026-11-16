@@ -69,7 +69,7 @@
 
 /* Art's frame under the face's content: ui-button, ui-button-primary for the latest stage, and
    the flat disabled ui-button, which has no lip, for a locked one, which never shows pressed
-   (card.ts showPresses). */
+   (the shared action binding). */
 .stage-select-frame {
   --ui-frame-image: var(--ui-button-image);
   --ui-frame-slice: var(--ui-button-slice);

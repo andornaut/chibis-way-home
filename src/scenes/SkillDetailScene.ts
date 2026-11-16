@@ -1,13 +1,12 @@
 import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { fillNames } from "@andornaut/game-kit/runtime/lines";
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
 import type { SkillId } from "../data/types/index.ts";
 import { PHONE_EVENTS } from "../pwa/index.ts";
-import { createSkillDetailsCard, showPresses, SKILL_ART } from "../ui/index.ts";
+import { createSkillDetailsCard, SKILL_ART } from "../ui/index.ts";
+import { bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
@@ -70,7 +69,6 @@ export class SkillDetailScene extends Scene {
       },
     );
     card.root.hidden = true;
-    card.close.addEventListener("click", () => this.requestClose());
     // A fresh Enter or Space with the focus on the card itself closes it, and P stops here,
     // before the modal layer and Phaser see it; the layer handles every other key.
     const onKeyDown = (event: KeyboardEvent) => {
@@ -103,9 +101,15 @@ export class SkillDetailScene extends Scene {
     };
     window.addEventListener(PHONE_EVENTS.backPressed, back, true);
     const stops = [
-      guardClicks(guard, card.root),
-      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => this.requestClose(), card.backdrop),
-      showPresses(() => input.accepts(), card.root),
+      bindSceneButtons(
+        input,
+        guard,
+        [
+          { activate: () => this.requestClose(), element: card.close },
+          { activate: () => this.requestClose(), element: card.backdrop },
+        ],
+        card.root,
+      ),
       () => card.dialog.removeEventListener("keydown", onKeyDown),
       () => window.removeEventListener(PHONE_EVENTS.backPressed, back, true),
     ];

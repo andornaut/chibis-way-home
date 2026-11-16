@@ -22,8 +22,8 @@ import {
   statsStatement,
   statsTotalRows,
 } from "../ui/index.ts";
-import { followTaps } from "./domTaps.ts";
-import { artFrameUrl, conversationControls, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { bindSceneActions } from "./domTaps.ts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { modalInput } from "./modalInput.ts";
 
 export interface CutsceneData {
@@ -73,10 +73,9 @@ export function stageSummaryWords(data: CutsceneData): StageSummaryWords {
 
 // A required inter-stage screen. Only a fresh Continue activation starts the next stage. The
 // summary is HTML in the UI layer (src/ui/dom/stageSummary.ts), in its modal layer with the pause
-// button kept live: a fresh tap on Continue or on the statement line continues (followTaps); Tab
+// entry covered: a fresh tap on Continue or on the statement line continues (bindSceneActions); Tab
 // and the arrows put the keyboard's focus on Continue, and a fresh Enter or Space continues
-// wherever the focus is. P and Escape pass on to PauseScene, which opens its card over a
-// departure; no other key, back or outside tap leaves it.
+// wherever the focus is. No other key, back or outside tap leaves it.
 export class CutsceneScene extends Scene {
   private stage!: string;
   private summary!: CutsceneData;
@@ -114,43 +113,35 @@ export class CutsceneScene extends Scene {
       })
       .catch((error: unknown) => console.warn("The stage preview failed to load", error));
     mountSceneView(this, view.root);
-    this.closeModal = sceneDomUi(this)?.modals.open(
-      { live: conversationControls(this) },
-      view.dialog,
-    );
+    this.closeModal = sceneDomUi(this)?.modals.open({}, view.dialog);
   }
   // Continue and the statement line continue on a fresh tap, Continue showing pressed meanwhile. A
   // click on Continue with no pointer behind it (an assistive technology's) continues.
   private watchPresses(view: StageSummaryView): () => void {
-    const onClick = (event: MouseEvent) => {
-      if (event.detail === 0 && modalInput(this).accepts()) {
-        this.continue();
-      }
-    };
-    view.continue.addEventListener("click", onClick);
-    const stopTaps = followTaps(
+    const stopTaps = bindSceneActions<"continue">(
       { preventDefault: true, target: view.root, view: view.root },
       modalInput(this),
       {
         accepts: () => !this.finished,
+        activate: () => this.continue(),
         controlAt: ({ target }) =>
           target instanceof Element && target.closest("[data-continue]") !== null
             ? "continue"
             : null,
+        controls: ["continue"],
+        element: () => view.continue,
         land: () => focusTarget(view.continue),
         show: (control) => view.continue.toggleAttribute("data-pressed", control !== undefined),
-        tap: () => this.continue(),
       },
     );
     return () => {
       stopTaps();
-      view.continue.removeEventListener("click", onClick);
     };
   }
   // The summary's keys, seen on its view before the modal layer and Phaser.
   private watchKeys(view: StageSummaryView): () => void {
     const onKeyDown = (event: KeyboardEvent) => {
-      // P and Escape pass on to PauseScene, which opens its card over a departure as in play.
+      // P and Escape never continue the required summary.
       if (pauseKey(event.key) || !modalInput(this).accepts(event)) {
         return;
       }

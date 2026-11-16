@@ -40,7 +40,7 @@ import {
   type PathLook,
   pathRects,
 } from "../ui/index.ts";
-import { followTaps } from "./domTaps.ts";
+import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
@@ -93,6 +93,10 @@ export class MapScene extends Scene implements StageSelectOpener {
 
   constructor() {
     super("map");
+  }
+
+  pausable(): boolean {
+    return false;
   }
 
   // Where he is comes from the saved progress: the map's start with nothing completed from the
@@ -377,12 +381,15 @@ export class MapScene extends Scene implements StageSelectOpener {
         this.act(control.kind);
       }
     };
-    const stop = followTaps(
+    const stop = bindSceneActions(
       { preventDefault: true, target: view.root, view: view.root },
       modalInput(this),
       {
         accepts: live,
+        activate,
         controlAt: (event) => controlAt(event.target),
+        controls: [...controls.keys()],
+        element: (button) => button,
         land: (button) => {
           if (button.getAttribute("aria-disabled") === "true") {
             return;
@@ -398,19 +405,12 @@ export class MapScene extends Scene implements StageSelectOpener {
               button === target && target.getAttribute("aria-disabled") !== "true",
             ),
           ),
-        tap: activate,
       },
     );
     view.root.addEventListener("keydown", (event) => {
       event.preventDefault();
       event.stopPropagation();
       this.key(event);
-    });
-    view.root.addEventListener("click", (event) => {
-      const button = controlAt(event.target);
-      if (event.detail === 0 && button !== null) {
-        activate(button);
-      }
     });
     const keep = (event: Event) => event.preventDefault();
     view.root.addEventListener("touchstart", keep, { capture: true, passive: false });

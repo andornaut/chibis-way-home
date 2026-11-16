@@ -12,7 +12,7 @@ import {
   showPanelParagraph,
   type StatusPanelView,
 } from "../ui/index.ts";
-import { followTaps } from "./domTaps.ts";
+import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView } from "./domUi.ts";
 import { modalInput } from "./modalInput.ts";
 
@@ -27,7 +27,7 @@ interface Bark {
 // A bark without an owner is an offscreen voice: no world actor gates or dismisses it.
 // The panel is HTML in the UI layer (src/ui/dom/dialogue.ts), a polite status region under every
 // modal's view, which dims it. It takes no presses itself, so a tap on it still reaches the
-// canvas and the zone's touches under it; the scene reads the tap from the page (followTaps).
+// canvas and the zone's touches under it; the scene reads the tap from the page (bindSceneActions).
 // While a door opens and its room shows over the world, the showing bark hides and holds its
 // time, as the room once covered it, and shows again for the rest of it once he leaves.
 export class ZoneBarkScene extends Scene {
@@ -127,20 +127,23 @@ export class ZoneBarkScene extends Scene {
     let pressed: Bark | undefined;
     const presentable = () =>
       this.current !== undefined && this.presentable(this.current) && this.canPresent();
-    return followTaps(
+    return bindSceneActions<"panel">(
       { preventDefault: false, target: document, view: view.root },
       modalInput(this),
       {
         accepts: presentable,
-        controlAt: ({ clientX, clientY }) =>
-          onPanel(view.panel, clientX, clientY) ? "panel" : null,
-        land: () => {
-          pressed = this.current;
-        },
-        tap: () => {
+        activate: () => {
           if (this.current === pressed) {
             this.clearCurrent();
           }
+        },
+        controlAt: ({ clientX, clientY }) =>
+          onPanel(view.panel, clientX, clientY) ? "panel" : null,
+        controls: ["panel"],
+        element: () => view.panel.element,
+        identity: () => this.current,
+        land: () => {
+          pressed = this.current;
         },
       },
     );

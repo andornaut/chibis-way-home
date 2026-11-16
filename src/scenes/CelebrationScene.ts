@@ -10,7 +10,7 @@ import {
   focusKeyAction,
   stepFocus,
 } from "../ui/index.ts";
-import { followTaps } from "./domTaps.ts";
+import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView } from "./domUi.ts";
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
@@ -133,30 +133,24 @@ export class CelebrationScene extends Scene implements RestartOpener {
   private watchPresses(view: CelebrationView): void {
     const controlAt = (target: EventTarget | null): Control | null =>
       CONTROLS.find((key) => target instanceof Node && view.buttons[key].contains(target)) ?? null;
-    const stop = followTaps<Control>(
+    const stop = bindSceneActions<Control>(
       { preventDefault: true, target: view.root, view: view.root },
       modalInput(this),
       {
         accepts: () => !this.finished && !this.restartOpen,
+        activate: (key) => this.act(key),
         controlAt: ({ target }) => controlAt(target),
+        controls: CONTROLS,
+        element: (key) => view.buttons[key],
         land: (key) => focusTarget(view.buttons[key]),
         show: (key) =>
           CONTROLS.forEach((control) =>
             view.buttons[control].toggleAttribute("data-pressed", control === key),
           ),
-        tap: (key) => this.act(key),
       },
     );
-    const click = (event: MouseEvent) => {
-      const key = controlAt(event.target);
-      if (event.detail === 0 && key !== null) {
-        this.act(key);
-      }
-    };
-    view.root.addEventListener("click", click);
     this.events.once("shutdown", () => {
       stop();
-      view.root.removeEventListener("click", click);
     });
   }
 

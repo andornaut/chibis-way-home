@@ -206,7 +206,15 @@ it("rejects HTML inherited releases, outside taps, drags and covered gestures", 
   const { root, scene } = await htmlOpening();
   const skip = root.querySelector<HTMLButtonElement>('[data-control="skip"]')!;
   const pointer = (target: Element, type: string, x = 0) =>
-    target.dispatchEvent(new PointerEvent(type, { bubbles: true, clientX: x, pointerId: 1 }));
+    target.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        clientX: x,
+        isPrimary: true,
+        pointerId: 1,
+      }),
+    );
   root.style.setProperty("--ui-unit", "1");
   pointer(skip, "pointerup");
   pointer(root, "pointerdown");
@@ -248,10 +256,14 @@ it("keeps failed-reveal input disabled and rejects a tap started before readines
   scene.events.emit("shutdown");
   const next = opening();
   const button = document.querySelector<HTMLButtonElement>('[data-control="skip"]')!;
-  button.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 1 }));
+  button.dispatchEvent(
+    new PointerEvent("pointerdown", { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+  );
   dom.ready!(true);
   await Promise.resolve();
-  button.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1 }));
+  button.dispatchEvent(
+    new PointerEvent("pointerup", { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+  );
   expect(saveOpeningSeen).not.toHaveBeenCalled();
   next.events.emit("shutdown");
 });

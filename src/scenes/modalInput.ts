@@ -12,6 +12,26 @@ const inputs = new WeakMap<object, SceneInput>();
 const readiness = new WeakMap<object, () => boolean>();
 const menuRevisions = new WeakMap<object, number>();
 const actionBindings = new WeakMap<SceneInput, Set<HoldActionsBinding>>();
+const menuReadyCancels = new WeakMap<object, Set<() => void>>();
+
+export function trackMenuActionBinding(
+  scene: Scene,
+  binding: HoldActionsBinding,
+): HoldActionsBinding {
+  let callbacks = menuReadyCancels.get(scene.game);
+  if (callbacks === undefined) {
+    callbacks = new Set();
+    menuReadyCancels.set(scene.game, callbacks);
+  }
+  callbacks.add(binding.cancel);
+  const registered = callbacks;
+  const dispose = () => {
+    registered.delete(binding.cancel);
+    binding();
+  };
+  dispose.cancel = binding.cancel;
+  return dispose;
+}
 
 export function trackActionBinding(
   input: SceneInput,
@@ -102,6 +122,7 @@ export function modalInput(scene: Scene): SceneInput {
       ready = value;
       if (changed) {
         actionBindings.get(input)?.forEach((binding) => binding.cancel());
+        menuReadyCancels.get(scene.game)?.forEach((cancel) => cancel());
       }
     },
     subscribe(clear) {
@@ -177,7 +198,7 @@ function pointerPresses(scene: Scene): Map<number, () => boolean> {
   return found;
 }
 
-// Only the persistent menu entry can open above the current modal owner.
+// The persistent menu entry shares the modal and source-readiness invalidation boundary.
 export function globalMenuInput(
   scene: Scene,
   enabled: () => boolean,
@@ -203,7 +224,9 @@ export function globalMenuInput(
       const captured = revision;
       const sourceRevision = menuRevisions.get(scene.game);
       return () =>
-        enabled() && captured === revision && sourceRevision === menuRevisions.get(scene.game);
+        enabled() &&
+        captured === revision &&
+        sourceRevision === menuRevisions.get(scene.game);
     },
   };
 }

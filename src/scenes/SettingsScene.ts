@@ -2,12 +2,10 @@ import {
   type InstallStepsKind,
   offersInstall,
 } from "@andornaut/game-kit/runtime/web/pwa/installState";
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
 import { installOffer } from "../pwa/installOffer.ts";
 import {
   createSettingsCard,
@@ -16,13 +14,13 @@ import {
   type SettingsCardView,
   type SettingsSpriteRow,
   type SettingsSwitch,
-  showPresses,
   showSteps,
   showSwitches,
   TOUCH_SETTINGS,
   type TouchSetting,
   touchSettingShown,
 } from "../ui/index.ts";
+import { bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
@@ -121,12 +119,6 @@ export class SettingsScene extends Scene {
     );
     this.card = card;
     card.root.hidden = true;
-    for (const setting of SWITCH_SETTINGS) {
-      card.switches[setting].addEventListener("click", () => this.act(setting));
-    }
-    card.install?.addEventListener("click", () => this.act("install"));
-    card.close.addEventListener("click", () => this.act("close"));
-    card.steps.close.addEventListener("click", () => this.act("close"));
     this.render();
     const icons = Promise.all(
       (Object.entries(card.icons) as [SettingsSpriteRow, HTMLImageElement][]).map(
@@ -148,9 +140,34 @@ export class SettingsScene extends Scene {
     }
     const guard = { gate: input };
     const stops = [
-      guardClicks(guard, card.root),
-      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => this.back(), card.backdrop),
-      showPresses(() => input.accepts(), card.root),
+      bindSceneButtons(
+        input,
+        guard,
+        [
+          ...SWITCH_SETTINGS.map((setting) => ({
+            activate: () => this.act(setting),
+            available: () => !this.steps,
+            element: card.switches[setting],
+          })),
+          ...(card.install === undefined
+            ? []
+            : [
+                {
+                  activate: () => this.act("install"),
+                  available: () => !this.steps,
+                  element: card.install,
+                },
+              ]),
+          { activate: () => this.act("close"), available: () => !this.steps, element: card.close },
+          {
+            activate: () => this.act("close"),
+            available: () => this.steps,
+            element: card.steps.close,
+          },
+          { activate: () => this.back(), element: card.backdrop },
+        ],
+        card.root,
+      ),
       // The Install row comes and goes as the game becomes installable or installed.
       installOffer().onChange(() =>
         this.scene.restart({ opener: this.opener } satisfies SettingsData),

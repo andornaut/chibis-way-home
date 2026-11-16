@@ -1,9 +1,8 @@
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
-import { type CardView, createCard, showPresses } from "../ui/index.ts";
+import { type CardView, createCard } from "../ui/index.ts";
+import { bindSceneButtons } from "./domTaps.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
@@ -57,17 +56,25 @@ export class RestartScene extends Scene {
       title: words.title,
     });
     card.root.hidden = true;
-    for (const target of TARGETS) {
-      card.buttons[target].addEventListener("click", () => this.act(target));
-    }
-    card.close?.addEventListener("click", () => this.back());
     const input = modalInput(this);
     const backdrop = showModalBackdrop(this);
     const guard = { gate: input };
     const stops = [
-      guardClicks(guard, card.root),
-      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => this.back(), card.backdrop),
-      showPresses(() => input.accepts(), card.root),
+      bindSceneButtons(
+        input,
+        guard,
+        [
+          ...TARGETS.map((target) => ({
+            activate: () => this.act(target),
+            element: card.buttons[target],
+          })),
+          ...(card.close === undefined
+            ? []
+            : [{ activate: () => this.back(), element: card.close }]),
+          { activate: () => this.back(), element: card.backdrop },
+        ],
+        card.root,
+      ),
     ];
     let shown = true;
     this.events.once("shutdown", () => {

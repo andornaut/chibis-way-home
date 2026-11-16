@@ -15,7 +15,7 @@ import {
   type StartView,
   stepFocus,
 } from "../ui/index.ts";
-import { followTaps } from "./domTaps.ts";
+import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
@@ -49,6 +49,10 @@ export class StartScene extends Scene implements RestartOpener {
 
   constructor() {
     super("start");
+  }
+
+  pausable(): boolean {
+    return false;
   }
 
   create(): void {
@@ -120,27 +124,25 @@ export class StartScene extends Scene implements RestartOpener {
             Control | undefined) ?? null)
         : null;
     };
-    const stop = followTaps<Control>(
+    const stop = bindSceneActions<Control>(
       { preventDefault: true, target: view.root, view: view.root },
       input,
       {
         accepts: live,
+        activate: (control) => {
+          this.focus = control;
+          this.act(control);
+        },
         controlAt,
+        controls: [...view.buttons.keys()],
+        element: (control) => view.buttons.get(control)!,
         land: (control) => {
           this.focus = control;
           focusTarget(view.buttons.get(control)!);
         },
         show: (control) => this.showPressed(control),
-        tap: (control) => this.act(control),
       },
     );
-    const click = (event: MouseEvent) => {
-      const control = controlAt(event);
-      if (event.detail === 0 && control !== null && live() && input.accepts(event)) {
-        this.focus = control;
-        this.act(control);
-      }
-    };
     const key = (event: KeyboardEvent) => {
       if (
         !live() ||
@@ -161,7 +163,6 @@ export class StartScene extends Scene implements RestartOpener {
       }
     };
     const keep = (event: Event) => event.preventDefault();
-    view.root.addEventListener("click", click);
     view.root.addEventListener("keydown", key);
     view.root.addEventListener("focusin", focus);
     view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
@@ -192,7 +193,6 @@ export class StartScene extends Scene implements RestartOpener {
       active = false;
       reveal.cancel();
       stop();
-      view.root.removeEventListener("click", click);
       view.root.removeEventListener("keydown", key);
       view.root.removeEventListener("focusin", focus);
       view.root.removeEventListener("touchstart", keep, true);

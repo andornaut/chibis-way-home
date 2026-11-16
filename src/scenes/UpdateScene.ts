@@ -1,10 +1,9 @@
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { type Game, Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
 import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa/index.ts";
-import { type CardView, createCard, showPresses } from "../ui/index.ts";
+import { type CardView, createCard } from "../ui/index.ts";
+import { bindSceneButtons } from "./domTaps.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
@@ -74,10 +73,6 @@ export class UpdateScene extends Scene {
       title: words.title,
     });
     card.root.hidden = true;
-    for (const action of BUTTONS) {
-      card.buttons[action].addEventListener("click", () => this.act(action));
-    }
-    card.close?.addEventListener("click", () => this.act("close"));
     // P closes other cards in the modal layer, not this one: it stops here, before the layer and
     // Phaser see it.
     const keepP = (event: KeyboardEvent) => {
@@ -97,9 +92,21 @@ export class UpdateScene extends Scene {
     };
     window.addEventListener(PHONE_EVENTS.backPressed, back, true);
     const stops = [
-      guardClicks(guard, card.root),
-      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => updateOffer.defer(), card.backdrop),
-      showPresses(() => input.accepts(), card.root),
+      bindSceneButtons(
+        input,
+        guard,
+        [
+          ...BUTTONS.map((action) => ({
+            activate: () => this.act(action),
+            element: card.buttons[action],
+          })),
+          ...(card.close === undefined
+            ? []
+            : [{ activate: () => this.act("close"), element: card.close }]),
+          { activate: () => updateOffer.defer(), element: card.backdrop },
+        ],
+        card.root,
+      ),
       () => window.removeEventListener(PHONE_EVENTS.backPressed, back, true),
     ];
     let shown = true;

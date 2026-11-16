@@ -1,12 +1,10 @@
 import { invokeControl } from "@andornaut/game-kit/runtime/ui/controlPresentation";
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
 import { ZONE_MAP } from "../data/map.ts";
 import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
 import { RECIPES } from "../data/zones.ts";
 import { destinationOf, destinationSelection, openMap } from "../progress/index.ts";
 import {
@@ -14,13 +12,13 @@ import {
   focusKeyAction,
   reducedMotion,
   refuseControl,
-  showPresses,
   type StageFace,
   stagePageOf,
   stagePickerKey,
   STAGES_PER_PAGE,
   type StageSelectView,
 } from "../ui/index.ts";
+import { bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
@@ -114,12 +112,6 @@ export class StageSelectScene extends Scene {
         image.src = await artFrameUrl(this, STAGE_PREVIEWS[id]!);
       }),
     ).catch((error: unknown) => console.warn("The stage screenshots failed to load", error));
-    for (const [id, button] of view.stages) {
-      button.addEventListener("click", () => this.activate({ id, kind: "stage" }));
-    }
-    view.close.addEventListener("click", () => this.activate({ kind: "close" }));
-    view.pager?.previous.addEventListener("click", () => this.activate({ kind: "page", step: -1 }));
-    view.pager?.next.addEventListener("click", () => this.activate({ kind: "page", step: 1 }));
     view.root.addEventListener("keydown", (event) => this.key(event));
     // A focused button presses on Space's keyup; the keydown already did.
     view.root.addEventListener("keyup", (event) => {
@@ -131,9 +123,31 @@ export class StageSelectScene extends Scene {
     const backdrop = showModalBackdrop(this);
     const guard = { gate: input };
     const stops = [
-      guardClicks(guard, view.root),
-      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => this.back(), view.backdrop),
-      showPresses(() => input.accepts(), view.root),
+      bindSceneButtons(
+        input,
+        guard,
+        [
+          ...[...view.stages].map(([id, button]) => ({
+            activate: () => this.activate({ id, kind: "stage" }),
+            element: button,
+          })),
+          { activate: () => this.activate({ kind: "close" }), element: view.close },
+          ...(view.pager === undefined
+            ? []
+            : [
+                {
+                  activate: () => this.activate({ kind: "page", step: -1 }),
+                  element: view.pager.previous,
+                },
+                {
+                  activate: () => this.activate({ kind: "page", step: 1 }),
+                  element: view.pager.next,
+                },
+              ]),
+          { activate: () => this.back(), element: view.backdrop },
+        ],
+        view.root,
+      ),
     ];
     input.subscribe(() => {
       this.stopRefusals();

@@ -15,7 +15,8 @@ vi.mock("phaser", () => ({
   Scenes: { Events: { PRE_RENDER: "prerender" } },
 }));
 vi.mock("./save.ts", () => ({ grantSkill: vi.fn() }));
-vi.mock("./modalInput.ts", () => ({
+vi.mock("./modalInput.ts", async (original) => ({
+  ...(await original<typeof import("./modalInput.ts")>()),
   modalInput: () => ({
     accepts: () => true,
     capture: () => () => true,

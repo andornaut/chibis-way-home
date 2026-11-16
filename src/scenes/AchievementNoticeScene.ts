@@ -19,7 +19,7 @@ import {
   SKILL_TIP,
   skillTipBlocked,
 } from "./achievementNotice.ts";
-import { followTaps } from "./domTaps.ts";
+import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView } from "./domUi.ts";
 import { modalInput } from "./modalInput.ts";
 import { activeSkill, nextAchievementNotice, nextSkillTip } from "./save.ts";
@@ -79,7 +79,7 @@ type Notice =
 // starts, once its icon's cut is ready (or has failed), so it never shows an empty portrait frame.
 // The panel is HTML in the UI layer (src/ui/dom/dialogue.ts), a polite status region whose panel
 // names the notice's kind in data-notice; it takes no presses itself, so the scene reads the tap
-// from the page (followTaps) and the screen under it still takes the press.
+// from the page (bindSceneActions) and the screen under it still takes the press.
 export class AchievementNoticeScene extends Scene {
   private view: StatusPanelView | undefined;
   private notice: Notice | undefined;
@@ -202,20 +202,23 @@ export class AchievementNoticeScene extends Scene {
   // the notice that replaced it meanwhile.
   private watchInput(view: StatusPanelView): () => void {
     let pressed: Notice | undefined;
-    return followTaps(
+    return bindSceneActions<"panel">(
       { preventDefault: false, target: document, view: view.root },
       modalInput(this),
       {
         accepts: () => this.showing() && !this.blocked(),
-        controlAt: ({ clientX, clientY }) =>
-          onPanel(view.panel, clientX, clientY) ? "panel" : null,
-        land: () => {
-          pressed = this.notice;
-        },
-        tap: () => {
+        activate: () => {
           if (this.notice === pressed) {
             this.clear();
           }
+        },
+        controlAt: ({ clientX, clientY }) =>
+          onPanel(view.panel, clientX, clientY) ? "panel" : null,
+        controls: ["panel"],
+        element: () => view.panel.element,
+        identity: () => this.notice,
+        land: () => {
+          pressed = this.notice;
         },
       },
     );

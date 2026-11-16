@@ -1,127 +1,142 @@
-import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
+import type { HoldRule } from "@andornaut/game-kit/runtime/input/hold";
+import type { HoldActionsBinding } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
+import type { PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 
-import { TOUCH } from "../data/touch.ts";
-import type { SceneInput } from "./modalInput.ts";
+import { assertGameActions, bindGameActions, type GameAction } from "../ui/index.ts";
+import { type SceneInput, trackActionBinding } from "./modalInput.ts";
 
-// Fresh taps on an HTML UI view's controls: a press that lands on a control, never travels past
-// the tap distance and lifts on the same control, under the modal input captured when it landed,
-// so a tap never crosses a stack change. One press is followed at a time, by its own pointer:
-// another finger down meanwhile leaves it alone. A drag, a cancel or a lift off the control taps
-// nothing. Lifts and moves are read on the whole page, so a press released elsewhere never holds.
-
-export interface TapRoute<Control> {
-  // The control a pointer's event is on, or null where it is on none of the view's.
+export interface ActionRoute<Control> {
+  readonly controls: readonly Control[];
+  element(control: Control): HTMLElement;
   controlAt(event: PointerEvent): Control | null;
-  // Whether a press may land now, before the modal input's own check.
   readonly accepts?: () => boolean;
-  // Called as a press lands on control and is followed.
+  readonly available?: (control: Control) => boolean;
+  readonly guard?: PressGuard;
+  readonly identity?: (control: Control) => unknown;
   readonly land?: (control: Control) => void;
-  // Shows the control the followed press holds, or none (undefined) once it lifts or travels.
   readonly show?: (control: Control | undefined) => void;
-  tap(control: Control): void;
+  readonly rule?: (control: Control) => HoldRule | undefined;
+  readonly hold?: (control: Control) => void;
+  activate(control: Control): void;
 }
 
-// Where a view's presses land: target, its element or the page for a view that takes no presses
-// itself, and view, an element in the view, whose --ui-unit sets the tap distance. preventDefault
-// on a press landing on a control keeps the keyboard's focus where it is and holds back the
-// mouse events it would send.
-export interface TapTarget {
+export interface ActionTarget {
   readonly preventDefault: boolean;
-  readonly target: EventTarget;
-  readonly view: Element;
+  readonly target: HTMLElement | Document;
+  readonly view: HTMLElement;
 }
 
-// Follows taps for route, landing on at, under input. Returns a function that removes the
-// listeners.
-export function followTaps<Control>(
-  at: TapTarget,
+// The scene maps controls and feedback; the shared binding owns both tap and hold activation.
+export function bindSceneActions<Control>(
+  at: ActionTarget,
   input: SceneInput,
-  route: TapRoute<Control>,
-): () => void {
-  const document = at.view.ownerDocument;
-  let press:
-    | {
-        readonly check: () => boolean;
-        readonly control: Control;
-        readonly pointerId: number;
-        readonly unit: number;
-        readonly x: number;
-        readonly y: number;
-        travelled: boolean;
-      }
-    | undefined;
-  const release = () => {
-    if (press !== undefined) {
-      press = undefined;
-      route.show?.(undefined);
-    }
+  route: ActionRoute<Control>,
+): HoldActionsBinding {
+  const controls = new Map(route.controls.map((control) => [route.element(control), control]));
+  const action = (control: Control): GameAction => {
+    const rule = route.rule?.(control);
+    return {
+      activate: () => route.activate(control),
+      available: () => route.accepts?.() !== false && route.available?.(control) !== false,
+      element: route.element(control),
+      ...(route.hold === undefined ? {} : { hold: () => route.hold!(control) }),
+      identity: route.identity === undefined ? control : route.identity(control),
+      ...(rule === undefined ? {} : { rule }),
+    };
   };
-  const travelled = (event: PointerEvent) =>
-    press !== undefined &&
-    Math.hypot(event.clientX - press.x, event.clientY - press.y) >
-      TOUCH.tapMaxDistance * press.unit;
-  const onDown = (event: PointerEvent) => {
-    const control = route.controlAt(event);
-    if (control === null) {
+  const resolve = (target: EventTarget | null): GameAction | null => {
+    let element = target instanceof Element ? target : null;
+    while (element !== null && at.view.contains(element)) {
+      if (controls.has(element as HTMLElement)) {
+        return action(controls.get(element as HTMLElement)!);
+      }
+      element = element.parentElement;
+    }
+    return null;
+  };
+  // These existing root policies keep UI focus and implicit capture separate from canvas input.
+  const down = (event: PointerEvent) => {
+    if (route.controlAt(event) === null) {
       return;
     }
     if (at.preventDefault) {
       event.preventDefault();
     }
-    // A touch is captured by what it lands on; released, its lift is on what it lifts over.
-    const { pointerId, target } = event;
-    if (target instanceof Element && target.hasPointerCapture(pointerId)) {
-      target.releasePointerCapture(pointerId);
-    }
-    if (press !== undefined || route.accepts?.() === false || !input.accepts()) {
-      return;
-    }
-    press = {
-      check: input.capture(),
-      control,
-      pointerId,
-      travelled: false,
-      unit: readUnit(at.view),
-      x: event.clientX,
-      y: event.clientY,
-    };
-    route.land?.(control);
-    route.show?.(control);
-  };
-  const onMove = (event: PointerEvent) => {
-    if (press?.pointerId !== event.pointerId || press.travelled || !travelled(event)) {
-      return;
-    }
-    press.travelled = true;
-    route.show?.(undefined);
-  };
-  const onEnd = (event: PointerEvent) => {
-    const held = press;
-    if (held?.pointerId !== event.pointerId) {
-      return;
-    }
-    const tapped =
-      event.type === "pointerup" &&
-      !held.travelled &&
-      !travelled(event) &&
-      route.controlAt(event) === held.control &&
-      route.accepts?.() !== false &&
-      held.check();
-    release();
-    if (tapped) {
-      route.tap(held.control);
+    if (event.target instanceof Element && event.target.hasPointerCapture(event.pointerId)) {
+      event.target.releasePointerCapture(event.pointerId);
     }
   };
-  input.subscribe(release);
-  at.target.addEventListener("pointerdown", onDown as EventListener, true);
-  document.addEventListener("pointermove", onMove, true);
-  document.addEventListener("pointerup", onEnd, true);
-  document.addEventListener("pointercancel", onEnd, true);
-  return () => {
-    release();
-    at.target.removeEventListener("pointerdown", onDown as EventListener, true);
-    document.removeEventListener("pointermove", onMove, true);
-    document.removeEventListener("pointerup", onEnd, true);
-    document.removeEventListener("pointercancel", onEnd, true);
+  at.target.addEventListener("pointerdown", down as EventListener, true);
+  const binding = trackActionBinding(
+    input,
+    bindGameActions(
+      {
+        guard: route.guard ?? { gate: input },
+        onPressChange: (pressed) => {
+          const control = pressed === null ? undefined : controls.get(pressed.element);
+          if (control !== undefined) {
+            route.land?.(control);
+          }
+          route.show?.(control);
+        },
+        pointerTarget: at.target,
+        resolve,
+        resolvePointer: (event) => {
+          const control = route.controlAt(event);
+          return control === null ? null : action(control);
+        },
+      },
+      at.view,
+    ),
+  );
+  const dispose = () => {
+    at.target.removeEventListener("pointerdown", down as EventListener, true);
+    binding();
   };
+  dispose.cancel = binding.cancel;
+  try {
+    assertGameActions(at.view);
+  } catch (error) {
+    dispose();
+    throw error;
+  }
+  return dispose;
+}
+
+export type SceneButtonAction = Omit<GameAction, "available"> & {
+  readonly available?: () => boolean;
+};
+
+export function bindSceneButtons(
+  input: SceneInput,
+  guard: PressGuard,
+  actions: readonly SceneButtonAction[],
+  root: HTMLElement,
+): HoldActionsBinding {
+  const elements = new Map(actions.map((action) => [action.element, action]));
+  return bindSceneActions({ preventDefault: false, target: root, view: root }, input, {
+    activate: (action) => action.activate(),
+    available: (action) => action.available?.() !== false,
+    controlAt: ({ target }) => {
+      let element = target instanceof Element ? target : null;
+      while (element !== null && root.contains(element)) {
+        if (elements.has(element as HTMLElement)) {
+          return elements.get(element as HTMLElement)!;
+        }
+        element = element.parentElement;
+      }
+      return null;
+    },
+    controls: actions,
+    element: (action) => action.element,
+    guard,
+    hold: (action) => (action.hold ?? action.activate)(),
+    identity: (action) => (action.identity === undefined ? action.element : action.identity),
+    rule: (action) => action.rule,
+    show: (pressed) => {
+      for (const action of actions) {
+        action.element.toggleAttribute("data-pressed", action === pressed);
+      }
+    },
+  });
 }

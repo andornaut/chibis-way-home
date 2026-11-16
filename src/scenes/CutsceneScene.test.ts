@@ -7,7 +7,6 @@ const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string) => Promise.resolve(`blob:${art}`),
-  conversationControls: () => [],
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(0, view);
     scene.events.once("shutdown", unmount);
@@ -78,7 +77,7 @@ function summary(scene: CutsceneScene, data: CutsceneData = DATA) {
 }
 
 function press(target: Element, x = 5, type = "pointerup") {
-  const at = { bubbles: true, clientX: 5, clientY: 5, pointerId: 1 };
+  const at = { bubbles: true, button: 0, clientX: 5, clientY: 5, isPrimary: true, pointerId: 1 };
   target.dispatchEvent(new PointerEvent("pointerdown", at));
   if (x !== 5) {
     target.dispatchEvent(new PointerEvent("pointermove", { ...at, clientX: x }));

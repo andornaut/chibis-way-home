@@ -1,18 +1,16 @@
-import { guardClicks, listenOutsideTaps } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { focusTargets } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
-import { TOUCH } from "../data/touch.ts";
 import {
   type AchievementsCardView,
   achievementsPerPage,
   createAchievementsCard,
   showAchievementsPage,
-  showPresses,
 } from "../ui/index.ts";
 import { achievementIconFrame } from "./AchievementNoticeScene.ts";
+import { bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
@@ -83,9 +81,6 @@ export class AchievementsScene extends Scene {
     );
     this.card = card;
     card.root.hidden = true;
-    for (const target of TARGETS) {
-      card.buttons[target].addEventListener("click", () => this.act(target));
-    }
     this.render();
     const icons = Promise.all(
       entries.map(async ({ earned, id }, index) => {
@@ -100,9 +95,18 @@ export class AchievementsScene extends Scene {
     const backdrop = showModalBackdrop(this);
     const guard = { gate: input };
     const stops = [
-      guardClicks(guard, card.root),
-      listenOutsideTaps(guard, TOUCH.tapMaxDistance, () => this.back(), card.backdrop),
-      showPresses(() => input.accepts(), card.root),
+      bindSceneButtons(
+        input,
+        guard,
+        [
+          ...TARGETS.map((target) => ({
+            activate: () => this.act(target),
+            element: card.buttons[target],
+          })),
+          { activate: () => this.back(), element: card.backdrop },
+        ],
+        card.root,
+      ),
     ];
     let shown = true;
     this.events.once("shutdown", () => {

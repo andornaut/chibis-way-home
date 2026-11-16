@@ -1,5 +1,4 @@
 import { fillNames } from "@andornaut/game-kit/runtime/lines";
-import { guardClicks } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
 import { STATS_SCOPE_TEXT, TEXT } from "../data/text.ts";
@@ -11,12 +10,12 @@ import {
   type DeathAction,
   type DeathCardView,
   deathKeyAction,
-  showPresses,
   STAGE_METRICS,
   statsStatement,
   statsTotalRows,
   type StatsTotalsSnapshot,
 } from "../ui/index.ts";
+import { bindSceneButtons } from "./domTaps.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
@@ -81,9 +80,6 @@ export class DeathScene extends Scene {
       ),
     });
     card.root.hidden = true;
-    for (const action of DEATH_ACTIONS) {
-      card.buttons[action].addEventListener("click", () => this.act(action));
-    }
     // A fresh Enter or Space with the focus on the card itself presses Try again; the modal layer
     // handles every other key.
     const onKeyDown = (event: KeyboardEvent) => {
@@ -99,8 +95,15 @@ export class DeathScene extends Scene {
     const input = modalInput(this);
     const backdrop = showModalBackdrop(this);
     const stops = [
-      guardClicks({ gate: input }, card.root),
-      showPresses(() => input.accepts(), card.root),
+      bindSceneButtons(
+        input,
+        { gate: input },
+        DEATH_ACTIONS.map((action) => ({
+          activate: () => this.act(action),
+          element: card.buttons[action],
+        })),
+        card.root,
+      ),
       () => card.dialog.removeEventListener("keydown", onKeyDown),
     ];
     let shown = true;

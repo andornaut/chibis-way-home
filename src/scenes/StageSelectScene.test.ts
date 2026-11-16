@@ -20,7 +20,10 @@ const gate = vi.hoisted(() => ({
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("./save.ts", () => ({ savedMap: () => ({ completed: COMPLETED }) }));
-vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalInput.ts", async (original) => ({
+  ...(await original<typeof import("./modalInput.ts")>()),
+  modalInput: () => gate,
+}));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: () => Promise.resolve("blob:preview"),
@@ -261,7 +264,9 @@ it("closes on a tap outside the card, never on one that lands on it", async () =
   const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
   const tap = (target: HTMLElement) => {
     for (const type of ["pointerdown", "pointerup"]) {
-      target.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 1 }));
+      target.dispatchEvent(
+        new PointerEvent(type, { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+      );
     }
   };
   tap(dialog);

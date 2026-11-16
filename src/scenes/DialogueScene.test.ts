@@ -8,7 +8,6 @@ vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string) => Promise.resolve(`blob:${art}`),
-  conversationControls: () => [],
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     const unmount = (dom.layer as UiLayer).mount(0, view);
     scene.events.once("shutdown", unmount);
@@ -61,7 +60,7 @@ function conversation() {
   const button = (control: string) =>
     root.querySelector<HTMLButtonElement>(`[data-control=${control}]`)!;
   const press = (target: Element, travel = 0, pointerId = 1) => {
-    const at = { bubbles: true, clientX: 5, clientY: 5, pointerId };
+    const at = { bubbles: true, button: 0, clientX: 5, clientY: 5, isPrimary: true, pointerId };
     target.dispatchEvent(new PointerEvent("pointerdown", at));
     target.dispatchEvent(new PointerEvent("pointermove", { ...at, clientX: 5 + travel }));
     target.dispatchEvent(new PointerEvent("pointerup", { ...at, clientX: 5 + travel }));
@@ -96,8 +95,17 @@ it("advances on a fresh tap anywhere but Skip, and never on a drag or a second f
   const { button, line, press, root } = conversation();
   const backdrop = root.querySelector(".ui-backdrop")!;
   press(backdrop, TOUCH.tapMaxDistance + 1);
-  const second = { bubbles: true, clientX: 5, clientY: 5, pointerId: 2 };
-  backdrop.dispatchEvent(new PointerEvent("pointerdown", { ...second, pointerId: 1 }));
+  const second = {
+    bubbles: true,
+    button: 0,
+    clientX: 5,
+    clientY: 5,
+    isPrimary: false,
+    pointerId: 2,
+  };
+  backdrop.dispatchEvent(
+    new PointerEvent("pointerdown", { ...second, isPrimary: true, pointerId: 1 }),
+  );
   backdrop.dispatchEvent(new PointerEvent("pointerdown", second));
   backdrop.dispatchEvent(new PointerEvent("pointerup", second));
   expect(line()).toBe(PARAGRAPHS[0]!.text);
@@ -160,7 +168,7 @@ it("passes P and Escape on, and takes no key or tap the modal gate refuses", () 
   expect(line()).toBe(PARAGRAPHS[0]!.text);
 });
 
-it("hides the panel and footer under a required choice, closing with its answer", async () => {
+it("keeps the panel and footer painted under a required choice, closing with its answer", async () => {
   const { opener, root, route, scene } = conversation();
   // No authored conversation ends in a choice, so this one is given one at its last line.
   const [prompt, first, second] = Object.keys(TEXT.lines);
@@ -177,8 +185,8 @@ it("hides the panel and footer under a required choice, closing with its answer"
   expect(route.pause).toHaveBeenCalledOnce();
   const hidden = (selector: string) => root.querySelector<HTMLElement>(selector)!.hidden;
   expect([hidden(".dialogue-panel"), hidden(".dialogue-footer"), root.hidden]).toEqual([
-    true,
-    true,
+    false,
+    false,
     false,
   ]);
   expect(scene.pausable()).toBe(false);

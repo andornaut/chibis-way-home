@@ -15,7 +15,8 @@ vi.mock("./playCamera.ts", () => ({
 }));
 vi.mock("./keyboardCapture.ts", () => ({ captureTab: vi.fn() }));
 vi.mock("./scenePalette.ts", () => ({ paletteColour: () => 0 }));
-vi.mock("./modalInput.ts", () => ({
+vi.mock("./modalInput.ts", async (original) => ({
+  ...(await original<typeof import("./modalInput.ts")>()),
   modalInput: () => ({
     accepts: () => state.ready,
     capture: () => () => state.ready,

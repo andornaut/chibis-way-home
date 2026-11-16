@@ -19,8 +19,8 @@ import {
   stepFocus,
 } from "../ui/index.ts";
 import type { DialogueChoiceData } from "./DialogueChoiceScene.ts";
-import { followTaps } from "./domTaps.ts";
-import { artFrameUrl, conversationControls, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { bindSceneActions } from "./domTaps.ts";
+import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
 
@@ -51,10 +51,9 @@ type DialogueTarget = DialogueControl | "panel";
 // ZoneScene owns the frozen world and per-attempt trigger. This scene owns one paragraph at a
 // time, consuming input until the conversation and its optional required terminal choice finish.
 // The conversation is HTML in the UI layer (src/ui/dom/dialogue.ts), opened in its modal layer
-// with the pause button kept live: a fresh tap advances, anywhere but on Skip, which skips; Tab
+// with the top card owning input: a fresh tap advances, anywhere but on Skip, which skips; Tab
 // and the arrows move the keyboard's focus through Continue then Skip, wrapping, starting on
-// neither; Enter and Space press the focused one, and every other key but P and Escape, which
-// pass on to PauseScene, advances.
+// neither; Enter and Space press the focused one, and every other key but P and Escape advances.
 export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private paragraphs: readonly DialogueParagraph[] = [];
   private opener = "zone";
@@ -124,10 +123,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     const open = () => {
       if (shown && !this.finished) {
         view.root.hidden = false;
-        this.closeModal = sceneDomUi(this)?.modals.open(
-          { live: conversationControls(this) },
-          view.dialog,
-        );
+        this.closeModal = sceneDomUi(this)?.modals.open({}, view.dialog);
       }
     };
     if (preview === undefined) {
@@ -146,8 +142,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       .finally(open);
   }
 
-  // Whether the pause card may open over this conversation: it still shows a line. Its required
-  // choice answers for itself.
+  // Phase capability, additionally guarded by the current modal input owner.
   pausable(): boolean {
     return !this.finished && !this.choosing;
   }
@@ -229,11 +224,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       this.finish();
     } else if (next.kind === "choice") {
       this.choosing = true;
-      // The choice card carries the prompt alone: the panel and the footer hide under it.
-      if (this.view !== undefined) {
-        this.view.panel.element.hidden = true;
-        this.view.footer.hidden = true;
-      }
+      // The choice owns input above the still-painted conversation.
       this.scene.launch("dialogueChoice", { choice: next.choice } satisfies DialogueChoiceData);
       this.scene.pause();
     } else {
@@ -248,53 +239,44 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     return CONTROLS.find((control) => this.view?.buttons[control] === active);
   }
 
-  // A press advances, or skips on Skip, as a fresh tap (followTaps), and focuses the button it
+  // A press advances, or skips on Skip, as a fresh tap (bindSceneActions), and focuses the button it
   // lands on, or the conversation off them. A click with no pointer behind it (an assistive
   // technology's) presses its button.
   private watchPresses(view: DialogueView): () => void {
     const input = modalInput(this);
     const live = () => !this.finished && !this.choosing;
-    const stopTaps = followTaps<DialogueTarget>(
+    const stopTaps = bindSceneActions<DialogueTarget>(
       { preventDefault: true, target: view.root, view: view.root },
       input,
       {
         accepts: live,
+        activate: (control) => this.act(control === "skip" ? "skip" : "advance"),
         controlAt: ({ target }) =>
           target instanceof Element && view.root.contains(target)
             ? ((target.closest<HTMLElement>("[data-control]")?.dataset.control as
                 DialogueControl | undefined) ?? "panel")
             : null,
+        controls: [...CONTROLS, "panel"],
+        element: (control) => (control === "panel" ? view.dialog : view.buttons[control]),
         land: (control) => focusTarget(control === "panel" ? view.dialog : view.buttons[control]),
         show: (control) =>
           CONTROLS.forEach((name) =>
             view.buttons[name].toggleAttribute("data-pressed", name === control),
           ),
-        tap: (control) => this.act(control === "skip" ? "skip" : "advance"),
       },
     );
-    const onClick = (event: MouseEvent) => {
-      const control = (event.target as Element | null)?.closest<HTMLElement>("[data-control]")
-        ?.dataset.control;
-      if (control !== undefined && event.detail === 0 && live() && input.accepts()) {
-        this.act(control === "skip" ? "skip" : "advance");
-      }
-    };
     // Phaser handles a touch off the canvas unless its default is prevented.
     const keep = (event: Event) => event.preventDefault();
-    view.root.addEventListener("click", onClick);
     view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
     view.root.addEventListener("touchend", keep, { capture: true, passive: false });
     return () => {
       stopTaps();
-      view.root.removeEventListener("click", onClick);
       view.root.removeEventListener("touchstart", keep, true);
       view.root.removeEventListener("touchend", keep, true);
     };
   }
 
-  // The conversation's keys, seen on its view before the modal layer and Phaser: P and Escape
-  // pass on to PauseScene, which opens its card over the conversation as in play; every other key
-  // the modal input accepts stops here.
+  // P and Escape never advance the conversation. Other accepted keys stop before Phaser.
   private watchKeys(view: DialogueView): () => void {
     const onKeyDown = (event: KeyboardEvent) => {
       if (pauseKey(event.key) || !modalInput(this).accepts(event)) {

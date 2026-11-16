@@ -22,7 +22,8 @@ it("uses actual pausable content for Pause and keeps nonpausable or covered cont
   expect(context(undefined)).toEqual({ homeShown: false, mode: "menu", scene: "start" });
   active.clear();
   active.add("map");
-  expect(context("map")).toEqual({ homeShown: true, mode: "menu", scene: "map" });
+  expect(context(undefined)).toEqual({ homeShown: true, mode: "menu", scene: "map" });
+  expect(context("map")).toEqual({ homeShown: true, mode: "pause", scene: "map" });
   active.clear();
   expect(
     menuContext(

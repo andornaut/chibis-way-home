@@ -250,7 +250,6 @@ export function showSteps(
     }
   }
   steps.dialog.hidden = words === undefined;
-  view.dialog.hidden = words !== undefined;
   for (const button of view.root.querySelectorAll<HTMLElement>("[data-pressed]")) {
     delete button.dataset.pressed;
   }

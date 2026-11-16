@@ -183,7 +183,14 @@ describe("the unlock notice", () => {
     running.room = false;
     scene.update(0, ACHIEVEMENT_NOTICE_SECONDS * 1000 - 1);
     expect([panel().hidden, scene.showing()]).toEqual([false, true]);
-    const at = { bubbles: true, clientX: box.x + 1, clientY: box.y + 1, pointerId: 1 };
+    const at = {
+      bubbles: true,
+      button: 0,
+      clientX: box.x + 1,
+      clientY: box.y + 1,
+      isPrimary: true,
+      pointerId: 1,
+    };
     document.body.dispatchEvent(new PointerEvent("pointerdown", at));
     document.body.dispatchEvent(new PointerEvent("pointerup", at));
     expect([panel().hidden, scene.showing()]).toEqual([true, false]);

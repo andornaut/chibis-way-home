@@ -4,13 +4,21 @@ import { EventEmitter } from "node:events";
 import { fillNames } from "@andornaut/game-kit/runtime/lines";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), capture: vi.fn(), close: vi.fn() }));
+const gate = vi.hoisted(() => ({
+  accepts: vi.fn(() => true),
+  capture: vi.fn(),
+  close: vi.fn(),
+  subscribe: vi.fn(),
+}));
 const dom = vi.hoisted(() => ({
   backdrop: Promise.resolve(),
   layer: undefined as undefined | object,
 }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalInput.ts", async (original) => ({
+  ...(await original<typeof import("./modalInput.ts")>()),
+  modalInput: () => gate,
+}));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: dom.backdrop }) }));
 vi.mock("./scenePalette.ts", async () => {
   const { default: palette } = await import("../../public/art/palette.json");
@@ -116,7 +124,14 @@ function key(value: string, options: KeyboardEventInit = {}) {
 }
 
 function tap(target: HTMLElement) {
-  const pointer = { bubbles: true, clientX: 5, clientY: 5, pointerId: 1 };
+  const pointer = {
+    bubbles: true,
+    button: 0,
+    clientX: 5,
+    clientY: 5,
+    isPrimary: true,
+    pointerId: 1,
+  };
   target.dispatchEvent(new PointerEvent("pointerdown", pointer));
   target.dispatchEvent(new PointerEvent("pointerup", pointer));
   target.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));

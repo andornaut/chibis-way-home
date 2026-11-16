@@ -73,6 +73,7 @@ let layer: UiLayer;
 const shutdowns: (() => void)[] = [];
 
 beforeEach(() => {
+  vi.useFakeTimers();
   vi.clearAllMocks();
   selection.active = "dash";
   selection.owned = ["dash", "speedy"];
@@ -84,6 +85,7 @@ beforeEach(() => {
 afterEach(() => {
   shutdowns.splice(0).forEach((shutdown) => shutdown());
   layer.dispose();
+  vi.useRealTimers();
 });
 
 // The pause scene beside a playing zone whose bird is bird, or that has no state yet (null).
@@ -260,16 +262,16 @@ it.each([
 );
 
 it("selects a tapped skill in play, but a 400ms hold opens its details without selecting it", () => {
-  const { details, skill, time, update } = play();
+  const { details, skill, update } = play();
   const tapping = press(skill("speedy"));
-  time.now = SKILL_GESTURE.holdMilliseconds - 1;
+  vi.advanceTimersByTime(SKILL_GESTURE.holdMilliseconds - 1);
   update();
   tapping.lift();
   expect(selection.select).toHaveBeenCalledExactlyOnceWith("speedy");
   expect(details()).toEqual([]);
   selection.select.mockClear();
   const holding = press(skill("speedy"), 2);
-  time.now += SKILL_GESTURE.holdMilliseconds;
+  vi.advanceTimersByTime(SKILL_GESTURE.holdMilliseconds);
   update();
   expect(details().map((data) => data.skill)).toEqual(["speedy"]);
   holding.lift();
@@ -278,20 +280,20 @@ it("selects a tapped skill in play, but a 400ms hold opens its details without s
 });
 
 it("opens details for a hold that lifts before a frame sees it", () => {
-  const { details, skill, time } = play();
+  const { details, skill } = play();
   const holding = press(skill("speedy"));
-  time.now += SKILL_GESTURE.holdMilliseconds;
+  vi.advanceTimersByTime(SKILL_GESTURE.holdMilliseconds);
   holding.lift();
   expect(details().map((data) => data.skill)).toEqual(["speedy"]);
   expect(selection.select).not.toHaveBeenCalled();
 });
 
 it("refuses a press that leaves its skill before it lifts, even back on the skill, and its hold", () => {
-  const { details, skill, time, update } = play();
+  const { details, skill, update } = play();
   const dragging = press(skill("dash"));
   dragging.move(skill("speedy"), 60);
   dragging.move(skill("dash"), 5);
-  time.now += SKILL_GESTURE.holdMilliseconds;
+  vi.advanceTimersByTime(SKILL_GESTURE.holdMilliseconds);
   update();
   dragging.lift();
   expect(selection.select).not.toHaveBeenCalled();
@@ -303,10 +305,22 @@ it("takes a skill tap while a move finger and the Jump and Use fingers stay down
   const canvas = document.createElement("canvas");
   document.body.append(canvas);
   for (const pointerId of [1, 2, 3]) {
-    canvas.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId }));
+    canvas.dispatchEvent(
+      new PointerEvent("pointerdown", {
+        bubbles: true,
+        button: 0,
+        isPrimary: pointerId === 1,
+        pointerId,
+        pointerType: "touch",
+      }),
+    );
   }
   // With other fingers down the browser sends no click for the tap.
-  press(skill("speedy"), 4).lift(skill("speedy"), 5, false);
+  press(skill("speedy"), 4, { isPrimary: false, pointerType: "touch" }).lift(
+    skill("speedy"),
+    5,
+    false,
+  );
   expect(selection.select).toHaveBeenCalledExactlyOnceWith("speedy");
   canvas.remove();
 });
@@ -326,7 +340,7 @@ it("keeps presses on its controls from Phaser, which handles presses off the can
 
 it("keeps selected Speedy painted and dimmed while Pause refuses direct skill actions", async () => {
   selection.active = "speedy";
-  const { details, dialog, hud, open, pauseButton, scenes, skill, time, update } = play();
+  const { details, dialog, hud, open, pauseButton, scenes, skill, update } = play();
   await open();
   const selected = skill("speedy");
   expect({
@@ -351,7 +365,7 @@ it("keeps selected Speedy painted and dimmed while Pause refuses direct skill ac
   tap(selected);
   selected.click();
   press(selected);
-  time.now += SKILL_GESTURE.holdMilliseconds;
+  vi.advanceTimersByTime(SKILL_GESTURE.holdMilliseconds);
   update();
   selected.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 1 }));
   expect(details()).toEqual([]);
@@ -386,10 +400,9 @@ it("steps the focus through Achievements, Settings, Back to title, Resume and th
   expect(document.activeElement).toBe(close);
 });
 
-it("keeps keyboard focus in the top card when a disabled skill is asked to focus", async () => {
+it("keeps keyboard focus on the top card when an inactive skill is asked to focus", async () => {
   const { details, open, scenes, skill } = play();
   await open();
-  expect(skill("speedy").disabled).toBe(true);
   skill("speedy").focus();
   expect(document.activeElement).not.toBe(skill("speedy"));
   pressKey([], "Enter");
@@ -400,7 +413,7 @@ it("keeps keyboard focus in the top card when a disabled skill is asked to focus
 it.each(["closed", "open"] as const)(
   "respects %s Pause ownership when a skill is pressed",
   async (state) => {
-    const { details, dialog, open, scenes, skill, time, update, zone } = play();
+    const { details, dialog, open, scenes, skill, update, zone } = play();
     if (state === "open") {
       await open();
       tap(skill("dash"));
@@ -410,7 +423,7 @@ it.each(["closed", "open"] as const)(
       return;
     }
     press(skill("dash"));
-    time.now += SKILL_GESTURE.holdMilliseconds;
+    vi.advanceTimersByTime(SKILL_GESTURE.holdMilliseconds);
     update();
 
     tap(skill("dash"));
@@ -429,9 +442,9 @@ it.each(["closed", "open"] as const)(
 );
 
 it("does not resume play through another modal owner when details close", () => {
-  const { details, game, scenes, skill, time, update } = play();
+  const { details, game, scenes, skill, update } = play();
   press(skill("dash"));
-  time.now += SKILL_GESTURE.holdMilliseconds;
+  vi.advanceTimersByTime(SKILL_GESTURE.holdMilliseconds);
   update();
   const other = { events: new EventEmitter(), game };
   modalInput(other as never).open();
@@ -441,10 +454,10 @@ it("does not resume play through another modal owner when details close", () => 
 });
 
 it("ignores a previous detail's close callback after a newer detail has opened", () => {
-  const { details, scenes, skill, time, update } = play();
+  const { details, scenes, skill, update } = play();
   const hold = () => {
     press(skill("dash"));
-    time.now += SKILL_GESTURE.holdMilliseconds;
+    vi.advanceTimersByTime(SKILL_GESTURE.holdMilliseconds);
     update();
   };
   hold();

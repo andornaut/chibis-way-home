@@ -1,4 +1,3 @@
-import { guardClicks } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
@@ -8,10 +7,10 @@ import {
   createChoiceCard,
   dialogueChoice,
   type ResolvedDialogueChoice,
-  showPresses,
 } from "../ui/index.ts";
 import type { DialogueChoiceOpener } from "./DialogueScene.ts";
-import { conversationControls, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { bindSceneButtons } from "./domTaps.ts";
+import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
 
@@ -21,10 +20,9 @@ export interface DialogueChoiceData {
 
 // A required terminal choice. No default, Skip, close, back or outside-tap dismissal is provided.
 // The card is HTML in the UI layer (src/ui/dom/choice.ts), shown once the dim under it is ready,
-// in the modal layer with the pause button kept live: an answer acts when a press lands on it and
+// in the modal layer with the top card owning input: an answer acts when a press lands on it and
 // lifts on it; Tab and the arrows move the keyboard's focus through the answers, wrapping,
-// starting on none, and Enter and Space press the focused one. P and Escape pass on to
-// PauseScene, which opens its card over the choice.
+// starting on none, and Enter and Space press the focused one. P and Escape select no answer.
 export class DialogueChoiceScene extends Scene {
   private choice!: ResolvedDialogueChoice;
   private finished = false;
@@ -43,14 +41,18 @@ export class DialogueChoiceScene extends Scene {
   create(): void {
     const card: ChoiceCardView = createChoiceCard(document, "dialogue-choice", this.choice);
     card.root.hidden = true;
-    for (const [id, button] of card.buttons) {
-      button.addEventListener("click", () => this.select(id));
-    }
     const input = modalInput(this);
     const backdrop = showModalBackdrop(this);
     const stops = [
-      guardClicks({ gate: input }, card.root),
-      showPresses(() => input.accepts(), card.root),
+      bindSceneButtons(
+        input,
+        { gate: input },
+        [...card.buttons].map(([id, button]) => ({
+          activate: () => this.select(id),
+          element: button,
+        })),
+        card.root,
+      ),
     ];
     let shown = true;
     this.events.once("shutdown", () => {
@@ -63,10 +65,7 @@ export class DialogueChoiceScene extends Scene {
     void backdrop.ready.then(() => {
       if (shown && !this.finished) {
         card.root.hidden = false;
-        this.closeModal = sceneDomUi(this)?.modals.open(
-          { live: conversationControls(this) },
-          card.dialog,
-        );
+        this.closeModal = sceneDomUi(this)?.modals.open({}, card.dialog);
       }
     });
   }

@@ -13,7 +13,7 @@ import {
   showOpeningCaption,
   stepFocus,
 } from "../ui/index.ts";
-import { followTaps } from "./domTaps.ts";
+import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
@@ -156,33 +156,27 @@ export class OpeningScene extends Scene {
       const action = target.closest<HTMLElement>("[data-control]")?.dataset.control;
       return action === "continue" || action === "skip" ? action : null;
     };
-    const stop = followTaps<Action>(
+    const stop = bindSceneActions<Action>(
       { preventDefault: true, target: view.root, view: view.root },
       input,
       {
         accepts: live,
+        activate: (action) => this.activate(action),
         controlAt,
+        controls: ACTIONS,
+        element: (action) => view.buttons[action],
         land: (action) => focusTarget(view.buttons[action]),
         show: (held) =>
           ACTIONS.forEach((action) =>
             view.buttons[action].toggleAttribute("data-pressed", held === action),
           ),
-        tap: (action) => this.activate(action),
       },
     );
-    const click = (event: MouseEvent) => {
-      const action = controlAt(event);
-      if (event.detail === 0 && action !== null && live() && input.accepts()) {
-        this.activate(action);
-      }
-    };
     const keep = (event: Event) => event.preventDefault();
-    view.root.addEventListener("click", click);
     view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
     view.root.addEventListener("touchend", keep, { capture: true, passive: false });
     return () => {
       stop();
-      view.root.removeEventListener("click", click);
       view.root.removeEventListener("touchstart", keep, true);
       view.root.removeEventListener("touchend", keep, true);
     };

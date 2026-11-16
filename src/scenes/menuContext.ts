@@ -39,10 +39,7 @@ export function menuContext(
   }
   return {
     homeShown: scene !== "start",
-    mode:
-      active(scene) && scene !== "start" && scene !== "map" && scene === pausable
-        ? "pause"
-        : "menu",
+    mode: active(scene) && scene === pausable ? "pause" : "menu",
     scene,
   };
 }

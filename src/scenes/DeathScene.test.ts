@@ -4,10 +4,17 @@ import { EventEmitter } from "node:events";
 import { fillNames } from "@andornaut/game-kit/runtime/lines";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true), capture: vi.fn() }));
+const gate = vi.hoisted(() => ({
+  accepts: vi.fn(() => true),
+  capture: vi.fn(),
+  subscribe: vi.fn(),
+}));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
+vi.mock("./modalInput.ts", async (original) => ({
+  ...(await original<typeof import("./modalInput.ts")>()),
+  modalInput: () => gate,
+}));
 vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
 vi.mock("./domUi.ts", () => ({
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
@@ -142,7 +149,7 @@ it("retries once for a fresh Enter on the card, or a press that lands and lifts 
   first.events.emit("shutdown");
   const { button, opener } = await openCard();
   const retry = button(TEXT.death.retry);
-  const pointer = { bubbles: true, pointerId: 1 };
+  const pointer = { bubbles: true, button: 0, isPrimary: true, pointerId: 1 };
   retry.dispatchEvent(new PointerEvent("pointerdown", pointer));
   retry.dispatchEvent(new PointerEvent("pointerup", pointer));
   retry.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
@@ -172,7 +179,14 @@ it("stays open for back, Escape, P and taps outside or on the card", async () =>
   }
   const backdrop = document.querySelector<HTMLElement>(".ui-death-scene .ui-backdrop")!;
   for (const target of [backdrop, dialog]) {
-    const pointer = { bubbles: true, clientX: 5, clientY: 5, pointerId: 1 };
+    const pointer = {
+      bubbles: true,
+      button: 0,
+      clientX: 5,
+      clientY: 5,
+      isPrimary: true,
+      pointerId: 1,
+    };
     target.dispatchEvent(new PointerEvent("pointerdown", pointer));
     target.dispatchEvent(new PointerEvent("pointerup", pointer));
     target.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
