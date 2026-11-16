@@ -177,3 +177,47 @@ it("stacks and dims ordinary Menu below nested cards, restoring only an explicit
   closeConversation();
   layer.dispose();
 });
+
+it("dims marked same-scene chrome outside the dialog and restores nested coverage", () => {
+  const layer = createUiLayer([], document);
+  document.body.append(layer.element);
+  layer.setDimmedSkin({ "--colour-cream": "dimmed" });
+  const root = document.createElement("div");
+  const hud = document.createElement("div");
+  hud.setAttribute("data-ui-covered", "");
+  const image = document.createElement("img");
+  image.src = "blob:lit";
+  layer.dimImage("blob:lit", "blob:dim");
+  hud.append(image);
+  const dialog = document.createElement("section");
+  dialog.setAttribute("data-ui-covered", "");
+  const action = document.createElement("button");
+  action.setAttribute("data-ui-covered", "");
+  dialog.append(action);
+  root.append(hud, dialog);
+  layer.mount(0, root);
+  const closeLive = layer.modals.open({ live: [hud] }, dialog);
+  expect(hud.hasAttribute("data-ui-dimmed")).toBe(false);
+  closeLive();
+  const close = layer.modals.open({}, dialog);
+  expect(hud.hasAttribute("data-ui-dimmed")).toBe(true);
+  expect(image.getAttribute("src")).toBe("blob:dim");
+  expect([dialog, action].map((element) => element.hasAttribute("data-ui-dimmed"))).toEqual([
+    false,
+    false,
+  ]);
+  const nested = document.createElement("section");
+  layer.mount(1, nested);
+  const closeNested = layer.modals.open({}, nested);
+  expect(root.hasAttribute("data-ui-dimmed")).toBe(true);
+  closeNested();
+  expect(root.hasAttribute("data-ui-dimmed")).toBe(false);
+  expect(hud.hasAttribute("data-ui-dimmed")).toBe(true);
+  expect(hud.style.getPropertyValue("--colour-cream")).toBe("dimmed");
+  expect(image.getAttribute("src")).toBe("blob:dim");
+  expect([root.hidden, hud.hidden, dialog.hidden]).toEqual([false, false, false]);
+  close();
+  expect(hud.hasAttribute("data-ui-dimmed")).toBe(false);
+  expect(image.getAttribute("src")).toBe("blob:lit");
+  layer.dispose();
+});
