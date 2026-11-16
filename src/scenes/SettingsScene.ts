@@ -186,7 +186,10 @@ export class SettingsScene extends Scene {
     void Promise.all([backdrop, icons]).then(() => {
       if (shown && !this.closed) {
         card.root.hidden = false;
-        this.closeModal = sceneDomUi(this)?.modals.open({ close: () => this.back() }, card.dialog);
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { backdrop: card.backdrop, close: () => this.back(), isolation: "dialog" },
+          card.dialog,
+        );
       }
     });
   }
@@ -258,7 +261,12 @@ export class SettingsScene extends Scene {
       );
     }
     this.closeStepsModal = sceneDomUi(this)?.modals.open(
-      { close: () => this.back(), focus: card.steps.close },
+      {
+        backdrop: card.backdrop,
+        close: () => this.back(),
+        focus: card.steps.close,
+        isolation: "dialog",
+      },
       card.steps.dialog,
     );
   }

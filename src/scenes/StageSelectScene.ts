@@ -130,6 +130,7 @@ export class StageSelectScene extends Scene {
           ...[...view.stages].map(([id, button]) => ({
             activate: () => this.activate({ id, kind: "stage" }),
             element: button,
+            ownAriaDisabled: "refusal-feedback" as const,
           })),
           { activate: () => this.activate({ kind: "close" }), element: view.close },
           ...(view.pager === undefined
@@ -138,10 +139,12 @@ export class StageSelectScene extends Scene {
                 {
                   activate: () => this.activate({ kind: "page", step: -1 }),
                   element: view.pager.previous,
+                  ownAriaDisabled: "refusal-feedback" as const,
                 },
                 {
                   activate: () => this.activate({ kind: "page", step: 1 }),
                   element: view.pager.next,
+                  ownAriaDisabled: "refusal-feedback" as const,
                 },
               ]),
           { activate: () => this.back(), element: view.backdrop },
@@ -166,7 +169,10 @@ export class StageSelectScene extends Scene {
     void Promise.all([backdrop.ready, previews]).then(() => {
       if (shown && !this.finished) {
         view.root.hidden = false;
-        this.closeModal = sceneDomUi(this)?.modals.open({}, view.dialog);
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { backdrop: view.backdrop, isolation: "dialog" },
+          view.dialog,
+        );
         this.render();
       }
     });

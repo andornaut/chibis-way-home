@@ -112,8 +112,9 @@ export class CutsceneScene extends Scene {
         }
       })
       .catch((error: unknown) => console.warn("The stage preview failed to load", error));
+    modalInput(this).open();
     mountSceneView(this, view.root);
-    this.closeModal = sceneDomUi(this)?.modals.open({}, view.dialog);
+    this.closeModal = sceneDomUi(this)?.modals.open({ isolation: "dialog" }, view.dialog);
   }
   // Continue and the statement line continue on a fresh tap, Continue showing pressed meanwhile. A
   // click on Continue with no pointer behind it (an assistive technology's) continues.

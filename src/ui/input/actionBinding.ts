@@ -102,6 +102,7 @@ export function bindGameActions(options: GameActionOptions, root: HTMLElement): 
   const binding = bindHoldActions(
     {
       activation: "pointer-release",
+      allowNonPrimaryTouch: true,
       guard: options.guard,
       onPressChange: options.onPressChange,
       pointerTarget: options.pointerTarget,
@@ -145,7 +146,10 @@ export function bindNativeGameActions(
   return registered(
     resolve,
     root,
-    bindHoldActions({ guard, resolve: (target) => resolved(resolve(target)) }, root),
+    bindHoldActions(
+      { allowNonPrimaryTouch: true, guard, resolve: (target) => resolved(resolve(target)) },
+      root,
+    ),
   );
 }
 

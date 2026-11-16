@@ -119,7 +119,10 @@ export class AchievementsScene extends Scene {
     void Promise.all([backdrop.ready, icons]).then(() => {
       if (shown && !this.closed) {
         card.root.hidden = false;
-        this.closeModal = sceneDomUi(this)?.modals.open({ close: () => this.back() }, card.dialog);
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { backdrop: card.backdrop, close: () => this.back(), isolation: "dialog" },
+          card.dialog,
+        );
       }
     });
   }

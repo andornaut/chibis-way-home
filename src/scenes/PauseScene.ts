@@ -48,8 +48,8 @@ import {
   globalMenuInput,
   menuSourceReady,
   modalInput,
-  trackMenuActionBinding,
   type SceneInput,
+  trackMenuActionBinding,
 } from "./modalInput.ts";
 import { type PauseDiscTimeline, pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome.ts";
 import { activeSkill, savedSkills, selectActiveSkill } from "./save.ts";
@@ -623,7 +623,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     if (open) {
       showPauseMenu(TEXT, this.mode, this.homeShown, view);
       this.closeModal ??= sceneDomUi(this)?.modals.open(
-        { close: () => this.close() },
+        { backdrop: view.card.backdrop, close: () => this.close(), isolation: "dialog" },
         view.card.dialog,
       );
     } else {
@@ -658,7 +658,11 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     }
     const scene = this.scene.get(key);
     const pausable = scene as unknown as Partial<PausableConversation>;
-    if (pausable.pausable?.() === false || !modalInput(key === ZONE ? this : scene).accepts() || !menuSourceReady(scene)) {
+    if (
+      pausable.pausable?.() === false ||
+      !modalInput(key === ZONE ? this : scene).accepts() ||
+      !menuSourceReady(scene)
+    ) {
       return undefined;
     }
     return key;

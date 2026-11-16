@@ -117,7 +117,10 @@ export class DeathScene extends Scene {
     void backdrop.ready.then(() => {
       if (shown && !this.finished) {
         card.root.hidden = false;
-        this.closeModal = sceneDomUi(this)?.modals.open({}, card.dialog);
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { backdrop: card.backdrop, isolation: "dialog" },
+          card.dialog,
+        );
       }
     });
   }

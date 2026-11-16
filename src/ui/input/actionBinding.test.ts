@@ -117,10 +117,20 @@ it("binds original cold factory callbacks without a game UI unit or a synthetic 
   const activate = vi.fn();
   button.addEventListener("click", activate);
   stops.push(bindFactoryAction({ activate, available: () => true, element: button }));
-  pointer(button, "pointerdown");
+  const touch = (type: string) =>
+    button.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        isPrimary: false,
+        pointerId: 1,
+        pointerType: "touch",
+      }),
+    );
+  touch("pointerdown");
   vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
   expect(activate).toHaveBeenCalledOnce();
-  pointer(button, "pointerup");
+  touch("pointerup");
   compatibilityClick(button);
   expect(activate).toHaveBeenCalledOnce();
   button.click();

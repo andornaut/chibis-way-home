@@ -127,7 +127,10 @@ export class UpdateScene extends Scene {
       this.readyToInteract = shown && this.sys.isActive();
       if (this.readyToInteract) {
         card.root.hidden = false;
-        this.closeModal = sceneDomUi(this)?.modals.open({ close: () => this.defer() }, card.dialog);
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { backdrop: card.backdrop, close: () => this.defer(), isolation: "dialog" },
+          card.dialog,
+        );
       }
     });
   }

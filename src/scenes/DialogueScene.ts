@@ -123,7 +123,11 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     const open = () => {
       if (shown && !this.finished) {
         view.root.hidden = false;
-        this.closeModal = sceneDomUi(this)?.modals.open({}, view.dialog);
+        modalInput(this).open();
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { backdrop: view.backdrop, isolation: "dialog" },
+          view.dialog,
+        );
       }
     };
     if (preview === undefined) {

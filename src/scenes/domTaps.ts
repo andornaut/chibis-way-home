@@ -13,6 +13,7 @@ export interface ActionRoute<Control> {
   readonly available?: (control: Control) => boolean;
   readonly guard?: PressGuard;
   readonly identity?: (control: Control) => unknown;
+  readonly ownAriaDisabled?: (control: Control) => GameAction["ownAriaDisabled"];
   readonly land?: (control: Control) => void;
   readonly show?: (control: Control | undefined) => void;
   readonly rule?: (control: Control) => HoldRule | undefined;
@@ -35,6 +36,7 @@ export function bindSceneActions<Control>(
   const controls = new Map(route.controls.map((control) => [route.element(control), control]));
   const action = (control: Control): GameAction => {
     const rule = route.rule?.(control);
+    const ownAriaDisabled = route.ownAriaDisabled?.(control);
     return {
       activate: () => route.activate(control),
       available: () => route.accepts?.() !== false && route.available?.(control) !== false,
@@ -42,6 +44,7 @@ export function bindSceneActions<Control>(
       ...(route.hold === undefined ? {} : { hold: () => route.hold!(control) }),
       identity: route.identity === undefined ? control : route.identity(control),
       ...(rule === undefined ? {} : { rule }),
+      ...(ownAriaDisabled === undefined ? {} : { ownAriaDisabled }),
     };
   };
   const resolve = (target: EventTarget | null): GameAction | null => {
@@ -132,10 +135,14 @@ export function bindSceneButtons(
     guard,
     hold: (action) => (action.hold ?? action.activate)(),
     identity: (action) => (action.identity === undefined ? action.element : action.identity),
+    ownAriaDisabled: (action) => action.ownAriaDisabled,
     rule: (action) => action.rule,
     show: (pressed) => {
       for (const action of actions) {
-        action.element.toggleAttribute("data-pressed", action === pressed);
+        action.element.toggleAttribute(
+          "data-pressed",
+          action === pressed && action.element.getAttribute("aria-disabled") !== "true",
+        );
       }
     },
   });

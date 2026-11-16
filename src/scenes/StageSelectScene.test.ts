@@ -28,6 +28,10 @@ vi.mock("../ui/input/actionBinding.ts", async (original) => {
   return { ...actual, bindGameActions: vi.fn(actual.bindGameActions) };
 });
 vi.mock("./save.ts", () => ({ savedMap: () => ({ completed: COMPLETED }) }));
+vi.mock("../ui/dom/refusal.ts", async (original) => {
+  const actual = await original<typeof import("../ui/dom/refusal.ts")>();
+  return { ...actual, refuseControl: vi.fn(actual.refuseControl) };
+});
 vi.mock("./modalInput.ts", async (original) => ({
   ...(await original<typeof import("./modalInput.ts")>()),
   modalInput: () => gate,
@@ -44,7 +48,14 @@ vi.mock("./domUi.ts", () => ({
 }));
 
 import { TEXT } from "../data/text.ts";
-import { bindGameActions, createUiLayer, setReducedMotion, type UiLayer } from "../ui/index.ts";
+import { TOUCH } from "../data/touch.ts";
+import {
+  bindGameActions,
+  createUiLayer,
+  refuseControl,
+  setReducedMotion,
+  type UiLayer,
+} from "../ui/index.ts";
 import { StageSelectScene } from "./StageSelectScene.ts";
 
 let layer: UiLayer;
@@ -246,6 +257,32 @@ describe("refusals", () => {
       shaking,
       stopped: locked.hasAttribute("data-ui-refusal-shake"),
     }).toEqual({ labels: 2, redAfterStep: false, shaking: "out", stopped: false });
+    expect(stageSelected).not.toHaveBeenCalled();
+  });
+
+  it("holds a locked stage for refusal once, without pressing its face or navigating", async () => {
+    vi.useFakeTimers();
+    const { stage, stageSelected } = await openPicker();
+    const locked = stage(residential);
+    const pointer = (type: string) =>
+      locked.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          pointerId: 1,
+          pointerType: "mouse",
+        }),
+      );
+    pointer("pointerdown");
+    expect(locked.hasAttribute("data-pressed")).toBe(false);
+    vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
+    expect(refuseControl).toHaveBeenCalledOnce();
+    expect(stageSelected).not.toHaveBeenCalled();
+    pointer("pointerup");
+    locked.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    expect(refuseControl).toHaveBeenCalledOnce();
+    expect(locked.hasAttribute("data-pressed")).toBe(false);
     expect(stageSelected).not.toHaveBeenCalled();
   });
 

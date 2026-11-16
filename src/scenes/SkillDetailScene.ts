@@ -126,7 +126,7 @@ export class SkillDetailScene extends Scene {
         this.ready = true;
         card.root.hidden = false;
         this.closeModal = sceneDomUi(this)?.modals.open(
-          { close: () => this.requestClose() },
+          { backdrop: card.backdrop, close: () => this.requestClose(), isolation: "dialog" },
           card.dialog,
         );
       }

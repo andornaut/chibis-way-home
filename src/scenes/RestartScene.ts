@@ -87,7 +87,10 @@ export class RestartScene extends Scene {
     void backdrop.ready.then(() => {
       if (shown && !this.decided) {
         card.root.hidden = false;
-        this.closeModal = sceneDomUi(this)?.modals.open({ close: () => this.back() }, card.dialog);
+        this.closeModal = sceneDomUi(this)?.modals.open(
+          { backdrop: card.backdrop, close: () => this.back(), isolation: "dialog" },
+          card.dialog,
+        );
       }
     });
   }
