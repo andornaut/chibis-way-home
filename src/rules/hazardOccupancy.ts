@@ -1,11 +1,139 @@
 import { EDGE } from "../core/index.ts";
-import type { BehaviourNode, BirdTuning, ObjectLayout, Point, Rect } from "../data/types/index.ts";
+import type {
+  BehaviourNode,
+  BehaviourPlan,
+  BirdTuning,
+  ObjectLayout,
+  Point,
+  Rect,
+} from "../data/types/index.ts";
 import type { BehaviourState } from "./behaviour.ts";
 import { axisOf } from "./motion.ts";
 import { orbitBounds } from "./orbit.ts";
 import { createTimedHazardSampler, timedHazardRect } from "./timedHazard.ts";
 
 const MAX_GRAPH_STATES = 128;
+
+// Placed behaviour graphs remain readonly for the lifetime of an occupancy snapshot.
+function graphMetadata(plan: BehaviourPlan) {
+  const ranges = new Map<BehaviourNode, number | undefined>();
+  const actionRange = (node: BehaviourNode): number | undefined => {
+    if (ranges.has(node)) {
+      return ranges.get(node);
+    }
+    let result = 0;
+    for (const action of node.onEnter ?? []) {
+      if (
+        !plan.pursuit ||
+        action.kind !== "force-pulse" ||
+        !Number.isFinite(action.range) ||
+        !Number.isFinite(action.height) ||
+        action.range < 0 ||
+        action.height < 0
+      ) {
+        ranges.set(node, undefined);
+        return undefined;
+      }
+      result = Math.max(result, action.range, action.height);
+    }
+    ranges.set(node, result);
+    return result;
+  };
+  // Escaped ground pursuit cannot move before settling; reacquisition resets to initial first.
+  const escapes = new Map<string, number | undefined>();
+  const calculateEscape = (start: string): number | undefined => {
+    const pending = [start];
+    const visited = new Set<string>();
+    let radius = 0;
+    while (pending.length) {
+      const key = pending.pop()!;
+      if (visited.has(key)) {
+        continue;
+      }
+      visited.add(key);
+      if (visited.size > MAX_GRAPH_STATES) {
+        return undefined;
+      }
+      if (key === plan.initial) {
+        continue;
+      }
+      const node = plan.states[key];
+      if (
+        !node ||
+        (node.motion.kind === "wait" &&
+          (node.motion.support === "required" || node.motion.wander)) ||
+        (node.motion.kind !== "wait" &&
+          !(node.motion.kind === "pursue" && node.motion.mode === "ground"))
+      ) {
+        return undefined;
+      }
+      const extra = actionRange(node);
+      if (extra === undefined) {
+        return undefined;
+      }
+      radius = Math.max(radius, extra);
+      for (const transition of node.transitions) {
+        // Visible means engaged for pursuit profiles, contradicting escaped/unsettled.
+        if (transition.when.some(({ kind }) => kind === "visible")) {
+          continue;
+        }
+        pending.push(transition.to);
+        const guaranteed =
+          transition.when.some(({ kind }) => kind === "pursuit-ended") &&
+          transition.when.every(
+            (condition) =>
+              condition.kind === "pursuit-ended" ||
+              (condition.kind === "elapsed" && condition.seconds === 0),
+          );
+        if (guaranteed && plan.states[transition.to]?.attack?.phase !== "tell") {
+          break;
+        }
+      }
+    }
+    return radius;
+  };
+  const stationaryEscape = (start: string): number | undefined => {
+    if (!escapes.has(start)) {
+      escapes.set(start, calculateEscape(start));
+    }
+    return escapes.get(start);
+  };
+  const transitions = new Map<BehaviourNode, ReturnType<typeof transitionFacts>>();
+  const transitionFacts = (node: BehaviourNode) =>
+    node.transitions.map((transition) => ({
+      invalid: transition.when.some(
+        (condition) =>
+          condition.kind === "elapsed" &&
+          (!Number.isFinite(condition.seconds) || condition.seconds < 0),
+      ),
+      pursuitEnded: transition.when.some(({ kind }) => kind === "pursuit-ended"),
+      threshold: Math.max(
+        0,
+        ...transition.when.map((condition) =>
+          condition.kind === "elapsed" ? condition.seconds : 0,
+        ),
+      ),
+      to: transition.to,
+    }));
+  return {
+    actionRange,
+    actions: Object.values(plan.states).flatMap((node) => node.onEnter ?? []),
+    flying: Boolean(
+      plan.pursuit &&
+      Object.values(plan.states).some(
+        ({ motion }) =>
+          motion.kind === "fly" || (motion.kind === "pursue" && motion.mode === "fly"),
+      ),
+    ),
+    stationaryEscape,
+    transitions: (node: BehaviourNode) => {
+      if (!transitions.has(node)) {
+        transitions.set(node, transitionFacts(node));
+      }
+      return transitions.get(node)!;
+    },
+  };
+}
 
 // Undefined means that this snapshot cannot certify future occupancy, not an empty envelope.
 export function hazardBoundsAt(
@@ -33,6 +161,7 @@ export function hazardBoundsAt(
     stateKey: state.stateKey,
   };
   const results = new Map<number, Rect | undefined>();
+  let graph: ReturnType<typeof graphMetadata> | undefined;
   const calculate = (endSeconds: number): Rect | undefined => {
     const horizon = endSeconds - timeSeconds;
     if (
@@ -99,7 +228,8 @@ export function hazardBoundsAt(
         y: object.origin.y + Math.min(0, dy),
       });
     }
-    const actions = Object.values(plan.states).flatMap((node) => node.onEnter ?? []);
+    const metadata = (graph ??= graphMetadata(plan));
+    const actions = metadata.actions;
     const initial = plan.states[plan.initial];
     // Existing emitted effects are bounded only for a still-unacquired, stationary initial state.
     if (
@@ -128,11 +258,7 @@ export function hazardBoundsAt(
         (!Number.isFinite(plan.idleWatchdog.seconds) ||
           plan.idleWatchdog.seconds <= 0 ||
           horizon + snapshot.idleSeconds + EDGE >= plan.idleWatchdog.seconds)) ||
-      (plan.pursuit &&
-        Object.values(plan.states).some(
-          ({ motion }) =>
-            motion.kind === "fly" || (motion.kind === "pursue" && motion.mode === "fly"),
-        ))
+      metadata.flying
     ) {
       return undefined;
     }
@@ -141,75 +267,6 @@ export function hazardBoundsAt(
     let top = origin.y,
       bottom = origin.y + object.height;
     let range = 0;
-    const actionRange = (node: BehaviourNode): number | undefined => {
-      let result = 0;
-      for (const action of node.onEnter ?? []) {
-        if (
-          !plan.pursuit ||
-          action.kind !== "force-pulse" ||
-          !Number.isFinite(action.range) ||
-          !Number.isFinite(action.height) ||
-          action.range < 0 ||
-          action.height < 0
-        ) {
-          return undefined;
-        }
-        result = Math.max(result, action.range, action.height);
-      }
-      return result;
-    };
-    // Escaped ground pursuit cannot move before settling; reacquisition resets to initial first.
-    const stationaryEscape = (start: string): number | undefined => {
-      const pending = [start];
-      const visited = new Set<string>();
-      let radius = 0;
-      while (pending.length) {
-        const key = pending.pop()!;
-        if (visited.has(key)) {
-          continue;
-        }
-        visited.add(key);
-        if (visited.size > MAX_GRAPH_STATES) {
-          return undefined;
-        }
-        if (key === plan.initial) {
-          continue;
-        }
-        const node = plan.states[key];
-        if (
-          !node ||
-          (node.motion.kind === "wait" &&
-            (node.motion.support === "required" || node.motion.wander)) ||
-          (node.motion.kind !== "wait" &&
-            !(node.motion.kind === "pursue" && node.motion.mode === "ground"))
-        ) {
-          return undefined;
-        }
-        const extra = actionRange(node);
-        if (extra === undefined) {
-          return undefined;
-        }
-        radius = Math.max(radius, extra);
-        for (const transition of node.transitions) {
-          // Visible means engaged for pursuit profiles, contradicting escaped/unsettled.
-          if (transition.when.some(({ kind }) => kind === "visible")) {
-            continue;
-          }
-          pending.push(transition.to);
-          const guaranteed =
-            transition.when.some(({ kind }) => kind === "pursuit-ended") &&
-            transition.when.every(
-              (condition) =>
-                condition.kind === "pursuit-ended" ||
-                (condition.kind === "elapsed" && condition.seconds === 0),
-            );
-          if (guaranteed && plan.states[transition.to]?.attack?.phase !== "tell") {
-            break;
-          }
-        }
-      }
-      return radius;
-    };
     const earliest = new Map([[snapshot.stateKey, 0]]);
     const queue = [snapshot.stateKey];
     // Escape settling can restore the initial state independently of authored graph edges.
@@ -238,7 +295,7 @@ export function hazardBoundsAt(
       ) {
         return undefined;
       }
-      const extra = actionRange(node);
+      const extra = metadata.actionRange(node);
       if (extra === undefined) {
         return undefined;
       }
@@ -256,22 +313,11 @@ export function hazardBoundsAt(
         }
       }
       const elapsed = key === snapshot.stateKey ? snapshot.elapsed : 0;
-      for (const transition of node.transitions) {
-        if (
-          transition.when.some(
-            (condition) =>
-              condition.kind === "elapsed" &&
-              (!Number.isFinite(condition.seconds) || condition.seconds < 0),
-          )
-        ) {
+      for (const transition of metadata.transitions(node)) {
+        if (transition.invalid) {
           return undefined;
         }
-        const threshold = Math.max(
-          0,
-          ...transition.when.map((condition) =>
-            condition.kind === "elapsed" ? condition.seconds : 0,
-          ),
-        );
+        const threshold = transition.threshold;
         const next = entry + Math.max(0, threshold - elapsed);
         if (!Number.isFinite(next)) {
           return undefined;
@@ -279,8 +325,8 @@ export function hazardBoundsAt(
         if (next > horizon + EDGE) {
           continue;
         }
-        if (plan.pursuit && transition.when.some(({ kind }) => kind === "pursuit-ended")) {
-          const radius = stationaryEscape(transition.to);
+        if (plan.pursuit && transition.pursuitEnded) {
+          const radius = metadata.stationaryEscape(transition.to);
           if (radius === undefined) {
             return undefined;
           }
