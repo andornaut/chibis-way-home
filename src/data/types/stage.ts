@@ -373,6 +373,8 @@ export interface ZoneRecipe {
   readonly length: { readonly max: number; readonly min: number };
   readonly spawnCol: number;
   readonly start: string;
+  // Each room occurrence reserves one requested door in this recipe's fixed start cap.
+  readonly startDoors?: readonly string[];
   readonly theme: string;
 }
 
