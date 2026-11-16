@@ -59,6 +59,8 @@ interface AchievementText {
 
 // The achievements card and the unlock notice.
 export interface AchievementsText {
+  // The card's return-to-parent action.
+  readonly back: string;
   // The Achievements card's title.
   readonly cardTitle: string;
   // The card's close X's accessible name.
