@@ -10,6 +10,7 @@ import {
   CONTROL_SIDE,
   CONTROL_VIEW_MARGIN,
   HUD_EDGE,
+  START_SCREEN,
   TOUCH_CIRCLE_RADIUS,
   TOUCH_LAYOUT,
 } from "../../data/layout.ts";
@@ -82,22 +83,33 @@ const drawn = (frame: Rect, shift: Point) => ({
 });
 
 describe("the controls' edges", () => {
-  // In each canvas, the pause disc HUD_EDGE in from the view's top and left, and the skill HUD's
-  // discs from its top and right; the bars never move them.
-  it.each(CASES)("in a %s area keep the HUD its set distances from the view", (_, css, dpr) => {
-    const shift = viewShift(fitAt(css, dpr));
-    const view = logicalView(shift);
-    const right = view.x + view.width - 1;
-    const pause = drawn(PAUSE_BUTTON.art, shift);
-    const hud = [...skillHud(SKILL_IDS).values()].map((at) => skillButton(shifted(shift, at)).disc);
-    const last = hud[hud.length - 1]!;
-    expect({
-      hudRight: near(right - (last.x + SKILL_BUTTON.disc - 1)),
-      hudTop: near(Math.min(...hud.map((disc) => disc.y)) - view.y),
-      pauseLeft: near(pause.left - view.x),
-      pauseTop: near(pause.top - view.y),
-    }).toEqual({ hudRight: HUD_EDGE, hudTop: HUD_EDGE, pauseLeft: HUD_EDGE, pauseTop: HUD_EDGE });
-  });
+  // The top controls' visible faces share the top section's centre; their horizontal edge
+  // insets stay HUD_EDGE, independently of the canvas bars.
+  it.each(CASES)(
+    "in a %s area centre top controls with their horizontal edge insets",
+    (_, css, dpr) => {
+      const shift = viewShift(fitAt(css, dpr));
+      const view = logicalView(shift);
+      const right = view.x + view.width - 1;
+      const pause = drawn(PAUSE_BUTTON.art, shift);
+      const hud = [...skillHud(SKILL_IDS).values()].map(
+        (at) => skillButton(shifted(shift, at)).disc,
+      );
+      const last = hud[hud.length - 1]!;
+      expect({
+        hudCentres: hud.map((disc) => near(disc.y + SKILL_BUTTON.disc / 2 - view.y)),
+        hudRight: near(right - (last.x + SKILL_BUTTON.disc - 1)),
+        // drawn() returns inclusive pixel bounds, so the bottom edge includes the final pixel.
+        pauseCentre: near((pause.top + pause.bottom + 1) / 2 - view.y),
+        pauseLeft: near(pause.left - view.x),
+      }).toEqual({
+        hudCentres: SKILL_IDS.map(() => START_SCREEN.navHeight / 2),
+        hudRight: HUD_EDGE,
+        pauseCentre: START_SCREEN.navHeight / 2,
+        pauseLeft: HUD_EDGE,
+      });
+    },
+  );
 
   it.each(CASES)("in a %s area are all drawn inside the view", (_, css, dpr) => {
     const fit = fitAt(css, dpr);
