@@ -18,6 +18,32 @@ const red = (col: number, cols: number, row: number): readonly Instance[] => [
   { character: "red-edge-support", col, cols, role: "support", row, rows: ROWS - row },
 ];
 
+// Three successive branch transfers cross a red floor through a narrow high landing and descents.
+const brokenRidge: ChunkModule = {
+  difficulty: 5,
+  encounters: 0,
+  entry: { row: 80 },
+  exit: { row: 80 },
+  id: "woodland-broken-ridge",
+  objects: [
+    { character: "platform-ledge", col: 6, cols: 4, role: "ledge", row: 76 },
+    { character: "platform-ledge", col: 13, cols: 3, role: "ledge", row: 71 },
+    { character: "platform-ledge", col: 19, cols: 4, role: "ledge", row: 75 },
+    ...red(4, 22, 92),
+  ],
+  route: {
+    profile: "recovery",
+    targets: [
+      { at: { col: 8, row: 76 } },
+      { at: { col: 14, row: 71 } },
+      { at: { col: 21, row: 75 } },
+    ],
+  },
+  sides: ["left", "right"],
+  solids: [floor(0, 4, 80), floor(26, 4, 80)],
+  zones: ["woodland"],
+};
+
 // A broad root terrace holds safe observation and recovery on either side of a warned vent.
 const ventTerrace: ChunkModule = {
   difficulty: 4,
@@ -243,5 +269,6 @@ export const WOODLAND_MODULES: Readonly<Record<string, ChunkModule>> = Object.fr
     dividedRavine,
     ventTerrace,
     boughReturn,
+    brokenRidge,
   ].map((module) => [module.id, module]),
 );
