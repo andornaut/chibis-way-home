@@ -142,6 +142,7 @@ export {
 } from "./dom/touchControls.ts";
 export { focusKeyAction, stepFocus } from "./focus/index.ts";
 export {
+  assertGameActions,
   bindFactoryAction,
   bindGameActions,
   bindNativeGameActions,

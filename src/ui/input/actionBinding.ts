@@ -20,6 +20,71 @@ export interface GameActionOptions {
   readonly onPressChange?: (action: HoldAction | null) => void;
 }
 
+const registrations = new WeakMap<HTMLElement, Set<{ resolve: GameActionOptions["resolve"] }>>();
+const DISCRETE_CONTROLS = [
+  "button",
+  'input:is([type="button"],[type="submit"],[type="reset"],[type="checkbox"],[type="radio"])',
+  '[role="button"],[role="checkbox"],[role="radio"],[role="switch"]',
+].join(",");
+
+function registered(
+  resolve: GameActionOptions["resolve"],
+  root: HTMLElement,
+  binding: HoldActionsBinding,
+): HoldActionsBinding {
+  let entries = registrations.get(root);
+  if (entries === undefined) {
+    entries = new Set();
+    registrations.set(root, entries);
+  }
+  const entry = { resolve };
+  entries.add(entry);
+  const owned = entries;
+  const dispose = () => {
+    owned.delete(entry);
+    binding();
+  };
+  dispose.cancel = binding.cancel;
+  return dispose;
+}
+
+// Registration is structural: disabled, hidden and not-yet-ready controls still have actions.
+// Text editors, native selects and continuous range/drag controls retain their native ownership.
+export function assertGameActions(root: HTMLElement): void {
+  const controls = [...root.querySelectorAll<HTMLElement>(DISCRETE_CONTROLS)];
+  if (root.matches(DISCRETE_CONTROLS)) {
+    controls.push(root);
+  }
+  for (const control of controls) {
+    let element: HTMLElement | null = control;
+    let found = false;
+    while (element !== null && root.contains(element)) {
+      for (const entry of registrations.get(element) ?? []) {
+        const action = entry.resolve(control);
+        const label =
+          action?.element.matches("label") &&
+          control.matches('input:is([type="checkbox"],[type="radio"])') &&
+          action.element.contains(control);
+        if (
+          action !== null &&
+          (action.element === control || label) &&
+          element.contains(action.element)
+        ) {
+          found = true;
+          break;
+        }
+      }
+      if (found) {
+        break;
+      }
+      element = element.parentElement;
+    }
+    if (!found) {
+      throw new Error("Every discrete control must register its action");
+    }
+  }
+}
+
 function resolved(action: GameAction | null): HoldAction | null {
   return action === null
     ? null
@@ -67,7 +132,7 @@ export function bindGameActions(options: GameActionOptions, root: HTMLElement): 
     root.removeEventListener("click", click);
   };
   dispose.cancel = binding.cancel;
-  return dispose;
+  return registered(options.resolve, root, dispose);
 }
 
 // Factories retain their native click ownership and original guarded semantic callback.
@@ -77,7 +142,11 @@ export function bindNativeGameActions(
   resolve: (target: EventTarget | null) => GameAction | null,
   root: HTMLElement,
 ): HoldActionsBinding {
-  return bindHoldActions({ guard, resolve: (target) => resolved(resolve(target)) }, root);
+  return registered(
+    resolve,
+    root,
+    bindHoldActions({ guard, resolve: (target) => resolved(resolve(target)) }, root),
+  );
 }
 
 export const bindFactoryAction: HoldActionBinding = (action) => {
