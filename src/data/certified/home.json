@@ -1,7 +1,7 @@
 {
   "arenas": [
     {
-      "hash": "78724542583c029c",
+      "hash": "272144f6be4c4e1b",
       "id": "arena-raccoon-familiar-neighbourhood",
       "stage": "familiar-neighbourhood"
     }
@@ -207,7 +207,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "fd8fe2f21028e30e", "proofs": "195a1a5615b12f3f" },
+  "inputs": { "data": "fd8fe2f21028e30e", "proofs": "174b03b28072b0e6" },
   "version": 1,
   "zone": "home"
 }
