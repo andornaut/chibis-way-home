@@ -295,7 +295,7 @@ export const TEXT: GameText = {
     test: { name: "Test room" },
   },
   settings: {
-    actionButtons: "Action buttons",
+    actionButtons: "Display Jump and Use buttons",
     close: "Close",
     descriptions: {
       actionButtons: "Use and Jump are shown or hidden. Touch actions remain available.",
@@ -332,7 +332,7 @@ export const TEXT: GameText = {
         title: "Add to Home screen",
       },
     },
-    moveControls: "Move controls",
+    moveControls: "Display joystick",
     reducedMotion: "Reduced motion",
     state: { hidden: "Hidden", off: "Off", on: "On", shown: "Shown" },
     title: "Settings",

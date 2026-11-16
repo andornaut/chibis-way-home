@@ -1,9 +1,11 @@
+import { createPageDivider } from "@andornaut/game-kit/runtime/web/ui/dom/controlPresentation";
 import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
+import { slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
-import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SUMMARY } from "../../data/layout.ts";
+import { CARD_CONTENT, DEATH_CARD, STAGE_PREVIEW, STAGE_SUMMARY } from "../../data/layout.ts";
 import type { DialogueSpeaker } from "../../data/types/index.ts";
 import { UI_FONT_FAMILY } from "../chrome/uiFonts.ts";
 import { CUTSCENE_CONTINUE } from "../layout/cutscene.ts";
@@ -28,6 +30,7 @@ const continueAt = CUTSCENE_CONTINUE;
 // The layout properties stageSummary.css reads, in base px, written on the summary's view with
 // its rows' gaps (stageSummaryGaps).
 export const STAGE_SUMMARY_LAYOUT: LayoutValues = {
+  "--run-stats-divider": slice(DEATH_CARD.dividerWidth),
   "--summary-continue-hit": continueAt.button.x - continueAt.hit.x,
   "--summary-continue-width": continueAt.button.width,
   "--summary-continue-y": continueAt.hit.y,
@@ -176,6 +179,10 @@ export function createStageSummary(
     { columnGap: 2 * CARD_CONTENT.padding, sizing: { mode: "equal" } },
     [words.stats, words.totals],
   );
+  const divider = createPageDivider(document);
+  divider.classList.add("ui-run-stats-divider");
+  divider.setAttribute("aria-hidden", "true");
+  stats.append(divider);
   dialog.append(
     zone,
     text("p", "stage-summary-stage", words.stage),

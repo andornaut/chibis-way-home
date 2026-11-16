@@ -10,16 +10,36 @@ it("opts the fixed-width summary statistics into canonical columns without chang
     continue: "Continue",
     progress: "Progress",
     stage: "Stage",
-    stats: [{ label: "Last time:", value: "1:05" }],
-    totals: [{ label: "Run total:", value: "10:10" }],
+    stats: [
+      { label: "Last time:", value: "1:05" },
+      { label: "Best time:", value: "0:56" },
+      { label: "Attempts:", value: "2" },
+    ],
+    totals: [
+      { label: "Stage total:", value: "2:01" },
+      { label: "Zone total:", value: "5:10" },
+      { label: "Run total:", value: "10:10" },
+    ],
     zone: "Zone",
   });
   const stats = view.dialog.querySelector<HTMLElement>(":scope > .ui-run-stats")!;
   expect(stats.dataset.uiLayoutSizing).toBe("equal");
   expect(stats.style.getPropertyValue("--ui-layout-gap")).toBe(String(2 * CARD_CONTENT.padding));
+  const divider = stats.querySelector(":scope > .ui-run-stats-divider")!;
+  expect(divider.classList.contains("ui-page-divider")).toBe(true);
+  expect(divider.getAttribute("aria-hidden")).toBe("true");
+  expect(stats.querySelectorAll(":scope > dl")).toHaveLength(2);
   expect([...stats.querySelectorAll("dt, dd")].map((node) => node.textContent)).toEqual([
     "Last time:",
     "1:05",
+    "Best time:",
+    "0:56",
+    "Attempts:",
+    "2",
+    "Stage total:",
+    "2:01",
+    "Zone total:",
+    "5:10",
     "Run total:",
     "10:10",
   ]);

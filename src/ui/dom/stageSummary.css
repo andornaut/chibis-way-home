@@ -69,11 +69,21 @@
   image-rendering: pixelated;
 }
 
-/* The metrics beside the totals, unboxed and with no divider, their first ink a row gap below the
+/* The metrics beside the totals, unboxed with a central divider, their first ink a row gap below the
    preview; labels light grey and values white. */
 .stage-summary > .ui-run-stats {
+  position: relative;
   width: calc(var(--ui-unit) * var(--summary-stats-width) * 1px);
   margin-top: calc(var(--ui-unit) * var(--summary-stats-gap) * 1px);
+}
+
+/* The shared divider occupies the existing gap without changing either metric column. */
+.stage-summary .ui-run-stats-divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  translate: -50% 0;
 }
 
 .stage-summary .ui-run-stats-value {
