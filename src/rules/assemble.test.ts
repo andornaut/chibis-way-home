@@ -7,6 +7,7 @@ import {
   assembleZone,
   assembleZoneAvoiding,
   type ChunkLibrary,
+  zonePlanOf,
 } from "./assemble.ts";
 import { recipeProblems } from "./chunk.ts";
 
@@ -482,6 +483,91 @@ describe("assembleZone", () => {
     expect(area.solids.map(({ col, look }) => [col, look])).toEqual(
       [0, 30, 60, 90, 120, 150].map((col) => [col, "grass"]),
     );
+  });
+
+  it("reserves declared start doors before ordinary rooms without changing shuffle draws", () => {
+    const slot = (id: string, col: number) => ({
+      area: { col, cols: 4, row: 45, rows: 5 },
+      id,
+      kind: "door" as const,
+    });
+    const lib = library({
+      a: chunk(50, 50, { slots: [slot("middle", 20)] }),
+      start: chunk(50, 50, { slots: [slot("start", 10)] }),
+    });
+    const zone = recipe(1, {
+      doors: [
+        { count: 1, room: "ordinary" },
+        { count: 1, room: "gift" },
+      ],
+    });
+    const fill = (startDoors?: readonly string[]) => {
+      let draws = 0;
+      const plan = zonePlanOf(
+        lib,
+        () => {
+          draws++;
+          return 0.9;
+        },
+        {
+          door: ["ordinary", "gift"],
+          event: [],
+          start: zone.start,
+          ...(startDoors && { startDoors }),
+        },
+        zone.theme,
+        zone.spawnCol,
+        [zone.start, "a", zone.finish],
+      );
+      return { area: areaOf(plan), draws };
+    };
+    const original = fill();
+    const reserved = fill(["gift"]);
+    expect(reserved.draws).toBe(original.draws);
+    expect(reserved.area.slots?.map(({ chunk, fill }) => ({ chunk, fill }))).toEqual([
+      { chunk: 0, fill: "gift" },
+      { chunk: 1, fill: "ordinary" },
+    ]);
+    expect(reserved.area.objects.filter(({ room }) => room).map(({ room }) => room)).toEqual([
+      "gift",
+      "ordinary",
+    ]);
+    expect(reserved.area.chunks).toEqual(original.area.chunks);
+  });
+
+  it("refuses missing or excessive requested start rooms and middle-only door slots", () => {
+    const slot = {
+      area: { col: 10, cols: 4, row: 45, rows: 5 },
+      id: "room",
+      kind: "door" as const,
+    };
+    const lib = library({
+      a: chunk(50, 50, { slots: [slot] }),
+      start: chunk(50, 50, { slots: [slot] }),
+    });
+    const zone = recipe(1, { doors: [{ count: 1, room: "gift" }] });
+    expect(() => assembleZone(lib, 1, "z", { ...zone, startDoors: ["other"] })).toThrow(
+      "not requested",
+    );
+    expect(() => assembleZone(lib, 1, "z", { ...zone, startDoors: ["gift", "gift"] })).toThrow(
+      "not requested",
+    );
+    expect(() =>
+      assembleZone({ ...lib, chunks: { ...lib.chunks, start: chunk(50, 50) } }, 1, "z", {
+        ...zone,
+        startDoors: ["gift"],
+      }),
+    ).toThrow("No door slot in fixed start start");
+    expect(() =>
+      zonePlanOf(
+        lib,
+        () => 0,
+        { door: ["gift"], event: [], start: "another-cap", startDoors: ["gift"] },
+        zone.theme,
+        zone.spawnCol,
+        [zone.start, "a", zone.finish],
+      ),
+    ).toThrow("No door slot in fixed start another-cap");
   });
 
   it("fills as many slots as the recipe asks for, by the seed, and leaves the rest empty", () => {

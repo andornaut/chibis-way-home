@@ -746,7 +746,8 @@ const shiftInstance = (col: number, instance: Instance): Instance => ({
 export function zonePlanOf(
   library: ChunkLibrary,
   random: Random,
-  fills: Readonly<Record<SlotKind, readonly string[]>>,
+  fills: Readonly<Record<SlotKind, readonly string[]>> &
+    Partial<Pick<ZoneRecipe, "start" | "startDoors">>,
   themeKey: string,
   spawnCol: number,
   ids: readonly string[],
@@ -808,7 +809,20 @@ export function zonePlanOf(
     if (want.length > open.length) {
       throw new Error(`${want.length} ${kind}s for ${open.length} ${kind} slots`);
     }
-    want.forEach((fill, index) => filled.set(open[index] as FilledSlot, fill));
+    const remaining = [...want];
+    for (const room of kind === "door" ? (fills.startDoors ?? []) : []) {
+      const wanted = remaining.indexOf(room);
+      if (wanted < 0) {
+        throw new Error(`Start door room ${room} is not requested by the recipe`);
+      }
+      const index = open.findIndex((slot) => slot.chunk === 0 && ids[slot.chunk] === fills.start);
+      if (index < 0) {
+        throw new Error(`No door slot in fixed start ${fills.start} for room ${room}`);
+      }
+      remaining.splice(wanted, 1);
+      filled.set(open.splice(index, 1)[0]!, room);
+    }
+    remaining.forEach((fill, index) => filled.set(open[index] as FilledSlot, fill));
   }
   const doorTemplate = bindElement(theme.bindings, {
     character: "",
@@ -1328,7 +1342,11 @@ export function assembleZone(
         zonePlanOf(
           library,
           randomStream(seed, `slots:${key}`),
-          fillsOf(recipe),
+          {
+            ...fillsOf(recipe),
+            start: recipe.start,
+            ...(recipe.startDoors && { startDoors: recipe.startDoors }),
+          },
           recipe.theme,
           recipe.spawnCol,
           [recipe.start, ...run, recipe.finish],
