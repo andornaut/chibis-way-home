@@ -100,7 +100,7 @@ it("reads only custom properties the layer, the bridge, the skin or a stylesheet
   expect([...read].filter((name) => !provided(name))).toEqual([]);
 });
 
-it("keeps the one global entry live without duplicating it in modal keyboard order", () => {
+it("covers the global entry only while a physical modal is open, ignoring entry live requests", () => {
   const layer = createUiLayer([], document);
   document.body.append(layer.element);
   const dialog = document.createElement("section"),
@@ -110,7 +110,12 @@ it("keeps the one global entry live without duplicating it in modal keyboard ord
   dialog.append(first);
   layer.mount(0, dialog);
   const remove = layer.menuEntry(entry);
+  entry.focus();
+  expect(document.activeElement).toBe(entry);
+  expect(entry.closest("[inert], [data-ui-dimmed]")).toBeNull();
   const close = layer.modals.open({ live: [entry] }, dialog);
+  expect(entry.closest("[inert]")).not.toBeNull();
+  expect(entry.closest("[data-ui-dimmed]")).not.toBeNull();
   const tab = () =>
     document.activeElement!.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Tab" }),
@@ -118,10 +123,13 @@ it("keeps the one global entry live without duplicating it in modal keyboard ord
   tab();
   expect(document.activeElement).toBe(first);
   tab();
-  expect(document.activeElement).toBe(entry);
+  expect(document.activeElement).toBe(first);
   tab();
   expect(document.activeElement).toBe(first);
   close();
+  expect(entry.closest("[inert], [data-ui-dimmed]")).toBeNull();
+  entry.focus();
+  expect(document.activeElement).toBe(entry);
   remove();
   expect(entry.isConnected).toBe(false);
   layer.dispose();
@@ -144,7 +152,7 @@ it("keeps a late ordinary Menu entry covered and removes the exact registration"
   layer.dispose();
 });
 
-it("stacks and dims ordinary Menu below nested cards, restoring only an explicit Pause exception", () => {
+it("keeps the global entry covered through nested physical modals and restores it after both close", () => {
   const layer = createUiLayer([], document);
   document.body.append(layer.element);
   const entry = document.createElement("button");
@@ -153,8 +161,8 @@ it("stacks and dims ordinary Menu below nested cards, restoring only an explicit
   layer.mount(0, conversation);
   const closeConversation = layer.modals.open({ live: [entry] }, conversation);
   const entryLayer = entry.closest(".global-menu-layer")!;
-  expect(layer.element.lastElementChild).toBe(entryLayer);
-  expect(entry.closest("[inert]")).toBeNull();
+  expect(conversation.previousElementSibling).toBe(entryLayer);
+  expect(entry.closest("[inert]")).not.toBeNull();
   const dialog = document.createElement("section");
   const action = document.createElement("button");
   dialog.append(action);
@@ -172,9 +180,12 @@ it("stacks and dims ordinary Menu below nested cards, restoring only an explicit
   );
   expect(document.activeElement).toBe(action);
   close();
+  expect(conversation.previousElementSibling).toBe(entryLayer);
+  expect(entry.closest("[inert]")).not.toBeNull();
+  expect(entry.closest("[data-ui-dimmed]")).not.toBeNull();
+  closeConversation();
   expect(layer.element.lastElementChild).toBe(entryLayer);
   expect(entry.closest("[inert], [data-ui-dimmed]")).toBeNull();
-  closeConversation();
   layer.dispose();
 });
 

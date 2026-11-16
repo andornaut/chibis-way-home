@@ -226,7 +226,7 @@ function createDimmingModals(
 ) {
   const modals = createModalLayer(root);
   const stack: { readonly dialog: HTMLElement; readonly options: ModalOptions }[] = [];
-  // An explicitly live Pause entry stays above its conversation. Ordinary Menu is covered.
+  // Physical modal cards cover the global entry.
   const placeEntry = (dialog?: HTMLElement, live: readonly HTMLElement[] = []) => {
     const covered = dialog !== undefined && !live.includes(globalEntry);
     const before = covered
@@ -250,8 +250,7 @@ function createDimmingModals(
     },
     open(options, dialog) {
       const live = (options.live ?? []).filter((element) => !globalEntry.contains(element));
-      const entryLive = options.live?.some((element) => globalEntry.contains(element)) ?? false;
-      const liveOptions = { ...options, live: entryLive ? [...live, globalEntry] : live };
+      const liveOptions = { ...options, live };
       placeEntry(dialog, liveOptions.live);
       const close = modals.open(liveOptions, dialog);
       const entry = { dialog, options: liveOptions };
