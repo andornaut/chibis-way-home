@@ -3,8 +3,9 @@ import { redCeiling } from "../chunkTemplates.ts";
 import { CRUMBLING_SUPPORT_TUNING } from "../obstacleTuning.ts";
 import type { ChunkModule, Difficulty, Instance, ModuleSide, TerrainRect } from "../types/index.ts";
 
-// Blue cityscape halves on the lower route (rows 70 and 80). Halves fill either side, so both
-// edges keep a 4-column seam footing. Grade 3 halves pair with any matching half; grade 4 halves
+// Blue cityscape halves use lower-route seams at rows 70 and 80 and a roof joint at row 60.
+// Lower-route halves fill either side; roof halves fix their side and retain the seam footing.
+// Grade 3 halves pair with any matching half; grade 4 halves
 // pair only with grade 3 ones, since two grade 4 halves make a grade 5 chunk outside Blue's band.
 const ROWS = 120;
 const BOTH: readonly ModuleSide[] = ["left", "right"];
@@ -213,6 +214,80 @@ const MODULE_LIST: readonly ChunkModule[] = [
     slots: [door(6, 70)],
     solids: [floor(0, 16, 70), floor(25, 5, 80)],
   }),
+  // Four successive supported climbs reach a roof joint, without a surrounding pit enclosure.
+  half(3, "city-roof-stair-ascent", {
+    entry: 80,
+    exit: 60,
+    route: {
+      profile: "primary",
+      targets: [
+        { at: { col: 8.5, row: 75 } },
+        { at: { col: 13.5, row: 70 } },
+        { at: { col: 18.5, row: 65 } },
+        { at: { col: 25, row: 60 } },
+      ],
+    },
+    sides: ["left"],
+    solids: [
+      floor(0, 6, 80),
+      floor(6, 5, 75),
+      floor(11, 5, 70),
+      floor(16, 5, 65),
+      floor(21, 9, 60),
+    ],
+  }),
+  // Open one-way landings replace the first two solid steps; missing one reaches the red base.
+  half(3, "city-roof-ledge-ascent", {
+    entry: 80,
+    exit: 60,
+    objects: [ledge(7, 5, 75), ledge(14, 5, 70), ...red(6, 14, 92)],
+    route: {
+      profile: "primary",
+      targets: [
+        { at: { col: 9.5, row: 75 } },
+        { at: { col: 16.5, row: 70 } },
+        { at: { col: 22.5, row: 65 } },
+        { at: { col: 27.5, row: 60 } },
+      ],
+    },
+    sides: ["left"],
+    solids: [floor(0, 6, 80), floor(20, 5, 65), floor(25, 5, 60)],
+  }),
+  // Brake onto the middle ledge, then descend below the overhang to the lower recovery ledge.
+  half(3, "city-roof-drop-channel", {
+    entry: 60,
+    exit: 80,
+    objects: [ledge(8, 5, 66), ledge(15, 6, 74), ...red(6, 15, 92)],
+    route: {
+      profile: "primary",
+      targets: [
+        { at: { col: 10.5, row: 66 }, xRange: { max: 11, min: 8 } },
+        { at: { col: 18, row: 74 }, xRange: { max: 19, min: 17 } },
+        { at: { col: 26, row: 80 } },
+      ],
+    },
+    sides: ["right"],
+    solids: [
+      floor(0, 6, 60),
+      { col: 17, cols: 2, look: "ground", row: 0, rows: 70 },
+      floor(21, 9, 80),
+    ],
+  }),
+  // Two rising landings cross a red-based gap; each landing supplies a readable recovery bank.
+  half(3, "city-crossbeam-recovery", {
+    entry: 80,
+    exit: 80,
+    objects: [ledge(9, 5, 77), ledge(18, 5, 74), ...red(6, 18, 92)],
+    route: {
+      profile: "primary",
+      targets: [
+        { at: { col: 11.5, row: 77 }, xRange: { max: 12, min: 9 } },
+        { at: { col: 20.5, row: 74 }, xRange: { max: 21, min: 18 } },
+        { at: { col: 27, row: 80 } },
+      ],
+    },
+    solids: [floor(0, 6, 80), floor(24, 6, 80)],
+  }),
   // Grade 4: timed supports, warned vents and moving hazards on the required path.
   half(4, "crosswalk", crosswalk(80)),
   half(4, "city-vent-deck", ventDeck(80)),
@@ -222,6 +297,21 @@ const MODULE_LIST: readonly ChunkModule[] = [
     exit: 80,
     objects: [crumbling(12, 6, 78), ...red(4, 22, 88)],
     solids: [floor(0, 4, 80), floor(26, 4, 80)],
+  }),
+  // Commit across the crumbling support, then recover on a permanent raised landing.
+  half(4, "city-crumbling-offset-bridge", {
+    entry: 80,
+    exit: 80,
+    objects: [crumbling(10, 5, 78), ledge(18, 5, 76), ...red(6, 18, 92)],
+    route: {
+      profile: "primary",
+      targets: [
+        { at: { col: 12.5, row: 78 }, xRange: { max: 13, min: 10 } },
+        { at: { col: 20.5, row: 76 }, xRange: { max: 21, min: 18 } },
+        { at: { col: 27, row: 80 } },
+      ],
+    },
+    solids: [floor(0, 6, 80), floor(24, 6, 80)],
   }),
   half(4, "city-ground-hazard", {
     entry: 80,

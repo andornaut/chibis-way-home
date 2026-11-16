@@ -1,17 +1,73 @@
 {
   "arenas": [
-    { "hash": "a3ef8aee896bae71", "id": "arena-dog-city-boundary", "stage": "city-boundary" }
+    {
+      "hash": "a3ef8aee896bae71",
+      "id": "arena-dog-city-boundary",
+      "stage": "city-boundary"
+    }
   ],
   "entries": [
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "blue-city-crossbeam-recovery--city-crumbling-offset-bridge",
+      "kind": "pair",
+      "layout": "63fab95b1132894e",
+      "modules": [
+        "city-crossbeam-recovery",
+        "city-crumbling-offset-bridge"
+      ],
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
+      "route": "3312789fd49a3359",
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
+      "trace": "b4139db029872518:669",
+      "work": 669
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-crossbeam-recovery--city-tap-strip",
+      "kind": "pair",
+      "layout": "25f579fd839e40b2",
+      "modules": [
+        "city-crossbeam-recovery",
+        "city-tap-strip"
+      ],
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
+      "route": "6676c1afd4634ca5",
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
+      "trace": "9701ab056ff903bf:986",
+      "work": 986
+    },
     {
       "encounters": 0,
       "grade": 4,
       "id": "blue-city-crumbling-climb--city-drop-gap",
       "kind": "pair",
       "layout": "b361042459ecc686",
-      "modules": ["city-crumbling-climb", "city-drop-gap"],
+      "modules": [
+        "city-crumbling-climb",
+        "city-drop-gap"
+      ],
       "route": "036cde6ab200d00e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "8aae008d582781c1:472",
       "work": 472
     },
@@ -21,9 +77,15 @@
       "id": "blue-city-crumbling-climb--city-ferry-high",
       "kind": "pair",
       "layout": "91cbe2cb157adae1",
-      "modules": ["city-crumbling-climb", "city-ferry-high"],
+      "modules": [
+        "city-crumbling-climb",
+        "city-ferry-high"
+      ],
       "route": "951981eb300fdda5",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "507c77a4e2795d1f:1311",
       "work": 1311
     },
@@ -33,9 +95,15 @@
       "id": "blue-city-crumbling-climb--city-gap-high",
       "kind": "pair",
       "layout": "d9506c34a1256ae0",
-      "modules": ["city-crumbling-climb", "city-gap-high"],
+      "modules": [
+        "city-crumbling-climb",
+        "city-gap-high"
+      ],
       "route": "cd5104064f31fc32",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "34c928f48c7b57e1:434",
       "work": 434
     },
@@ -45,9 +113,15 @@
       "id": "blue-city-crumbling-climb--city-ledge-descent",
       "kind": "pair",
       "layout": "bdc93d3b840e65f6",
-      "modules": ["city-crumbling-climb", "city-ledge-descent"],
+      "modules": [
+        "city-crumbling-climb",
+        "city-ledge-descent"
+      ],
       "route": "74b6e85ca2cb7075",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "dc1854638c154fd5:1086",
       "work": 1086
     },
@@ -57,9 +131,15 @@
       "id": "blue-city-crumbling-climb--city-lift-descent",
       "kind": "pair",
       "layout": "632d1840e0292f9d",
-      "modules": ["city-crumbling-climb", "city-lift-descent"],
+      "modules": [
+        "city-crumbling-climb",
+        "city-lift-descent"
+      ],
       "route": "0431acd658d5962a",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "e557d0f8236893de:3636",
       "work": 3636
     },
@@ -69,9 +149,15 @@
       "id": "blue-city-crumbling-climb--city-low-descent",
       "kind": "pair",
       "layout": "5b7d1ff3b5c1d1e6",
-      "modules": ["city-crumbling-climb", "city-low-descent"],
+      "modules": [
+        "city-crumbling-climb",
+        "city-low-descent"
+      ],
       "route": "b043022d1a0db4e7",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a7493f270964bc99:3727",
       "work": 3727
     },
@@ -81,9 +167,15 @@
       "id": "blue-city-crumbling-climb--city-tap-strip-high",
       "kind": "pair",
       "layout": "b802654a2649140d",
-      "modules": ["city-crumbling-climb", "city-tap-strip-high"],
+      "modules": [
+        "city-crumbling-climb",
+        "city-tap-strip-high"
+      ],
       "route": "cd5104064f31fc32",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c9254fc8b04833ef:971",
       "work": 971
     },
@@ -93,9 +185,15 @@
       "id": "blue-city-crumbling-descent--city-ferry",
       "kind": "pair",
       "layout": "409d1a70a576d0d2",
-      "modules": ["city-crumbling-descent", "city-ferry"],
+      "modules": [
+        "city-crumbling-descent",
+        "city-ferry"
+      ],
       "route": "54bb9e8aefa00a43",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "81fb4bfaf6ae7f05:2403",
       "work": 2403
     },
@@ -105,9 +203,15 @@
       "id": "blue-city-crumbling-descent--city-gap",
       "kind": "pair",
       "layout": "529c239dcfbd50dc",
-      "modules": ["city-crumbling-descent", "city-gap"],
+      "modules": [
+        "city-crumbling-descent",
+        "city-gap"
+      ],
       "route": "56d4664de4d65d2a",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "1f1198504ec8867a:1596",
       "work": 1596
     },
@@ -117,9 +221,15 @@
       "id": "blue-city-crumbling-descent--city-gap-climb",
       "kind": "pair",
       "layout": "b3c95e9d6fd09100",
-      "modules": ["city-crumbling-descent", "city-gap-climb"],
+      "modules": [
+        "city-crumbling-descent",
+        "city-gap-climb"
+      ],
       "route": "4cdfa1970912715f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "cd365693ee918a5c:409",
       "work": 409
     },
@@ -129,9 +239,15 @@
       "id": "blue-city-crumbling-descent--city-ledge-climb",
       "kind": "pair",
       "layout": "a97d085fb9da52db",
-      "modules": ["city-crumbling-descent", "city-ledge-climb"],
+      "modules": [
+        "city-crumbling-descent",
+        "city-ledge-climb"
+      ],
       "route": "7f5da1045c48603b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "75fcdcaf6c108fb6:839",
       "work": 839
     },
@@ -141,9 +257,15 @@
       "id": "blue-city-crumbling-descent--city-ledge-pit",
       "kind": "pair",
       "layout": "311604407a380415",
-      "modules": ["city-crumbling-descent", "city-ledge-pit"],
+      "modules": [
+        "city-crumbling-descent",
+        "city-ledge-pit"
+      ],
       "route": "7e2c9ba05b2b4ba2",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "8442d3c2967ab4ed:418",
       "work": 418
     },
@@ -153,9 +275,15 @@
       "id": "blue-city-crumbling-descent--city-lift-climb",
       "kind": "pair",
       "layout": "742172e57f1bfbba",
-      "modules": ["city-crumbling-descent", "city-lift-climb"],
+      "modules": [
+        "city-crumbling-descent",
+        "city-lift-climb"
+      ],
       "route": "cd7cf4fb05ee39f9",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "ef166b98d970bcf0:5982",
       "work": 5982
     },
@@ -165,9 +293,15 @@
       "id": "blue-city-crumbling-descent--city-red-face-climb",
       "kind": "pair",
       "layout": "c9d20af2af9dbccf",
-      "modules": ["city-crumbling-descent", "city-red-face-climb"],
+      "modules": [
+        "city-crumbling-descent",
+        "city-red-face-climb"
+      ],
       "route": "4c5cc665d2c0464d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "980b51f440bec6e4:1197",
       "work": 1197
     },
@@ -177,9 +311,15 @@
       "id": "blue-city-crumbling-descent--city-tap-strip",
       "kind": "pair",
       "layout": "b660b362134784ca",
-      "modules": ["city-crumbling-descent", "city-tap-strip"],
+      "modules": [
+        "city-crumbling-descent",
+        "city-tap-strip"
+      ],
       "route": "87e5f98cf0a84531",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "cac8ef29ac50bb11:2622",
       "work": 2622
     },
@@ -189,9 +329,15 @@
       "id": "blue-city-crumbling-pit--city-ferry",
       "kind": "pair",
       "layout": "3ab55cbecb6d23e6",
-      "modules": ["city-crumbling-pit", "city-ferry"],
+      "modules": [
+        "city-crumbling-pit",
+        "city-ferry"
+      ],
       "route": "26143be56e91b1db",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "1f1c15a521452b30:2165",
       "work": 2165
     },
@@ -201,9 +347,15 @@
       "id": "blue-city-crumbling-pit--city-gap",
       "kind": "pair",
       "layout": "dbb60949d9acb080",
-      "modules": ["city-crumbling-pit", "city-gap"],
+      "modules": [
+        "city-crumbling-pit",
+        "city-gap"
+      ],
       "route": "200c6feac4a3f830",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b6d25a70a7864552:1437",
       "work": 1437
     },
@@ -213,9 +365,15 @@
       "id": "blue-city-crumbling-pit--city-gap-climb",
       "kind": "pair",
       "layout": "a7d685f8bf1f68b1",
-      "modules": ["city-crumbling-pit", "city-gap-climb"],
+      "modules": [
+        "city-crumbling-pit",
+        "city-gap-climb"
+      ],
       "route": "2254d00f3410bc8f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "bf5be7a981eb97a9:923",
       "work": 923
     },
@@ -225,9 +383,15 @@
       "id": "blue-city-crumbling-pit--city-ledge-climb",
       "kind": "pair",
       "layout": "24e93fe257225546",
-      "modules": ["city-crumbling-pit", "city-ledge-climb"],
+      "modules": [
+        "city-crumbling-pit",
+        "city-ledge-climb"
+      ],
       "route": "393106c52b775d71",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "0527a0aa8417caaa:456",
       "work": 456
     },
@@ -237,9 +401,15 @@
       "id": "blue-city-crumbling-pit--city-ledge-pit",
       "kind": "pair",
       "layout": "79707f1a9be2f900",
-      "modules": ["city-crumbling-pit", "city-ledge-pit"],
+      "modules": [
+        "city-crumbling-pit",
+        "city-ledge-pit"
+      ],
       "route": "672f66d8712faf58",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7ad2261c63c38d52:453",
       "work": 453
     },
@@ -249,9 +419,15 @@
       "id": "blue-city-crumbling-pit--city-lift-climb",
       "kind": "pair",
       "layout": "433ec500d0c1a977",
-      "modules": ["city-crumbling-pit", "city-lift-climb"],
+      "modules": [
+        "city-crumbling-pit",
+        "city-lift-climb"
+      ],
       "route": "863f3d05b9cfd2e4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "39ab0e19238a994b:3754",
       "work": 3754
     },
@@ -261,9 +437,15 @@
       "id": "blue-city-crumbling-pit--city-red-face-climb",
       "kind": "pair",
       "layout": "006191234b238610",
-      "modules": ["city-crumbling-pit", "city-red-face-climb"],
+      "modules": [
+        "city-crumbling-pit",
+        "city-red-face-climb"
+      ],
       "route": "3712eddee622c4f2",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a1c3a196001f1bb5:444",
       "work": 444
     },
@@ -273,9 +455,15 @@
       "id": "blue-city-crumbling-pit--city-tap-strip",
       "kind": "pair",
       "layout": "9230065a11e50f7c",
-      "modules": ["city-crumbling-pit", "city-tap-strip"],
+      "modules": [
+        "city-crumbling-pit",
+        "city-tap-strip"
+      ],
       "route": "f00456bc98ed561d",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "40e7d89dd469a735:1856",
       "work": 1856
     },
@@ -285,9 +473,15 @@
       "id": "blue-city-drop-gap--city-crumbling-climb",
       "kind": "pair",
       "layout": "eba52a37a3f6a050",
-      "modules": ["city-drop-gap", "city-crumbling-climb"],
+      "modules": [
+        "city-drop-gap",
+        "city-crumbling-climb"
+      ],
       "route": "85d42d0f16854946",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "db64b0e7dc9385eb:397",
       "work": 397
     },
@@ -297,9 +491,15 @@
       "id": "blue-city-drop-gap--city-crumbling-pit",
       "kind": "pair",
       "layout": "41de9ecc84fd3631",
-      "modules": ["city-drop-gap", "city-crumbling-pit"],
+      "modules": [
+        "city-drop-gap",
+        "city-crumbling-pit"
+      ],
       "route": "e1885480c9be8c00",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "e8298f790833a123:411",
       "work": 411
     },
@@ -309,9 +509,15 @@
       "id": "blue-city-drop-gap--city-ferry",
       "kind": "pair",
       "layout": "6d1c6910eb2528ff",
-      "modules": ["city-drop-gap", "city-ferry"],
+      "modules": [
+        "city-drop-gap",
+        "city-ferry"
+      ],
       "route": "677fabc8909df673",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7f0267055da8c951:1145",
       "work": 1145
     },
@@ -321,9 +527,15 @@
       "id": "blue-city-drop-gap--city-gap",
       "kind": "pair",
       "layout": "7cca55acaa141813",
-      "modules": ["city-drop-gap", "city-gap"],
+      "modules": [
+        "city-drop-gap",
+        "city-gap"
+      ],
       "route": "b07cf0b24d15b402",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b3ed2d909aae1640:1687",
       "work": 1687
     },
@@ -333,9 +545,15 @@
       "id": "blue-city-drop-gap--city-gap-climb",
       "kind": "pair",
       "layout": "1216eb5eb876902c",
-      "modules": ["city-drop-gap", "city-gap-climb"],
+      "modules": [
+        "city-drop-gap",
+        "city-gap-climb"
+      ],
       "route": "1fce63fc1df9377b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "f58a80649fee622a:409",
       "work": 409
     },
@@ -345,9 +563,15 @@
       "id": "blue-city-drop-gap--city-ground-hazard",
       "kind": "pair",
       "layout": "744977cbb7518f9f",
-      "modules": ["city-drop-gap", "city-ground-hazard"],
+      "modules": [
+        "city-drop-gap",
+        "city-ground-hazard"
+      ],
       "route": "080d59101f52551e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "fb6c4902d20b213f:1587",
       "work": 1587
     },
@@ -357,9 +581,15 @@
       "id": "blue-city-drop-gap--city-ledge-climb",
       "kind": "pair",
       "layout": "06c835f8757c9cb7",
-      "modules": ["city-drop-gap", "city-ledge-climb"],
+      "modules": [
+        "city-drop-gap",
+        "city-ledge-climb"
+      ],
       "route": "b2aab6d448c6d465",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c301bb55756017ca:421",
       "work": 421
     },
@@ -369,9 +599,15 @@
       "id": "blue-city-drop-gap--city-ledge-pit",
       "kind": "pair",
       "layout": "dcce66937d01d47e",
-      "modules": ["city-drop-gap", "city-ledge-pit"],
+      "modules": [
+        "city-drop-gap",
+        "city-ledge-pit"
+      ],
       "route": "e1885480c9be8c00",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "98b0115124889db6:418",
       "work": 418
     },
@@ -381,9 +617,15 @@
       "id": "blue-city-drop-gap--city-lift-climb",
       "kind": "pair",
       "layout": "fa34cc6e75fc4ca6",
-      "modules": ["city-drop-gap", "city-lift-climb"],
+      "modules": [
+        "city-drop-gap",
+        "city-lift-climb"
+      ],
       "route": "f10a7f3e8d64ea49",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "bcdd542217744c8b:5199",
       "work": 5199
     },
@@ -393,9 +635,15 @@
       "id": "blue-city-drop-gap--city-red-face-climb",
       "kind": "pair",
       "layout": "eea58b59f0b51a11",
-      "modules": ["city-drop-gap", "city-red-face-climb"],
+      "modules": [
+        "city-drop-gap",
+        "city-red-face-climb"
+      ],
       "route": "9fb2c28f2edc3873",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "2ac26268ea38885c:409",
       "work": 409
     },
@@ -405,9 +653,15 @@
       "id": "blue-city-drop-gap--city-tap-strip",
       "kind": "pair",
       "layout": "bfd91473e3f3686b",
-      "modules": ["city-drop-gap", "city-tap-strip"],
+      "modules": [
+        "city-drop-gap",
+        "city-tap-strip"
+      ],
       "route": "2a98065aca2cb945",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "2e316cf9ac50404d:13770",
       "work": 13770
     },
@@ -417,9 +671,15 @@
       "id": "blue-city-drop-gap--city-vent-climb",
       "kind": "pair",
       "layout": "8dff286183383f0e",
-      "modules": ["city-drop-gap", "city-vent-climb"],
+      "modules": [
+        "city-drop-gap",
+        "city-vent-climb"
+      ],
       "route": "1fce63fc1df9377b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "5350dbc5d472ac80:597",
       "work": 597
     },
@@ -429,9 +689,15 @@
       "id": "blue-city-drop-gap--city-vent-deck",
       "kind": "pair",
       "layout": "20f609eabaec2584",
-      "modules": ["city-drop-gap", "city-vent-deck"],
+      "modules": [
+        "city-drop-gap",
+        "city-vent-deck"
+      ],
       "route": "b07cf0b24d15b402",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "6ac882ddb72c9745:893",
       "work": 893
     },
@@ -441,9 +707,15 @@
       "id": "blue-city-ferry--city-crumbling-climb",
       "kind": "pair",
       "layout": "f455a451ed367716",
-      "modules": ["city-ferry", "city-crumbling-climb"],
+      "modules": [
+        "city-ferry",
+        "city-crumbling-climb"
+      ],
       "route": "d59f4bd736ba822e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "39ea93cacc818eeb:1062",
       "work": 1062
     },
@@ -453,9 +725,15 @@
       "id": "blue-city-ferry--city-crumbling-pit",
       "kind": "pair",
       "layout": "db00b07501821340",
-      "modules": ["city-ferry", "city-crumbling-pit"],
+      "modules": [
+        "city-ferry",
+        "city-crumbling-pit"
+      ],
       "route": "44c647d7e3b5883f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "ad79215c098e0a35:1079",
       "work": 1079
     },
@@ -465,9 +743,15 @@
       "id": "blue-city-ferry--city-ferry",
       "kind": "pair",
       "layout": "0ed82ca2c0e42d8b",
-      "modules": ["city-ferry", "city-ferry"],
+      "modules": [
+        "city-ferry",
+        "city-ferry"
+      ],
       "route": "e00945f50b906c86",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "0dc4d9b869ff6a97:2796",
       "work": 2796
     },
@@ -477,9 +761,15 @@
       "id": "blue-city-ferry--city-gap",
       "kind": "pair",
       "layout": "f35f338cf4e4ca44",
-      "modules": ["city-ferry", "city-gap"],
+      "modules": [
+        "city-ferry",
+        "city-gap"
+      ],
       "route": "5a142f6b9bd08feb",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "72dec59fd44d20fd:1935",
       "work": 1935
     },
@@ -489,9 +779,15 @@
       "id": "blue-city-ferry--city-gap-climb",
       "kind": "pair",
       "layout": "f017de925e74bd04",
-      "modules": ["city-ferry", "city-gap-climb"],
+      "modules": [
+        "city-ferry",
+        "city-gap-climb"
+      ],
       "route": "efeebfdc94342e5b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "d40c67cfa0b9a0f8:2451",
       "work": 2451
     },
@@ -501,9 +797,15 @@
       "id": "blue-city-ferry--city-ground-hazard",
       "kind": "pair",
       "layout": "755eb1f2858dcbdc",
-      "modules": ["city-ferry", "city-ground-hazard"],
+      "modules": [
+        "city-ferry",
+        "city-ground-hazard"
+      ],
       "route": "73bb37511668f8e3",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "89295481c60c9a4f:1715",
       "work": 1715
     },
@@ -513,9 +815,15 @@
       "id": "blue-city-ferry--city-ledge-climb",
       "kind": "pair",
       "layout": "3dc33c842f38ec33",
-      "modules": ["city-ferry", "city-ledge-climb"],
+      "modules": [
+        "city-ferry",
+        "city-ledge-climb"
+      ],
       "route": "c4fb7c3209b156e7",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "3bc266cf6b3bf5c0:1089",
       "work": 1089
     },
@@ -525,9 +833,15 @@
       "id": "blue-city-ferry--city-ledge-pit",
       "kind": "pair",
       "layout": "87aaaa5e3d8e8cfd",
-      "modules": ["city-ferry", "city-ledge-pit"],
+      "modules": [
+        "city-ferry",
+        "city-ledge-pit"
+      ],
       "route": "44c647d7e3b5883f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a129afdfd4e71740:1086",
       "work": 1086
     },
@@ -537,9 +851,15 @@
       "id": "blue-city-ferry--city-lift-climb",
       "kind": "pair",
       "layout": "acdbcf51e5f38858",
-      "modules": ["city-ferry", "city-lift-climb"],
+      "modules": [
+        "city-ferry",
+        "city-lift-climb"
+      ],
       "route": "86f3ad58380843f5",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9cbb39852e16ab4c:4893",
       "work": 4893
     },
@@ -549,9 +869,15 @@
       "id": "blue-city-ferry--city-red-face-climb",
       "kind": "pair",
       "layout": "6b60e2252dd50d25",
-      "modules": ["city-ferry", "city-red-face-climb"],
+      "modules": [
+        "city-ferry",
+        "city-red-face-climb"
+      ],
       "route": "33a7bb2b2e4c2410",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "99c95097e3934739:1077",
       "work": 1077
     },
@@ -561,9 +887,15 @@
       "id": "blue-city-ferry--city-tap-strip",
       "kind": "pair",
       "layout": "03284aa449d10c61",
-      "modules": ["city-ferry", "city-tap-strip"],
+      "modules": [
+        "city-ferry",
+        "city-tap-strip"
+      ],
       "route": "8a33b07adcc6044a",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "24def3c274b0a8e5:2538",
       "work": 2538
     },
@@ -573,9 +905,15 @@
       "id": "blue-city-ferry--city-vent-climb",
       "kind": "pair",
       "layout": "94c38cc8ebac0893",
-      "modules": ["city-ferry", "city-vent-climb"],
+      "modules": [
+        "city-ferry",
+        "city-vent-climb"
+      ],
       "route": "efeebfdc94342e5b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "38374a817680aea5:4436",
       "work": 4436
     },
@@ -585,9 +923,15 @@
       "id": "blue-city-ferry--city-vent-deck",
       "kind": "pair",
       "layout": "cfb165adacb2dc9e",
-      "modules": ["city-ferry", "city-vent-deck"],
+      "modules": [
+        "city-ferry",
+        "city-vent-deck"
+      ],
       "route": "5a142f6b9bd08feb",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "aa864365beb522a3:1981",
       "work": 1981
     },
@@ -597,9 +941,15 @@
       "id": "blue-city-ferry-high--city-crumbling-descent",
       "kind": "pair",
       "layout": "eda18535e25513c8",
-      "modules": ["city-ferry-high", "city-crumbling-descent"],
+      "modules": [
+        "city-ferry-high",
+        "city-crumbling-descent"
+      ],
       "route": "7535b546f14c9f4c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4a68e623f4e531d6:1132",
       "work": 1132
     },
@@ -609,9 +959,15 @@
       "id": "blue-city-ferry-high--city-drop-gap",
       "kind": "pair",
       "layout": "6f0343bb6e948264",
-      "modules": ["city-ferry-high", "city-drop-gap"],
+      "modules": [
+        "city-ferry-high",
+        "city-drop-gap"
+      ],
       "route": "b71b0fe4e094f129",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "be721a85a3bc438b:1157",
       "work": 1157
     },
@@ -621,9 +977,15 @@
       "id": "blue-city-ferry-high--city-ferry-high",
       "kind": "pair",
       "layout": "2d3198f6cac94878",
-      "modules": ["city-ferry-high", "city-ferry-high"],
+      "modules": [
+        "city-ferry-high",
+        "city-ferry-high"
+      ],
       "route": "b1caa6c46e56eefc",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "5e0d57b6b959231b:2796",
       "work": 2796
     },
@@ -633,9 +995,15 @@
       "id": "blue-city-ferry-high--city-gap-high",
       "kind": "pair",
       "layout": "5aadc6252f9e900d",
-      "modules": ["city-ferry-high", "city-gap-high"],
+      "modules": [
+        "city-ferry-high",
+        "city-gap-high"
+      ],
       "route": "0a4ec8d76ad0feec",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "913733b3f3612add:3444",
       "work": 3444
     },
@@ -645,9 +1013,15 @@
       "id": "blue-city-ferry-high--city-hazard-descent",
       "kind": "pair",
       "layout": "5d9a7448e90e0911",
-      "modules": ["city-ferry-high", "city-hazard-descent"],
+      "modules": [
+        "city-ferry-high",
+        "city-hazard-descent"
+      ],
       "route": "177fc280612245b0",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "347112160aa9791d:1474",
       "work": 1474
     },
@@ -657,9 +1031,15 @@
       "id": "blue-city-ferry-high--city-ledge-descent",
       "kind": "pair",
       "layout": "b19f180f34bdd762",
-      "modules": ["city-ferry-high", "city-ledge-descent"],
+      "modules": [
+        "city-ferry-high",
+        "city-ledge-descent"
+      ],
       "route": "804bb65ee6273480",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "0b9b639a5a5cd5ff:3892",
       "work": 3892
     },
@@ -669,9 +1049,15 @@
       "id": "blue-city-ferry-high--city-lift-descent",
       "kind": "pair",
       "layout": "c52d4c5c51ee1fb9",
-      "modules": ["city-ferry-high", "city-lift-descent"],
+      "modules": [
+        "city-ferry-high",
+        "city-lift-descent"
+      ],
       "route": "f82b5a37e2cbee52",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "25353b3c62e73e25:4326",
       "work": 4326
     },
@@ -681,9 +1067,15 @@
       "id": "blue-city-ferry-high--city-low-descent",
       "kind": "pair",
       "layout": "b5c028d222f248a5",
-      "modules": ["city-ferry-high", "city-low-descent"],
+      "modules": [
+        "city-ferry-high",
+        "city-low-descent"
+      ],
       "route": "177fc280612245b0",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "db3ef1de99075cff:8294",
       "work": 8294
     },
@@ -693,9 +1085,15 @@
       "id": "blue-city-ferry-high--city-tap-strip-high",
       "kind": "pair",
       "layout": "4ed4afa8e9e7c548",
-      "modules": ["city-ferry-high", "city-tap-strip-high"],
+      "modules": [
+        "city-ferry-high",
+        "city-tap-strip-high"
+      ],
       "route": "0a4ec8d76ad0feec",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9c2105cd53ae2c36:1983",
       "work": 1983
     },
@@ -705,9 +1103,15 @@
       "id": "blue-city-ferry-high--city-vent-deck-high",
       "kind": "pair",
       "layout": "f6236eed3f9778b8",
-      "modules": ["city-ferry-high", "city-vent-deck-high"],
+      "modules": [
+        "city-ferry-high",
+        "city-vent-deck-high"
+      ],
       "route": "0a4ec8d76ad0feec",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "657dff156c600d52:1981",
       "work": 1981
     },
@@ -717,9 +1121,15 @@
       "id": "blue-city-gap--city-crumbling-climb",
       "kind": "pair",
       "layout": "9a3c82a5226bedf2",
-      "modules": ["city-gap", "city-crumbling-climb"],
+      "modules": [
+        "city-gap",
+        "city-crumbling-climb"
+      ],
       "route": "1f804db56e767495",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "f95e575aea3dd1d8:768",
       "work": 768
     },
@@ -729,9 +1139,15 @@
       "id": "blue-city-gap--city-crumbling-pit",
       "kind": "pair",
       "layout": "e2f21c0c7f33cbfa",
-      "modules": ["city-gap", "city-crumbling-pit"],
+      "modules": [
+        "city-gap",
+        "city-crumbling-pit"
+      ],
       "route": "9a4c4e189b263fb4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "545d8372d03dca6c:786",
       "work": 786
     },
@@ -741,9 +1157,15 @@
       "id": "blue-city-gap--city-ferry",
       "kind": "pair",
       "layout": "aa75e5aee9086101",
-      "modules": ["city-gap", "city-ferry"],
+      "modules": [
+        "city-gap",
+        "city-ferry"
+      ],
       "route": "18cee9699818745c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "98c8c1e97e39f389:2238",
       "work": 2238
     },
@@ -753,9 +1175,15 @@
       "id": "blue-city-gap--city-gap",
       "kind": "pair",
       "layout": "13b16f980b21e1ee",
-      "modules": ["city-gap", "city-gap"],
+      "modules": [
+        "city-gap",
+        "city-gap"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "fa0f456c72909488:833",
       "work": 833
     },
@@ -765,9 +1193,15 @@
       "id": "blue-city-gap--city-gap-climb",
       "kind": "pair",
       "layout": "b80ba2db050dec4a",
-      "modules": ["city-gap", "city-gap-climb"],
+      "modules": [
+        "city-gap",
+        "city-gap-climb"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c88906e0b5f1327b:1349",
       "work": 1349
     },
@@ -777,9 +1211,15 @@
       "id": "blue-city-gap--city-ground-hazard",
       "kind": "pair",
       "layout": "0ab10a20ddbd3d7b",
-      "modules": ["city-gap", "city-ground-hazard"],
+      "modules": [
+        "city-gap",
+        "city-ground-hazard"
+      ],
       "route": "57ea8e00ea60d150",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "6d384ba3381da259:1960",
       "work": 1960
     },
@@ -789,9 +1229,15 @@
       "id": "blue-city-gap--city-ledge-climb",
       "kind": "pair",
       "layout": "4caa57c73f746f04",
-      "modules": ["city-gap", "city-ledge-climb"],
+      "modules": [
+        "city-gap",
+        "city-ledge-climb"
+      ],
       "route": "f28d513d701f656b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "53b8c34391499e38:1237",
       "work": 1237
     },
@@ -801,9 +1247,15 @@
       "id": "blue-city-gap--city-ledge-pit",
       "kind": "pair",
       "layout": "8f25b1cc1846fd24",
-      "modules": ["city-gap", "city-ledge-pit"],
+      "modules": [
+        "city-gap",
+        "city-ledge-pit"
+      ],
       "route": "9a4c4e189b263fb4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "67258b97b10e2660:792",
       "work": 792
     },
@@ -813,9 +1265,15 @@
       "id": "blue-city-gap--city-lift-climb",
       "kind": "pair",
       "layout": "4cf5796defc7500f",
-      "modules": ["city-gap", "city-lift-climb"],
+      "modules": [
+        "city-gap",
+        "city-lift-climb"
+      ],
       "route": "4e96af9cb384f29b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "2ab88ab902203f22:5509",
       "work": 5509
     },
@@ -825,9 +1283,15 @@
       "id": "blue-city-gap--city-red-face-climb",
       "kind": "pair",
       "layout": "5098c1cf885b135a",
-      "modules": ["city-gap", "city-red-face-climb"],
+      "modules": [
+        "city-gap",
+        "city-red-face-climb"
+      ],
       "route": "0caa6f01381cfc8d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "f59ac096cfe2bc10:871",
       "work": 871
     },
@@ -837,9 +1301,15 @@
       "id": "blue-city-gap--city-tap-strip",
       "kind": "pair",
       "layout": "982e89dcbbdcd2d2",
-      "modules": ["city-gap", "city-tap-strip"],
+      "modules": [
+        "city-gap",
+        "city-tap-strip"
+      ],
       "route": "8d0ca6905115ad78",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "cc8bab4cb2b4a935:2306",
       "work": 2306
     },
@@ -849,9 +1319,15 @@
       "id": "blue-city-gap--city-vent-climb",
       "kind": "pair",
       "layout": "1f52737e7f6ddc7b",
-      "modules": ["city-gap", "city-vent-climb"],
+      "modules": [
+        "city-gap",
+        "city-vent-climb"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "11cfa5ae17016a8b:1761",
       "work": 1761
     },
@@ -861,9 +1337,15 @@
       "id": "blue-city-gap--city-vent-deck",
       "kind": "pair",
       "layout": "b72dca9db9252051",
-      "modules": ["city-gap", "city-vent-deck"],
+      "modules": [
+        "city-gap",
+        "city-vent-deck"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4847af678bcd2394:1142",
       "work": 1142
     },
@@ -873,9 +1355,15 @@
       "id": "blue-city-gap-climb--city-crumbling-descent",
       "kind": "pair",
       "layout": "670c2de26636e644",
-      "modules": ["city-gap-climb", "city-crumbling-descent"],
+      "modules": [
+        "city-gap-climb",
+        "city-crumbling-descent"
+      ],
       "route": "1d35fac4851fc3a0",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9dc8c86afab6bcbd:1099",
       "work": 1099
     },
@@ -885,9 +1373,15 @@
       "id": "blue-city-gap-climb--city-drop-gap",
       "kind": "pair",
       "layout": "7de3c70b1cedc4b7",
-      "modules": ["city-gap-climb", "city-drop-gap"],
+      "modules": [
+        "city-gap-climb",
+        "city-drop-gap"
+      ],
       "route": "e197e6f890b15324",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c06d7c7409ed6368:901",
       "work": 901
     },
@@ -897,9 +1391,15 @@
       "id": "blue-city-gap-climb--city-ferry-high",
       "kind": "pair",
       "layout": "c5d3635e51972f49",
-      "modules": ["city-gap-climb", "city-ferry-high"],
+      "modules": [
+        "city-gap-climb",
+        "city-ferry-high"
+      ],
       "route": "c7f6aa0695a89a70",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "839f4a316a4e91c6:2415",
       "work": 2415
     },
@@ -909,9 +1409,15 @@
       "id": "blue-city-gap-climb--city-gap-high",
       "kind": "pair",
       "layout": "740cd8daf9f5ee9c",
-      "modules": ["city-gap-climb", "city-gap-high"],
+      "modules": [
+        "city-gap-climb",
+        "city-gap-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "d3f569124885c60c:3053",
       "work": 3053
     },
@@ -921,9 +1427,15 @@
       "id": "blue-city-gap-climb--city-hazard-descent",
       "kind": "pair",
       "layout": "73d8ee7f90beb79b",
-      "modules": ["city-gap-climb", "city-hazard-descent"],
+      "modules": [
+        "city-gap-climb",
+        "city-hazard-descent"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b8a2da4035e4466d:11217",
       "work": 11217
     },
@@ -933,9 +1445,15 @@
       "id": "blue-city-gap-climb--city-ledge-descent",
       "kind": "pair",
       "layout": "e723a529e4292df0",
-      "modules": ["city-gap-climb", "city-ledge-descent"],
+      "modules": [
+        "city-gap-climb",
+        "city-ledge-descent"
+      ],
       "route": "46000278f15e41a5",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "02d7dbe2ce0e7dc5:2042",
       "work": 2042
     },
@@ -945,9 +1463,15 @@
       "id": "blue-city-gap-climb--city-lift-descent",
       "kind": "pair",
       "layout": "a6c5f6f12ab256bd",
-      "modules": ["city-gap-climb", "city-lift-descent"],
+      "modules": [
+        "city-gap-climb",
+        "city-lift-descent"
+      ],
       "route": "1116ca374b8aeacd",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b921061ae6026772:3069",
       "work": 3069
     },
@@ -957,9 +1481,15 @@
       "id": "blue-city-gap-climb--city-low-descent",
       "kind": "pair",
       "layout": "b0b81fbf636358b1",
-      "modules": ["city-gap-climb", "city-low-descent"],
+      "modules": [
+        "city-gap-climb",
+        "city-low-descent"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "77e19253ae28d0e0:3775",
       "work": 3775
     },
@@ -969,9 +1499,15 @@
       "id": "blue-city-gap-climb--city-tap-strip-high",
       "kind": "pair",
       "layout": "0b41990a13493abb",
-      "modules": ["city-gap-climb", "city-tap-strip-high"],
+      "modules": [
+        "city-gap-climb",
+        "city-tap-strip-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "708dd3606023d2cb:1058",
       "work": 1058
     },
@@ -981,9 +1517,15 @@
       "id": "blue-city-gap-climb--city-vent-deck-high",
       "kind": "pair",
       "layout": "0264a4b3bcf6e33e",
-      "modules": ["city-gap-climb", "city-vent-deck-high"],
+      "modules": [
+        "city-gap-climb",
+        "city-vent-deck-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "12bcc4c3a4206253:1588",
       "work": 1588
     },
@@ -993,9 +1535,15 @@
       "id": "blue-city-gap-high--city-crumbling-descent",
       "kind": "pair",
       "layout": "820f7781d50eba2c",
-      "modules": ["city-gap-high", "city-crumbling-descent"],
+      "modules": [
+        "city-gap-high",
+        "city-crumbling-descent"
+      ],
       "route": "1d35fac4851fc3a0",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "e5c0c85171713abe:844",
       "work": 844
     },
@@ -1005,9 +1553,15 @@
       "id": "blue-city-gap-high--city-drop-gap",
       "kind": "pair",
       "layout": "8bfbaa376888ca5c",
-      "modules": ["city-gap-high", "city-drop-gap"],
+      "modules": [
+        "city-gap-high",
+        "city-drop-gap"
+      ],
       "route": "e197e6f890b15324",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7270ecd5b2fbb394:868",
       "work": 868
     },
@@ -1017,9 +1571,15 @@
       "id": "blue-city-gap-high--city-ferry-high",
       "kind": "pair",
       "layout": "5a8d7ba7c28526db",
-      "modules": ["city-gap-high", "city-ferry-high"],
+      "modules": [
+        "city-gap-high",
+        "city-ferry-high"
+      ],
       "route": "c7f6aa0695a89a70",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b599807c7b6f0dd7:2243",
       "work": 2243
     },
@@ -1029,9 +1589,15 @@
       "id": "blue-city-gap-high--city-gap-high",
       "kind": "pair",
       "layout": "8653914d11bb54a3",
-      "modules": ["city-gap-high", "city-gap-high"],
+      "modules": [
+        "city-gap-high",
+        "city-gap-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "81af989e2a0a66be:832",
       "work": 832
     },
@@ -1041,9 +1607,15 @@
       "id": "blue-city-gap-high--city-hazard-descent",
       "kind": "pair",
       "layout": "a61e46fcb786ab91",
-      "modules": ["city-gap-high", "city-hazard-descent"],
+      "modules": [
+        "city-gap-high",
+        "city-hazard-descent"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "f712fa1105b9d9aa:9235",
       "work": 9235
     },
@@ -1053,9 +1625,15 @@
       "id": "blue-city-gap-high--city-ledge-descent",
       "kind": "pair",
       "layout": "f98fcd1a87054f32",
-      "modules": ["city-gap-high", "city-ledge-descent"],
+      "modules": [
+        "city-gap-high",
+        "city-ledge-descent"
+      ],
       "route": "46000278f15e41a5",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "56dba0c14cc9562d:1700",
       "work": 1700
     },
@@ -1065,9 +1643,15 @@
       "id": "blue-city-gap-high--city-lift-descent",
       "kind": "pair",
       "layout": "b2bb52f0f33222f7",
-      "modules": ["city-gap-high", "city-lift-descent"],
+      "modules": [
+        "city-gap-high",
+        "city-lift-descent"
+      ],
       "route": "1116ca374b8aeacd",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "8bca332c8d0b5eae:3549",
       "work": 3549
     },
@@ -1077,9 +1661,15 @@
       "id": "blue-city-gap-high--city-low-descent",
       "kind": "pair",
       "layout": "e370edf80e098959",
-      "modules": ["city-gap-high", "city-low-descent"],
+      "modules": [
+        "city-gap-high",
+        "city-low-descent"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "0a486b0033316521:950",
       "work": 950
     },
@@ -1089,9 +1679,15 @@
       "id": "blue-city-gap-high--city-tap-strip-high",
       "kind": "pair",
       "layout": "c8e401accaea3785",
-      "modules": ["city-gap-high", "city-tap-strip-high"],
+      "modules": [
+        "city-gap-high",
+        "city-tap-strip-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "26071c8104e2f93c:886",
       "work": 886
     },
@@ -1101,9 +1697,15 @@
       "id": "blue-city-gap-high--city-vent-deck-high",
       "kind": "pair",
       "layout": "b78b8ef57965bf45",
-      "modules": ["city-gap-high", "city-vent-deck-high"],
+      "modules": [
+        "city-gap-high",
+        "city-vent-deck-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4754432d5514a6b5:1148",
       "work": 1148
     },
@@ -1113,9 +1715,15 @@
       "id": "blue-city-ground-hazard--city-ferry",
       "kind": "pair",
       "layout": "4bbf36cf61ca781c",
-      "modules": ["city-ground-hazard", "city-ferry"],
+      "modules": [
+        "city-ground-hazard",
+        "city-ferry"
+      ],
       "route": "6f7b8b788daf8d12",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4079cfa8030e25c3:3862",
       "work": 3862
     },
@@ -1125,9 +1733,15 @@
       "id": "blue-city-ground-hazard--city-gap",
       "kind": "pair",
       "layout": "48923b12624fa9dd",
-      "modules": ["city-ground-hazard", "city-gap"],
+      "modules": [
+        "city-ground-hazard",
+        "city-gap"
+      ],
       "route": "6b415900605d5c79",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "94f8deeb963d66ec:3427",
       "work": 3427
     },
@@ -1137,9 +1751,15 @@
       "id": "blue-city-ground-hazard--city-gap-climb",
       "kind": "pair",
       "layout": "9fff8b21146290f1",
-      "modules": ["city-ground-hazard", "city-gap-climb"],
+      "modules": [
+        "city-ground-hazard",
+        "city-gap-climb"
+      ],
       "route": "6c4bf2aa5bfe18bd",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "fc4c362e064989be:1525",
       "work": 1525
     },
@@ -1149,9 +1769,15 @@
       "id": "blue-city-ground-hazard--city-ledge-climb",
       "kind": "pair",
       "layout": "cac53780c98b7b5a",
-      "modules": ["city-ground-hazard", "city-ledge-climb"],
+      "modules": [
+        "city-ground-hazard",
+        "city-ledge-climb"
+      ],
       "route": "1e82ae8814ab6e5d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "6be552f7c1620e96:1537",
       "work": 1537
     },
@@ -1161,9 +1787,15 @@
       "id": "blue-city-ground-hazard--city-ledge-pit",
       "kind": "pair",
       "layout": "bf90a20f6db021c5",
-      "modules": ["city-ground-hazard", "city-ledge-pit"],
+      "modules": [
+        "city-ground-hazard",
+        "city-ledge-pit"
+      ],
       "route": "589bbd376fb01f7b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b6ced6c276016fae:1534",
       "work": 1534
     },
@@ -1173,9 +1805,15 @@
       "id": "blue-city-ground-hazard--city-lift-climb",
       "kind": "pair",
       "layout": "a58f75cd658a19d8",
-      "modules": ["city-ground-hazard", "city-lift-climb"],
+      "modules": [
+        "city-ground-hazard",
+        "city-lift-climb"
+      ],
       "route": "de9fc74ab650dce9",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7e7039ea41006bd0:6316",
       "work": 6316
     },
@@ -1185,9 +1823,15 @@
       "id": "blue-city-ground-hazard--city-red-face-climb",
       "kind": "pair",
       "layout": "54d9c1095e8ec0b5",
-      "modules": ["city-ground-hazard", "city-red-face-climb"],
+      "modules": [
+        "city-ground-hazard",
+        "city-red-face-climb"
+      ],
       "route": "6ff9a88b1a943ff9",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "24f6a44bda2a49de:1525",
       "work": 1525
     },
@@ -1197,9 +1841,15 @@
       "id": "blue-city-ground-hazard--city-tap-strip",
       "kind": "pair",
       "layout": "0c67144139b7de29",
-      "modules": ["city-ground-hazard", "city-tap-strip"],
+      "modules": [
+        "city-ground-hazard",
+        "city-tap-strip"
+      ],
       "route": "7554c848d2c5fddb",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "56af8a9e8d063b25:3364",
       "work": 3364
     },
@@ -1209,9 +1859,15 @@
       "id": "blue-city-hazard-descent--city-ferry",
       "kind": "pair",
       "layout": "b64b0e63700a72c8",
-      "modules": ["city-hazard-descent", "city-ferry"],
+      "modules": [
+        "city-hazard-descent",
+        "city-ferry"
+      ],
       "route": "18cee9699818745c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "bd4b5c7284b0ea7b:2479",
       "work": 2479
     },
@@ -1221,9 +1877,15 @@
       "id": "blue-city-hazard-descent--city-gap",
       "kind": "pair",
       "layout": "a4e68bc4884ca521",
-      "modules": ["city-hazard-descent", "city-gap"],
+      "modules": [
+        "city-hazard-descent",
+        "city-gap"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "1d3e4fff26ab9f55:2483",
       "work": 2483
     },
@@ -1233,9 +1895,15 @@
       "id": "blue-city-hazard-descent--city-gap-climb",
       "kind": "pair",
       "layout": "dbaf6feb45269d7e",
-      "modules": ["city-hazard-descent", "city-gap-climb"],
+      "modules": [
+        "city-hazard-descent",
+        "city-gap-climb"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "dae25316ad73439a:1584",
       "work": 1584
     },
@@ -1245,9 +1913,15 @@
       "id": "blue-city-hazard-descent--city-ledge-climb",
       "kind": "pair",
       "layout": "b46a5b72ebd3c39d",
-      "modules": ["city-hazard-descent", "city-ledge-climb"],
+      "modules": [
+        "city-hazard-descent",
+        "city-ledge-climb"
+      ],
       "route": "f28d513d701f656b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "76a9d8a9a6f44176:1228",
       "work": 1228
     },
@@ -1257,9 +1931,15 @@
       "id": "blue-city-hazard-descent--city-ledge-pit",
       "kind": "pair",
       "layout": "17f6f7351d78f11c",
-      "modules": ["city-hazard-descent", "city-ledge-pit"],
+      "modules": [
+        "city-hazard-descent",
+        "city-ledge-pit"
+      ],
       "route": "9a4c4e189b263fb4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "ac26e6f26a9f9a81:1224",
       "work": 1224
     },
@@ -1269,9 +1949,15 @@
       "id": "blue-city-hazard-descent--city-lift-climb",
       "kind": "pair",
       "layout": "a4bda59368b8ef3c",
-      "modules": ["city-hazard-descent", "city-lift-climb"],
+      "modules": [
+        "city-hazard-descent",
+        "city-lift-climb"
+      ],
       "route": "4e96af9cb384f29b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "fb25c042c5b599ec:5416",
       "work": 5416
     },
@@ -1281,9 +1967,15 @@
       "id": "blue-city-hazard-descent--city-red-face-climb",
       "kind": "pair",
       "layout": "c996a0db3df3f230",
-      "modules": ["city-hazard-descent", "city-red-face-climb"],
+      "modules": [
+        "city-hazard-descent",
+        "city-red-face-climb"
+      ],
       "route": "0caa6f01381cfc8d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4576fd2a3aad5ad9:1215",
       "work": 1215
     },
@@ -1293,9 +1985,15 @@
       "id": "blue-city-hazard-descent--city-tap-strip",
       "kind": "pair",
       "layout": "63968657c19995dc",
-      "modules": ["city-hazard-descent", "city-tap-strip"],
+      "modules": [
+        "city-hazard-descent",
+        "city-tap-strip"
+      ],
       "route": "8d0ca6905115ad78",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "76235954523a86e5:3692",
       "work": 3692
     },
@@ -1305,9 +2003,15 @@
       "id": "blue-city-ledge-climb--city-crumbling-descent",
       "kind": "pair",
       "layout": "205685d695870698",
-      "modules": ["city-ledge-climb", "city-crumbling-descent"],
+      "modules": [
+        "city-ledge-climb",
+        "city-crumbling-descent"
+      ],
       "route": "a0e94c05b1992f0c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "de9f303b0d042b8a:449",
       "work": 449
     },
@@ -1317,9 +2021,15 @@
       "id": "blue-city-ledge-climb--city-drop-gap",
       "kind": "pair",
       "layout": "f8bac81f5982492d",
-      "modules": ["city-ledge-climb", "city-drop-gap"],
+      "modules": [
+        "city-ledge-climb",
+        "city-drop-gap"
+      ],
       "route": "2a11a66c63066e7e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "08ec36a2aeb6885a:473",
       "work": 473
     },
@@ -1329,9 +2039,15 @@
       "id": "blue-city-ledge-climb--city-ferry-high",
       "kind": "pair",
       "layout": "f9a38a71b4d6fb66",
-      "modules": ["city-ledge-climb", "city-ferry-high"],
+      "modules": [
+        "city-ledge-climb",
+        "city-ferry-high"
+      ],
       "route": "8af6aed1292b533d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "bb65f9d9f1b76493:1849",
       "work": 1849
     },
@@ -1341,9 +2057,15 @@
       "id": "blue-city-ledge-climb--city-gap-high",
       "kind": "pair",
       "layout": "a00d73573cddd4e6",
-      "modules": ["city-ledge-climb", "city-gap-high"],
+      "modules": [
+        "city-ledge-climb",
+        "city-gap-high"
+      ],
       "route": "8a9e4afc67afefdb",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a31d694f562b8d84:3863",
       "work": 3863
     },
@@ -1353,9 +2075,15 @@
       "id": "blue-city-ledge-climb--city-hazard-descent",
       "kind": "pair",
       "layout": "436bedee930e2a48",
-      "modules": ["city-ledge-climb", "city-hazard-descent"],
+      "modules": [
+        "city-ledge-climb",
+        "city-hazard-descent"
+      ],
       "route": "7561dfcae90a9e2f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7254ff0f6f48dbb4:9561",
       "work": 9561
     },
@@ -1365,9 +2093,15 @@
       "id": "blue-city-ledge-climb--city-ledge-descent",
       "kind": "pair",
       "layout": "798d4d77d8fa48ae",
-      "modules": ["city-ledge-climb", "city-ledge-descent"],
+      "modules": [
+        "city-ledge-climb",
+        "city-ledge-descent"
+      ],
       "route": "b1ddb8fbdfee931c",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "e58ead27a7ca56e7:1086",
       "work": 1086
     },
@@ -1377,9 +2111,15 @@
       "id": "blue-city-ledge-climb--city-lift-descent",
       "kind": "pair",
       "layout": "948226dd0aa3a3e4",
-      "modules": ["city-ledge-climb", "city-lift-descent"],
+      "modules": [
+        "city-ledge-climb",
+        "city-lift-descent"
+      ],
       "route": "06f3c3a692940a99",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "174e83d00a043e1d:3637",
       "work": 3637
     },
@@ -1389,9 +2129,15 @@
       "id": "blue-city-ledge-climb--city-low-descent",
       "kind": "pair",
       "layout": "44d1a8eb4de5844e",
-      "modules": ["city-ledge-climb", "city-low-descent"],
+      "modules": [
+        "city-ledge-climb",
+        "city-low-descent"
+      ],
       "route": "7561dfcae90a9e2f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "450ddb3340266c19:6107",
       "work": 6107
     },
@@ -1401,9 +2147,15 @@
       "id": "blue-city-ledge-climb--city-tap-strip-high",
       "kind": "pair",
       "layout": "911d099e5e98dc90",
-      "modules": ["city-ledge-climb", "city-tap-strip-high"],
+      "modules": [
+        "city-ledge-climb",
+        "city-tap-strip-high"
+      ],
       "route": "8a9e4afc67afefdb",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "76710f9cf3eb32a4:1473",
       "work": 1473
     },
@@ -1413,9 +2165,15 @@
       "id": "blue-city-ledge-climb--city-vent-deck-high",
       "kind": "pair",
       "layout": "3033e7dbd62be260",
-      "modules": ["city-ledge-climb", "city-vent-deck-high"],
+      "modules": [
+        "city-ledge-climb",
+        "city-vent-deck-high"
+      ],
       "route": "8a9e4afc67afefdb",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "6dd38dd0f46923c9:401",
       "work": 401
     },
@@ -1425,9 +2183,15 @@
       "id": "blue-city-ledge-descent--city-crumbling-climb",
       "kind": "pair",
       "layout": "22c5e9e32ddc2594",
-      "modules": ["city-ledge-descent", "city-crumbling-climb"],
+      "modules": [
+        "city-ledge-descent",
+        "city-crumbling-climb"
+      ],
       "route": "5220280cb1599211",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "a6b5d1630858d03d:1940",
       "work": 1940
     },
@@ -1437,9 +2201,15 @@
       "id": "blue-city-ledge-descent--city-crumbling-pit",
       "kind": "pair",
       "layout": "05293e1457795e53",
-      "modules": ["city-ledge-descent", "city-crumbling-pit"],
+      "modules": [
+        "city-ledge-descent",
+        "city-crumbling-pit"
+      ],
       "route": "477be2e841a9d546",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "c3596680923ecf79:1564",
       "work": 1564
     },
@@ -1449,9 +2219,15 @@
       "id": "blue-city-ledge-descent--city-ferry",
       "kind": "pair",
       "layout": "3fef994f600747ba",
-      "modules": ["city-ledge-descent", "city-ferry"],
+      "modules": [
+        "city-ledge-descent",
+        "city-ferry"
+      ],
       "route": "b52bd4da3011b50e",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "4d4cd7f61738c3dd:2354",
       "work": 2354
     },
@@ -1461,9 +2237,15 @@
       "id": "blue-city-ledge-descent--city-gap",
       "kind": "pair",
       "layout": "3297fdd68dccf836",
-      "modules": ["city-ledge-descent", "city-gap"],
+      "modules": [
+        "city-ledge-descent",
+        "city-gap"
+      ],
       "route": "d254cf222a1beb76",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "79eebd933f9331a1:798",
       "work": 798
     },
@@ -1473,9 +2255,15 @@
       "id": "blue-city-ledge-descent--city-gap-climb",
       "kind": "pair",
       "layout": "3779c36b971fc3ea",
-      "modules": ["city-ledge-descent", "city-gap-climb"],
+      "modules": [
+        "city-ledge-descent",
+        "city-gap-climb"
+      ],
       "route": "26dd3d97a0e88cac",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "9bb5d2569d8cd433:882",
       "work": 882
     },
@@ -1485,9 +2273,15 @@
       "id": "blue-city-ledge-descent--city-ground-hazard",
       "kind": "pair",
       "layout": "3465eb38f940c724",
-      "modules": ["city-ledge-descent", "city-ground-hazard"],
+      "modules": [
+        "city-ledge-descent",
+        "city-ground-hazard"
+      ],
       "route": "8c4ac4ed92a09b78",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "f2de71dae0aac1b5:3238",
       "work": 3238
     },
@@ -1497,9 +2291,15 @@
       "id": "blue-city-ledge-descent--city-ledge-climb",
       "kind": "pair",
       "layout": "7e1bb4c5581ea97e",
-      "modules": ["city-ledge-descent", "city-ledge-climb"],
+      "modules": [
+        "city-ledge-descent",
+        "city-ledge-climb"
+      ],
       "route": "3c9a7285235de447",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "13cd47358849f0e5:906",
       "work": 906
     },
@@ -1509,9 +2309,15 @@
       "id": "blue-city-ledge-descent--city-ledge-pit",
       "kind": "pair",
       "layout": "a807bdb5b99bd93c",
-      "modules": ["city-ledge-descent", "city-ledge-pit"],
+      "modules": [
+        "city-ledge-descent",
+        "city-ledge-pit"
+      ],
       "route": "477be2e841a9d546",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "1db235daf7855a47:1618",
       "work": 1618
     },
@@ -1521,9 +2327,15 @@
       "id": "blue-city-ledge-descent--city-lift-climb",
       "kind": "pair",
       "layout": "fefd3eaed9233775",
-      "modules": ["city-ledge-descent", "city-lift-climb"],
+      "modules": [
+        "city-ledge-descent",
+        "city-lift-climb"
+      ],
       "route": "367fa356cb1e78a3",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "443fe508cd06f061:6522",
       "work": 6522
     },
@@ -1533,9 +2345,15 @@
       "id": "blue-city-ledge-descent--city-red-face-climb",
       "kind": "pair",
       "layout": "e722feabb6ad44b0",
-      "modules": ["city-ledge-descent", "city-red-face-climb"],
+      "modules": [
+        "city-ledge-descent",
+        "city-red-face-climb"
+      ],
       "route": "22bf6637a37ebf0c",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "cd6f90beea1e011b:882",
       "work": 882
     },
@@ -1545,9 +2363,15 @@
       "id": "blue-city-ledge-descent--city-tap-strip",
       "kind": "pair",
       "layout": "e2e1ddd4428b72c3",
-      "modules": ["city-ledge-descent", "city-tap-strip"],
+      "modules": [
+        "city-ledge-descent",
+        "city-tap-strip"
+      ],
       "route": "87be8d8e2ea8511d",
-      "slots": { "door": 2, "event": 0 },
+      "slots": {
+        "door": 2,
+        "event": 0
+      },
       "trace": "b97511e8d5c46325:2974",
       "work": 2974
     },
@@ -1557,9 +2381,15 @@
       "id": "blue-city-ledge-descent--city-vent-climb",
       "kind": "pair",
       "layout": "589ba832ed99cc67",
-      "modules": ["city-ledge-descent", "city-vent-climb"],
+      "modules": [
+        "city-ledge-descent",
+        "city-vent-climb"
+      ],
       "route": "26dd3d97a0e88cac",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "6d3fbe7e81997f35:6106",
       "work": 6106
     },
@@ -1569,9 +2399,15 @@
       "id": "blue-city-ledge-descent--city-vent-deck",
       "kind": "pair",
       "layout": "e05e6cafaa4fe6ac",
-      "modules": ["city-ledge-descent", "city-vent-deck"],
+      "modules": [
+        "city-ledge-descent",
+        "city-vent-deck"
+      ],
       "route": "d254cf222a1beb76",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "caf728e2a8b1dc85:5758",
       "work": 5758
     },
@@ -1581,9 +2417,15 @@
       "id": "blue-city-ledge-pit--city-crumbling-climb",
       "kind": "pair",
       "layout": "56e1a5c37716bb80",
-      "modules": ["city-ledge-pit", "city-crumbling-climb"],
+      "modules": [
+        "city-ledge-pit",
+        "city-crumbling-climb"
+      ],
       "route": "8d4f11966d24fcc8",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "88107365864f46e5:518",
       "work": 518
     },
@@ -1593,9 +2435,15 @@
       "id": "blue-city-ledge-pit--city-crumbling-pit",
       "kind": "pair",
       "layout": "8d9a60b58360fbd8",
-      "modules": ["city-ledge-pit", "city-crumbling-pit"],
+      "modules": [
+        "city-ledge-pit",
+        "city-crumbling-pit"
+      ],
       "route": "672f66d8712faf58",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "50541c000620b4f7:446",
       "work": 446
     },
@@ -1605,9 +2453,15 @@
       "id": "blue-city-ledge-pit--city-ferry",
       "kind": "pair",
       "layout": "b5ccbfc33ec2ccd1",
-      "modules": ["city-ledge-pit", "city-ferry"],
+      "modules": [
+        "city-ledge-pit",
+        "city-ferry"
+      ],
       "route": "26143be56e91b1db",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "8dd3d89c5bdf343b:2295",
       "work": 2295
     },
@@ -1617,9 +2471,15 @@
       "id": "blue-city-ledge-pit--city-gap",
       "kind": "pair",
       "layout": "c3a4919b640aad75",
-      "modules": ["city-ledge-pit", "city-gap"],
+      "modules": [
+        "city-ledge-pit",
+        "city-gap"
+      ],
       "route": "200c6feac4a3f830",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "679f378adead3a26:1577",
       "work": 1577
     },
@@ -1629,9 +2489,15 @@
       "id": "blue-city-ledge-pit--city-gap-climb",
       "kind": "pair",
       "layout": "c839474208b1b651",
-      "modules": ["city-ledge-pit", "city-gap-climb"],
+      "modules": [
+        "city-ledge-pit",
+        "city-gap-climb"
+      ],
       "route": "2254d00f3410bc8f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "bf5be7a981eb97a9:923",
       "work": 923
     },
@@ -1641,9 +2507,15 @@
       "id": "blue-city-ledge-pit--city-ground-hazard",
       "kind": "pair",
       "layout": "e9c55ec9c23db986",
-      "modules": ["city-ledge-pit", "city-ground-hazard"],
+      "modules": [
+        "city-ledge-pit",
+        "city-ground-hazard"
+      ],
       "route": "99710d466ba5ee07",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "847a93aaccaf4265:1534",
       "work": 1534
     },
@@ -1653,9 +2525,15 @@
       "id": "blue-city-ledge-pit--city-ledge-climb",
       "kind": "pair",
       "layout": "5f0d5eb938024a4e",
-      "modules": ["city-ledge-pit", "city-ledge-climb"],
+      "modules": [
+        "city-ledge-pit",
+        "city-ledge-climb"
+      ],
       "route": "393106c52b775d71",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "0527a0aa8417caaa:456",
       "work": 456
     },
@@ -1665,9 +2543,15 @@
       "id": "blue-city-ledge-pit--city-ledge-pit",
       "kind": "pair",
       "layout": "b38c167d89656a33",
-      "modules": ["city-ledge-pit", "city-ledge-pit"],
+      "modules": [
+        "city-ledge-pit",
+        "city-ledge-pit"
+      ],
       "route": "672f66d8712faf58",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7ad2261c63c38d52:453",
       "work": 453
     },
@@ -1677,9 +2561,15 @@
       "id": "blue-city-ledge-pit--city-lift-climb",
       "kind": "pair",
       "layout": "9cd4521e43773450",
-      "modules": ["city-ledge-pit", "city-lift-climb"],
+      "modules": [
+        "city-ledge-pit",
+        "city-lift-climb"
+      ],
       "route": "863f3d05b9cfd2e4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "6881b6fc7947770c:4557",
       "work": 4557
     },
@@ -1689,9 +2579,15 @@
       "id": "blue-city-ledge-pit--city-red-face-climb",
       "kind": "pair",
       "layout": "b550c85150eeb278",
-      "modules": ["city-ledge-pit", "city-red-face-climb"],
+      "modules": [
+        "city-ledge-pit",
+        "city-red-face-climb"
+      ],
       "route": "3712eddee622c4f2",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a1c3a196001f1bb5:444",
       "work": 444
     },
@@ -1701,9 +2597,15 @@
       "id": "blue-city-ledge-pit--city-tap-strip",
       "kind": "pair",
       "layout": "a71b2ea298a17709",
-      "modules": ["city-ledge-pit", "city-tap-strip"],
+      "modules": [
+        "city-ledge-pit",
+        "city-tap-strip"
+      ],
       "route": "f00456bc98ed561d",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "cb42603e793740fb:1002",
       "work": 1002
     },
@@ -1713,9 +2615,15 @@
       "id": "blue-city-ledge-pit--city-vent-climb",
       "kind": "pair",
       "layout": "ce52118a891b220b",
-      "modules": ["city-ledge-pit", "city-vent-climb"],
+      "modules": [
+        "city-ledge-pit",
+        "city-vent-climb"
+      ],
       "route": "2254d00f3410bc8f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "ead67d046e3c50b6:420",
       "work": 420
     },
@@ -1725,9 +2633,15 @@
       "id": "blue-city-ledge-pit--city-vent-deck",
       "kind": "pair",
       "layout": "70811e02bbe1f49e",
-      "modules": ["city-ledge-pit", "city-vent-deck"],
+      "modules": [
+        "city-ledge-pit",
+        "city-vent-deck"
+      ],
       "route": "200c6feac4a3f830",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a1e4c43ccd8b164a:816",
       "work": 816
     },
@@ -1737,9 +2651,15 @@
       "id": "blue-city-lift-climb--city-crumbling-descent",
       "kind": "pair",
       "layout": "2d03d08d6f1d6de3",
-      "modules": ["city-lift-climb", "city-crumbling-descent"],
+      "modules": [
+        "city-lift-climb",
+        "city-crumbling-descent"
+      ],
       "route": "6d5275a559163a0f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "72ad3b2fe2af0894:2217",
       "work": 2217
     },
@@ -1749,9 +2669,15 @@
       "id": "blue-city-lift-climb--city-drop-gap",
       "kind": "pair",
       "layout": "9b5fac3528480b2d",
-      "modules": ["city-lift-climb", "city-drop-gap"],
+      "modules": [
+        "city-lift-climb",
+        "city-drop-gap"
+      ],
       "route": "c18dd821bd0a7f28",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "79e3ec87795b1364:2241",
       "work": 2241
     },
@@ -1761,9 +2687,15 @@
       "id": "blue-city-lift-climb--city-ferry-high",
       "kind": "pair",
       "layout": "e9c767b7cc778904",
-      "modules": ["city-lift-climb", "city-ferry-high"],
+      "modules": [
+        "city-lift-climb",
+        "city-ferry-high"
+      ],
       "route": "e28d38b54b5eaddb",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "63d3bd6d0ab66e19:3056",
       "work": 3056
     },
@@ -1773,9 +2705,15 @@
       "id": "blue-city-lift-climb--city-gap-high",
       "kind": "pair",
       "layout": "b89b08285aeb9bd9",
-      "modules": ["city-lift-climb", "city-gap-high"],
+      "modules": [
+        "city-lift-climb",
+        "city-gap-high"
+      ],
       "route": "697ff0e9f13421c8",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "826165d9cf60510b:4659",
       "work": 4659
     },
@@ -1785,9 +2723,15 @@
       "id": "blue-city-lift-climb--city-hazard-descent",
       "kind": "pair",
       "layout": "8f5c30e0ac4d09fc",
-      "modules": ["city-lift-climb", "city-hazard-descent"],
+      "modules": [
+        "city-lift-climb",
+        "city-hazard-descent"
+      ],
       "route": "d43cb0a18ebffd32",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b25bb45596c4e17b:7855",
       "work": 7855
     },
@@ -1797,9 +2741,15 @@
       "id": "blue-city-lift-climb--city-ledge-descent",
       "kind": "pair",
       "layout": "bee631cd56941af6",
-      "modules": ["city-lift-climb", "city-ledge-descent"],
+      "modules": [
+        "city-lift-climb",
+        "city-ledge-descent"
+      ],
       "route": "d97bfb3c697c5e80",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "d3a674fb47ffd79f:4446",
       "work": 4446
     },
@@ -1809,9 +2759,15 @@
       "id": "blue-city-lift-climb--city-lift-descent",
       "kind": "pair",
       "layout": "1c3ee87a653c0382",
-      "modules": ["city-lift-climb", "city-lift-descent"],
+      "modules": [
+        "city-lift-climb",
+        "city-lift-descent"
+      ],
       "route": "37a67e165ae87e9d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9d44e3688f2fe6ca:5385",
       "work": 5385
     },
@@ -1821,9 +2777,15 @@
       "id": "blue-city-lift-climb--city-low-descent",
       "kind": "pair",
       "layout": "5747d259021183e1",
-      "modules": ["city-lift-climb", "city-low-descent"],
+      "modules": [
+        "city-lift-climb",
+        "city-low-descent"
+      ],
       "route": "d43cb0a18ebffd32",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "ce819542ae4fb64d:8714",
       "work": 8714
     },
@@ -1833,9 +2795,15 @@
       "id": "blue-city-lift-climb--city-tap-strip-high",
       "kind": "pair",
       "layout": "5aed6c12b3772fa6",
-      "modules": ["city-lift-climb", "city-tap-strip-high"],
+      "modules": [
+        "city-lift-climb",
+        "city-tap-strip-high"
+      ],
       "route": "697ff0e9f13421c8",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "662b206bbee07ced:4620",
       "work": 4620
     },
@@ -1845,9 +2813,15 @@
       "id": "blue-city-lift-climb--city-vent-deck-high",
       "kind": "pair",
       "layout": "da5f6067070eb55e",
-      "modules": ["city-lift-climb", "city-vent-deck-high"],
+      "modules": [
+        "city-lift-climb",
+        "city-vent-deck-high"
+      ],
       "route": "697ff0e9f13421c8",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "96549e24aab3299f:4799",
       "work": 4799
     },
@@ -1857,9 +2831,15 @@
       "id": "blue-city-lift-descent--city-crumbling-climb",
       "kind": "pair",
       "layout": "a1f8c009703f25af",
-      "modules": ["city-lift-descent", "city-crumbling-climb"],
+      "modules": [
+        "city-lift-descent",
+        "city-crumbling-climb"
+      ],
       "route": "036afbb3c186394a",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "0ad20dffd10e6d21:5532",
       "work": 5532
     },
@@ -1869,9 +2849,15 @@
       "id": "blue-city-lift-descent--city-crumbling-pit",
       "kind": "pair",
       "layout": "c1f4ced746561504",
-      "modules": ["city-lift-descent", "city-crumbling-pit"],
+      "modules": [
+        "city-lift-descent",
+        "city-crumbling-pit"
+      ],
       "route": "94c47794e46f074e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "0814801259d149b2:15782",
       "work": 15782
     },
@@ -1881,9 +2867,15 @@
       "id": "blue-city-lift-descent--city-ferry",
       "kind": "pair",
       "layout": "bebb212bb4e38b97",
-      "modules": ["city-lift-descent", "city-ferry"],
+      "modules": [
+        "city-lift-descent",
+        "city-ferry"
+      ],
       "route": "4c591cdbd5d56da0",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "05a8cc6296516385:6432",
       "work": 6432
     },
@@ -1893,9 +2885,15 @@
       "id": "blue-city-lift-descent--city-gap",
       "kind": "pair",
       "layout": "926f8b42b6f390ca",
-      "modules": ["city-lift-descent", "city-gap"],
+      "modules": [
+        "city-lift-descent",
+        "city-gap"
+      ],
       "route": "f4b3041d01646882",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "0fbd929f0181f6a4:6140",
       "work": 6140
     },
@@ -1905,9 +2903,15 @@
       "id": "blue-city-lift-descent--city-gap-climb",
       "kind": "pair",
       "layout": "c42950ea6b2ffff2",
-      "modules": ["city-lift-descent", "city-gap-climb"],
+      "modules": [
+        "city-lift-descent",
+        "city-gap-climb"
+      ],
       "route": "ef2719edd210216b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9229f2628d50e86f:5196",
       "work": 5196
     },
@@ -1917,9 +2921,15 @@
       "id": "blue-city-lift-descent--city-ground-hazard",
       "kind": "pair",
       "layout": "f99f6e39b363d5d4",
-      "modules": ["city-lift-descent", "city-ground-hazard"],
+      "modules": [
+        "city-lift-descent",
+        "city-ground-hazard"
+      ],
       "route": "ecd6ad66726adf04",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "2da1973fc789d1db:6051",
       "work": 6051
     },
@@ -1929,9 +2939,15 @@
       "id": "blue-city-lift-descent--city-ledge-climb",
       "kind": "pair",
       "layout": "c3acba3abb12dffd",
-      "modules": ["city-lift-descent", "city-ledge-climb"],
+      "modules": [
+        "city-lift-descent",
+        "city-ledge-climb"
+      ],
       "route": "83a30c15c82ccef9",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "80666cf681cf6eb1:5302",
       "work": 5302
     },
@@ -1941,9 +2957,15 @@
       "id": "blue-city-lift-descent--city-ledge-pit",
       "kind": "pair",
       "layout": "141b74219c0b26aa",
-      "modules": ["city-lift-descent", "city-ledge-pit"],
+      "modules": [
+        "city-lift-descent",
+        "city-ledge-pit"
+      ],
       "route": "94c47794e46f074e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "12f92b0f361ea2a0:5655",
       "work": 5655
     },
@@ -1953,9 +2975,15 @@
       "id": "blue-city-lift-descent--city-lift-climb",
       "kind": "pair",
       "layout": "554a58766f0ff4c9",
-      "modules": ["city-lift-descent", "city-lift-climb"],
+      "modules": [
+        "city-lift-descent",
+        "city-lift-climb"
+      ],
       "route": "ee503ff54424a23a",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "638dde287b1bc86b:5598",
       "work": 5598
     },
@@ -1965,9 +2993,15 @@
       "id": "blue-city-lift-descent--city-red-face-climb",
       "kind": "pair",
       "layout": "2b9246b068bd597a",
-      "modules": ["city-lift-descent", "city-red-face-climb"],
+      "modules": [
+        "city-lift-descent",
+        "city-red-face-climb"
+      ],
       "route": "8b8a85e50ec5511c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "57325e5e97e43910:4692",
       "work": 4692
     },
@@ -1977,9 +3011,15 @@
       "id": "blue-city-lift-descent--city-tap-strip",
       "kind": "pair",
       "layout": "9c49c09e40d20852",
-      "modules": ["city-lift-descent", "city-tap-strip"],
+      "modules": [
+        "city-lift-descent",
+        "city-tap-strip"
+      ],
       "route": "c4c7c5ee9395761a",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "7702444c32efc435:18818",
       "work": 18818
     },
@@ -1989,9 +3029,15 @@
       "id": "blue-city-lift-descent--city-vent-climb",
       "kind": "pair",
       "layout": "03f79beea6d310fb",
-      "modules": ["city-lift-descent", "city-vent-climb"],
+      "modules": [
+        "city-lift-descent",
+        "city-vent-climb"
+      ],
       "route": "ef2719edd210216b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b10cbd42d4ed5e86:6394",
       "work": 6394
     },
@@ -2001,9 +3047,15 @@
       "id": "blue-city-lift-descent--city-vent-deck",
       "kind": "pair",
       "layout": "9b85e0eec2d756a6",
-      "modules": ["city-lift-descent", "city-vent-deck"],
+      "modules": [
+        "city-lift-descent",
+        "city-vent-deck"
+      ],
       "route": "f4b3041d01646882",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "65d491df4b30ac75:4950",
       "work": 4950
     },
@@ -2013,9 +3065,15 @@
       "id": "blue-city-low-descent--city-crumbling-climb",
       "kind": "pair",
       "layout": "9d3e748fa56df974",
-      "modules": ["city-low-descent", "city-crumbling-climb"],
+      "modules": [
+        "city-low-descent",
+        "city-crumbling-climb"
+      ],
       "route": "1f804db56e767495",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "48d877981275deb8:6324",
       "work": 6324
     },
@@ -2025,9 +3083,15 @@
       "id": "blue-city-low-descent--city-crumbling-pit",
       "kind": "pair",
       "layout": "e32d814f24870c50",
-      "modules": ["city-low-descent", "city-crumbling-pit"],
+      "modules": [
+        "city-low-descent",
+        "city-crumbling-pit"
+      ],
       "route": "9a4c4e189b263fb4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "29dbc70e7bf95b0a:5513",
       "work": 5513
     },
@@ -2037,9 +3101,15 @@
       "id": "blue-city-low-descent--city-ferry",
       "kind": "pair",
       "layout": "ff2d806bf90449fc",
-      "modules": ["city-low-descent", "city-ferry"],
+      "modules": [
+        "city-low-descent",
+        "city-ferry"
+      ],
       "route": "18cee9699818745c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "176eb40aed93eb42:62935",
       "work": 62935
     },
@@ -2049,9 +3119,15 @@
       "id": "blue-city-low-descent--city-gap",
       "kind": "pair",
       "layout": "e626803b038ae028",
-      "modules": ["city-low-descent", "city-gap"],
+      "modules": [
+        "city-low-descent",
+        "city-gap"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "298cc634716ff3e0:2950",
       "work": 2950
     },
@@ -2061,9 +3137,15 @@
       "id": "blue-city-low-descent--city-gap-climb",
       "kind": "pair",
       "layout": "35ca4f27572d9d55",
-      "modules": ["city-low-descent", "city-gap-climb"],
+      "modules": [
+        "city-low-descent",
+        "city-gap-climb"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a950dfdcc1637050:3825",
       "work": 3825
     },
@@ -2073,9 +3155,15 @@
       "id": "blue-city-low-descent--city-ground-hazard",
       "kind": "pair",
       "layout": "08c8c87273c35104",
-      "modules": ["city-low-descent", "city-ground-hazard"],
+      "modules": [
+        "city-low-descent",
+        "city-ground-hazard"
+      ],
       "route": "57ea8e00ea60d150",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "ec84026d1b5959aa:20978",
       "work": 20978
     },
@@ -2085,9 +3173,15 @@
       "id": "blue-city-low-descent--city-ledge-climb",
       "kind": "pair",
       "layout": "d9efa1269b05f6b7",
-      "modules": ["city-low-descent", "city-ledge-climb"],
+      "modules": [
+        "city-low-descent",
+        "city-ledge-climb"
+      ],
       "route": "f28d513d701f656b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c65c619b62b042f6:6072",
       "work": 6072
     },
@@ -2097,9 +3191,15 @@
       "id": "blue-city-low-descent--city-ledge-pit",
       "kind": "pair",
       "layout": "0fb6a19258b1f2a1",
-      "modules": ["city-low-descent", "city-ledge-pit"],
+      "modules": [
+        "city-low-descent",
+        "city-ledge-pit"
+      ],
       "route": "9a4c4e189b263fb4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "8b87e8ad662dec8c:5519",
       "work": 5519
     },
@@ -2109,9 +3209,15 @@
       "id": "blue-city-low-descent--city-lift-climb",
       "kind": "pair",
       "layout": "dc7e6e8af4114f9b",
-      "modules": ["city-low-descent", "city-lift-climb"],
+      "modules": [
+        "city-low-descent",
+        "city-lift-climb"
+      ],
       "route": "4e96af9cb384f29b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "cc44efa063d4ded7:75880",
       "work": 75880
     },
@@ -2121,9 +3227,15 @@
       "id": "blue-city-low-descent--city-red-face-climb",
       "kind": "pair",
       "layout": "83a695841f0621ed",
-      "modules": ["city-low-descent", "city-red-face-climb"],
+      "modules": [
+        "city-low-descent",
+        "city-red-face-climb"
+      ],
       "route": "0caa6f01381cfc8d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "3e502e148443213e:6696",
       "work": 6696
     },
@@ -2133,9 +3245,15 @@
       "id": "blue-city-low-descent--city-tap-strip",
       "kind": "pair",
       "layout": "5601ee87ee95a2a1",
-      "modules": ["city-low-descent", "city-tap-strip"],
+      "modules": [
+        "city-low-descent",
+        "city-tap-strip"
+      ],
       "route": "8d0ca6905115ad78",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "15ac6a8b9ff427d5:10932",
       "work": 10932
     },
@@ -2145,9 +3263,15 @@
       "id": "blue-city-low-descent--city-vent-climb",
       "kind": "pair",
       "layout": "b6b4fa715e8938fa",
-      "modules": ["city-low-descent", "city-vent-climb"],
+      "modules": [
+        "city-low-descent",
+        "city-vent-climb"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "e6f30a28ee1260c2:3411",
       "work": 3411
     },
@@ -2157,9 +3281,15 @@
       "id": "blue-city-low-descent--city-vent-deck",
       "kind": "pair",
       "layout": "d486cdd0a03de500",
-      "modules": ["city-low-descent", "city-vent-deck"],
+      "modules": [
+        "city-low-descent",
+        "city-vent-deck"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c4a2437b7ec5e380:5513",
       "work": 5513
     },
@@ -2169,9 +3299,15 @@
       "id": "blue-city-planter--city-crumbling-climb",
       "kind": "pair",
       "layout": "757a562ac03966ee",
-      "modules": ["city-planter", "city-crumbling-climb"],
+      "modules": [
+        "city-planter",
+        "city-crumbling-climb"
+      ],
       "route": "5b62f3e036cb5927",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9ba18aae72c17c1a:430",
       "work": 430
     },
@@ -2181,9 +3317,15 @@
       "id": "blue-city-planter--city-crumbling-pit",
       "kind": "pair",
       "layout": "384001af032afc41",
-      "modules": ["city-planter", "city-crumbling-pit"],
+      "modules": [
+        "city-planter",
+        "city-crumbling-pit"
+      ],
       "route": "d7a0fd83a0faa11e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "f8824db2310eac0c:358",
       "work": 358
     },
@@ -2193,9 +3335,15 @@
       "id": "blue-city-planter--city-ferry",
       "kind": "pair",
       "layout": "c117f22d4560a2a2",
-      "modules": ["city-planter", "city-ferry"],
+      "modules": [
+        "city-planter",
+        "city-ferry"
+      ],
       "route": "2fb838fffbe8d3b5",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c6dacfc3102b21e9:2386",
       "work": 2386
     },
@@ -2205,9 +3353,15 @@
       "id": "blue-city-planter--city-gap",
       "kind": "pair",
       "layout": "dce02a71d5fd0f28",
-      "modules": ["city-planter", "city-gap"],
+      "modules": [
+        "city-planter",
+        "city-gap"
+      ],
       "route": "b0e517f238529c63",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "760c09fc43b32524:1679",
       "work": 1679
     },
@@ -2217,9 +3371,15 @@
       "id": "blue-city-planter--city-gap-climb",
       "kind": "pair",
       "layout": "6a68c8b00b6d93b9",
-      "modules": ["city-planter", "city-gap-climb"],
+      "modules": [
+        "city-planter",
+        "city-gap-climb"
+      ],
       "route": "2f0255ce32487843",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "260e448b18fcea51:922",
       "work": 922
     },
@@ -2229,9 +3389,15 @@
       "id": "blue-city-planter--city-ground-hazard",
       "kind": "pair",
       "layout": "7be3e4c12db6abff",
-      "modules": ["city-planter", "city-ground-hazard"],
+      "modules": [
+        "city-planter",
+        "city-ground-hazard"
+      ],
       "route": "4105d8304b55c77f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4b1dd8d4e89fe609:994",
       "work": 994
     },
@@ -2241,9 +3407,15 @@
       "id": "blue-city-planter--city-ledge-climb",
       "kind": "pair",
       "layout": "1dacb18d2253252a",
-      "modules": ["city-planter", "city-ledge-climb"],
+      "modules": [
+        "city-planter",
+        "city-ledge-climb"
+      ],
       "route": "a496bb84d2773fef",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "196c18d492f1d40d:456",
       "work": 456
     },
@@ -2253,9 +3425,15 @@
       "id": "blue-city-planter--city-ledge-pit",
       "kind": "pair",
       "layout": "93d5bd4f1742f7f9",
-      "modules": ["city-planter", "city-ledge-pit"],
+      "modules": [
+        "city-planter",
+        "city-ledge-pit"
+      ],
       "route": "d7a0fd83a0faa11e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "d7ade63b30266eff:365",
       "work": 365
     },
@@ -2265,9 +3443,15 @@
       "id": "blue-city-planter--city-lift-climb",
       "kind": "pair",
       "layout": "049cc82485b2140e",
-      "modules": ["city-planter", "city-lift-climb"],
+      "modules": [
+        "city-planter",
+        "city-lift-climb"
+      ],
       "route": "7546ed0917ab6370",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "18b6b0d9d0cb2708:5134",
       "work": 5134
     },
@@ -2277,9 +3461,15 @@
       "id": "blue-city-planter--city-red-face-climb",
       "kind": "pair",
       "layout": "fed5de9223b60f03",
-      "modules": ["city-planter", "city-red-face-climb"],
+      "modules": [
+        "city-planter",
+        "city-red-face-climb"
+      ],
       "route": "09ee5c1de667a61e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "1eae7022c4e570b5:444",
       "work": 444
     },
@@ -2289,9 +3479,15 @@
       "id": "blue-city-planter--city-tap-strip",
       "kind": "pair",
       "layout": "976feb19c464cfcd",
-      "modules": ["city-planter", "city-tap-strip"],
+      "modules": [
+        "city-planter",
+        "city-tap-strip"
+      ],
       "route": "bf10033ee0244694",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "90097e8a0a8653b9:1006",
       "work": 1006
     },
@@ -2301,9 +3497,15 @@
       "id": "blue-city-planter--city-vent-climb",
       "kind": "pair",
       "layout": "e84038609d76e767",
-      "modules": ["city-planter", "city-vent-climb"],
+      "modules": [
+        "city-planter",
+        "city-vent-climb"
+      ],
       "route": "2f0255ce32487843",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "6674958a7ddb36ae:420",
       "work": 420
     },
@@ -2313,9 +3515,15 @@
       "id": "blue-city-planter--city-vent-deck",
       "kind": "pair",
       "layout": "03fe5b659538bedb",
-      "modules": ["city-planter", "city-vent-deck"],
+      "modules": [
+        "city-planter",
+        "city-vent-deck"
+      ],
       "route": "b0e517f238529c63",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "23de502bad4167c0:829",
       "work": 829
     },
@@ -2325,9 +3533,15 @@
       "id": "blue-city-planter--crosswalk",
       "kind": "pair",
       "layout": "005a2209f4ce02de",
-      "modules": ["city-planter", "crosswalk"],
+      "modules": [
+        "city-planter",
+        "crosswalk"
+      ],
       "route": "b0e517f238529c63",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b0d75813b93cd834:9431",
       "work": 9431
     },
@@ -2337,9 +3551,15 @@
       "id": "blue-city-red-face-climb--city-crumbling-descent",
       "kind": "pair",
       "layout": "4dfdbe79ecf8954c",
-      "modules": ["city-red-face-climb", "city-crumbling-descent"],
+      "modules": [
+        "city-red-face-climb",
+        "city-crumbling-descent"
+      ],
       "route": "aae776bee850efa5",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "3e8b8609b9cf5f0b:448",
       "work": 448
     },
@@ -2349,9 +3569,15 @@
       "id": "blue-city-red-face-climb--city-drop-gap",
       "kind": "pair",
       "layout": "9548ddea8b105869",
-      "modules": ["city-red-face-climb", "city-drop-gap"],
+      "modules": [
+        "city-red-face-climb",
+        "city-drop-gap"
+      ],
       "route": "a3a6b8988577c1b8",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "8aae008d582781c1:472",
       "work": 472
     },
@@ -2361,9 +3587,15 @@
       "id": "blue-city-red-face-climb--city-ferry-high",
       "kind": "pair",
       "layout": "4f67f3f06a71ee6b",
-      "modules": ["city-red-face-climb", "city-ferry-high"],
+      "modules": [
+        "city-red-face-climb",
+        "city-ferry-high"
+      ],
       "route": "0f10948d437ef419",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "8f271fae49c84a4c:1848",
       "work": 1848
     },
@@ -2373,9 +3605,15 @@
       "id": "blue-city-red-face-climb--city-gap-high",
       "kind": "pair",
       "layout": "d30d1f46c6b0378c",
-      "modules": ["city-red-face-climb", "city-gap-high"],
+      "modules": [
+        "city-red-face-climb",
+        "city-gap-high"
+      ],
       "route": "0ccca7a07f616fd1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b331e81432221544:2491",
       "work": 2491
     },
@@ -2385,9 +3623,15 @@
       "id": "blue-city-red-face-climb--city-hazard-descent",
       "kind": "pair",
       "layout": "efad240efab759f8",
-      "modules": ["city-red-face-climb", "city-hazard-descent"],
+      "modules": [
+        "city-red-face-climb",
+        "city-hazard-descent"
+      ],
       "route": "604cfbf17990c46c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "8e1dc87f1471f7f4:2024",
       "work": 2024
     },
@@ -2397,9 +3641,15 @@
       "id": "blue-city-red-face-climb--city-ledge-descent",
       "kind": "pair",
       "layout": "039e70a8c201bd85",
-      "modules": ["city-red-face-climb", "city-ledge-descent"],
+      "modules": [
+        "city-red-face-climb",
+        "city-ledge-descent"
+      ],
       "route": "1789350fa0feb121",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "dc1854638c154fd5:1086",
       "work": 1086
     },
@@ -2409,9 +3659,15 @@
       "id": "blue-city-red-face-climb--city-lift-descent",
       "kind": "pair",
       "layout": "feed215f99b56b3e",
-      "modules": ["city-red-face-climb", "city-lift-descent"],
+      "modules": [
+        "city-red-face-climb",
+        "city-lift-descent"
+      ],
       "route": "278c9a03b55e798b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a9d734edde06baea:3636",
       "work": 3636
     },
@@ -2421,9 +3677,15 @@
       "id": "blue-city-red-face-climb--city-low-descent",
       "kind": "pair",
       "layout": "b3208c9d0dac022b",
-      "modules": ["city-red-face-climb", "city-low-descent"],
+      "modules": [
+        "city-red-face-climb",
+        "city-low-descent"
+      ],
       "route": "604cfbf17990c46c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7ed119d62c41784d:3504",
       "work": 3504
     },
@@ -2433,9 +3695,15 @@
       "id": "blue-city-red-face-climb--city-tap-strip-high",
       "kind": "pair",
       "layout": "c238ff99a5fb4b2e",
-      "modules": ["city-red-face-climb", "city-tap-strip-high"],
+      "modules": [
+        "city-red-face-climb",
+        "city-tap-strip-high"
+      ],
       "route": "0ccca7a07f616fd1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7368cd970508f161:915",
       "work": 915
     },
@@ -2445,11 +3713,40 @@
       "id": "blue-city-red-face-climb--city-vent-deck-high",
       "kind": "pair",
       "layout": "2adcf46621c1561d",
-      "modules": ["city-red-face-climb", "city-vent-deck-high"],
+      "modules": [
+        "city-red-face-climb",
+        "city-vent-deck-high"
+      ],
       "route": "0ccca7a07f616fd1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "2c5b277200f1d29b:401",
       "work": 401
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "blue-city-roof-stair-ascent--city-roof-drop-channel",
+      "kind": "pair",
+      "layout": "1390b3ff8c85c321",
+      "modules": [
+        "city-roof-stair-ascent",
+        "city-roof-drop-channel"
+      ],
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
+      "route": "adbe1fb4bb54b8e2",
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
+      "trace": "13f454deb910b43a:697",
+      "work": 697
     },
     {
       "encounters": 0,
@@ -2457,9 +3754,15 @@
       "id": "blue-city-tap-strip--city-crumbling-climb",
       "kind": "pair",
       "layout": "69914c7c57a3f124",
-      "modules": ["city-tap-strip", "city-crumbling-climb"],
+      "modules": [
+        "city-tap-strip",
+        "city-crumbling-climb"
+      ],
       "route": "82531f2a16e52c0f",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "137e34c5be0046e5:1252",
       "work": 1252
     },
@@ -2469,9 +3772,15 @@
       "id": "blue-city-tap-strip--city-crumbling-pit",
       "kind": "pair",
       "layout": "c9b3902c04441979",
-      "modules": ["city-tap-strip", "city-crumbling-pit"],
+      "modules": [
+        "city-tap-strip",
+        "city-crumbling-pit"
+      ],
       "route": "7e32bec608bb9335",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "8f67fe987a882b75:1288",
       "work": 1288
     },
@@ -2481,9 +3790,15 @@
       "id": "blue-city-tap-strip--city-ferry",
       "kind": "pair",
       "layout": "b7d55a1589459390",
-      "modules": ["city-tap-strip", "city-ferry"],
+      "modules": [
+        "city-tap-strip",
+        "city-ferry"
+      ],
       "route": "ce3ddb183d843e31",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "11c642c7fbf85b7f:2752",
       "work": 2752
     },
@@ -2493,9 +3808,15 @@
       "id": "blue-city-tap-strip--city-gap",
       "kind": "pair",
       "layout": "e90e9a3e5fb4448d",
-      "modules": ["city-tap-strip", "city-gap"],
+      "modules": [
+        "city-tap-strip",
+        "city-gap"
+      ],
       "route": "599f9e876d692910",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "30cb806d8e9a7509:1378",
       "work": 1378
     },
@@ -2505,9 +3826,15 @@
       "id": "blue-city-tap-strip--city-gap-climb",
       "kind": "pair",
       "layout": "46e8e6b83242144c",
-      "modules": ["city-tap-strip", "city-gap-climb"],
+      "modules": [
+        "city-tap-strip",
+        "city-gap-climb"
+      ],
       "route": "8bd130e8f5b83ace",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "75cf044ccfda7725:2554",
       "work": 2554
     },
@@ -2517,9 +3844,15 @@
       "id": "blue-city-tap-strip--city-ground-hazard",
       "kind": "pair",
       "layout": "c7302fe035eaafb3",
-      "modules": ["city-tap-strip", "city-ground-hazard"],
+      "modules": [
+        "city-tap-strip",
+        "city-ground-hazard"
+      ],
       "route": "778d276872642e1c",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "c42689b1817ce577:3638",
       "work": 3638
     },
@@ -2529,9 +3862,15 @@
       "id": "blue-city-tap-strip--city-ledge-climb",
       "kind": "pair",
       "layout": "309943b10bc83330",
-      "modules": ["city-tap-strip", "city-ledge-climb"],
+      "modules": [
+        "city-tap-strip",
+        "city-ledge-climb"
+      ],
       "route": "188f86d43e4c451a",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "369bc4a010385701:1306",
       "work": 1306
     },
@@ -2541,9 +3880,15 @@
       "id": "blue-city-tap-strip--city-ledge-pit",
       "kind": "pair",
       "layout": "8d3a3e4ae102d97f",
-      "modules": ["city-tap-strip", "city-ledge-pit"],
+      "modules": [
+        "city-tap-strip",
+        "city-ledge-pit"
+      ],
       "route": "7e32bec608bb9335",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "bb2d9178749a10d5:1300",
       "work": 1300
     },
@@ -2553,9 +3898,15 @@
       "id": "blue-city-tap-strip--city-lift-climb",
       "kind": "pair",
       "layout": "812da55012bccaeb",
-      "modules": ["city-tap-strip", "city-lift-climb"],
+      "modules": [
+        "city-tap-strip",
+        "city-lift-climb"
+      ],
       "route": "e97d0fae3eb819dc",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "de8bfd4e252d6325:8740",
       "work": 8740
     },
@@ -2565,9 +3916,15 @@
       "id": "blue-city-tap-strip--city-red-face-climb",
       "kind": "pair",
       "layout": "d00c5637f5a7fc6f",
-      "modules": ["city-tap-strip", "city-red-face-climb"],
+      "modules": [
+        "city-tap-strip",
+        "city-red-face-climb"
+      ],
       "route": "8c86d8bb2d4d1d47",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "d31ff53e7238d025:1282",
       "work": 1282
     },
@@ -2577,9 +3934,15 @@
       "id": "blue-city-tap-strip--city-tap-strip",
       "kind": "pair",
       "layout": "0a0e11a85cd9c169",
-      "modules": ["city-tap-strip", "city-tap-strip"],
+      "modules": [
+        "city-tap-strip",
+        "city-tap-strip"
+      ],
       "route": "2c83250b039edcde",
-      "slots": { "door": 2, "event": 0 },
+      "slots": {
+        "door": 2,
+        "event": 0
+      },
       "trace": "4682a95d01dac8a5:2018",
       "work": 2018
     },
@@ -2589,9 +3952,15 @@
       "id": "blue-city-tap-strip--city-vent-climb",
       "kind": "pair",
       "layout": "f019f50152de6de6",
-      "modules": ["city-tap-strip", "city-vent-climb"],
+      "modules": [
+        "city-tap-strip",
+        "city-vent-climb"
+      ],
       "route": "8bd130e8f5b83ace",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "80bd6cc2292373df:4220",
       "work": 4220
     },
@@ -2601,9 +3970,15 @@
       "id": "blue-city-tap-strip--city-vent-deck",
       "kind": "pair",
       "layout": "88a422c01a1e94a0",
-      "modules": ["city-tap-strip", "city-vent-deck"],
+      "modules": [
+        "city-tap-strip",
+        "city-vent-deck"
+      ],
       "route": "599f9e876d692910",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "93dd13c69f2e4f4d:3050",
       "work": 3050
     },
@@ -2613,9 +3988,15 @@
       "id": "blue-city-tap-strip-high--city-crumbling-descent",
       "kind": "pair",
       "layout": "2ef2672e2ebd8591",
-      "modules": ["city-tap-strip-high", "city-crumbling-descent"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-crumbling-descent"
+      ],
       "route": "1d35fac4851fc3a0",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "1628d69d5c8789c0:551",
       "work": 551
     },
@@ -2625,9 +4006,15 @@
       "id": "blue-city-tap-strip-high--city-drop-gap",
       "kind": "pair",
       "layout": "1519688128de1429",
-      "modules": ["city-tap-strip-high", "city-drop-gap"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-drop-gap"
+      ],
       "route": "e197e6f890b15324",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "6545c29de92b7b8e:576",
       "work": 576
     },
@@ -2637,9 +4024,15 @@
       "id": "blue-city-tap-strip-high--city-ferry-high",
       "kind": "pair",
       "layout": "4ca1ad4530674760",
-      "modules": ["city-tap-strip-high", "city-ferry-high"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-ferry-high"
+      ],
       "route": "c7f6aa0695a89a70",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "5fbb1ebb1054c727:2466",
       "work": 2466
     },
@@ -2649,9 +4042,15 @@
       "id": "blue-city-tap-strip-high--city-gap-high",
       "kind": "pair",
       "layout": "94c12ed0bd654ba4",
-      "modules": ["city-tap-strip-high", "city-gap-high"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-gap-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "5bd09f329bd0b448:2642",
       "work": 2642
     },
@@ -2661,9 +4060,15 @@
       "id": "blue-city-tap-strip-high--city-hazard-descent",
       "kind": "pair",
       "layout": "5bf7e05278acdfd9",
-      "modules": ["city-tap-strip-high", "city-hazard-descent"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-hazard-descent"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "21a5569b3f4dd863:835",
       "work": 835
     },
@@ -2673,9 +4078,15 @@
       "id": "blue-city-tap-strip-high--city-ledge-descent",
       "kind": "pair",
       "layout": "9140e3e3ac47cbc1",
-      "modules": ["city-tap-strip-high", "city-ledge-descent"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-ledge-descent"
+      ],
       "route": "46000278f15e41a5",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "c5bd81ee2f7ea937:1030",
       "work": 1030
     },
@@ -2685,9 +4096,15 @@
       "id": "blue-city-tap-strip-high--city-lift-descent",
       "kind": "pair",
       "layout": "39019fb832126fff",
-      "modules": ["city-tap-strip-high", "city-lift-descent"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-lift-descent"
+      ],
       "route": "1116ca374b8aeacd",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "0138a8f47ffa57bd:3101",
       "work": 3101
     },
@@ -2697,9 +4114,15 @@
       "id": "blue-city-tap-strip-high--city-low-descent",
       "kind": "pair",
       "layout": "b265ae61ab35aff6",
-      "modules": ["city-tap-strip-high", "city-low-descent"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-low-descent"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "49afcc6fbb54756f:2598",
       "work": 2598
     },
@@ -2709,9 +4132,15 @@
       "id": "blue-city-tap-strip-high--city-tap-strip-high",
       "kind": "pair",
       "layout": "49dd115aca92f0f7",
-      "modules": ["city-tap-strip-high", "city-tap-strip-high"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-tap-strip-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "3fdf5d1757e840b4:818",
       "work": 818
     },
@@ -2721,9 +4150,15 @@
       "id": "blue-city-tap-strip-high--city-vent-deck-high",
       "kind": "pair",
       "layout": "19210b0c16a388d5",
-      "modules": ["city-tap-strip-high", "city-vent-deck-high"],
+      "modules": [
+        "city-tap-strip-high",
+        "city-vent-deck-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "64775b2d25ec893f:1646",
       "work": 1646
     },
@@ -2733,9 +4168,15 @@
       "id": "blue-city-vent-climb--city-drop-gap",
       "kind": "pair",
       "layout": "cf585b5e88e8a887",
-      "modules": ["city-vent-climb", "city-drop-gap"],
+      "modules": [
+        "city-vent-climb",
+        "city-drop-gap"
+      ],
       "route": "e197e6f890b15324",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9c2fc6f7ada03212:473",
       "work": 473
     },
@@ -2745,9 +4186,15 @@
       "id": "blue-city-vent-climb--city-ferry-high",
       "kind": "pair",
       "layout": "3790cb649847da0b",
-      "modules": ["city-vent-climb", "city-ferry-high"],
+      "modules": [
+        "city-vent-climb",
+        "city-ferry-high"
+      ],
       "route": "c7f6aa0695a89a70",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "d66c66bc65fb86da:4561",
       "work": 4561
     },
@@ -2757,9 +4204,15 @@
       "id": "blue-city-vent-climb--city-gap-high",
       "kind": "pair",
       "layout": "515e014deef3901a",
-      "modules": ["city-vent-climb", "city-gap-high"],
+      "modules": [
+        "city-vent-climb",
+        "city-gap-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "6eb425eee5c666a1:433",
       "work": 433
     },
@@ -2769,9 +4222,15 @@
       "id": "blue-city-vent-climb--city-ledge-descent",
       "kind": "pair",
       "layout": "d32ddafd2b31d6ca",
-      "modules": ["city-vent-climb", "city-ledge-descent"],
+      "modules": [
+        "city-vent-climb",
+        "city-ledge-descent"
+      ],
       "route": "46000278f15e41a5",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "60993ad516de43b1:1086",
       "work": 1086
     },
@@ -2781,9 +4240,15 @@
       "id": "blue-city-vent-climb--city-lift-descent",
       "kind": "pair",
       "layout": "8a8c840c78f5bcc1",
-      "modules": ["city-vent-climb", "city-lift-descent"],
+      "modules": [
+        "city-vent-climb",
+        "city-lift-descent"
+      ],
       "route": "1116ca374b8aeacd",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "26778d7ffa16e976:3069",
       "work": 3069
     },
@@ -2793,9 +4258,15 @@
       "id": "blue-city-vent-climb--city-low-descent",
       "kind": "pair",
       "layout": "53654547663c01db",
-      "modules": ["city-vent-climb", "city-low-descent"],
+      "modules": [
+        "city-vent-climb",
+        "city-low-descent"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "19cdb5c8fdc6a33c:21996",
       "work": 21996
     },
@@ -2805,9 +4276,15 @@
       "id": "blue-city-vent-climb--city-tap-strip-high",
       "kind": "pair",
       "layout": "c5586c00ae16ec22",
-      "modules": ["city-vent-climb", "city-tap-strip-high"],
+      "modules": [
+        "city-vent-climb",
+        "city-tap-strip-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a65ba9000b7b7089:2878",
       "work": 2878
     },
@@ -2817,9 +4294,15 @@
       "id": "blue-city-vent-deck--city-ferry",
       "kind": "pair",
       "layout": "2786c5949146f2f3",
-      "modules": ["city-vent-deck", "city-ferry"],
+      "modules": [
+        "city-vent-deck",
+        "city-ferry"
+      ],
       "route": "18cee9699818745c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "872c788522e7b125:4367",
       "work": 4367
     },
@@ -2829,9 +4312,15 @@
       "id": "blue-city-vent-deck--city-gap",
       "kind": "pair",
       "layout": "b8874b16843a1410",
-      "modules": ["city-vent-deck", "city-gap"],
+      "modules": [
+        "city-vent-deck",
+        "city-gap"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "e847bedb6289dce6:1828",
       "work": 1828
     },
@@ -2841,9 +4330,15 @@
       "id": "blue-city-vent-deck--city-gap-climb",
       "kind": "pair",
       "layout": "f661492f3462ad0c",
-      "modules": ["city-vent-deck", "city-gap-climb"],
+      "modules": [
+        "city-vent-deck",
+        "city-gap-climb"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c34e11b9ce7ed66d:531",
       "work": 531
     },
@@ -2853,9 +4348,15 @@
       "id": "blue-city-vent-deck--city-ledge-climb",
       "kind": "pair",
       "layout": "c8e0ebfbe5a471b3",
-      "modules": ["city-vent-deck", "city-ledge-climb"],
+      "modules": [
+        "city-vent-deck",
+        "city-ledge-climb"
+      ],
       "route": "f28d513d701f656b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "d9908fdc4e27d098:455",
       "work": 455
     },
@@ -2865,9 +4366,15 @@
       "id": "blue-city-vent-deck--city-ledge-pit",
       "kind": "pair",
       "layout": "df451868d76b2b4c",
-      "modules": ["city-vent-deck", "city-ledge-pit"],
+      "modules": [
+        "city-vent-deck",
+        "city-ledge-pit"
+      ],
       "route": "9a4c4e189b263fb4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "34b54932e9be49cf:451",
       "work": 451
     },
@@ -2877,9 +4384,15 @@
       "id": "blue-city-vent-deck--city-lift-climb",
       "kind": "pair",
       "layout": "b587a424993d307c",
-      "modules": ["city-vent-deck", "city-lift-climb"],
+      "modules": [
+        "city-vent-deck",
+        "city-lift-climb"
+      ],
       "route": "4e96af9cb384f29b",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "3454a9783c6ff9c0:4728",
       "work": 4728
     },
@@ -2889,9 +4402,15 @@
       "id": "blue-city-vent-deck--city-red-face-climb",
       "kind": "pair",
       "layout": "24f3ec7ab12e76f7",
-      "modules": ["city-vent-deck", "city-red-face-climb"],
+      "modules": [
+        "city-vent-deck",
+        "city-red-face-climb"
+      ],
       "route": "0caa6f01381cfc8d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "99f0274fbf162e2d:531",
       "work": 531
     },
@@ -2901,9 +4420,15 @@
       "id": "blue-city-vent-deck--city-tap-strip",
       "kind": "pair",
       "layout": "68f7d168c8353e06",
-      "modules": ["city-vent-deck", "city-tap-strip"],
+      "modules": [
+        "city-vent-deck",
+        "city-tap-strip"
+      ],
       "route": "8d0ca6905115ad78",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "5b9cf10792a5b183:1212",
       "work": 1212
     },
@@ -2913,9 +4438,15 @@
       "id": "blue-city-vent-deck-high--city-drop-gap",
       "kind": "pair",
       "layout": "2269a85a7ff394d4",
-      "modules": ["city-vent-deck-high", "city-drop-gap"],
+      "modules": [
+        "city-vent-deck-high",
+        "city-drop-gap"
+      ],
       "route": "e197e6f890b15324",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9a487f8055cf0a09:523",
       "work": 523
     },
@@ -2925,9 +4456,15 @@
       "id": "blue-city-vent-deck-high--city-ferry-high",
       "kind": "pair",
       "layout": "4d129e40de2a73b5",
-      "modules": ["city-vent-deck-high", "city-ferry-high"],
+      "modules": [
+        "city-vent-deck-high",
+        "city-ferry-high"
+      ],
       "route": "c7f6aa0695a89a70",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "a197662de972ccbb:4367",
       "work": 4367
     },
@@ -2937,9 +4474,15 @@
       "id": "blue-city-vent-deck-high--city-gap-high",
       "kind": "pair",
       "layout": "5ea81dcf4cafbdf2",
-      "modules": ["city-vent-deck-high", "city-gap-high"],
+      "modules": [
+        "city-vent-deck-high",
+        "city-gap-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "2895f9a3edfb6b16:1834",
       "work": 1834
     },
@@ -2949,9 +4492,15 @@
       "id": "blue-city-vent-deck-high--city-ledge-descent",
       "kind": "pair",
       "layout": "282c559f037aa2a4",
-      "modules": ["city-vent-deck-high", "city-ledge-descent"],
+      "modules": [
+        "city-vent-deck-high",
+        "city-ledge-descent"
+      ],
       "route": "46000278f15e41a5",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "c3285f1f30abd6a3:1010",
       "work": 1010
     },
@@ -2961,9 +4510,15 @@
       "id": "blue-city-vent-deck-high--city-lift-descent",
       "kind": "pair",
       "layout": "0dd32d193e2217d6",
-      "modules": ["city-vent-deck-high", "city-lift-descent"],
+      "modules": [
+        "city-vent-deck-high",
+        "city-lift-descent"
+      ],
       "route": "1116ca374b8aeacd",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "472f8840e6cbd778:3032",
       "work": 3032
     },
@@ -2973,9 +4528,15 @@
       "id": "blue-city-vent-deck-high--city-low-descent",
       "kind": "pair",
       "layout": "edc22d585568f942",
-      "modules": ["city-vent-deck-high", "city-low-descent"],
+      "modules": [
+        "city-vent-deck-high",
+        "city-low-descent"
+      ],
       "route": "dadc097c73c5e003",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "38d6dae8513e997d:4784",
       "work": 4784
     },
@@ -2985,9 +4546,15 @@
       "id": "blue-city-vent-deck-high--city-tap-strip-high",
       "kind": "pair",
       "layout": "67b9805ada6bae7b",
-      "modules": ["city-vent-deck-high", "city-tap-strip-high"],
+      "modules": [
+        "city-vent-deck-high",
+        "city-tap-strip-high"
+      ],
       "route": "47697259cdccdcb1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "07ecd2fee5824be3:1286",
       "work": 1286
     },
@@ -2998,7 +4565,10 @@
       "kind": "single",
       "layout": "8aca0cfd9ccce7ad",
       "route": "f434b5571cb4a5b1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "5c13394fcbe34d93:532",
       "work": 532
     },
@@ -3009,7 +4579,10 @@
       "kind": "single",
       "layout": "1c4c9ecf55748385",
       "route": "4983ef1b0aac85a4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7aae81aa1bda228e:760",
       "work": 760
     },
@@ -3020,7 +4593,10 @@
       "kind": "single",
       "layout": "6ce3088eb6869608",
       "route": "4983ef1b0aac85a4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "58b6da85c97c72fe:943",
       "work": 943
     },
@@ -3031,7 +4607,10 @@
       "kind": "single",
       "layout": "e5382e2ce5e770b0",
       "route": "af4545c70468f99e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "8fcecebe8f853c69:7818",
       "work": 7818
     },
@@ -3042,7 +4621,10 @@
       "kind": "single",
       "layout": "a3695494773dd6ae",
       "route": "4983ef1b0aac85a4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "92abab10323b520f:419",
       "work": 419
     },
@@ -3053,7 +4635,10 @@
       "kind": "single",
       "layout": "2d8435f0b5a0fabb",
       "route": "8cf90f25e50faf1e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "fff2779afce2cdea:2830",
       "work": 2830
     },
@@ -3064,7 +4649,10 @@
       "kind": "single",
       "layout": "953c6b092d84b5f8",
       "route": "4983ef1b0aac85a4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "3f35257ece3160f1:3288",
       "work": 3288
     },
@@ -3075,7 +4663,10 @@
       "kind": "single",
       "layout": "973ceb527fd3b9bd",
       "route": "4983ef1b0aac85a4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c7362c4245acc798:1049",
       "work": 1049
     },
@@ -3086,7 +4677,10 @@
       "kind": "single",
       "layout": "bc6c8e7dbe6ebcda",
       "route": "4d4bacbd8ccd2a31",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "2cb12a1505ebc357:1115",
       "work": 1115
     },
@@ -3097,7 +4691,10 @@
       "kind": "single",
       "layout": "91e29d31a94965b4",
       "route": "e0d2b23ac4e263b5",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "39661d5b3ddbafce:797",
       "work": 797
     },
@@ -3108,7 +4705,10 @@
       "kind": "single",
       "layout": "10dfce36ad41bc43",
       "route": "4983ef1b0aac85a4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b386a4fa9c749103:579",
       "work": 579
     },
@@ -3119,7 +4719,10 @@
       "kind": "single",
       "layout": "a5019fe6b8787806",
       "route": "4983ef1b0aac85a4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c7c76560fd8e3fb6:828",
       "work": 828
     },
@@ -3130,7 +4733,10 @@
       "kind": "single",
       "layout": "5c8ace3baceef771",
       "route": "52f9d009b49c3a54",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4be176cf83d0a6eb:1953",
       "work": 1953
     },
@@ -3141,7 +4747,10 @@
       "kind": "single",
       "layout": "d43f94de0793f009",
       "route": "64215e6caac35714",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4db6abade691ef28:1953",
       "work": 1953
     },
@@ -3152,7 +4761,10 @@
       "kind": "single",
       "layout": "d74b7327155e0e9b",
       "route": "2df588c36705864d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "e74c7995161e8302:6206",
       "work": 6206
     },
@@ -3163,7 +4775,10 @@
       "kind": "single",
       "layout": "2c4a4746fa9af05a",
       "route": "38f1e27c06abf92f",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "d7abcf8785dc4311:1355",
       "work": 1355
     },
@@ -3174,7 +4789,10 @@
       "kind": "single",
       "layout": "1e79436be82a4f0b",
       "route": "73d00a4d0dcdd653",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "96ecc1c4c5010643:2421",
       "work": 2421
     },
@@ -3185,7 +4803,10 @@
       "kind": "single",
       "layout": "b7fab5a4d18bcea4",
       "route": "8806e0a22f1b946c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9fd5ba805ef26f22:854",
       "work": 854
     },
@@ -3196,7 +4817,10 @@
       "kind": "single",
       "layout": "80a87aeacaea1c95",
       "route": "14cd9a0637951ec1",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "1b66fc83f381aa69:715",
       "work": 715
     },
@@ -3207,7 +4831,10 @@
       "kind": "single",
       "layout": "ec85a6b047c04d81",
       "route": "958768cb40249c89",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4ba78cb5e8da38d8:2408",
       "work": 2408
     },
@@ -3218,7 +4845,10 @@
       "kind": "single",
       "layout": "3449d53cf37fe92a",
       "route": "c47d3abeebc21987",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "10c1c1e08b467bfe:3651",
       "work": 3651
     },
@@ -3229,7 +4859,10 @@
       "kind": "single",
       "layout": "c900f009f66bc560",
       "route": "4983ef1b0aac85a4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "af0d6b86afe1c5ce:481",
       "work": 481
     },
@@ -3240,7 +4873,10 @@
       "kind": "single",
       "layout": "180085161a77f315",
       "route": "3963365bd514dd1d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "200a8f6919a1a61f:158819",
       "work": 158819
     },
@@ -3251,7 +4887,10 @@
       "kind": "single",
       "layout": "ce56bb8013edb4e0",
       "route": "4983ef1b0aac85a4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "20cbd7be7a1ee181:342",
       "work": 342
     },
@@ -3262,12 +4901,18 @@
       "kind": "single",
       "layout": "b50a62a8a8d0b247",
       "route": "409ead945ddc16dd",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "0aabef2ca19c03bc:408",
       "work": 408
     }
   ],
-  "inputs": { "data": "bb781c7df76ea3ac", "proofs": "c413e879cdb3836b" },
+  "inputs": {
+    "data": "bb781c7df76ea3ac",
+    "proofs": "c413e879cdb3836b"
+  },
   "version": 1,
   "zone": "blue"
 }
