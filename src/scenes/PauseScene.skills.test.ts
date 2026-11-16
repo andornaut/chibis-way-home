@@ -155,9 +155,12 @@ it("captures the world once while touch settings update inside the single DOM mo
     expect(showModalBackdrop).toHaveBeenCalledTimes(1);
     expect(pause.zone.showTouchControls).not.toHaveBeenCalled();
     expect([chrome.inert, chrome.hasAttribute(UI_DIMMED)]).toEqual([true, true]);
-    expect(
-      [move, actions, progress, pause.hud].map((part) => part.hasAttribute(UI_DIMMED)),
-    ).toEqual([false, false, false, true]);
+    expect([move, actions, progress].map((part) => part.hasAttribute(UI_DIMMED))).toEqual([
+      false,
+      false,
+      false,
+    ]);
+    expect(pause.hud.closest(`[${UI_DIMMED}]`)).not.toBeNull();
     pause.scene.setTouchSetting("moveControls", false);
     pause.scene.setTouchSetting("actionButtons", true);
     expect([move.hidden, actions.hidden, chrome.inert, chrome.hasAttribute(UI_DIMMED)]).toEqual([

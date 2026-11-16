@@ -52,7 +52,11 @@ function content() {
       return zone;
     }
     if (!owners.has(key)) {
-      owners.set(key, { events: new EventEmitter(), game });
+      owners.set(key, {
+        events: new EventEmitter(),
+        game,
+        pausable: () => key !== "start" && key !== "map",
+      });
     }
     return owners.get(key)!;
   };

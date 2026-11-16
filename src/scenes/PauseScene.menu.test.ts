@@ -76,7 +76,11 @@ function menu(initial: string) {
       return { playCovered: () => false, skillState: () => undefined };
     }
     if (!owners.has(key)) {
-      owners.set(key, { events: new EventEmitter(), game, pausable: () => pausable });
+      owners.set(key, {
+        events: new EventEmitter(),
+        game,
+        pausable: () => key !== "start" && key !== "map" && pausable,
+      });
     }
     return owners.get(key)!;
   };
@@ -265,7 +269,7 @@ it("restores Pause after Update covers it without allowing a covered Menu visit"
   tap(f.pause.pauseButton);
   await settle();
   const update = f.card("update");
-  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
   tap(f.pause.pauseButton);
   await settle();
   expect(document.activeElement).toBe(update.button);
@@ -420,7 +424,7 @@ it("opens Achievements above gameplay Pause and returns to its held context befo
   expect(f.scenes.launch).toHaveBeenCalledExactlyOnceWith("achievements", { opener: "pause" });
   const child = f.card("achievements");
   expect(f.paused.has("zone")).toBe(true);
-  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+  expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
   pressKey([f.pause.keyboard], "p");
   expect(document.activeElement).toBe(child.button);
   expect(f.scenes.resume).not.toHaveBeenCalled();

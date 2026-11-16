@@ -125,10 +125,17 @@ export function pressKey(
   const event = new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key, ...options });
   const stopped = { value: false };
   const stop = event.stopPropagation.bind(event);
+  const stopImmediately = event.stopImmediatePropagation.bind(event);
   Object.defineProperty(event, "stopPropagation", {
     value: () => {
       stopped.value = true;
       stop();
+    },
+  });
+  Object.defineProperty(event, "stopImmediatePropagation", {
+    value: () => {
+      stopped.value = true;
+      stopImmediately();
     },
   });
   (document.activeElement ?? document.body).dispatchEvent(event);
