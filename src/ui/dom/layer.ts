@@ -102,11 +102,8 @@ export interface UiLayer {
   setDimmedSkin(properties: LayoutValues): void;
 }
 
-// What the card dialog in one of root's views dims: the views under it, but not a live element
-// in one or the elements along the path to it, whose other children it dims instead. The kit's
-// modal layer makes the same elements inert, besides any view over the card's. In a view over
-// the card's or alongside its dialog, it dims only marked UI_COVERED branches outside the
-// dialog that neither are nor hold a live element.
+// Cards dim lower views and marked branches beside or above their dialog. Explicit live paths
+// retain their existing paint; dialog content stays undimmed.
 function dimTargets(
   root: HTMLElement,
   dialog: HTMLElement,
