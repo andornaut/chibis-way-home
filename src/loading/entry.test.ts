@@ -50,6 +50,10 @@ function host(progress: Pick<typeof import("./progress.ts"), "loadingProgress">)
   startup.initial = progress.loadingProgress.begin();
   const element = document.createElement("div");
   element.id = "game";
+  Object.defineProperties(element, {
+    offsetHeight: { value: 360 },
+    offsetWidth: { value: 720 },
+  });
   document.body.append(element);
   return element;
 }

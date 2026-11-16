@@ -6,7 +6,7 @@ import {
 } from "@andornaut/game-kit/runtime/progressState";
 import { createDomProgressBar } from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
 
-import { SCREEN } from "../data/screen.ts";
+import { loadingUnit } from "./presentation.ts";
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style.ts";
 
 // The bar shows only loads the player waits for, each through its own entry point: boot (the
@@ -75,11 +75,7 @@ export function mountLoading(parent: HTMLElement): () => void {
     bar = createDomProgressBar(host, stageProgressStyle(stage), PROGRESS_RECT, LOADING_TIMING);
     show();
   };
-  const resize = () =>
-    host.style.setProperty(
-      "--loading-scale",
-      String(Math.min(parent.offsetWidth / SCREEN.width, parent.offsetHeight / SCREEN.height)),
-    );
+  const resize = () => host.style.setProperty("--loading-scale", String(loadingUnit(parent)));
   const observer = new ResizeObserver(resize);
   observer.observe(parent);
   resize();

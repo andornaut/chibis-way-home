@@ -146,6 +146,36 @@ export const DEATH_CARD = {
 // The page and in-game loading bar share this height; stage progress has its own style.
 export const LOADING_LAYOUT = { height: 2 } as const;
 
+export const LOADING_FAILURE_PRESENTATION = {
+  action: {
+    borderWidth: 1,
+    height: TEXT_BUTTON.height,
+    highlightHeight: 1,
+    paddingBottom: TEXT_BUTTON.lipHeight,
+    paddingX: 12,
+    shadeHeight: TEXT_BUTTON.lipHeight,
+    width: 128,
+  },
+  panel: {
+    bodyActionGapPx: 24,
+    borderWidthPx: 1,
+    lipHeightPx: 4,
+    // CLEANUP (added 2026-11-15): confirm this provisional width after the approved font comparison.
+    maxWidthPx: 328,
+    paddingBottomPx: 16,
+    paddingTopPx: 24,
+    paddingXPx: 16,
+    safeInsetPx: 16,
+    shadowOffsetPx: 4,
+    titleBodyGapPx: 16,
+  },
+  text: {
+    action: { lineHeight: 1.2, sizePx: 18, weight: 700 },
+    body: { lineHeight: 1.45, sizePx: 18, weight: 400 },
+    title: { lineHeight: 1.2, sizePx: 24, weight: 700 },
+  },
+} as const;
+
 export const SETTINGS_CARD = {
   // art: each row's leading icon side, and the install steps glyph's.
   icon: 16,

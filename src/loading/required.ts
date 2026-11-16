@@ -4,13 +4,13 @@ import {
   type LoadingAttemptState,
 } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import {
-  type LoadingFailureView,
+  type LoadingFailurePresentationView,
   mountLoadingFailure,
 } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
 import type { InstallationState } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
-import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
-import { CARD_CONTENT, TEXT_BUTTON } from "../data/layout.ts";
+import { SCREEN } from "../data/screen.ts";
+import { loadingFailurePresentation, loadingUnit } from "./presentation.ts";
 
 // One page registry shares the kit's required-resource failure and explicit Retry lifecycle.
 export const requiredLoading = createRequiredLoading();
@@ -63,19 +63,17 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
   const document = parent.ownerDocument;
   const window = document.defaultView;
   let live = true;
-  let listening = false;
+  const frame = parent.closest<HTMLElement>("#game") ?? parent;
   let requiredState = requiredLoading.state;
   let state: LoadingAttemptState = requiredState;
   let revision = 0;
   let owner: "required" | "installation" = "required";
   let pending: Promise<unknown> | undefined;
   let pendingOwner: "required" | "installation" | undefined;
-  let startingRetry = false;
   let unit: number | undefined;
-  let view: LoadingFailureView | undefined;
+  let view: LoadingFailurePresentationView | undefined;
   const onRetry = () => {
     let flight: Promise<unknown>;
-    startingRetry = true;
     try {
       pendingOwner = owner;
       flight = owner === "installation" ? installationRetry!() : requiredLoading.retry();
@@ -83,8 +81,6 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
     } catch (error) {
       pendingOwner = undefined;
       throw error;
-    } finally {
-      startingRetry = false;
     }
     const settled = () => {
       if (live && pending === flight) {
@@ -97,36 +93,32 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
     return flight.then(() => undefined);
   };
   const refit = () => {
-    if (!live || state.kind !== "failed" || startingRetry || pending !== undefined) {
+    if (!live || (state.kind !== "failed" && view === undefined)) {
       return;
     }
-    const nextUnit = readUnit(parent.closest("#game")?.querySelector(".ui-layer") ?? parent);
+    const nextUnit = loadingUnit(frame);
+    if (!Number.isFinite(nextUnit) || nextUnit <= 0) {
+      return;
+    }
+    parent.style.setProperty("--failure-frame-width", `${SCREEN.width * nextUnit}px`);
+    parent.style.setProperty("--failure-frame-height", `${SCREEN.height * nextUnit}px`);
     if (view !== undefined && unit === nextUnit) {
       return;
     }
-    const focused = view?.element.querySelector("button") === document.activeElement;
-    view?.dispose();
     unit = nextUnit;
+    const presentation = loadingFailurePresentation(unit);
+    if (view !== undefined) {
+      view.setPresentation(presentation);
+      return;
+    }
     view = mountLoadingFailure(
       {
-        layout: {
-          actionAlign: "end",
-          gapPx: CARD_CONTENT.gap * unit,
-          minActionSizePx: TEXT_BUTTON.height * unit,
-          paddingPx: CARD_CONTENT.padding * unit,
-        },
         onRetry,
+        presentation,
       },
       parent,
     );
     view.update(state);
-    if (focused) {
-      view.element.querySelector("button")?.focus({ preventScroll: true });
-    }
-    if (!listening) {
-      window?.addEventListener("resize", refit);
-      listening = true;
-    }
   };
   const render = () => {
     const nextOwner =
@@ -155,6 +147,9 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
       view?.element.querySelector("button")?.focus({ preventScroll: true });
     }
   };
+  const observer = new ResizeObserver(refit);
+  observer.observe(frame);
+  window?.addEventListener("resize", refit);
   const stop = requiredLoading.subscribe((next) => {
     requiredState = next;
     render();
@@ -165,6 +160,7 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
     stop();
     installationListeners.delete(render);
     window?.removeEventListener("resize", refit);
+    observer.disconnect();
     pending = undefined;
     view?.dispose();
     view = undefined;
