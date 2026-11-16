@@ -54,6 +54,21 @@ For each placement, record the source, seed, starting support, active skills and
 
 Report observed outcomes separately from unobserved specials, incomplete recovery, controller limitations and exhausted work. A cooldown is not a contact grace period. Record any declared reaction delay and whether the cue was actually visible; automated success does not establish human fairness or enjoyment. Compare distinct physical encounter layouts rather than counting cosmetic aliases as variety.
 
+### Boss move catalogue
+
+Ordinary ground charges and pursuit are separate from this catalogue. Kiwi's two-charge sequence is listed as a charge variant; Pebble's swoop is a distinct attack but is not flagged as a special by the scorer. All tells use the shared anticipation pose before commitment. The shared attack cooldown starts after the committed sequence completes; it does not make body contact safe.
+
+| Boss   | Special or variant                                        | Tell                                               | Action and recovery                                                                                                                                                              |
+| ------ | --------------------------------------------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Archie | Pounce (`pounce`)                                         | 1 s                                                | Forward hop, then 0.3 s rest before pursuit.                                                                                                                                     |
+| Pebble | Dropping burst (`drop-burst`); swoop (`swoop`)            | 1 s each                                           | The burst aligns for up to three falling droppings. The swoop flies towards Chibi. Both return to actual support and rest for 0.35 s before pursuit.                             |
+| Trixi  | Floor trap (`trap`)                                       | 1 s                                                | Places a stationary trap that arms after 0.8 s; returns to pursuit after the 0.14 s release.                                                                                     |
+| Bini   | Maul (`maul`); sonic growl (`growl`)                      | 1 s; 1.2 s                                         | Maul holds a close-body swipe for 0.3 s, then rests for 0.35 s. Growl emits a pushing gust for 0.35 s, then resumes pursuit.                                                     |
+| Kiwi   | Climb and drop (`drop`); double-charge variant (`charge`) | Drop 1 s; charge 0.9 s, second-charge re-aim 0.6 s | Lines up, climbs and drops, then rests for 0.3 s. The charge variant adds a second rush only with at least three tiles of ground ahead, then rests and returns along the ground. |
+| Fert   | Parcel throw (`parcel`)                                   | 1 s                                                | Lobs a parcel during a 0.14 s throw, then holds a 1 s committed rest before pursuit.                                                                                             |
+
+This is a source-reviewed catalogue. Current browser observation of every special move is not established. Arena evade proofs alone do not establish all-move observation or human playability.
+
 ### Reported playtimes
 
 | Zone                 | Stage              | Reported clear time |
