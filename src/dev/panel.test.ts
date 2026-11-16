@@ -6,6 +6,7 @@ import { ZONE_MAP } from "../data/map.ts";
 import { TEXT } from "../data/text.ts";
 import { TOUCH } from "../data/touch.ts";
 import { SKILL_IDS } from "../progress/index.ts";
+import { assertGameActions } from "../ui/input/actionBinding.ts";
 import { developerStages, mountDeveloperPanel, panelInputGate } from "./panel.ts";
 
 const stops: (() => void)[] = [];
@@ -24,17 +25,40 @@ function panel(grant: Parameters<typeof mountDeveloperPanel>[0]["grant"] = vi.fn
   document.body.append(host);
   let blocked = false;
   let sync = () => {};
-  const dispose = mountDeveloperPanel({
-    blocked: () => blocked,
-    grant,
-    subscribe: (next) => { sync = next; return () => {}; },
-  }, host);
+  const dispose = mountDeveloperPanel(
+    {
+      blocked: () => blocked,
+      grant,
+      subscribe: (next) => {
+        sync = next;
+        return () => {};
+      },
+    },
+    host,
+  );
   stops.push(dispose);
   const section = document.querySelector<HTMLElement>(".dev-tools")!;
   const fields = section.querySelector<HTMLFieldSetElement>("#dev-panel")!;
-  const button = (text: string) => [...section.querySelectorAll("button")].find((node) => node.textContent === text)!;
-  const checkbox = (text: string) => [...section.querySelectorAll("label")].find((node) => node.textContent === text)!.querySelector<HTMLInputElement>("input")!;
-  return { button, checkbox, dispose, fields, host, media, section, sync: () => sync(), block: (next: boolean) => { blocked = next; sync(); } };
+  const button = (text: string) =>
+    [...section.querySelectorAll("button")].find((node) => node.textContent === text)!;
+  const checkbox = (text: string) =>
+    [...section.querySelectorAll("label")]
+      .find((node) => node.textContent === text)!
+      .querySelector<HTMLInputElement>("input")!;
+  return {
+    block: (next: boolean) => {
+      blocked = next;
+      sync();
+    },
+    button,
+    checkbox,
+    dispose,
+    fields,
+    host,
+    media,
+    section,
+    sync: () => sync(),
+  };
 }
 function activate(element: HTMLElement) {
   const key = element instanceof HTMLInputElement ? " " : "Enter";
@@ -44,11 +68,22 @@ function activate(element: HTMLElement) {
   element.click();
 }
 function pointer(target: HTMLElement, type: string) {
-  target.dispatchEvent(new PointerEvent(type, { bubbles: true, button: 0, clientX: 1, clientY: 1, isPrimary: true, pointerId: 1 }));
+  target.dispatchEvent(
+    new PointerEvent(type, {
+      bubbles: true,
+      button: 0,
+      clientX: 1,
+      clientY: 1,
+      isPrimary: true,
+      pointerId: 1,
+    }),
+  );
 }
 describe("browser developer panel", () => {
   it("derives selectable stages and invalidates captured presses across modals", () => {
-    expect(developerStages().flatMap((zone) => zone.stages.map((stage) => stage.id))).toEqual(ZONE_MAP.destinations.flatMap((zone) => zone.stages));
+    expect(developerStages().flatMap((zone) => zone.stages.map((stage) => stage.id))).toEqual(
+      ZONE_MAP.destinations.flatMap((zone) => zone.stages),
+    );
     let blocked = false;
     const gate = panelInputGate(() => blocked);
     gate.press();
@@ -112,7 +147,12 @@ describe("browser developer panel", () => {
 it("reports partial save outcomes while retaining async modal and disposal guards", async () => {
   let finish!: (result: import("../progress/index.ts").SavedSkillGrantResult) => void;
   let available = () => false;
-  const grant = vi.fn((access: { available: () => boolean }) => { available = access.available; return new Promise<import("../progress/index.ts").SavedSkillGrantResult>((resolve) => { finish = resolve; }); });
+  const grant = vi.fn((access: { available: () => boolean }) => {
+    available = access.available;
+    return new Promise<import("../progress/index.ts").SavedSkillGrantResult>((resolve) => {
+      finish = resolve;
+    });
+  });
   const view = panel(grant);
   activate(view.button(DEV_TEXT.toggle));
   const groups = view.fields.querySelectorAll("fieldset");
@@ -131,7 +171,13 @@ it("reports partial save outcomes while retaining async modal and disposal guard
   view.block(true);
   view.block(false);
   expect(available()).toBe(false);
-  finish({ cause: "blocked", reason: "action_unavailable", status: "partial", writes: [{ available: true, record: "progress", status: "saved" }], written: ["progress"] });
+  finish({
+    cause: "blocked",
+    reason: "action_unavailable",
+    status: "partial",
+    writes: [{ available: true, record: "progress", status: "saved" }],
+    written: ["progress"],
+  });
   const status = view.section.querySelector('[role="status"]')!;
   await vi.waitFor(() => expect(status.textContent).toContain(DEV_TEXT.grantResults.partial));
   expect(status.textContent).toContain(DEV_TEXT.grantRecords.progress);
@@ -190,4 +236,13 @@ it("holds a label or its native checkbox once and cancels a stale modal press", 
   vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
   pointer(label, "pointerup");
   expect(checkbox.checked).toBe(before);
+});
+
+it("rejects a newly constructed discrete control without an action registration", () => {
+  const view = panel();
+  expect(() => assertGameActions(view.section)).not.toThrow();
+  view.section.append(document.createElement("button"));
+  expect(() => assertGameActions(view.section)).toThrow(
+    "Every discrete control must register its action",
+  );
 });

@@ -289,9 +289,17 @@ it("holds Retry through its guarded factory callback once and suppresses release
   const retry = vi.fn(() => new Promise<void>(() => {}));
   resources.push(requiredLoading.observe({ retry, status: () => "failed" }));
   const button = view.button();
-  const pointer = (type: string) => button.dispatchEvent(new PointerEvent(type, {
-    bubbles: true, button: 0, clientX: 1, clientY: 1, isPrimary: true, pointerId: 1,
-  }));
+  const pointer = (type: string) =>
+    button.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        clientX: 1,
+        clientY: 1,
+        isPrimary: true,
+        pointerId: 1,
+      }),
+    );
   pointer("pointerdown");
   expect(retry).not.toHaveBeenCalled();
   now = TOUCH.actionHoldMilliseconds;

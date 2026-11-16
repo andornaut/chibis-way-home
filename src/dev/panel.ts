@@ -4,7 +4,11 @@ import { DEV_TEXT } from "../data/dev.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { TEXT } from "../data/text.ts";
 import { type SavedSkillGrantResult, SKILL_IDS } from "../progress/index.ts";
-import { bindGameActions, bindNativeGameActions } from "../ui/input/actionBinding.ts";
+import {
+  assertGameActions,
+  bindGameActions,
+  bindNativeGameActions,
+} from "../ui/input/actionBinding.ts";
 import {
   changeInvulnerability,
   changeSkillOverride,
@@ -200,14 +204,14 @@ export function mountDeveloperPanel(
     }
   });
   section.addEventListener("keyup", (event) => event.stopPropagation());
-  toggle.addEventListener("click", () => {
+  const onToggle = () => {
     if (!gate.accepts()) {
       return;
     }
     invalidate();
     fields.hidden = !fields.hidden;
     toggle.setAttribute("aria-expanded", String(!fields.hidden));
-  });
+  };
   zones.addEventListener("change", () => {
     if (gate.accepts()) {
       fillStages();
@@ -231,7 +235,11 @@ export function mountDeveloperPanel(
     changeInvulnerability(page, invulnerable.checked);
   };
   invulnerable.addEventListener("change", applyInvulnerability);
-  nativeActions.push({ apply: applyInvulnerability, checkbox: invulnerable, label: invulnerableLabel });
+  nativeActions.push({
+    apply: applyInvulnerability,
+    checkbox: invulnerable,
+    label: invulnerableLabel,
+  });
   const onGrant = () => {
     if (!gate.accepts() || fields.hidden) {
       return;
@@ -270,31 +278,49 @@ export function mountDeveloperPanel(
         }
       });
   };
-  const available = () => !unavailable() && !pending && !disposed && !fields.hidden;
+  const interactive = () => !unavailable() && !pending && !disposed;
+  const available = () => interactive() && !fields.hidden;
   const nativeBinding = bindNativeGameActions(
     { gate },
     (target) => {
-      const control = nativeActions.find(({ label }) => target instanceof page.Node && label.contains(target));
-      return control === undefined ? null : {
-        activate: () => {
-          control.checkbox.checked = !control.checkbox.checked;
-          control.apply();
-        },
-        available: () => available() && !fields.disabled && !control.checkbox.disabled,
-        element: control.label,
-      };
+      const control = nativeActions.find(
+        ({ label }) => target instanceof page.Node && label.contains(target),
+      );
+      return control === undefined
+        ? null
+        : {
+            activate: () => {
+              control.checkbox.checked = !control.checkbox.checked;
+              control.apply();
+            },
+            available: () => available() && !fields.disabled && !control.checkbox.disabled,
+            element: control.label,
+          };
     },
     section,
   );
-  const buttons = [{ activate: onLoad, element: load }, { activate: onGrant, element: grant }];
-  const actions = bindGameActions({
-    guard: { gate },
-    resolve: (target) => {
-      const action = buttons.find(({ element }) => target instanceof page.Node && element.contains(target));
-      return action === undefined ? null : { ...action, available };
+  const buttons = [
+    { activate: onToggle, available: interactive, element: toggle },
+    { activate: onLoad, available, element: load },
+    { activate: onGrant, available, element: grant },
+  ];
+  const actions = bindGameActions(
+    {
+      guard: { gate },
+      resolve: (target) => {
+        const action = buttons.find(
+          ({ element }) => target instanceof page.Node && element.contains(target),
+        );
+        return action ?? null;
+      },
     },
-  }, section);
-  cancelActions = () => { nativeBinding.cancel(); actions.cancel(); };
+    section,
+  );
+  assertGameActions(section);
+  cancelActions = () => {
+    nativeBinding.cancel();
+    actions.cancel();
+  };
   const resume = () => {
     invalidate();
     sync();
