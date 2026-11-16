@@ -129,7 +129,7 @@ it("keeps card keys guarded and restores only held content", async () => {
     modalInput(card as never).open();
     pause.update();
     expect(pause.pauseButton.hidden, key).toBe(false);
-    expect(pause.pauseButton.disabled, key).toBe(false);
+    expect(pause.pauseButton.disabled, key).toBe(true);
     pressKey([pause.keyboard], "P");
     expect(scenes.pause).not.toHaveBeenCalled();
     modalInput(card as never).close();
@@ -141,7 +141,7 @@ it("keeps card keys guarded and restores only held content", async () => {
   expect(scenes.pause).toHaveBeenCalledExactlyOnceWith("map");
   expect(scenes.bringToTop).toHaveBeenCalledOnce();
   expect(pause.pauseButton.hidden).toBe(false);
-  expect(pause.pauseButton.disabled).toBe(false);
+  expect(pause.pauseButton.disabled).toBe(true);
   tap(pause.button(TEXT.pause.settings));
   expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("settings", { opener: "pause" });
   expect(scenes.resume).not.toHaveBeenCalled();
