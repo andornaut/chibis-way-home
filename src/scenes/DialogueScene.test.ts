@@ -153,10 +153,10 @@ it("focuses a touched dialogue control without a ring and keeps keyboard focus v
   expect(keyboardFocus).toHaveBeenCalledWith();
 });
 
-it("passes P and Escape on, and takes no key or tap the modal gate refuses", () => {
+it("contains P and Escape without advancing, and takes no action the modal gate refuses", () => {
   const { line, press, root, scene } = conversation();
   for (const key of ["p", "P", "Escape"]) {
-    expect(pressKey([], key).stopped()).toBe(false);
+    expect(pressKey([], key).stopped()).toBe(true);
   }
   const cover = Object.assign(new DialogueScene(), {
     events: new EventEmitter(),
