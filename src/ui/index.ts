@@ -144,6 +144,7 @@ export { focusKeyAction, stepFocus } from "./focus/index.ts";
 export {
   bindFactoryAction,
   bindGameActions,
+  bindNativeGameActions,
   type GameAction,
   type GameActionOptions,
 } from "./input/actionBinding.ts";

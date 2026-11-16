@@ -72,6 +72,14 @@ export function bindGameActions(options: GameActionOptions, root: HTMLElement): 
 
 // Factories retain their native click ownership and original guarded semantic callback.
 // readUnit supplies CSS unit 1 for cold controls outside the game's fitted UI layer.
+export function bindNativeGameActions(
+  guard: PressGuard,
+  resolve: (target: EventTarget | null) => GameAction | null,
+  root: HTMLElement,
+): HoldActionsBinding {
+  return bindHoldActions({ guard, resolve: (target) => resolved(resolve(target)) }, root);
+}
+
 export const bindFactoryAction: HoldActionBinding = (action) => {
   const gate = {
     accepts: action.available,
@@ -80,12 +88,9 @@ export const bindFactoryAction: HoldActionBinding = (action) => {
       return () => accepted && action.available();
     },
   };
-  return bindHoldActions(
-    {
-      guard: { gate },
-      resolve: (target) =>
-        target instanceof Node && action.element.contains(target) ? resolved(action) : null,
-    },
+  return bindNativeGameActions(
+    { gate },
+    (target) => (target instanceof Node && action.element.contains(target) ? action : null),
     action.element,
   );
 };
