@@ -35,6 +35,8 @@ export type ControlAction = "move" | "jump" | "use";
 
 // The touch controls, in base pixels.
 export interface TouchTuning {
+  // A discrete action held this long activates once, unless it has an explicit hold action.
+  readonly actionHoldMilliseconds: number;
   // A move touch moves him once it is more than this far left or right of where it started.
   readonly moveDeadZone: number;
   // A press that travels further than this is a drag, not a tap: a tap outside a card closes it.
