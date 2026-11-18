@@ -94,6 +94,7 @@ Plain PNGs from their drawing tools, listed in the manifest under `images` with 
 | portrait-goose            | Trixi dialogue portrait, transparent                       | 48x48  | neutral                                                                                      |
 | portrait-pigeon           | Pebble dialogue portrait, transparent                      | 48x48  | neutral                                                                                      |
 | portrait-raccoon          | Kiwi dialogue portrait, transparent                        | 48x48  | neutral                                                                                      |
+| portrait-tip              | Tip dialogue portrait, transparent                         | 48x48  | neutral                                                                                      |
 | ui-button                 | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                                                    |
 | ui-button-primary         | nine-slice (2,4,2,6)                                       | 16x28  | normal, pressed, disabled                                                                    |
 | ui-close                  | sprite                                                     | 24x24  | normal, pressed                                                                              |

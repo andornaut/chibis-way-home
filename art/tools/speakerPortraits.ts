@@ -1,21 +1,25 @@
 /**
- * Trixi and Kiwi dialogue portraits matching their existing antagonist identities.
+ * Trixi and Kiwi dialogue portraits matching their existing antagonist identities, and the Tip
+ * speaker's light bulb.
  *
  * Usage: node art/tools/speakerPortraits.ts build | preview OUT.png, from the repository root.
- * portrait-goose and portrait-raccoon: 48x48, facing right, transparent ground, chest cropped at
- * the bottom and one ink outer contour. Each has one neutral 1000ms looping frame, once []. Use the
- * standard unmirrored dialogue portrait slot with its top-left origin. Neither portrait declares a
- * hitbox, contact mask or slice. Trixi retains cream feathers, a long neck, grey wing, orange bill
- * and round ink-rimmed glasses: one lens over a white eye and ink pupil, sized within the head.
- * Kiwi retains rounded ears, grey/slate fur, paired ink masks, a cream face band and muzzle, and
- * white eye glints, without accessories.
+ * portrait-goose, portrait-raccoon and portrait-tip: 48x48, transparent ground, cropped at the
+ * bottom and one ink outer contour. Each has one neutral 1000ms looping frame, once []. Use the
+ * standard unmirrored dialogue portrait slot with its top-left origin. No portrait declares a
+ * hitbox, contact mask or slice. Trixi and Kiwi face right and are cropped at the chest. Trixi
+ * retains cream feathers, a long neck, grey wing, orange bill and round ink-rimmed glasses: one lens
+ * over a white eye and ink pupil, sized within the head. Kiwi retains rounded ears, grey/slate fur,
+ * paired ink masks, a cream face band and muzzle, and white eye glints, without accessories. Tip is
+ * an upright light bulb without a face: warm yellow glass shaded by an amber crescent along its
+ * lower right, white glints at the upper left, four short yellow rays clear of the glass and a grey
+ * screw base whose thread bands run off the bottom edge.
  */
 
 import { run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
-const ONCE = { "portrait-goose": [], "portrait-raccoon": [] };
+const ONCE = { "portrait-goose": [], "portrait-raccoon": [], "portrait-tip": [] };
 const USAGE = "Usage: speakerPortraits.ts build | preview OUT.png";
 
 function goose(): pixel.Frame {
@@ -63,9 +67,58 @@ function raccoon(): pixel.Frame {
   return g.outlined({ edge: () => pixel.hex("ink") });
 }
 
+/** The glass silhouette: a round globe tapering into a neck that meets the base. */
+function glass(g: Grid, dx: number, dy: number, colour: string): void {
+  g.ell(24 + dx, 16 + dy, 13.5, 13.5, colour);
+  g.tri([12 + dx, 20 + dy], [36 + dx, 20 + dy], [31 + dx, 33 + dy], colour);
+  g.tri([12 + dx, 20 + dy], [31 + dx, 33 + dy], [17 + dx, 33 + dy], colour);
+}
+
+function tip(): pixel.Frame {
+  const g = new Grid(48, 48);
+  // Amber shade where the glass drawn 3px up and to the left does not reach: a lower-right crescent.
+  const lit = new Grid(48, 48);
+  glass(lit, -3, -3, "yellow");
+  glass(g, 0, 0, "amber");
+  for (let y = 0; y < 48; y++) {
+    for (let x = 0; x < 48; x++) {
+      if (g.px[y][x] && lit.px[y][x]) {
+        g.p(x, y, "yellow");
+      }
+    }
+  }
+  // White glints: a curved streak along the upper left of the globe and a short dot below it.
+  g.rect(14, 10, 2, 5, "white");
+  g.rect(15, 8, 2, 2, "white");
+  g.rect(17, 6, 3, 2, "white");
+  g.rect(14, 17, 2, 2, "white");
+  // Screw base: a collar, then 3px threads stepping out past 2px grooves, cropped by the bottom edge.
+  g.rect(17, 32, 15, 2, "grey");
+  for (const y of [34, 39, 44]) {
+    g.rect(16, y, 17, 3, "grey");
+    g.rect(16, y, 2, 3, "lgrey");
+    g.rect(29, y, 4, 3, "slate");
+  }
+  for (const y of [37, 42, 47]) {
+    g.rect(18, y, 13, 2, "slate");
+    g.rect(27, y, 4, 2, "dslate");
+  }
+  g.rect(28, 32, 4, 2, "slate");
+  // Short rays clear of the glass: level at each side and rising at the upper corners.
+  for (const x of [2, 42]) {
+    g.rect(x, 15, 4, 2, "yellow");
+  }
+  for (let i = 0; i < 3; i++) {
+    g.rect(8 - i, 6 - i, 2, 1, "yellow");
+    g.rect(38 + i, 6 - i, 2, 1, "yellow");
+  }
+  return g.outlined({ edge: () => pixel.hex("ink") });
+}
+
 export function* sprites(): Generator<pixel.SpriteEntry> {
   yield ["portrait-goose", [["neutral", [goose()], 1000]]];
   yield ["portrait-raccoon", [["neutral", [raccoon()], 1000]]];
+  yield ["portrait-tip", [["neutral", [tip()], 1000]]];
 }
 
 const OPTIONS: pixel.MainOptions = {
