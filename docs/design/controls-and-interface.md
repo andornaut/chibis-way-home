@@ -46,3 +46,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0069 | Prefix the touch settings rows with Display                             | [cwh-0069.md](../work/cwh-0069.md) |
 | cwh-0255 | Name the opening and start screens and the game page from the text data | [cwh-0255.md](../work/cwh-0255.md) |
 | cwh-0256 | Adopt the shared Pause and Menu navigation                              | [cwh-0256.md](../work/cwh-0256.md) |
+| cwh-0264 | Move developer controls into a Settings Cheats modal                    | [cwh-0264.md](../work/cwh-0264.md) |

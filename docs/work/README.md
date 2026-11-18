@@ -299,3 +299,4 @@ decided or delivered, and why, in a line or two each.
 | cwh-0261 | Document the boss special moves in a catalogue table                                          | [cwh-0261.md](cwh-0261.md) |
 | cwh-0262 | Declare every art build set's outputs so the check catches stale files                        | [cwh-0262.md](cwh-0262.md) |
 | cwh-0263 | Gate boss charges by reach and room to move                                                   | [cwh-0263.md](cwh-0263.md) |
+| cwh-0264 | Move developer controls into a Settings Cheats modal                                          | [cwh-0264.md](cwh-0264.md) |
