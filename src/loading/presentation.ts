@@ -10,10 +10,10 @@ export function loadingUnit(frame: Pick<HTMLElement, "offsetHeight" | "offsetWid
 }
 
 // Text and panel spacing are CSS pixels; only the logical action and its decoration scale. The
-// Retry label is white, matching the primary Start button label.
+// Retry uses the primary button plate and white label, as Start does.
 export function loadingFailurePresentation(unit: number): LoadingFailurePresentation {
   const { action, panel, text } = LOADING_FAILURE_PRESENTATION;
-  const { cream, forest, green, ink, plum, tan, white, yellow } = palette.colours;
+  const { cream, dslate, ink, navy, plum, slate, white } = palette.colours;
   return {
     action: {
       borderWidthPx: action.borderWidth * unit,
@@ -25,13 +25,13 @@ export function loadingFailurePresentation(unit: number): LoadingFailurePresenta
       widthPx: action.width * unit,
     },
     palette: {
-      action: green,
+      action: dslate,
       actionText: white,
       border: ink,
-      highlight: yellow,
-      lip: tan,
+      highlight: slate,
+      lip: navy,
       panel: cream,
-      shade: forest,
+      shade: navy,
       shadow: ink,
       text: plum,
     },

@@ -36,13 +36,13 @@ it("keeps approved CSS panel and text metrics while scaling only the logical act
     widthPx: 256,
   });
   expect(small.palette).toEqual({
-    action: palette.colours.green,
+    action: palette.colours.dslate,
     actionText: palette.colours.white,
     border: palette.colours.ink,
-    highlight: palette.colours.yellow,
-    lip: palette.colours.tan,
+    highlight: palette.colours.slate,
+    lip: palette.colours.navy,
     panel: palette.colours.cream,
-    shade: palette.colours.forest,
+    shade: palette.colours.navy,
     shadow: palette.colours.ink,
     text: palette.colours.plum,
   });
