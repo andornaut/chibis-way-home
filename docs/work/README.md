@@ -292,3 +292,5 @@ decided or delivered, and why, in a line or two each.
 | cwh-0254 | Release landed and superseded Tech worktrees and branches                        | [cwh-0254.md](cwh-0254.md) |
 | cwh-0255 | Name the opening and start screens and the game page from the text data          | [cwh-0255.md](cwh-0255.md) |
 | cwh-0256 | Adopt the shared Pause and Menu navigation                                       | [cwh-0256.md](cwh-0256.md) |
+| cwh-0257 | Stop shipping the unreferenced Liberation TTFs                                   | [cwh-0257.md](cwh-0257.md) |
+| cwh-0258 | Subset the WOFF2 faces to the player-string glyphs with a coverage check         | [cwh-0258.md](cwh-0258.md) |

@@ -195,3 +195,5 @@ Reference: [art](../../art/README.md), [style guide](../../art/style-guide.md), 
 | cwh-0247 | Size modals by width family with Large cards at 688                              | [cwh-0247.md](../work/cwh-0247.md) |
 | cwh-0248 | Describe the current stage picker in the map generator comment                   | [cwh-0248.md](../work/cwh-0248.md) |
 | cwh-0249 | Align the Settings row notes, heights and state words with source                | [cwh-0249.md](../work/cwh-0249.md) |
+| cwh-0257 | Stop shipping the unreferenced Liberation TTFs                                   | [cwh-0257.md](../work/cwh-0257.md) |
+| cwh-0258 | Subset the WOFF2 faces to the player-string glyphs with a coverage check         | [cwh-0258.md](../work/cwh-0258.md) |
