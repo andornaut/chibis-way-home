@@ -25,8 +25,9 @@ decided or delivered, and why, in a line or two each.
   is never rewritten.
 - Work files are public: no session IDs, hostnames, local home-directory paths or quoted
   conversation, only short approval references.
-- An approval reference ending in `backfill` dates a finished item by its first implementing
-  commit.
+- A backfilled item whose user approval date was inferred from handoff history reads
+  `user, <date> (inferred from handoff history)`. One with no traceable approval reads
+  `unrecorded (<role>-shipped, <date>)`, dated by its first implementing commit.
 - Docs-only changes run only the attribution and lint checks ([cwh-0026](cwh-0026.md)).
 - The game never serves or deploys `docs/`: the build reads `pages/` and `public/`, and
   deployment uploads only `dist/`.
