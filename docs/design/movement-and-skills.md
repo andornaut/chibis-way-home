@@ -1,6 +1,14 @@
 # Movement and skills
 
-Gameplay owns Chibi's movement and skills in the [rulebook](../../gameplay/design.md#chibi).
+Stages are built on 12 px tiles to Chibi's fixed reaches: a short press rises 3 tiles, a full jump
+6, and a running jump with flutter crosses a 17-tile gap ([grid](../../gameplay/design.md#grid)). He
+walks and brakes smoothly, jumps with one uninterrupted decelerating ascent, flutters on every fall,
+and has coyote time and jump buffering ([Chibi](../../gameplay/design.md#chibi)). Gift rooms
+permanently grant Dash, Double jump and Speedy; at most one skill is selected, only its effect
+applies, and selecting another owned skill replaces it. The first permanent gift selects its skill
+automatically, later grants keep the current selection, and each new grant queues a tip to tap or
+click the skill to enable it. Ordinary required routes never need a skill, and there is no life
+counter.
 
 Reference: [Chibi](../../gameplay/design.md#chibi).
 

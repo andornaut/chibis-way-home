@@ -1,6 +1,18 @@
 # Story and cast
 
-Gameplay owns the premise, cast, voice and dialogue in the [rulebook](../../gameplay/design.md#cast).
+After a fight, Fert, a ferret, mails his sleeping former best friend Chibi far from the apartment
+they shared, and Chibi travels home zone by zone through a modern world where animals talk, there
+are no humans and there is no combat ([pitch](../../gameplay/design.md#pitch),
+[setting](../../gameplay/design.md#setting)). Each zone has one antagonist with a distinct voice,
+Fert's friends and finally Fert himself, and the cause of the fight and the outcome of the
+friendship stay undecided ([cast](../../gameplay/design.md#cast),
+[voice](../../gameplay/design.md#voice)). Conversations show one paragraph of at most two lines at a
+time in a fixed top box with name tabs and portraits, advance only on Continue and can be skipped
+([dialogue](../../gameplay/design.md#dialogue)). Each zone introduces its antagonist once in a
+cinematic exchange and closes with an outgoing exchange, while spotting, escape and Fert's journey
+barks show as nonmodal messages ([quips](../../gameplay/design.md#quips),
+[Fert](../../gameplay/design.md#fert)). New games and confirmed Restart open with four manually
+advanced still shots ([opening story](../../gameplay/design.md#opening-story)).
 
 Reference: [cast](../../gameplay/design.md#cast), [dialogue](../../gameplay/design.md#dialogue), [narrative](../../gameplay/narrative/README.md).
 
