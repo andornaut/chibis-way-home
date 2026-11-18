@@ -124,7 +124,9 @@ export function createSettingsCard(
   writeLayoutProperties(SETTINGS_LAYOUT, root);
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
-  const { dialog } = dialogFor(id, words.title, "settings-card", "medium");
+  // Large: at medium the rows' wrapped notes leave the card taller than the view less its screen
+  // margins. The install steps card over it stays medium.
+  const { dialog } = dialogFor(id, words.title, "settings-card", "large");
   const list = element("div", "settings-rows");
   const icons: Partial<Record<SettingsSpriteRow, HTMLImageElement>> = {};
   // A row's button with its icons and its label, which names it. Each switch's note describes
