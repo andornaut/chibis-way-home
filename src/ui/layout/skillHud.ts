@@ -20,8 +20,9 @@ const DISC_MARGIN = (SKILL_BUTTON.target - SKILL_BUTTON.disc) / 2;
 export const SKILL_TARGET_GAP = SMALL_BUTTON_GAP - 2 * DISC_MARGIN;
 // Where each shown skill's button target sits in the base view: one row along the view's top,
 // packed against its right edge in SKILL_IDS order with discs SMALL_BUTTON_GAP apart, each disc
-// HUD_EDGE in from the top and the rightmost disc HUD_EDGE in from the right. Skills not shown
-// take no slot. Like the pause button, the row moves with the view (viewShift).
+// and target centred on the top section's TOP_BAR_CENTRE_Y and the rightmost disc HUD_EDGE in
+// from the right. Skills not shown take no slot. Like the pause button, the row moves with the
+// view (viewShift).
 export function skillHud(shown: readonly SkillId[]): ReadonlyMap<SkillId, Point> {
   const row = SKILL_IDS.filter((skill) => shown.includes(skill));
   const right = SCREEN.width - HUD_EDGE + DISC_MARGIN;

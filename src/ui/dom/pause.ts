@@ -24,9 +24,10 @@ import {
 
 // The pause scene's view in the HTML UI (pause.css, on ui.css and skillDisc.css): the pause card,
 // the pause button at the view's top-left corner and the skill HUD along its top-right, each
-// button's box its press area. The HUD sits over the card's backdrop, so a press on it is never a
-// tap outside the card. A card under this view (a conversation, its choice or a summary) covers
-// the HUD and entry, which stay painted but dim and take no presses beneath the top card.
+// button's box its press area. While the card is open the entry and the HUD stay painted over its
+// backdrop, dimmed and inert, so a press on them passes to the backdrop: a tap outside the card,
+// which closes it. A card under this view (a conversation, its choice or a summary) covers the HUD
+// and entry the same way: they stay painted but dim and take no presses beneath the top card.
 
 // The layout properties pause.css reads, in base px.
 export const PAUSE_LAYOUT: LayoutValues = {

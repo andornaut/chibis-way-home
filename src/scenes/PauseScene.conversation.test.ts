@@ -30,21 +30,28 @@ vi.mock("./save.ts", () => ({
 vi.mock("./modalBackdrop.ts", () => ({
   showModalBackdrop: () => ({ destroy: vi.fn(), ready: Promise.resolve(), setVisible: vi.fn() }),
 }));
-vi.mock("./domUi.ts", () => ({
-  artFrameUrl: () => Promise.resolve("blob:glyph"),
-  mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
-    const unmount = (dom.layer as UiLayer).mount(10, view);
-    scene.events.once("shutdown", unmount);
-    return unmount;
-  },
-  sceneDomUi: () => dom.layer,
-}));
+// Each view mounts at its scene's place in the game's scene list.
+vi.mock("./domUi.ts", () => {
+  const orders: Readonly<Record<string, number>> = { dialogue: 9, pause: 13 };
+  return {
+    artFrameUrl: () => Promise.resolve("blob:glyph"),
+    mountSceneView: (
+      scene: { events: EventEmitter; scene: { key: string } },
+      view: HTMLElement,
+    ) => {
+      const unmount = (dom.layer as UiLayer).mount(orders[scene.scene.key] ?? 0, view);
+      scene.events.once("shutdown", unmount);
+      return unmount;
+    },
+    sceneDomUi: () => dom.layer,
+  };
+});
 
 import { ZONE_DIALOGUES } from "../data/dialogues.ts";
 import { ZONE_MAP } from "../data/map.ts";
-import { TEXT } from "../data/text.ts";
 import { createUiLayer, type UiLayer } from "../ui/index.ts";
 import { type DialogueData, DialogueScene } from "./DialogueScene.ts";
+import { modalInput } from "./modalInput.ts";
 import { createPauseScene, settle, tap } from "./pauseFixture.ts";
 
 let layer: UiLayer;
@@ -63,21 +70,30 @@ afterEach(() => {
 });
 
 interface DialogueState {
+  create(): void;
   paragraph: number;
   showParagraph(): void;
 }
 
-// The zone paused under a conversation, on its second line, and the pause scene beside it.
-// Without a conversation (null) the zone is on the map: neither running nor paused.
-function conversation(data: DialogueData | null = { scene: "archie-intro" }) {
+// The zone paused under a conversation, shown on its second line in its real modal (its input
+// scope and dialog isolation in the UI layer), and the pause scene beside it. Without a
+// conversation (null) the zone is on the map: neither running nor paused.
+async function conversation(data: DialogueData | null = { scene: "archie-intro" }) {
   const game = { events: new EventEmitter() };
-  const dialogue = Object.assign(new DialogueScene(), { events: new EventEmitter(), game });
+  const dialogue = Object.assign(new DialogueScene(), {
+    events: new EventEmitter(),
+    game,
+    scene: {
+      get: () => undefined,
+      key: "dialogue",
+      launch: vi.fn(),
+      start: vi.fn(),
+      stop: vi.fn(),
+    },
+    sys: { isActive: () => true },
+    textures: { exists: () => true },
+  });
   const lines = dialogue as unknown as DialogueState;
-  if (data !== null) {
-    dialogue.init(data);
-    lines.paragraph = 1;
-  }
-  const showParagraph = vi.spyOn(lines, "showParagraph").mockImplementation(() => {});
   const zone = {
     conversationCovers: () => data !== null,
     playCovered: () => data !== null,
@@ -96,15 +112,23 @@ function conversation(data: DialogueData | null = { scene: "archie-intro" }) {
   };
   const pause = createPauseScene(game, scenes);
   shutdowns.push(() => pause.events.emit("shutdown"));
+  if (data !== null) {
+    dialogue.init(data);
+    lines.paragraph = 1;
+    shutdowns.push(() => dialogue.events.emit("shutdown"));
+    lines.create();
+    await settle();
+  }
+  const showParagraph = vi.spyOn(lines, "showParagraph").mockImplementation(() => {});
   pause.update();
-  return { lines, pause, scenes, showParagraph };
+  return { dialogue, lines, pause, scenes, showParagraph };
 }
 
-it("shows the pause button while a conversation covers play, and never on the map", () => {
-  const first = conversation();
+it("shows the pause button while a conversation covers play, and never on the map", async () => {
+  const first = await conversation();
   expect(first.pause.pauseButton.hidden).toBe(false);
-  first.pause.events.emit("shutdown");
-  expect(conversation(null).pause.pauseButton.hidden).toBe(true);
+  shutdowns.splice(0).forEach((shutdown) => shutdown());
+  expect((await conversation(null)).pause.pauseButton.hidden).toBe(true);
 });
 
 const { id: zone, stages } = ZONE_MAP.destinations[0]!;
@@ -115,16 +139,17 @@ it.each<{ readonly data?: DialogueData; readonly name: string }>([
     data: { clearedStage: stages.at(-1)!, scene: ZONE_DIALOGUES[zone]!.outro },
     name: "a zone's outgoing exchange",
   },
-])("opens over $name and resumes it on the same line, the zone still paused", async ({ data }) => {
-  const { lines, pause, scenes, showParagraph } = conversation(data ?? { scene: "archie-intro" });
+])("leaves $name in its modal on the same line, the zone still paused", async ({ data }) => {
+  const { dialogue, lines, pause, scenes, showParagraph } = await conversation(
+    data ?? { scene: "archie-intro" },
+  );
+  expect(pause.pauseButton.closest("[inert]")).not.toBeNull();
   tap(pause.pauseButton);
   await settle();
-  const card = pause.dialog.closest<HTMLElement>(".ui-card-scene")!;
-  expect(card.hidden).toBe(false);
-  expect(scenes.pause).toHaveBeenCalledExactlyOnceWith("dialogue");
-  tap(pause.button(TEXT.pause.resume));
-  expect(card.hidden).toBe(true);
-  expect(scenes.resume).toHaveBeenCalledExactlyOnceWith("dialogue");
+  expect(pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
+  expect(scenes.pause).not.toHaveBeenCalled();
+  expect(scenes.resume).not.toHaveBeenCalled();
+  expect(modalInput(dialogue as never).accepts()).toBe(true);
   expect(lines.paragraph).toBe(1);
   expect(showParagraph).not.toHaveBeenCalled();
   pause.update();

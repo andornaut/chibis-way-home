@@ -34,9 +34,9 @@ export const PAUSE_GLYPH = {
   frame: CONTROL_DISC_FRAME,
 } as const;
 
-// The top-corner HUD's drawn edge in from the view: Pause's disc in from the view's top and left,
-// and the skill row's discs in from its top and the rightmost one in from its right, so the two
-// corners mirror.
+// The top-corner HUD's drawn edge in from the view's sides: Pause's disc in from the left and the
+// skill row's rightmost disc in from the right, so the two corners mirror. Both centre on the top
+// section's middle (src/ui/layout/topBar.ts).
 export const HUD_EDGE = 12;
 
 // Use, Jump and the move hint are placed from the full game canvas's edges (the navigation
@@ -63,7 +63,8 @@ export const TOUCH_LAYOUT = {
   useFromJump: { x: -77, y: -100 } satisfies Point,
 } as const;
 
-// The skill HUD's buttons, packed along the view's top right, HUD_EDGE in from its top and right.
+// The skill HUD's buttons, packed along the view's top right, centred on the top section's middle
+// with the rightmost disc HUD_EDGE in from the right.
 export const SKILL_HUD = {
   // art: the skill glyph's frame side.
   glyph: 16,
@@ -234,7 +235,8 @@ export const DIALOGUE_LAYOUT = {
   departureInset: 16,
   // Skip and Continue below the panel: their gap below the panel's bottom and their height.
   footer: { gap: 4, height: 36 },
-  // The speaker's name tab: its top's clearance below the skill HUD's drawn discs, its drawn edge in
+  // The speaker's name tab: clearance, which with HUD_EDGE and the disc's side puts its top at y 66,
+  // 25.5 below the top row's centred discs (src/ui/layout/dialogueScreen.ts); its drawn edge in
   // from the panel's end opposite the portrait, its height, the name's clearance from its left
   // and right edges, and how far it rises above the panel's top.
   nameTab: { clearance: 21, endInset: 8, height: 20, inset: 6, overhang: 10 },

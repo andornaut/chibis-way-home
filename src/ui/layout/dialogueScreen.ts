@@ -5,8 +5,10 @@ import { FONT_SCALE } from "./fontRoles.ts";
 import { SKILL_BUTTON } from "./skillHud.ts";
 
 const { nameTab: TAB, padding: PADDING, panel, portraitInset: PORTRAIT_INSET } = DIALOGUE_LAYOUT;
-// The name tab's top, the top of everything the panel draws: the clearance below the top button
-// row's discs, whose skill HUD targets stay live above it.
+// The name tab's top, the top of everything the panel draws, at y 66: TAB.clearance below where a
+// disc HUD_EDGE from the view's top would end (45). The top row's discs centre on
+// TOP_BAR_CENTRE_Y and end at y 40.5, so the tab's top is 25.5 below them and below every top-row
+// press area (Pause's, the deepest, ends at y 52.5).
 const TAB_TOP = HUD_EDGE + SKILL_BUTTON.disc + TAB.clearance;
 // The panel, centred across the view below the name tab's overhang.
 const BOX: Rect = {
