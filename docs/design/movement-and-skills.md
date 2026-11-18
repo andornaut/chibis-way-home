@@ -12,3 +12,4 @@ Reference: [Chibi](../../gameplay/design.md#chibi).
 | cwh-0046 | Add Dash, Double jump and Speedy as gifted skills         | [cwh-0046.md](../work/cwh-0046.md) |
 | cwh-0060 | Grant skills unselected and tip the player to enable them | [cwh-0060.md](../work/cwh-0060.md) |
 | cwh-0070 | Auto-select the first gifted skill                        | [cwh-0070.md](../work/cwh-0070.md) |
+| cwh-0250 | Grant every skill unselected, including the first gift    | [cwh-0250.md](../work/cwh-0250.md) |
