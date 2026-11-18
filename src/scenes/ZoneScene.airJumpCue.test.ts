@@ -17,6 +17,7 @@ vi.mock("./save.ts", () => ({
   activeSkill: () => "doubleJump",
   recordActiveStageStep: vi.fn(),
   recordStepAchievements: vi.fn(),
+  triggerZoneTips: vi.fn(),
 }));
 
 import { ZoneScene } from "./ZoneScene.ts";
@@ -57,6 +58,7 @@ it.each(["accepted", "death", "area"])(
       attemptShown: 0,
       barksCanPresent: () => false,
       beginDeath: vi.fn(),
+      cameraView: () => ({ height: 0, width: 0, x: 0, y: 0 }),
       clock: frameSteps({ maxFrameMs: 100, stepMs: STEP_MS }, 0, startStepClock).clock,
       drawArea: vi.fn(),
       drawBird: vi.fn(),
