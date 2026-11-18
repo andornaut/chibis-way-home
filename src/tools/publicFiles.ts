@@ -3,7 +3,7 @@ import type { Plugin } from "vite";
 // Public files a build ships though no shipped file names them: the favicon browsers request
 // without a link, and the licence that travels with the shipped typefaces.
 export const UNNAMED_PUBLIC_FILES: readonly string[] = [
-  "/art/fonts/liberation/OFL.txt",
+  "/art/fonts/chibi-sans/OFL.txt",
   "/favicon.ico",
 ];
 

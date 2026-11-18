@@ -40,13 +40,13 @@ it("registers exactly the two former CSS face declarations once per document", (
   expect(faces).toEqual([
     {
       descriptors: { display: "block", style: "normal", weight: "400" },
-      family: "Liberation Sans",
-      source: 'url("/art/fonts/liberation/LiberationSans-Regular.woff2") format("woff2")',
+      family: "Chibi Sans",
+      source: 'url("/art/fonts/chibi-sans/ChibiSans-Regular.woff2") format("woff2")',
     },
     {
       descriptors: { display: "block", style: "normal", weight: "700" },
-      family: "Liberation Sans",
-      source: 'url("/art/fonts/liberation/LiberationSans-Bold.woff2") format("woff2")',
+      family: "Chibi Sans",
+      source: 'url("/art/fonts/chibi-sans/ChibiSans-Bold.woff2") format("woff2")',
     },
   ]);
   expect(fonts.add).toHaveBeenCalledTimes(2);
@@ -75,7 +75,7 @@ it("registers before Boot font requests and keeps both weights ready across laye
   const layer = createUiLayer([], document);
   layers.push(layer, createUiLayer([], document));
   expect(fonts.add).toHaveBeenCalledTimes(2);
-  expect(layer.element.style.getPropertyValue("--ui-font-family")).toBe('"Liberation Sans"');
+  expect(layer.element.style.getPropertyValue("--ui-font-family")).toBe('"Chibi Sans"');
   let ready = false;
   const loading = loadUiFonts(document.fonts).then(() => {
     ready = true;

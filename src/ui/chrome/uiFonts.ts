@@ -9,18 +9,18 @@ const UI_FONTS = {
       key: FONT_ROLES.body,
       role: "body",
       style: "normal",
-      url: "/art/fonts/liberation/LiberationSans-Regular.woff2",
+      url: "/art/fonts/chibi-sans/ChibiSans-Regular.woff2",
       weight: "400",
     },
     {
       key: FONT_ROLES.heading,
       role: "heading",
       style: "normal",
-      url: "/art/fonts/liberation/LiberationSans-Bold.woff2",
+      url: "/art/fonts/chibi-sans/ChibiSans-Bold.woff2",
       weight: "700",
     },
   ],
-  family: "Liberation Sans",
+  family: "Chibi Sans",
   format: "woff2",
 } as const;
 

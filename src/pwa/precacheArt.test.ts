@@ -63,8 +63,8 @@ it("includes the native crash bird and both UI font files in the fingerprinted a
   const urls = artUrls(EMPTY);
   for (const url of [
     BIRD_SHEET_URL,
-    "/art/fonts/liberation/LiberationSans-Regular.woff2",
-    "/art/fonts/liberation/LiberationSans-Bold.woff2",
+    "/art/fonts/chibi-sans/ChibiSans-Regular.woff2",
+    "/art/fonts/chibi-sans/ChibiSans-Bold.woff2",
   ]) {
     expect(urls.filter((entry) => entry === url)).toHaveLength(1);
   }

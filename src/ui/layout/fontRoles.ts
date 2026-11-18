@@ -13,7 +13,7 @@ export const FONT_METRICS = {
   mainHeading: { lineHeight: 28, size: 24 },
 } as const;
 
-// art: Liberation Sans's vertical metrics in both weights, as fractions of the font size: its
+// art: Chibi Sans's vertical metrics in both weights, as fractions of the font size: its
 // hhea ascent and descent, which set a CSS line's content area, and its OS/2 cap height.
 export const UI_FONT_FACE = {
   ascent: 1854 / 2048,
