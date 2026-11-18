@@ -285,3 +285,5 @@ decided or delivered, and why, in a line or two each.
 | cwh-0248 | Describe the current stage picker in the map generator comment                   | [cwh-0248.md](cwh-0248.md) |
 | cwh-0249 | Align the Settings row notes, heights and state words with source                | [cwh-0249.md](cwh-0249.md) |
 | cwh-0250 | Grant every skill unselected, including the first gift                           | [cwh-0250.md](cwh-0250.md) |
+| cwh-0251 | Add the Tip speaker and first-time tips                                          | [cwh-0251.md](cwh-0251.md) |
+| cwh-0252 | Turn the selected power-up off with a tap                                        | [cwh-0252.md](cwh-0252.md) |

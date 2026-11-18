@@ -15,3 +15,4 @@ Reference: [cast](../../gameplay/design.md#cast), [dialogue](../../gameplay/desi
 | cwh-0045 | Play a storybook opening before new games                 | [cwh-0045.md](../work/cwh-0045.md) |
 | cwh-0059 | Describe the opening as shipped and settle Fert's wording | [cwh-0059.md](../work/cwh-0059.md) |
 | cwh-0071 | Keep the opening at four still shots                      | [cwh-0071.md](../work/cwh-0071.md) |
+| cwh-0251 | Add the Tip speaker and first-time tips                   | [cwh-0251.md](../work/cwh-0251.md) |
