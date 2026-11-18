@@ -29,14 +29,13 @@ export function cardTurnAction(open: boolean): CardAction | undefined {
 }
 
 // What back does on the start screen.
-type StartBackAction = "closeCard" | "exit";
+type StartBackAction = "closeCard" | "leave";
 
-// Back closes the card that shows (the settings card or its install steps, or the restart card),
-// and otherwise leaves the game as Exit does. Where the start screen shows no Exit, back does
-// nothing.
-export function startBackAction(cardOpen: boolean, canExit: boolean): StartBackAction | undefined {
+// Back closes the card that shows (the restart card), and otherwise leaves the game where back can
+// (backLeavesGame in src/pwa), and does nothing elsewhere.
+export function startBackAction(cardOpen: boolean, canLeave: boolean): StartBackAction | undefined {
   if (cardOpen) {
     return "closeCard";
   }
-  return canExit ? "exit" : undefined;
+  return canLeave ? "leave" : undefined;
 }

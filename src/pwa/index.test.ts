@@ -330,7 +330,9 @@ it("never offers an update on a page no version controls", async () => {
 });
 
 it.each([
-  { app: false, name: "browser tab", shown: true, ua: "iPhone Safari" },
+  { app: false, name: "browser tab", shown: false, ua: "iPhone Safari" },
+  { app: false, name: "Chrome Android tab", shown: false, ua: "Android Chrome/142.0" },
+  { app: false, name: "desktop Chrome tab", shown: false, ua: "Chrome/142.0" },
   { app: true, name: "Chrome Android app", shown: true, ua: "Android Chrome/142.0" },
   { app: true, name: "desktop Chrome app", shown: true, ua: "Chrome/142.0" },
   { app: true, name: "desktop Edge app", shown: true, ua: "Chrome/142.0 Edg/142.0" },
@@ -354,7 +356,7 @@ it.each([
     watcher: false,
   },
 ])(
-  "offers Start Exit only with a usable exit path: $name",
+  "shows Start Exit only in an app window that closes: $name",
   async ({ app, historyLength = 1, shown, ua, watcher = true }) => {
     const { backCloseWatcher } = await import("@andornaut/game-kit/runtime/web/pwa/backNavigation");
     vi.mocked(backCloseWatcher).mockReturnValueOnce(watcher ? () => new EventTarget() : undefined);
@@ -368,8 +370,20 @@ it.each([
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp();
     expect(pwa.exitShown()).toBe(shown);
+    // Back leaves from a browser tab, and from an app only where its window closes.
+    expect(pwa.backLeavesGame()).toBe(app ? shown : true);
   },
 );
+
+it("closes the window for Exit and never navigates, even once the page shows in a tab", async () => {
+  const close = vi.fn();
+  const assign = vi.fn();
+  Object.assign(window, { close, location: { assign } });
+  const pwa = await import("./index.ts");
+  pwa.closeApp();
+  expect(close).toHaveBeenCalledOnce();
+  expect(assign).not.toHaveBeenCalled();
+});
 
 it("retains first-install reports arriving before play binding and delegates only explicit Retry", async () => {
   const failed: InstallationState = {

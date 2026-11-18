@@ -8,6 +8,8 @@ const native = vi.hoisted(() => ({ cancel: vi.fn(), layer: vi.fn(), reveal: vi.f
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "back-pressed" },
+  backLeavesGame: () => false,
+  closeApp: vi.fn(),
   coverZone: lifecycle.cover,
   exitShown: () => false,
   startScreenShown: lifecycle.shown,

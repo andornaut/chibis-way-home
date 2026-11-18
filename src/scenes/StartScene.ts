@@ -5,7 +5,14 @@ import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
 import { openingDestination } from "../progress/index.ts";
-import { coverZone, exitShown, PHONE_EVENTS, startScreenShown } from "../pwa/index.ts";
+import {
+  backLeavesGame,
+  closeApp,
+  coverZone,
+  exitShown,
+  PHONE_EVENTS,
+  startScreenShown,
+} from "../pwa/index.ts";
 import {
   createStart,
   focusKeyAction,
@@ -34,11 +41,11 @@ type Card = "restart";
 
 // The screen the game opens on without saved progress, and that Back to title goes to: the Start
 // button, which opens the map (Continue, with him where he stands, once progress is saved),
-// under a nav bar with Exit at its right end. Restart opens the restart card;
-// the card that shows takes the keys and back until it closes. Exit, and back with no card open,
-// leave the browser game. Installed app windows omit Exit when closing is
-// unsupported (exitShown), and back there is the browser's own. A control acts when a press lands
-// on it and lifts on it.
+// under a nav bar with Exit at its right end only in an app window a script can close (exitShown).
+// Restart opens the restart card; the card that shows takes the keys and back until it closes.
+// Exit closes the app's window and never navigates. Back with no card open leaves the game where
+// it can (backLeavesGame): a closable app's window closes and a browser tab goes to the site's
+// home page. A control acts when a press lands on it and lifts on it.
 export class StartScene extends Scene implements RestartOpener {
   private layout!: StartScreenLayout;
   private focus: Control | undefined;
@@ -75,14 +82,14 @@ export class StartScene extends Scene implements RestartOpener {
     modalInput(this).subscribe(() => this.showPressed(undefined));
     this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
     const onBack = (event: Event) => {
-      const action = startBackAction(this.card !== undefined, this.layout.exit !== undefined);
+      const action = startBackAction(this.card !== undefined, backLeavesGame());
       if (action === "closeCard") {
         const card = this.cardScene();
         if (modalInput(card).accepts(event)) {
           card.back();
         }
-      } else if (action === "exit" && modalInput(this).accepts(event)) {
-        this.act("exit");
+      } else if (action === "leave" && modalInput(this).accepts(event)) {
+        exitApp(browserExitPage());
       }
     };
     window.addEventListener(PHONE_EVENTS.backPressed, onBack);
@@ -266,7 +273,7 @@ export class StartScene extends Scene implements RestartOpener {
       this.drawFocus();
       this.scene.launch(RESTART, { opener: this.scene.key } satisfies RestartData);
     } else {
-      exitApp(browserExitPage());
+      closeApp();
     }
   }
 

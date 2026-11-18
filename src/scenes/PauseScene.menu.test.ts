@@ -62,6 +62,11 @@ afterEach(() => {
   layer.dispose();
 });
 
+// The modal's buttons besides Back to title and the bottom button, alphabetical by label.
+const ALPHABETICAL = [TEXT.start.achievements, TEXT.pause.settings].sort((a, b) =>
+  a.localeCompare(b),
+);
+
 function menu(initial: string) {
   const active = new Set([initial, "pause"]),
     paused = new Set<string>();
@@ -156,12 +161,12 @@ it("opens the Start Menu with bottom-primary Close and returns focus without cha
   const rows = [...f.pause.dialog.querySelectorAll<HTMLButtonElement>(".ui-text-button")].filter(
     (button) => !button.hidden,
   );
-  expect(rows.map((button) => button.textContent)).toEqual([
-    TEXT.start.achievements,
-    TEXT.pause.settings,
-    TEXT.pause.close,
+  expect(rows.map((button) => button.textContent)).toEqual([...ALPHABETICAL, TEXT.pause.close]);
+  expect(rows.map((button) => button.classList.contains("ui-text-button-primary"))).toEqual([
+    false,
+    false,
+    true,
   ]);
-  expect(rows.at(-1)?.classList.contains("ui-text-button-primary")).toBe(true);
   expect(document.activeElement).toBe(f.pause.dialog);
   const names = Array.from({ length: 5 }, () => {
     pressKey([], "Tab");
@@ -413,10 +418,15 @@ it("opens Achievements above gameplay Pause and returns to its held context befo
     (button) => !button.hidden,
   );
   expect(rows.map((button) => button.textContent)).toEqual([
-    TEXT.start.achievements,
-    TEXT.pause.settings,
+    ...ALPHABETICAL,
     TEXT.pause.home,
     TEXT.pause.resume,
+  ]);
+  expect(rows.map((button) => button.classList.contains("ui-text-button-primary"))).toEqual([
+    false,
+    false,
+    false,
+    true,
   ]);
   const action = f.pause.button(TEXT.start.achievements);
   action.focus();

@@ -5,7 +5,7 @@
 // A fresh document may apply a complete waiting version before constructing the game or reading
 // saves. During play, newer versions stage separately and switch only through Update now or the
 // newer-save guard. Returning to Start or showing the page never activates them.
-import { appCannotClose } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
+import { appCannotClose, runsInAppWindow } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
 import {
   backCloseWatcher,
   isFirefoxAndroidApp,
@@ -48,8 +48,9 @@ export const updateOffer = createUpdateOffer(
 // The forced update for a save a newer version wrote (requireNewer), as the kit reports it.
 export const requiredUpdate = createRequiredUpdate();
 
-// Capture close eligibility before the back guard can add a history entry.
-let exitHidden = false;
+// Close eligibility, captured as the page loads, before the back guard can add a history entry.
+let appCloses = false;
+let backLeaves = true;
 let home: HomeScreen | undefined;
 let screenWakeLock: ScreenWakeLock | undefined;
 
@@ -103,7 +104,9 @@ export function setupPhoneApp(): Promise<LaunchResult> {
     "storage" in navigator ? navigator.storage : undefined,
   );
   const createCloseWatcher = backCloseWatcher(navigator.userAgent, browserCloseWatcher());
-  exitHidden = appCannotClose(createCloseWatcher, window);
+  const cannotClose = appCannotClose(createCloseWatcher, window);
+  appCloses = runsInAppWindow(window) && !cannotClose;
+  backLeaves = !cannotClose;
   // Firefox for Android's installed app keeps its own back.
   // WORKAROUND: https://bugzilla.mozilla.org/show_bug.cgi?id=2079243 (see isFirefoxAndroidApp).
   if (!isFirefoxAndroidApp(navigator.userAgent, (query) => matchMedia(query).matches)) {
@@ -126,10 +129,21 @@ export function setupPhoneApp(): Promise<LaunchResult> {
   return launch;
 }
 
-// Whether the start screen offers to leave the game: Exit, and back with no card open. A browser
-// tab can always leave for the site's home page; app windows need a supported close path.
+// Whether the start screen shows Exit: only in an installed app's window that a script can close.
 export function exitShown(): boolean {
-  return !exitHidden;
+  return appCloses;
+}
+
+// Closes the app's window, for Exit; it never navigates to another page.
+export function closeApp(): void {
+  window.close();
+}
+
+// Whether back on the start screen with no card open leaves the game: a closable app's window
+// closes and a browser tab goes to the site's home page. An app whose window a script cannot
+// close keeps back on the start screen.
+export function backLeavesGame(): boolean {
+  return backLeaves;
 }
 
 // Updates to a version at least as new as the one that wrote the save, by itself and with no

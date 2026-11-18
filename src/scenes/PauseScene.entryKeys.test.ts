@@ -4,15 +4,19 @@ import { EventEmitter } from "node:events";
 import { afterEach, expect, it, vi } from "vitest";
 
 const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
+// Exit's window close, and the page exit handler, which may navigate.
 const exit = vi.hoisted(() => vi.fn());
+const leave = vi.hoisted(() => vi.fn());
 vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scene: class {} }));
 vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/exitApp", () => ({
   browserExitPage: () => "/",
-  exitApp: exit,
+  exitApp: leave,
 }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { onChange: () => () => {} } }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
+  backLeavesGame: () => true,
+  closeApp: exit,
   coverZone: vi.fn(),
   exitShown: () => true,
   startScreenShown: vi.fn(),
@@ -53,6 +57,7 @@ const cleanup: (() => void)[] = [];
 afterEach(() => {
   cleanup.splice(0).forEach((stop) => stop());
   exit.mockClear();
+  leave.mockClear();
 });
 
 async function startMenu() {
@@ -220,4 +225,14 @@ it("cannot activate or route Tab to Menu underneath an ordinary modal", async ()
   expect(document.activeElement).toBe(action);
   expect(exit).not.toHaveBeenCalled();
   close();
+});
+
+it("closes the app window from Exit without navigating", async () => {
+  const f = await startMenu();
+  f.key("Tab");
+  f.key("Tab");
+  expect(document.activeElement?.getAttribute("aria-label")).toBe(TEXT.start.exit);
+  f.key("Enter");
+  expect(exit).toHaveBeenCalledOnce();
+  expect(leave).not.toHaveBeenCalled();
 });

@@ -33,7 +33,7 @@ export interface IconButtonLayout {
 }
 
 export interface StartScreenLayout {
-  // Present where the start screen offers to leave the game (exitShown in src/pwa).
+  // Present where Exit closes the app (exitShown in src/pwa).
   readonly exit?: IconButtonLayout;
   readonly logo: Rect;
   readonly nav: Rect;
