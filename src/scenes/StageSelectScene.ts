@@ -22,7 +22,7 @@ import { bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
-import { savedMap } from "./save.ts";
+import { mapFullyOpen, savedMap } from "./save.ts";
 
 export interface StageSelectData {
   readonly destination: string;
@@ -70,7 +70,7 @@ export class StageSelectScene extends Scene {
     const selection = destinationSelection(
       PLANS,
       ZONE_MAP,
-      openMap(ZONE_MAP, new Set(progress.completed)),
+      openMap(ZONE_MAP, new Set(progress.completed), mapFullyOpen()),
       catalogue,
     );
     if (selection.kind !== "choose") {

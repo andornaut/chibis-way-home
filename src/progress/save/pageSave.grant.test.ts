@@ -4,8 +4,6 @@ import { afterEach, expect, it, vi } from "vitest";
 import { CHUNKS } from "../../data/chunks.ts";
 import { ZONE_MAP } from "../../data/map.ts";
 import { RECIPES } from "../../data/zones.ts";
-import { SKILL_IDS } from "../skills.ts";
-import { ACHIEVEMENT_KEYS } from "./achievements.ts";
 import { BEGINNING, PROGRESS_KEYS, progressFormat } from "./progress.ts";
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -25,131 +23,31 @@ it("keeps an owned but unselected save unselected when a later gift arrives", as
     setItem: vi.fn(),
   });
   const page = await import("./pageSave.ts");
-  const session = { development: () => false, skillOverrides: () => ({}) };
+  const session = {
+    development: () => false,
+    powerUpsUnlocked: () => false,
+    skillOverrides: () => ({}),
+  };
   await page.loadProgress(session);
   expect(page.grantSkill(session, "doubleJump")).toBe(true);
   expect(page.activeSkill(session)).toBeNull();
-  expect(page.savedSkills()).toEqual(["dash", "doubleJump"]);
+  expect(page.savedSkills(session)).toEqual(["dash", "doubleJump"]);
 });
 
 it("keeps a developer's temporary selection when the first real gift arrives", async () => {
   vi.stubGlobal("localStorage", { getItem: () => null, setItem: vi.fn() });
   const page = await import("./pageSave.ts");
   const overrides = { dash: true };
-  const session = { development: () => true, skillOverrides: () => overrides };
+  const session = {
+    development: () => true,
+    powerUpsUnlocked: () => false,
+    skillOverrides: () => overrides,
+  };
   await page.loadProgress(session);
   expect(page.selectActiveSkill(session, "dash")).toBe(true);
   expect(page.grantSkill(session, "doubleJump")).toBe(true);
   expect(page.activeSkill(session)).toBe("dash");
-  expect(page.savedSkills()).toEqual(["doubleJump"]);
+  expect(page.savedSkills(session)).toEqual(["doubleJump"]);
   overrides.dash = false;
   expect(page.activeSkill(session)).toBeNull();
-});
-
-it("grants stored ownership independently while run-only cheats preserve normal saves", async () => {
-  const profile = {
-    ...BEGINNING,
-    activeSkill: "doubleJump" as const,
-    at: "map" as const,
-    completed: [],
-    openingSeen: true,
-    seenZoneIntros: [],
-    skills: ["doubleJump" as const],
-    stand: ZONE_MAP.start,
-  };
-  const encoded = encodeSave(
-    progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS))),
-    profile,
-  );
-  if (!encoded.ok) {
-    throw new Error(encoded.reason);
-  }
-  const values = new Map<string, string>([[PROGRESS_KEYS.save, encoded.value]]);
-  const setItem = vi.fn((key: string, value: string) => values.set(key, value));
-  vi.stubGlobal("localStorage", { getItem: (key: string) => values.get(key) ?? null, setItem });
-  vi.stubGlobal("window", {
-    document: { fullscreenElement: null },
-    location: new URL("https://example.test/play/?devSession=1"),
-    matchMedia: () => ({ matches: false }),
-    navigator: {},
-  });
-  const save = await import("../../scenes/save.ts");
-  const page = await import("./pageSave.ts");
-  await save.loadProgress();
-  expect(save.savedProgress().at).toBe("map");
-  expect(await page.grantSavedSkills({ available: () => true })).toMatchObject({ status: "saved" });
-  expect(save.savedProgress()).toMatchObject({
-    ...profile,
-    skills: ["doubleJump", "dash", "speedy"],
-  });
-  expect(new Set(save.savedSkills())).toEqual(new Set(SKILL_IDS));
-  expect(save.activeSkill()).toBe("doubleJump");
-  // A power-up tip for each new grant, and the switch tip, once the unlock notices have shown.
-  while (save.nextAchievementNotice(() => false) !== undefined) {
-    // Drain the grant's unlock notices.
-  }
-  expect(Array.from({ length: 3 }, () => save.nextTip(() => false))).toEqual([
-    { id: "powerUp", skill: "dash" },
-    { id: "secondPowerUp" },
-    { id: "powerUp", skill: "speedy" },
-  ]);
-  expect(save.grantSkill("dash")).toBe(false);
-  expect(save.nextTip(() => false)).toBeUndefined();
-  save.beginStageRun(ZONE_MAP.start);
-  save.saveCompleted(ZONE_MAP.start);
-  await save.flushStats();
-  await save.loadProgress();
-  expect(save.savedMap().completed).toContain(ZONE_MAP.start);
-  expect(save.selectActiveSkill("speedy")).toBe(true);
-  await save.loadProgress();
-  expect(save.activeSkill()).toBe("speedy");
-  expect(JSON.parse(values.get(PROGRESS_KEYS.save)!).activeSkill).toBe("speedy");
-  expect(JSON.parse(values.get(PROGRESS_KEYS.save)!).skills).toHaveLength(3);
-});
-
-it("blocks explicit saved grants while a normal progress write is outstanding", async () => {
-  const values = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => values.set(key, value),
-  });
-  const page = await import("./pageSave.ts");
-  const session = { development: () => false, skillOverrides: () => ({}) };
-  await page.loadProgress(session);
-  expect(page.grantSkill(session, "doubleJump")).toBe(true);
-  expect(await page.grantSavedSkills({ available: () => true })).toMatchObject({
-    reason: "pending_progress_writes",
-    status: "blocked",
-    written: [],
-  });
-});
-
-it("recovers one saved pending notice after cache adoption was blocked", async () => {
-  const values = new Map<string, string>();
-  let available = true;
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      values.set(key, value);
-      if (key === ACHIEVEMENT_KEYS.save) {
-        available = false;
-      }
-    },
-  });
-  const page = await import("./pageSave.ts");
-  expect(await page.grantSavedSkills({ available: () => available })).toMatchObject({
-    cause: "blocked",
-    reason: "cache_commit_unavailable",
-    status: "partial",
-    written: ["progress", "achievements"],
-  });
-  available = true;
-  expect(await page.grantSavedSkills({ available: () => available })).toMatchObject({
-    status: "unchanged",
-  });
-  expect(page.nextAchievementNotice(() => false)).toBe("gift-rooms");
-  expect(page.nextAchievementNotice(() => false)).toBeUndefined();
-  await page.grantSavedSkills({ available: () => available });
-  expect(page.nextAchievementNotice(() => false)).toBeUndefined();
-  expect(JSON.parse(values.get(ACHIEVEMENT_KEYS.save)!).earned).toEqual(["gift-rooms"]);
 });

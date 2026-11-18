@@ -26,14 +26,15 @@ export interface OpenMap {
 
 // What the zones he has completed open: from the map's start along built paths, through forks,
 // to each zone node with a zone to play; on past a zone node only once he has completed it.
-// Unbuilt paths, and zone nodes with no zone yet, stay closed. The finish leads nowhere.
-export function openMap(map: ZoneMap, completed: ReadonlySet<string>): OpenMap {
+// Unbuilt paths, and zone nodes with no zone yet, stay closed. The finish leads nowhere. With
+// everything (Unlock all zones), every zone node leads on as if completed, without being so.
+export function openMap(map: ZoneMap, completed: ReadonlySet<string>, everything = false): OpenMap {
   const reached = new Set([map.start]);
   const edges: MapEdge[] = [];
   const queue = [map.start];
   for (let id = queue.shift(); id !== undefined; id = queue.shift()) {
     const node = nodeOf(map, id);
-    if (node.kind === "zone" && !completed.has(id)) {
+    if (node.kind === "zone" && !everything && !completed.has(id)) {
       continue;
     }
     for (const { edge, node: next } of pathsFrom(map, id)) {

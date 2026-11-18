@@ -9,14 +9,14 @@ import { buildLabel } from "@andornaut/game-kit/runtime/web/buildLabel";
 import * as achievements from "../../data/achievements.ts";
 import * as characters from "../../data/characters.ts";
 import * as crashText from "../../data/crashText.ts";
+import * as dev from "../../data/dev.ts";
 import * as dialogues from "../../data/dialogues.ts";
 import * as text from "../../data/text.ts";
 import * as zones from "../../data/zones.ts";
 import { timeText } from "../../progress/index.ts";
 
-// Every exported value of these modules is walked. src/data/dev.ts is left out: the developer
-// panel sets its own sans-serif font (src/dev/panel.css), not the served faces.
-const STRING_SOURCES = { achievements, characters, crashText, dialogues, text, zones };
+// Every exported value of these modules is walked.
+const STRING_SOURCES = { achievements, characters, crashText, dev, dialogues, text, zones };
 
 const PACKAGE_JSON = new URL("../../../package.json", import.meta.url);
 

@@ -152,7 +152,7 @@ it("queues each distinct grant's power-up tip once and none for a duplicate gran
   ]);
 });
 
-it("keeps Dev-only selection temporary and falls back to saved ownership when an override is unchecked", async () => {
+it("keeps a cheat-enabled selection temporary and falls back to saved ownership", async () => {
   const { PROGRESS_VERSION } = await import("../progress/index.ts");
   const raw = JSON.stringify({
     activeSkill: "dash",
@@ -168,34 +168,23 @@ it("keeps Dev-only selection temporary and falls back to saved ownership when an
     getItem: (key: string) => values.get(key) ?? null,
     setItem: write,
   });
-  const url = new URL("https://example.test/play/?devSession=1&skillSpeedy=1");
-  const host = {
-    document: { fullscreenElement: null },
-    history: {
-      replaceState: (_state: unknown, _title: string, next: URL) => {
-        url.href = next.href;
-      },
-      state: null,
-    },
-    location: url,
-    matchMedia: () => ({ matches: false }),
-    navigator: {},
-  };
-  vi.stubGlobal("window", host);
   const save = await import("./save.ts");
+  const mode = await import("../dev/mode.ts");
   await save.loadProgress();
+  save.startCheatSession();
+  mode.setSkillOverride(true, "speedy");
   expect(save.activeSkill()).toBe("dash");
   expect(save.selectActiveSkill("speedy")).toBe(true);
   expect(save.activeSkill()).toBe("speedy");
   expect(save.selectActiveSkill(null)).toBe(true);
   expect(save.activeSkill()).toBeNull();
   expect(save.selectActiveSkill("speedy")).toBe(true);
-  const { changeSkillOverride } = await import("../dev/mode.ts");
-  changeSkillOverride(host as unknown as Window, false, "speedy");
+  mode.setSkillOverride(false, "speedy");
   expect(save.activeSkill()).toBe("dash");
   expect(save.selectActiveSkill("dash")).toBe(false);
   expect(save.savedProgress().activeSkill).toBe("dash");
   expect(values.get("chibis-way-home.save")).toBe(raw);
+  save.endCheatSession();
   expect(save.grantSkill("doubleJump")).toBe(true);
   expect(save.selectActiveSkill("doubleJump")).toBe(true);
   await save.loadProgress();

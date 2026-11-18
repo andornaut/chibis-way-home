@@ -31,6 +31,7 @@ vi.mock("./domUi.ts", () => ({
   sceneDomUi: () => ({ element: document.body }),
 }));
 vi.mock("./save.ts", () => ({
+  mapFullyOpen: () => false,
   saveStand: vi.fn(),
   savedMap: () => ({ completed: [], stand: "" }),
 }));

@@ -57,11 +57,10 @@ vi.mock("@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn", () => ({
   followFrameTurn: vi.fn(),
 }));
 vi.mock("../crash/crashScreen.ts", () => ({ CRASH_SCREEN: { stopGameOnCrash: vi.fn() } }));
-vi.mock("../dev/panel.ts", () => ({ mountDeveloperPanel: () => vi.fn() }));
 vi.mock("../pwa/index.ts", () => ({ setupPhoneApp: startup.setup }));
 vi.mock("../pwa/installOffer.ts", () => ({ installOffer: startup.install }));
 vi.mock("../scenes/domUi.ts", () => ({ mountDomUi: () => vi.fn() }));
-vi.mock("../scenes/save.ts", () => ({ grantSavedSkills: vi.fn() }));
+vi.mock("../scenes/save.ts", () => ({}));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
 beforeEach(() => {

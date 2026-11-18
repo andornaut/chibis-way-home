@@ -45,7 +45,7 @@ import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domU
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
 import { fitPlayCamera } from "./playCamera.ts";
-import { savedMap, saveStand } from "./save.ts";
+import { mapFullyOpen, savedMap, saveStand } from "./save.ts";
 import type { StageSelectData, StageSelectOpener, StageSelectScene } from "./StageSelectScene.ts";
 import type { ZoneData } from "./ZoneScene.ts";
 
@@ -104,7 +104,7 @@ export class MapScene extends Scene implements StageSelectOpener {
   init(data: MapData = {}): void {
     const { completed, stand } = savedMap();
     this.completed = new Set(completed);
-    this.open = openMap(ZONE_MAP, this.completed);
+    this.open = openMap(ZONE_MAP, this.completed, mapFullyOpen());
     this.stand = this.open.zones.includes(stand) ? stand : ZONE_MAP.start;
     this.birdFrames = new Map();
     this.view = undefined;

@@ -1,11 +1,19 @@
+import type { StoreSaveResult } from "@andornaut/game-kit/runtime/save/saveStore";
+
 import type { AchievementId, Rect, SkillId, ZoneLayout } from "../data/types/index.ts";
-import { developmentSkillOverrides, isDevelopmentSession } from "../dev/mode.ts";
+import {
+  allPowerUpsUnlocked,
+  allZonesUnlocked,
+  beginDevelopmentSession,
+  developmentSkillOverrides,
+  endDevelopmentSession,
+  isDevelopmentSession,
+} from "../dev/mode.ts";
 import type {
   AchievementEntry,
   Progress,
   QueuedTip,
   RunStatsSummary,
-  SavedSkillGrantResult,
   WholeRunStatsSummary,
   ZoneStatsSummary,
 } from "../progress/index.ts";
@@ -17,12 +25,44 @@ import { stepTips, tipsInView } from "../rules/zoneTips.ts";
 
 export type { Progress };
 
-// The page's save calls with this page's developer session bound, so scenes call them without
-// a session. The session is asked at each call, as developer activation can start mid-page.
+// The page's save calls with this page's cheat session bound, so scenes call them without a
+// session. The session is asked at each call, as a cheat can start it mid-page.
 const SESSION: pageSave.SaveSession = {
   development: isDevelopmentSession,
+  powerUpsUnlocked: allPowerUpsUnlocked,
   skillOverrides: developmentSkillOverrides,
 };
+
+// Every cheat calls this first: the first starts the cheat session, which holds the save so that
+// nothing is saved, earned or banked until it ends.
+export function startCheatSession(): void {
+  if (!isDevelopmentSession()) {
+    pageSave.holdSave();
+    beginDevelopmentSession();
+  }
+}
+
+// Returning to the start screen from play ends the cheat session: every cheat turns off and the
+// save is back as it was before the first cheat, so Continue loads that.
+export function endCheatSession(): void {
+  if (isDevelopmentSession()) {
+    endDevelopmentSession();
+    pageSave.releaseSave();
+  }
+}
+
+// Whether the map opens every zone and stage (Unlock all zones).
+export function mapFullyOpen(): boolean {
+  return allZonesUnlocked();
+}
+
+// The tools, which start no cheat session and write the save.
+export function clearSeenTips(): Promise<StoreSaveResult> {
+  return pageSave.clearSeenTips();
+}
+export function resetSave(): Promise<StoreSaveResult> {
+  return pageSave.resetSave();
+}
 
 export function probeSaveAge(): ReturnType<typeof pageSave.probeSaveAge> {
   return pageSave.probeSaveAge();
@@ -124,7 +164,7 @@ export function resetWholeRunStats(): void {
   pageSave.resetWholeRunStats();
 }
 export function savedSkills(): readonly SkillId[] {
-  return pageSave.savedSkills();
+  return pageSave.savedSkills(SESSION);
 }
 export function activeSkill(): SkillId | null {
   return pageSave.activeSkill(SESSION);
@@ -134,11 +174,6 @@ export function selectActiveSkill(skill: SkillId | null): boolean {
 }
 export function grantSkill(skill: SkillId): boolean {
   return pageSave.grantSkill(SESSION, skill);
-}
-export function grantSavedSkills(context: {
-  readonly available: () => boolean;
-}): Promise<SavedSkillGrantResult> {
-  return pageSave.grantSavedSkills(context);
 }
 export function savedProgress(): Progress {
   return pageSave.savedProgress();

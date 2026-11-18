@@ -46,9 +46,7 @@ function bypasses(path: string, text: string): string[] {
       if ((event === "click" || event === "pointerup") && path !== BINDING) {
         found.push(`${event} action outside the shared action binding`);
       }
-      // The developer panel retains native select and checkbox change semantics. Its
-      // construction assertion also requires every checkbox to register its hold action.
-      if (event === "change" && path !== "dev/panel.ts") {
+      if (event === "change") {
         found.push("unregistered native discrete change route");
       }
     }

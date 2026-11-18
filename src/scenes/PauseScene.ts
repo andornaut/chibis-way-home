@@ -52,11 +52,11 @@ import {
   trackMenuActionBinding,
 } from "./modalInput.ts";
 import { type PauseDiscTimeline, pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome.ts";
-import { activeSkill, savedSkills, selectActiveSkill } from "./save.ts";
+import { activeSkill, savedSkills, saveStand, selectActiveSkill } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene.ts";
 import type { SkillDetailData } from "./SkillDetailScene.ts";
-import type { ZoneScene } from "./ZoneScene.ts";
+import type { ZoneData, ZoneScene } from "./ZoneScene.ts";
 
 // The scenes that show a conversation over the paused zone, each holding its modal input in turn:
 // a line, the line's required choice, and the departure.
@@ -385,7 +385,24 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   }
 
   // Ends content and shows the start screen, keeping the persistent pause overlay.
+  // Cheats' Load stage: the menu closes and stage plays, entered as the map's stage picker enters
+  // it, from whatever the menu covered.
+  loadStage(stage: string): void {
+    saveStand(stage);
+    this.leaveMenu(ZONE, { node: stage } satisfies ZoneData);
+  }
+
+  // After Reset save: the menu closes on the start screen, as Back to title does.
+  returnToStart(): void {
+    this.returnHome();
+  }
+
   private returnHome(): void {
+    this.leaveMenu(START);
+  }
+
+  // Closes the menu, stops every scene it covered and launches key with data.
+  private leaveMenu(key: string, data?: object): void {
     updateOffer.defer();
     this.frames = [];
     this.returnEntryFocus = false;
@@ -400,7 +417,11 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       (key) => this.scene.isActive(key) || this.scene.isPaused(key),
     ).forEach((key) => this.scene.stop(key));
     coverZone("room", false);
-    this.scene.launch(START);
+    if (data === undefined) {
+      this.scene.launch(key);
+    } else {
+      this.scene.launch(key, data);
+    }
     startWakeLock();
     coverZone("pauseCard", false);
   }

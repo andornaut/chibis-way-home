@@ -27,6 +27,7 @@ vi.mock("../pwa/index.ts", () => ({
 }));
 vi.mock("./save.ts", () => ({
   activeSkill: () => undefined,
+  endCheatSession: () => undefined,
   savedProgress: () => ({ at: "beginning" }),
   savedSkills: () => [],
 }));

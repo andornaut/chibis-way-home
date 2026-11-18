@@ -1,109 +1,73 @@
-import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
+import { runsInAppWindow } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
 
 import type { SkillId } from "../data/types/index.ts";
-import { SKILL_IDS, type SkillOverrides } from "../progress/index.ts";
+import type { SkillOverrides } from "../progress/index.ts";
 
-const SKILL_PARAMS: Readonly<Record<SkillId, string>> = {
-  dash: "skillDash",
-  doubleJump: "skillDoubleJump",
-  speedy: "skillSpeedy",
-};
-
-export function skillOverridesFromSearch(search: string): SkillOverrides {
-  const params = new URLSearchParams(search);
-  return Object.fromEntries(
-    SKILL_IDS.map((skill) => [skill, params.get(SKILL_PARAMS[skill]) === "1"]),
-  );
+// The cheats chosen for the current cheat session (gameplay/cheats.md). The session lives only in
+// this page's memory: nothing stores it, so reloading or closing the game ends it, as does
+// src/scenes/save.ts's endCheatSession when play returns to the start screen.
+interface CheatState {
+  readonly invulnerable: boolean;
+  readonly powerUps: boolean;
+  readonly skills: SkillOverrides;
+  readonly zones: boolean;
 }
 
-// The page's developer parameters, parsed again only when its query string changes.
-let parsed:
-  | {
-      readonly flags: ReturnType<typeof developmentFlags>;
-      readonly search: string;
-      readonly skills: SkillOverrides;
-    }
-  | undefined;
-function pageParameters(host: Window) {
-  const { search } = host.location;
-  if (parsed?.search !== search) {
-    parsed = {
-      flags: developmentFlags(search),
-      search,
-      skills: Object.freeze(skillOverridesFromSearch(search)),
-    };
-  }
-  return parsed;
+const NONE: CheatState = { invulnerable: false, powerUps: false, skills: {}, zones: false };
+let cheats = NONE;
+let session = false;
+
+// Whether cheats may be used here: in a browser tab, never in an installed app's window.
+export function cheatsAvailable(host: Window): boolean {
+  return !runsInAppWindow(host);
+}
+
+// Whether a cheat session is running: some cheat was used since the page loaded or play last
+// returned to the start screen.
+export function isDevelopmentSession(): boolean {
+  return session;
+}
+
+export function beginDevelopmentSession(): void {
+  session = true;
+}
+
+// Ends the session and turns every cheat off.
+export function endDevelopmentSession(): void {
+  session = false;
+  cheats = NONE;
 }
 
 export function developmentSkillOverrides(): SkillOverrides {
-  return typeof window !== "undefined" && regularBrowser(window)
-    ? pageParameters(window).skills
-    : {};
+  return cheats.skills;
 }
 
-export function changeSkillOverride(host: Window, enabled: boolean, skill: SkillId): void {
-  sessionStarted = true;
-  const url = new URL(host.location.href);
-  url.searchParams.set("devSession", "1");
-  if (enabled) {
-    url.searchParams.set(SKILL_PARAMS[skill], "1");
-  } else {
-    url.searchParams.delete(SKILL_PARAMS[skill]);
-  }
-  host.history.replaceState(host.history.state, "", url);
-}
-
-export function developmentFlags(search: string) {
-  const params = new URLSearchParams(search);
-  return {
-    invulnerable: params.get("invulnerable") === "1",
-    session:
-      params.get("devSession") === "1" ||
-      params.get("invulnerable") === "1" ||
-      SKILL_IDS.some((skill) => params.get(SKILL_PARAMS[skill]) === "1"),
-  };
-}
-let sessionStarted = false;
-export function isDevelopmentSession(): boolean {
-  sessionStarted ||= typeof window !== "undefined" && pageParameters(window).flags.session;
-  return sessionStarted;
-}
-const appQueries = new WeakMap<Window, MediaQueryList>();
-export function regularBrowser(host: Window): boolean {
-  let query = appQueries.get(host);
-  if (!query) {
-    query = host.matchMedia(INSTALLED_APP_DISPLAY_QUERY);
-    appQueries.set(host, query);
-  }
-  return (
-    !query.matches &&
-    !(host.navigator as Navigator & { standalone?: boolean }).standalone &&
-    !host.document.fullscreenElement
-  );
-}
 export function invulnerabilityEnabled(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    regularBrowser(window) &&
-    pageParameters(window).flags.invulnerable
-  );
+  return cheats.invulnerable;
 }
-export function stageDevelopmentUrl(current: string, stage: string): string {
-  const url = new URL(current);
-  url.searchParams.set("devSession", "1");
-  url.searchParams.set("zone", stage);
-  url.searchParams.delete("stagePreview");
-  return url.href;
+
+// Whether Unlock all power-ups made every power-up owned for the session.
+export function allPowerUpsUnlocked(): boolean {
+  return cheats.powerUps;
 }
-export function changeInvulnerability(host: Window, enabled: boolean): void {
-  sessionStarted = true;
-  const url = new URL(host.location.href);
-  url.searchParams.set("devSession", "1");
-  if (enabled) {
-    url.searchParams.set("invulnerable", "1");
-  } else {
-    url.searchParams.delete("invulnerable");
-  }
-  host.history.replaceState(host.history.state, "", url);
+
+// Whether Unlock all zones opened every zone and stage on the map for the session.
+export function allZonesUnlocked(): boolean {
+  return cheats.zones;
+}
+
+export function setInvulnerability(enabled: boolean): void {
+  cheats = { ...cheats, invulnerable: enabled };
+}
+
+export function setSkillOverride(enabled: boolean, skill: SkillId): void {
+  cheats = { ...cheats, skills: Object.freeze({ ...cheats.skills, [skill]: enabled }) };
+}
+
+export function unlockAllPowerUps(): void {
+  cheats = { ...cheats, powerUps: true };
+}
+
+export function unlockAllZones(): void {
+  cheats = { ...cheats, zones: true };
 }

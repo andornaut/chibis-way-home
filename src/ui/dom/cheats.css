@@ -1,0 +1,66 @@
+/* The Cheats card and its Reset save confirmation (cheats.ts), on ui.css's .ui-card and
+   settings.css's rows, in the settings card's view: lengths are base px times --ui-unit. */
+
+/* Both cards take the settings card's place in its view. */
+.cheats-card,
+.cheats-confirm {
+  grid-area: 1 / 1;
+}
+
+.cheats-card[hidden],
+.cheats-confirm[hidden] {
+  display: none;
+}
+
+/* The card is no taller than the view: its title, status line and Close stay, and the groups
+   between them scroll. Rows pan the body as well as press. */
+.cheats-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-self: stretch;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.cheats-body .settings-row,
+.cheats-body .ui-text-button {
+  touch-action: pan-y;
+}
+
+.cheats-group {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  text-align: start;
+}
+
+.cheats-group-title {
+  margin: 0;
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  font-weight: 700;
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+}
+
+.cheats-group-text {
+  color: var(--colour-dslate);
+  text-align: start;
+}
+
+/* The rows sit under the group's heading rather than under a card header's press areas. */
+.cheats-rows {
+  margin-top: 0;
+}
+
+.cheats-choice {
+  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
+  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+  text-align: end;
+}
+
+.cheats-status:empty {
+  display: none;
+}

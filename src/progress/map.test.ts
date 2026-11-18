@@ -49,6 +49,11 @@ describe("openMap", () => {
   };
   const path = (from: string, to: string) => `${from}-${to}`;
 
+  // Unlock all zones: every built zone opens with nothing completed; unbuilt paths stay closed.
+  it("opens every zone along built paths when everything is unlocked", () => {
+    expect(openMap(WITH_E, new Set(), true).zones).toEqual(["a", "b", "c"]);
+  });
+
   it.each([
     ["nothing completed: the first zone alone", MAP, [], ["a"], []],
     [

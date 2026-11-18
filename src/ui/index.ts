@@ -57,6 +57,15 @@ export {
   type CelebrationWords,
   createCelebrationView,
 } from "./dom/celebration.ts";
+export {
+  type CheatAction,
+  type CheatPicker,
+  type CheatsCardView,
+  type CheatsCardWords,
+  type CheatSwitch,
+  createCheatsCard,
+  showCheats,
+} from "./dom/cheats.ts";
 export { type ChoiceCardView, createChoiceCard } from "./dom/choice.ts";
 export { createDeathCard, type DeathCardView } from "./dom/death.ts";
 export {
@@ -72,6 +81,7 @@ export {
   showPanelParagraph,
   type StatusPanelView,
 } from "./dom/dialogue.ts";
+export { mountFpsCounter } from "./dom/fpsCounter.ts";
 export { createUiLayer, loadUiFonts, UI_DIMMED, UI_LAYOUT, type UiLayer } from "./dom/layer.ts";
 export {
   createUiLayoutPorts,
@@ -226,6 +236,7 @@ export {
   startBackAction,
 } from "./pause/cardInput.ts";
 export { type RoomEvent, roomEvent } from "./pause/roomInput.ts";
+export { fpsCounterShown, setFpsCounterShown } from "./settings/fpsCounter.ts";
 export { reducedMotion, setReducedMotion } from "./settings/reducedMotion.ts";
 export {
   coarsePointer,

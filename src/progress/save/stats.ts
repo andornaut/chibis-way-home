@@ -176,7 +176,12 @@ interface StageStatsStore {
   // Records that a skill was used.
   useSkill(): void;
   pendingChanges(): boolean;
-  acceptSavedSkillUse(used: boolean): void;
+  // Writes what changed so far, then keeps every later change in memory only, until release puts
+  // back the statistics as they were at hold.
+  hold(): void;
+  release(): void;
+  // Replaces the statistics with fresh ones and writes them, held or not.
+  reset(): Promise<void>;
 }
 
 // A separate store keeps unfinished stage clocks independent of progress restarts. Mutations
@@ -192,12 +197,16 @@ export function stageStatsStore(
   let checkpoint: ReturnType<typeof setTimeout> | undefined;
   let dirty = false;
   let writing = 0;
+  // The statistics as they were when a hold began, while it lasts.
+  let held: Stats | undefined;
   const flush = async () => {
     if (checkpoint !== undefined) {
       clearTimeout(checkpoint);
       checkpoint = undefined;
     }
-    if (dirty) {
+    if (held !== undefined) {
+      dirty = false;
+    } else if (dirty) {
       dirty = false;
       writing++;
       pending = store.save(stats).finally(() => {
@@ -269,11 +278,6 @@ export function stageStatsStore(
     };
   };
   return {
-    acceptSavedSkillUse(used) {
-      if (used) {
-        stats = { ...stats, wholeRun: { ...stats.wholeRun, skillUsed: true } };
-      }
-    },
     addActiveTime(stage, seconds) {
       if (!Number.isFinite(seconds) || seconds < 0) {
         throw new Error("Invalid active play duration");
@@ -371,6 +375,12 @@ export function stageStatsStore(
       };
     },
     flush,
+    hold() {
+      if (held === undefined) {
+        void flush();
+        held = stats;
+      }
+    },
     async load(persist) {
       const loaded = await store.load();
       stats = loaded.save;
@@ -392,6 +402,25 @@ export function stageStatsStore(
       }
       stats = { ...stats, wholeRun: { ...stats.wholeRun, deaths: stats.wholeRun.deaths + 1 } };
       changed();
+    },
+    release() {
+      if (held !== undefined) {
+        stats = held;
+        held = undefined;
+        dirty = false;
+      }
+    },
+    async reset() {
+      const wasHeld = held !== undefined;
+      held = undefined;
+      stats = fresh();
+      dirty = true;
+      // flush starts its write before it first waits, so a hold resumes over the fresh record.
+      const written = flush();
+      if (wasHeld) {
+        held = stats;
+      }
+      await written;
     },
     // Restart also ends every unfinished stage run, so its next entry starts at one attempt;
     // historical bests stay.

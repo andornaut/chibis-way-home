@@ -14,6 +14,7 @@ import "./ui/dom/actionHelp.css";
 import "./ui/dom/pause.css";
 import "./ui/dom/skillDetails.css";
 import "./ui/dom/settings.css";
+import "./ui/dom/cheats.css";
 import "./ui/dom/dialogue.css";
 import "./ui/dom/stageSummary.css";
 import "./ui/dom/celebration.css";
@@ -23,7 +24,6 @@ import "./ui/dom/room.css";
 import "./ui/dom/start.css";
 import "./ui/dom/stageProgress.css";
 import "./ui/dom/touchControls.css";
-import "./dev/panel.css";
 
 import { MENU_FPS } from "@andornaut/game-kit/runtime/clock/frameCap";
 import { capFrameRate } from "@andornaut/game-kit/runtime/clock/phaser/capFrameRate";
@@ -36,8 +36,8 @@ import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/fol
 import { Core, Game, Scale, WEBGL } from "phaser";
 
 import { CRASH_SCREEN } from "./crash/crashScreen.ts";
+import { DEV_TEXT } from "./data/dev.ts";
 import { SCREEN } from "./data/screen.ts";
-import { mountDeveloperPanel } from "./dev/panel.ts";
 import { setupPhoneApp } from "./pwa/index.ts";
 import { installOffer } from "./pwa/installOffer.ts";
 import { AchievementNoticeScene } from "./scenes/AchievementNoticeScene.ts";
@@ -54,7 +54,6 @@ import { OpeningScene } from "./scenes/OpeningScene.ts";
 import { PauseScene } from "./scenes/PauseScene.ts";
 import { RestartScene } from "./scenes/RestartScene.ts";
 import { RoomScene } from "./scenes/RoomScene.ts";
-import { grantSavedSkills } from "./scenes/save.ts";
 import { SettingsScene } from "./scenes/SettingsScene.ts";
 import { SkillDetailScene } from "./scenes/SkillDetailScene.ts";
 import { StageSelectScene } from "./scenes/StageSelectScene.ts";
@@ -64,6 +63,7 @@ import { ZoneBarkScene } from "./scenes/ZoneBarkScene.ts";
 import { ZoneDepartureScene } from "./scenes/ZoneDepartureScene.ts";
 import { ZoneIntroductionScene } from "./scenes/ZoneIntroductionScene.ts";
 import { ZoneScene } from "./scenes/ZoneScene.ts";
+import { mountFpsCounter } from "./ui/index.ts";
 import { FRAME_TURN } from "./ui/input/frameTurn.ts";
 
 // The page's ink background (public/site.css), which the canvas's bars match.
@@ -161,22 +161,12 @@ function startGame(attempt: LoadingAttempt): void {
   const gameHost = document.getElementById("game");
   if (gameHost) {
     game.events.once("destroy", mountDomUi(game, gameHost));
-    const dispose = mountDeveloperPanel(
-      {
-        blocked: () =>
-          gameHost.hasAttribute("data-modal-open") ||
-          game.scene.isActive("boot") ||
-          (game.scene.isActive("zone") && (game.scene.getScene("zone") as ZoneScene).playCovered()),
-        grant: grantSavedSkills,
-        subscribe: (sync) => {
-          game.events.on("poststep", sync);
-          return () => game.events.off("poststep", sync);
-        },
-      },
-      gameHost,
-    );
-    game.events.once("destroy", dispose);
   }
+  // The FPS counter tool, on the page outside the game's view.
+  game.events.once(
+    "destroy",
+    mountFpsCounter(document, () => game.loop.actualFps, DEV_TEXT.fps),
+  );
   // Phaser fits the canvas to #game and measures and maps pointers through the frame's turn, and
   // the page is kept to the visible area with the fit refreshed whenever it or the turn may have
   // changed (the kit's followFrameTurn).

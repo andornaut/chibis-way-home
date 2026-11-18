@@ -14,7 +14,10 @@ vi.mock("../pwa/index.ts", () => ({
   exitShown: () => false,
   startScreenShown: lifecycle.shown,
 }));
-vi.mock("./save.ts", () => ({ savedProgress: () => ({ at: "map" }) }));
+vi.mock("./save.ts", () => ({
+  endCheatSession: () => {},
+  savedProgress: () => ({ at: "map" }),
+}));
 vi.mock("./keyboardCapture.ts", () => ({ captureTab: vi.fn() }));
 vi.mock("./scenePalette.ts", () => ({ paletteColour: () => 0 }));
 vi.mock("./playCamera.ts", () => ({ fitPlayCamera: vi.fn() }));
