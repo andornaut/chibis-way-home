@@ -1,7 +1,7 @@
 import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import { BOSS_CHARACTERS } from "../data/achievements.ts";
-import type { AreaLayout, Rect, TipId } from "../data/types/index.ts";
+import type { AreaLayout, Rect } from "../data/types/index.ts";
 import type { ZoneState } from "./zone.ts";
 
 const BOSSES: ReadonlySet<string> = new Set(Object.values(BOSS_CHARACTERS));
@@ -13,7 +13,7 @@ export function tipsInView(
   area: AreaLayout,
   zone: Pick<ZoneState, "objects">,
   view: Rect,
-): TipId[] {
+): ("doors" | "hazards")[] {
   let doors = false;
   let hazards = false;
   area.objects.forEach((object, index) => {
@@ -32,7 +32,7 @@ export function tipsInView(
 
 // The tips live steps from before to after offer: bosses when a boss's pursuit acquires Chibi,
 // while he stays in the area and alive.
-export function stepTips(area: AreaLayout, before: ZoneState, after: ZoneState): TipId[] {
+export function stepTips(area: AreaLayout, before: ZoneState, after: ZoneState): "bosses"[] {
   if (after.death !== undefined || after.area !== before.area) {
     return [];
   }

@@ -213,7 +213,7 @@ describe("the tip", () => {
   // play shows.
   async function tip() {
     queue.ids = [ACHIEVEMENT_IDS[0]!];
-    queue.tips = [{ id: "firstPowerUp", skill: "dash" }];
+    queue.tips = [{ id: "powerUp", skill: "dash" }];
     const play = { shown: false };
     const sheets: Readonly<Record<string, unknown>> = { "icon-achievement": iconSheet, palette };
     const scene = Object.assign(new AchievementNoticeScene(), {
@@ -269,8 +269,8 @@ describe("the tip", () => {
     }).toEqual({
       glyph: "blob:icon-skill-dash/icon-skill-dash 0.aseprite",
       hidden: false,
-      labels: [...TEXT.tips.firstPowerUp.matchAll(/\{(\w+)\}/gu)].map(([, token]) => word(token!)),
-      line: TEXT.tips.firstPowerUp.replace(/\{(\w+)\}/gu, (_, token: string) => word(token)),
+      labels: [...TEXT.tips.powerUp.matchAll(/\{(\w+)\}/gu)].map(([, token]) => word(token!)),
+      line: TEXT.tips.powerUp.replace(/\{(\w+)\}/gu, (_, token: string) => word(token)),
       notice: "tip",
       portrait: `blob:${speaker.portrait}/`,
       side: speaker.side,

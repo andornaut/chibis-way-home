@@ -383,9 +383,9 @@ export const TEXT: GameText = {
     bosses: "You can't fight back. Outrun it or slip through a door.",
     controls: "{move} Move left or right and {jump} Jump to get Chibi home.",
     doors: "Stand at a door and press {use} Use to go inside.",
-    firstPowerUp:
-      "Tap or click {skill} at the top right to turn it on or off. Only one power-up works at a time.",
     hazards: "Red edges are dangerous. Keep Chibi clear of them.",
+    powerUp:
+      "Tap or click {skill} at the top right to turn it on or off. Only one power-up works at a time.",
     secondPowerUp: "Tap or click another power-up to switch to it.",
   },
   update: {

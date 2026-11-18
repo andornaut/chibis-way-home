@@ -8,9 +8,9 @@ import type { Point } from "./geometry.ts";
 import type { ControlAction } from "./ui.ts";
 
 // A first-time tip, by its trigger: bosses, a boss first acquires Chibi; controls, the first
-// stage starts; doors, a room door first shows in view; firstPowerUp, the first skill grant;
-// hazards, a red hazard first shows in view; secondPowerUp, two skills are first owned.
-export type TipId = "bosses" | "controls" | "doors" | "firstPowerUp" | "hazards" | "secondPowerUp";
+// stage starts; doors, a room door first shows in view; hazards, a red hazard first shows in
+// view; powerUp, each skill's first grant; secondPowerUp, two skills are first owned.
+export type TipId = "bosses" | "controls" | "doors" | "hazards" | "powerUp" | "secondPowerUp";
 
 export interface DeathText {
   // The death card's accessible name, with the zone's name as {zone}.

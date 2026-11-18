@@ -7,7 +7,8 @@ import type { MapNode, ZoneMap } from "../../data/types/index.ts";
 import { RECIPES } from "../../data/zones.ts";
 import { openMap } from "../map.ts";
 import { destinationForStage, destinationSelection } from "../mapDestinations.ts";
-import { TIP_IDS } from "../tips.ts";
+import { SKILL_IDS } from "../skills.ts";
+import { type SeenTip, TIP_IDS } from "../tips.ts";
 import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./progress.ts";
 
 const node = (id: string, kind: MapNode["kind"], zone?: string): MapNode => ({
@@ -75,8 +76,16 @@ describe("progressFormat", () => {
     ],
     ["owned skills with none selected", { ...BEGINNING, skills: ["dash", "speedy"] }],
     ["acknowledged beginning", { ...BEGINNING, openingSeen: true, skills: [] }],
-    ["some tips seen", { ...at("start"), seenTips: ["controls", "doors"] } as Progress],
-    ["every tip seen", { ...BEGINNING, seenTips: TIP_IDS }],
+    ["some tips seen", { ...at("start"), seenTips: ["controls", "powerUp:dash"] } as Progress],
+    [
+      "every tip seen",
+      {
+        ...BEGINNING,
+        seenTips: TIP_IDS.flatMap((id): SeenTip[] =>
+          id === "powerUp" ? SKILL_IDS.map((skill) => `powerUp:${skill}` as const) : [id],
+        ),
+      },
+    ],
     [
       "a remembered zone introduction",
       { ...at("start"), seenZoneIntros: ["test-zone"] } as Progress,
@@ -127,6 +136,9 @@ describe("progressFormat", () => {
     ["missing seen tips", stored({ at: "beginning", seenTips: undefined })],
     ["unknown seen tip", stored({ at: "beginning", seenTips: ["jump"] })],
     ["duplicate seen tip", stored({ at: "beginning", seenTips: ["doors", "doors"] })],
+    ["a power-up tip without its skill", stored({ at: "beginning", seenTips: ["powerUp"] })],
+    ["a power-up tip of an unknown skill", stored({ at: "beginning", seenTips: ["powerUp:fly"] })],
+    ["a skill on another tip", stored({ at: "beginning", seenTips: ["doors:dash"] })],
     ["not JSON", "{not json"],
     ["no version", JSON.stringify({ at: "map", completed: [], stand: "start" })],
     ["version 1", stored({ at: "map", route: ["start"] }, 1)],

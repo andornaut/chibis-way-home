@@ -43,4 +43,11 @@ export {
   skillTuning,
 } from "./skills.ts";
 export { type StageCompletion, stageCompletion, stageExit } from "./stageCompletion.ts";
-export { isTipId, type QueuedTip, TIP_IDS } from "./tips.ts";
+export {
+  isSeenTip,
+  type PlayTipId,
+  type QueuedTip,
+  type SeenTip,
+  seenTip,
+  TIP_IDS,
+} from "./tips.ts";

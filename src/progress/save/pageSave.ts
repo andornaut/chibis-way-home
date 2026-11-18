@@ -7,7 +7,7 @@ import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/local
 import { BOSS_CHARACTERS } from "../../data/achievements.ts";
 import { CHUNKS } from "../../data/chunks.ts";
 import { ZONE_MAP } from "../../data/map.ts";
-import type { AchievementId, BossId, SkillId, TipId } from "../../data/types/index.ts";
+import type { AchievementId, BossId, SkillId } from "../../data/types/index.ts";
 import { RECIPES } from "../../data/zones.ts";
 import {
   ACHIEVEMENT_IDS,
@@ -20,7 +20,7 @@ import {
 } from "../achievements.ts";
 import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks.ts";
 import { eligibleSkills, resolveActiveSkill, type SkillOverrides } from "../skills.ts";
-import type { QueuedTip } from "../tips.ts";
+import { type PlayTipId, type QueuedTip, seenTip } from "../tips.ts";
 import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT, achievementsStore } from "./achievements.ts";
 import {
   BEGINNING,
@@ -514,24 +514,26 @@ export function clearProgress(session: SaveSession): void {
   write(session, BEGINNING);
 }
 
-// Queues tip behind the triggered ones unless it has shown this playthrough or is queued.
+// Queues tip behind the triggered ones unless it has shown this playthrough or is queued, the
+// power-up tip once for each skill (seenTip).
 function queueTip(tip: QueuedTip): void {
-  if (!progress.seenTips.includes(tip.id) && !tips.some(({ id }) => id === tip.id)) {
+  const seen = seenTip(tip);
+  if (!progress.seenTips.includes(seen) && !tips.some((queued) => seenTip(queued) === seen)) {
     tips.push(tip);
   }
 }
 
-// A new grant of skill triggers the first power-up's tip, naming skill, and once two skills are
-// owned the second's.
+// A new grant of skill triggers its power-up tip, naming skill, and once two skills are owned the
+// switch tip.
 function queueGrantTips(skill: SkillId): void {
-  queueTip({ id: "firstPowerUp", skill });
+  queueTip({ id: "powerUp", skill });
   if (progress.skills.length >= 2) {
     queueTip({ id: "secondPowerUp" });
   }
 }
 
 // What play shows triggers these tips (a door or red hazard in view, a boss acquiring him).
-export function triggerTips(ids: readonly TipId[]): void {
+export function triggerTips(ids: readonly PlayTipId[]): void {
   ids.forEach((id) => queueTip({ id }));
 }
 
@@ -542,6 +544,6 @@ export function nextTip(session: SaveSession, blocked: () => boolean): QueuedTip
     return undefined;
   }
   const tip = tips.shift()!;
-  write(session, { ...progress, seenTips: [...progress.seenTips, tip.id] });
+  write(session, { ...progress, seenTips: [...progress.seenTips, seenTip(tip)] });
   return tip;
 }

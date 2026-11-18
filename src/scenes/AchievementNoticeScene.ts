@@ -72,7 +72,7 @@ export function tipParagraph(
     document,
     colours,
     { actions: TEXT.buttons, icons: TEXT.actionIcons },
-    tip.skill === undefined ? undefined : TEXT.skills[tip.skill].title,
+    tip.id === "powerUp" ? TEXT.skills[tip.skill].title : undefined,
     TEXT.tips[tip.id],
   );
   return { glyphs, paragraph: { colour: speaker.colour, name, side: speaker.side, text: nodes } };
@@ -178,7 +178,8 @@ export class AchievementNoticeScene extends Scene {
         panel.portrait.hidden = false;
       }
     });
-    const skill = notice.kind === "tip" ? notice.tip.skill : undefined;
+    const skill =
+      notice.kind === "tip" && notice.tip.id === "powerUp" ? notice.tip.skill : undefined;
     const glyphCuts = glyphs.map((glyph) =>
       skill === undefined
         ? Promise.resolve()

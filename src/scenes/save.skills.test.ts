@@ -1,6 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
+import type { SkillId } from "../data/types/index.ts";
 import { SKILL_IDS } from "../progress/index.ts";
 
 afterEach(() => {
@@ -54,7 +55,7 @@ it("leaves the first gift unselected and tipped, turns a selection off and rejec
   save.grantSkill("doubleJump");
   expect(save.savedSkills()).toEqual(["doubleJump"]);
   expect(save.activeSkill()).toBeNull();
-  expect(save.nextTip(() => false)).toEqual({ id: "firstPowerUp", skill: "doubleJump" });
+  expect(save.nextTip(() => false)).toEqual({ id: "powerUp", skill: "doubleJump" });
   expect(save.selectActiveSkill("dash")).toBe(false);
   expect(save.selectActiveSkill("doubleJump")).toBe(true);
   expect(save.selectActiveSkill("doubleJump")).toBe(false);
@@ -97,9 +98,12 @@ it("triggers each tip once a playthrough, behind unlock notices, saved as seen u
   // Owning every skill unlocks an achievement, whose notice comes first.
   expect(save.nextTip(open)).toBeUndefined();
   expect(save.nextAchievementNotice(open)).toBe("gift-rooms");
-  expect([save.nextTip(open), save.nextTip(open), save.nextTip(open)]).toEqual([
-    { id: "firstPowerUp", skill: SKILL_IDS[0] },
+  const [first, second, third] = SKILL_IDS as [SkillId, SkillId, SkillId];
+  expect(Array.from({ length: 5 }, () => save.nextTip(open))).toEqual([
+    { id: "powerUp", skill: first },
+    { id: "powerUp", skill: second },
     { id: "secondPowerUp" },
+    { id: "powerUp", skill: third },
     undefined,
   ]);
   await save.loadProgress();
@@ -110,8 +114,10 @@ it("triggers each tip once a playthrough, behind unlock notices, saved as seen u
   expect(reopened.savedProgress().seenTips).toEqual([
     "controls",
     "doors",
-    "firstPowerUp",
+    `powerUp:${first}`,
+    `powerUp:${second}`,
     "secondPowerUp",
+    `powerUp:${third}`,
   ]);
   reopenedPage.triggerTips(["doors", "hazards"]);
   expect([reopened.nextTip(open), reopened.nextTip(open)]).toEqual([{ id: "hazards" }, undefined]);
@@ -119,6 +125,31 @@ it("triggers each tip once a playthrough, behind unlock notices, saved as seen u
   expect(reopened.savedProgress().seenTips).toEqual([]);
   reopenedPage.triggerTips(["doors"]);
   expect(reopened.nextTip(open)).toEqual({ id: "doors" });
+});
+
+it("queues each distinct grant's power-up tip once and none for a duplicate grant", async () => {
+  vi.stubGlobal("localStorage", { getItem: () => null, setItem: vi.fn() });
+  const save = await import("./save.ts");
+  await save.loadProgress();
+  const open = () => false;
+  const [first, second, third] = SKILL_IDS as [SkillId, SkillId, SkillId];
+  save.grantSkill(first);
+  expect(save.nextTip(open)).toEqual({ id: "powerUp", skill: first });
+  expect(save.grantSkill(first)).toBe(false);
+  save.grantSkill(second);
+  expect(save.grantSkill(second)).toBe(false);
+  expect([save.nextTip(open), save.nextTip(open)]).toEqual([
+    { id: "powerUp", skill: second },
+    { id: "secondPowerUp" },
+  ]);
+  save.grantSkill(third);
+  expect(save.grantSkill(third)).toBe(false);
+  // Owning every skill unlocks an achievement, whose notice comes first.
+  save.nextAchievementNotice(open);
+  expect([save.nextTip(open), save.nextTip(open)]).toEqual([
+    { id: "powerUp", skill: third },
+    undefined,
+  ]);
 });
 
 it("keeps Dev-only selection temporary and falls back to saved ownership when an override is unchecked", async () => {
