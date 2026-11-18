@@ -54,7 +54,7 @@ it("leaves the first gift unselected and tipped, turns a selection off and rejec
   save.grantSkill("doubleJump");
   expect(save.savedSkills()).toEqual(["doubleJump"]);
   expect(save.activeSkill()).toBeNull();
-  expect(save.nextSkillTip(() => false)).toBe("doubleJump");
+  expect(save.nextTip(() => false)).toEqual({ id: "firstPowerUp", skill: "doubleJump" });
   expect(save.selectActiveSkill("dash")).toBe(false);
   expect(save.selectActiveSkill("doubleJump")).toBe(true);
   expect(save.selectActiveSkill("doubleJump")).toBe(false);
@@ -71,28 +71,54 @@ it("leaves the first gift unselected and tipped, turns a selection off and rejec
   expect(save.activeSkill()).toBe("doubleJump");
 });
 
-it("queues one tip per new grant in grant order, behind unlock notices, dropping a selected skill's", async () => {
-  vi.stubGlobal("localStorage", { getItem: () => null, setItem: vi.fn() });
-  const save = await import("./save.ts");
-  await save.loadProgress();
+it("triggers each tip once a playthrough, behind unlock notices, saved as seen until Restart", async () => {
+  const values = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  };
+  vi.stubGlobal("localStorage", storage);
   const open = () => false;
-  expect(save.nextSkillTip(open)).toBeUndefined();
-  SKILL_IDS.forEach((skill) => expect(save.grantSkill(skill)).toBe(true));
-  expect(save.grantSkill("dash")).toBe(false);
+  const save = await import("./save.ts");
+  const page = await import("../progress/save/pageSave.ts");
+  await save.loadProgress();
+  save.beginStageRun(ZONE_MAP.start);
+  page.triggerTips(["doors", "doors"]);
+  expect(save.nextTip(() => true)).toBeUndefined();
+  expect([save.nextTip(open), save.nextTip(open), save.nextTip(open)]).toEqual([
+    { id: "controls" },
+    { id: "doors" },
+    undefined,
+  ]);
+  page.triggerTips(["doors"]);
+  save.beginStageRun(ZONE_MAP.start);
+  expect(save.nextTip(open)).toBeUndefined();
+  SKILL_IDS.forEach((skill) => save.grantSkill(skill));
   // Owning every skill unlocks an achievement, whose notice comes first.
-  expect(save.nextSkillTip(open)).toBeUndefined();
+  expect(save.nextTip(open)).toBeUndefined();
   expect(save.nextAchievementNotice(open)).toBe("gift-rooms");
-  expect(save.nextSkillTip(() => true)).toBeUndefined();
-  expect(save.nextSkillTip(open)).toBe("dash");
-  expect(save.selectActiveSkill("speedy")).toBe(true);
-  expect(save.nextSkillTip(open)).toBe("doubleJump");
-  expect(save.nextSkillTip(open)).toBeUndefined();
-  save.clearProgress();
-  save.grantSkill("dash");
-  save.clearProgress();
-  save.grantSkill("speedy");
-  expect(save.nextSkillTip(open)).toBe("speedy");
-  expect(save.nextSkillTip(open)).toBeUndefined();
+  expect([save.nextTip(open), save.nextTip(open), save.nextTip(open)]).toEqual([
+    { id: "firstPowerUp", skill: SKILL_IDS[0] },
+    { id: "secondPowerUp" },
+    undefined,
+  ]);
+  await save.loadProgress();
+  vi.resetModules();
+  const reopened = await import("./save.ts");
+  const reopenedPage = await import("../progress/save/pageSave.ts");
+  await reopened.loadProgress();
+  expect(reopened.savedProgress().seenTips).toEqual([
+    "controls",
+    "doors",
+    "firstPowerUp",
+    "secondPowerUp",
+  ]);
+  reopenedPage.triggerTips(["doors", "hazards"]);
+  expect([reopened.nextTip(open), reopened.nextTip(open)]).toEqual([{ id: "hazards" }, undefined]);
+  reopened.clearProgress();
+  expect(reopened.savedProgress().seenTips).toEqual([]);
+  reopenedPage.triggerTips(["doors"]);
+  expect(reopened.nextTip(open)).toEqual({ id: "doors" });
 });
 
 it("keeps Dev-only selection temporary and falls back to saved ownership when an override is unchecked", async () => {
@@ -101,6 +127,7 @@ it("keeps Dev-only selection temporary and falls back to saved ownership when an
     activeSkill: "dash",
     at: "beginning",
     openingSeen: false,
+    seenTips: [],
     skills: ["dash"],
     version: PROGRESS_VERSION,
   });
@@ -151,6 +178,7 @@ it("keeps an existing save's selection on load", async () => {
     activeSkill: "speedy",
     at: "beginning",
     openingSeen: true,
+    seenTips: [],
     skills: ["dash", "speedy"],
     version: PROGRESS_VERSION,
   });

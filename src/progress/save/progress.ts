@@ -5,9 +5,10 @@ import type {
 } from "@andornaut/game-kit/runtime/save/versionedSave";
 
 import { RECENT_STAGES } from "../../data/stageProgress.ts";
-import type { SkillSelection, ZoneMap } from "../../data/types/index.ts";
+import type { SkillSelection, TipId, ZoneMap } from "../../data/types/index.ts";
 import { openMap } from "../map.ts";
 import { isSkillId } from "../skills.ts";
+import { isTipId } from "../tips.ts";
 
 // Middle chunk ids of each map destination's latest stage entries, newest first: at most
 // RECENT_STAGES entries per destination. Absent means none.
@@ -15,8 +16,11 @@ export type RecentChunks = Readonly<Partial<Record<string, readonly (readonly st
 
 // The player's progress: the beginning (no progress saved, the start screen offers Start), or
 // the map, with the zone nodes he has completed, the zone node he stands on and the recent
-// middle chunks.
-export type Progress = SkillSelection & { readonly openingSeen: boolean } & (
+// middle chunks. seenTips: the first-time tips shown this playthrough, in the order they showed.
+export type Progress = SkillSelection & {
+  readonly openingSeen: boolean;
+  readonly seenTips: readonly TipId[];
+} & (
     | { readonly at: "beginning" }
     | {
         readonly at: "map";
@@ -31,13 +35,14 @@ export const BEGINNING: Progress = {
   activeSkill: null,
   at: "beginning",
   openingSeen: false,
+  seenTips: [],
   skills: [],
 };
 
 // The save format's version. Before the first release, a change to the format or a map node or
 // zone renamed bumps it, and older saves reset to the beginning. Chunk ids are advisory: an
 // unknown one is dropped on load, so renaming a chunk needs no bump.
-export const PROGRESS_VERSION = 11;
+export const PROGRESS_VERSION = 12;
 export const PROGRESS_KEYS = {
   backup: "chibis-way-home.save-backup",
   save: "chibis-way-home.save",
@@ -131,6 +136,13 @@ export function progressFormat(
     if (typeof progress.openingSeen !== "boolean") {
       return { ok: false, reason: "the save has no opening acknowledgement" };
     }
+    if (
+      !Array.isArray(progress.seenTips) ||
+      !progress.seenTips.every(isTipId) ||
+      new Set(progress.seenTips).size !== progress.seenTips.length
+    ) {
+      return { ok: false, reason: "the save has an invalid seen tip list" };
+    }
     if (progress.at === "beginning") {
       return { ok: true, value: progress };
     }
@@ -154,12 +166,16 @@ export function progressFormat(
       completed,
       openingSeen,
       recent,
+      seenTips,
       seenZoneIntros,
       skills,
       stand,
     }: StoredObject): Checked<Progress> => {
       if (typeof openingSeen !== "boolean") {
         return { ok: false, reason: "the save has no opening acknowledgement" };
+      }
+      if (!Array.isArray(seenTips) || !seenTips.every(isTipId)) {
+        return { ok: false, reason: "the save has no valid seen tip list" };
       }
       if (!Array.isArray(skills) || !skills.every(isSkillId)) {
         return { ok: false, reason: "the save has no valid skill list" };
@@ -168,7 +184,7 @@ export function progressFormat(
         return { ok: false, reason: "the save has no valid active skill" };
       }
       if (at === "beginning") {
-        return checked({ activeSkill, at, openingSeen, skills });
+        return checked({ activeSkill, at, openingSeen, seenTips, skills });
       }
       if (at !== "map") {
         return { ok: false, reason: "the save does not say where he is" };
@@ -192,6 +208,7 @@ export function progressFormat(
         completed,
         openingSeen,
         ...(Object.keys(kept).length > 0 && { recent: kept }),
+        seenTips,
         seenZoneIntros,
         skills,
         stand,

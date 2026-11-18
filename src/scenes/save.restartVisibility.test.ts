@@ -33,6 +33,7 @@ it("keeps confirmed Restart cleared across map browsing and reopen until real st
     activeSkill: null,
     at: "beginning",
     openingSeen: false,
+    seenTips: [],
     skills: [],
   });
   expect(save.stageRunStats(stage)).toEqual(stats);
@@ -56,6 +57,7 @@ it("does not begin saved progress for a non-catalogued diagnostic stage", async 
     activeSkill: null,
     at: "beginning",
     openingSeen: false,
+    seenTips: [],
     skills: [],
   });
 });

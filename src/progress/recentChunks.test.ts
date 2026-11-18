@@ -15,6 +15,7 @@ const AT_MAP: Progress = {
   at: "map",
   completed: [],
   openingSeen: true,
+  seenTips: [],
   seenZoneIntros: [],
   skills: [],
   stand: ZONE_MAP.start,

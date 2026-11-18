@@ -7,7 +7,7 @@ import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/local
 import { BOSS_CHARACTERS } from "../../data/achievements.ts";
 import { CHUNKS } from "../../data/chunks.ts";
 import { ZONE_MAP } from "../../data/map.ts";
-import type { AchievementId, BossId, SkillId } from "../../data/types/index.ts";
+import type { AchievementId, BossId, SkillId, TipId } from "../../data/types/index.ts";
 import { RECIPES } from "../../data/zones.ts";
 import {
   ACHIEVEMENT_IDS,
@@ -20,6 +20,7 @@ import {
 } from "../achievements.ts";
 import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks.ts";
 import { eligibleSkills, resolveActiveSkill, type SkillOverrides } from "../skills.ts";
+import type { QueuedTip } from "../tips.ts";
 import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT, achievementsStore } from "./achievements.ts";
 import {
   BEGINNING,
@@ -57,8 +58,9 @@ let progress: Progress = BEGINNING;
 // A developer session's selection of an enabled skill it does not own, or none after turning that
 // selection off, held for the page.
 let temporarySelection: SkillId | null | undefined;
-// Each new grant's enable tip not shown yet, in grant order. They are not saved.
-let skillTips: SkillId[] = [];
+// The first-time tips triggered and not shown yet, in trigger order. They are not saved; a tip is
+// saved as seen once it starts.
+let tips: QueuedTip[] = [];
 const STAGES = new Set(ZONE_MAP.destinations.flatMap(({ stages }) => stages));
 const stats = stageStatsStore(localSaveStorage(), STAGES, ZONE_MAP.destinations);
 let statsLifecycleInstalled = false;
@@ -218,6 +220,9 @@ export function beginStageRun(session: SaveSession, stage: string): void {
       writeStand(session, stage);
     }
     stats.beginRun(stage);
+    if (stage === ZONE_MAP.start) {
+      queueTip({ id: "controls" });
+    }
   }
 }
 export function retryStageRun(stage: string): void {
@@ -330,7 +335,7 @@ export function grantSkill(session: SaveSession, skill: SkillId): boolean {
   }
   const effects = skillGrantEffects(earnedIds, stats.skillUsed(), granted);
   write(session, granted);
-  skillTips.push(skill);
+  queueGrantTips(skill);
   if (effects.awarded.length > 0) {
     earnedIds = [...earnedIds, ...effects.awarded];
     notices.push(effects.awarded);
@@ -370,8 +375,10 @@ export async function grantSavedSkills(context: {
         available,
         committed: (snapshot) => {
           const owned = progress.skills;
-          skillTips.push(...snapshot.progress.skills.filter((skill) => !owned.includes(skill)));
           progress = snapshot.progress;
+          snapshot.progress.skills
+            .filter((skill) => !owned.includes(skill))
+            .forEach(queueGrantTips);
           stats.acceptSavedSkillUse(snapshot.stats.wholeRun.skillUsed === true);
           earnedIds = snapshot.achievements.earned;
           notices.push(snapshot.achievements.unannounced.filter((id) => !deliveredNotices.has(id)));
@@ -444,6 +451,7 @@ export function saveZoneIntro(session: SaveSession, zone: string): void {
     ...savedMap(),
     openingSeen: progress.openingSeen,
     ...savedRecent(),
+    seenTips: progress.seenTips,
     seenZoneIntros: [...seen, zone],
     skills: progress.skills,
   });
@@ -464,6 +472,7 @@ function writeStand(session: SaveSession, stand: string): void {
     completed: savedMap().completed,
     openingSeen: progress.openingSeen,
     ...savedRecent(),
+    seenTips: progress.seenTips,
     seenZoneIntros: seenZoneIntros(),
     skills: progress.skills,
     stand,
@@ -479,6 +488,7 @@ export function saveCompleted(session: SaveSession, node: string): void {
     completed: completed.includes(node) ? completed : [...completed, node],
     openingSeen: progress.openingSeen,
     ...savedRecent(),
+    seenTips: progress.seenTips,
     seenZoneIntros: seenZoneIntros(),
     skills: progress.skills,
     stand: node,
@@ -496,20 +506,42 @@ function write(session: SaveSession, next: Progress): void {
   });
 }
 
-// Restart: progress goes back to the beginning, and the map opens on the first zone with nothing
-// completed. Only progress is cleared.
+// Restart: progress goes back to the beginning, with no tip seen, and the map opens on the first
+// zone with nothing completed. Only progress is cleared.
 export function clearProgress(session: SaveSession): void {
   void flushStats();
-  skillTips = [];
+  tips = [];
   write(session, BEGINNING);
 }
 
-// The next new grant's enable tip to show unless blocked, once every queued unlock notice has
-// shown. A tip whose skill is selected by then is dropped.
-export function nextSkillTip(session: SaveSession, blocked: () => boolean): SkillId | undefined {
-  skillTips = skillTips.filter((skill) => skill !== activeSkill(session));
-  if (skillTips.length === 0 || notices.pending().length > 0 || blocked()) {
+// Queues tip behind the triggered ones unless it has shown this playthrough or is queued.
+function queueTip(tip: QueuedTip): void {
+  if (!progress.seenTips.includes(tip.id) && !tips.some(({ id }) => id === tip.id)) {
+    tips.push(tip);
+  }
+}
+
+// A new grant of skill triggers the first power-up's tip, naming skill, and once two skills are
+// owned the second's.
+function queueGrantTips(skill: SkillId): void {
+  queueTip({ id: "firstPowerUp", skill });
+  if (progress.skills.length >= 2) {
+    queueTip({ id: "secondPowerUp" });
+  }
+}
+
+// What play shows triggers these tips (a door or red hazard in view, a boss acquiring him).
+export function triggerTips(ids: readonly TipId[]): void {
+  ids.forEach((id) => queueTip({ id }));
+}
+
+// The next triggered tip to show unless blocked, once every queued unlock notice has shown,
+// saved as seen as it starts.
+export function nextTip(session: SaveSession, blocked: () => boolean): QueuedTip | undefined {
+  if (tips.length === 0 || notices.pending().length > 0 || blocked()) {
     return undefined;
   }
-  return skillTips.shift();
+  const tip = tips.shift()!;
+  write(session, { ...progress, seenTips: [...progress.seenTips, tip.id] });
+  return tip;
 }

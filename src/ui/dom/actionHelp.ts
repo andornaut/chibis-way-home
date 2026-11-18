@@ -75,3 +75,38 @@ export function createActionHelp(
     return unit;
   });
 }
+
+// text's nodes as createActionHelp gives them, with each {skill} token the skill's label in the
+// action weight, then its glyph: an image one body line high, decorative beside the label, whose
+// source the caller sets. A {skill} token needs a skill label.
+export function createSkillActionHelp(
+  document: Document,
+  colours: Parameters<typeof helpChromeLayers>[0],
+  words: ActionHelpWords,
+  skill: string | undefined,
+  text: string,
+): { readonly glyphs: readonly HTMLImageElement[]; readonly nodes: readonly Node[] } {
+  const glyphs: HTMLImageElement[] = [];
+  const nodes = text.split("{skill}").flatMap((run, index) => {
+    const parts = createActionHelp(document, colours, words, run);
+    if (index === 0) {
+      return parts;
+    }
+    if (skill === undefined) {
+      throw new Error(`No skill for the {skill} token in ${text}`);
+    }
+    const unit = document.createElement("span");
+    unit.className = "ui-action-help-action";
+    writeLayoutProperties(ACTION_HELP_PROPERTIES, unit);
+    const label = document.createElement("span");
+    label.className = "ui-action-help-label";
+    label.textContent = skill;
+    const glyph = document.createElement("img");
+    glyph.className = "ui-action-help-icon ui-action-help-glyph";
+    glyph.alt = "";
+    glyphs.push(glyph);
+    unit.append(label, glyph);
+    return [unit, ...parts];
+  });
+  return { glyphs, nodes };
+}

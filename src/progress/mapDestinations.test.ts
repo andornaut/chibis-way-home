@@ -51,6 +51,7 @@ describe("destination selection", () => {
       at: "map" as const,
       completed: ["one"],
       openingSeen: true,
+      seenTips: [],
       seenZoneIntros: [],
       skills: [],
       stand: "one",

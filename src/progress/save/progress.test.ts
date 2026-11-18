@@ -2,10 +2,12 @@ import { encodeSave, loadSave } from "@andornaut/game-kit/runtime/save/versioned
 import { describe, expect, it } from "vitest";
 
 import { ZONE_MAP } from "../../data/map.ts";
+import { TEXT } from "../../data/text.ts";
 import type { MapNode, ZoneMap } from "../../data/types/index.ts";
 import { RECIPES } from "../../data/zones.ts";
 import { openMap } from "../map.ts";
 import { destinationForStage, destinationSelection } from "../mapDestinations.ts";
+import { TIP_IDS } from "../tips.ts";
 import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./progress.ts";
 
 const node = (id: string, kind: MapNode["kind"], zone?: string): MapNode => ({
@@ -47,6 +49,7 @@ const stored = (fields: object, version = PROGRESS_VERSION) =>
   JSON.stringify({
     activeSkill: null,
     openingSeen: false,
+    seenTips: [],
     seenZoneIntros: [],
     skills: [],
     ...fields,
@@ -57,6 +60,7 @@ const at = (stand: string, completed: string[] = []): Progress => ({
   at: "map",
   completed,
   openingSeen: false,
+  seenTips: [],
   seenZoneIntros: [],
   skills: [],
   stand,
@@ -71,6 +75,8 @@ describe("progressFormat", () => {
     ],
     ["owned skills with none selected", { ...BEGINNING, skills: ["dash", "speedy"] }],
     ["acknowledged beginning", { ...BEGINNING, openingSeen: true, skills: [] }],
+    ["some tips seen", { ...at("start"), seenTips: ["controls", "doors"] } as Progress],
+    ["every tip seen", { ...BEGINNING, seenTips: TIP_IDS }],
     [
       "a remembered zone introduction",
       { ...at("start"), seenZoneIntros: ["test-zone"] } as Progress,
@@ -118,13 +124,19 @@ describe("progressFormat", () => {
         stand: "start",
       }),
     ],
+    ["missing seen tips", stored({ at: "beginning", seenTips: undefined })],
+    ["unknown seen tip", stored({ at: "beginning", seenTips: ["jump"] })],
+    ["duplicate seen tip", stored({ at: "beginning", seenTips: ["doors", "doors"] })],
     ["not JSON", "{not json"],
     ["no version", JSON.stringify({ at: "map", completed: [], stand: "start" })],
     ["version 1", stored({ at: "map", route: ["start"] }, 1)],
     ["version 2", stored({ at: "map", route: ["start"], seed: 7 }, 2)],
     [
-      "the previous catalogue version",
-      stored({ at: "map", completed: [], stand: "start" }, PROGRESS_VERSION - 1),
+      "the previous version, before seen tips",
+      stored(
+        { at: "map", completed: [], seenTips: undefined, stand: "start" },
+        PROGRESS_VERSION - 1,
+      ),
     ],
     ["an unknown place", stored({ at: "shop", completed: [], stand: "start" })],
     [
@@ -145,6 +157,10 @@ describe("progressFormat", () => {
     ],
   ])("starts from the beginning on a save with %s", (_, raw) => {
     expect(loadSave(FORMAT, raw)).toMatchObject({ save: BEGINNING, status: "corrupt" });
+  });
+
+  it("knows every tip TEXT.tips words", () => {
+    expect([...TIP_IDS].sort()).toEqual(Object.keys(TEXT.tips).sort());
   });
 
   it("leaves a later version's save alone and starts from the beginning", () => {
@@ -180,6 +196,7 @@ describe("built cityscape progress", () => {
         at: "map" as const,
         completed,
         openingSeen: true,
+        seenTips: [],
         seenZoneIntros: [],
         skills: [],
         stand,

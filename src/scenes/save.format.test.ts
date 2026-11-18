@@ -8,44 +8,45 @@ import type { ZoneState } from "../rules/zone.ts";
 const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
-    ['{"activeSkill":null,"at":"beginning","openingSeen":true,"skills":[],"version":11', "}"].join(
-      "",
-    ),
-  ],
-  [
-    "chibis-way-home.save",
     [
-      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenZoneIntros',
-      '":[],"skills":[],"stand":"street","version":11}',
+      '{"activeSkill":null,"at":"beginning","openingSeen":true,"seenTips":[],"skills":[]',
+      ',"version":12}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenZoneIntro',
-      's":[],"skills":["dash"],"stand":"street","version":11}',
+      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
+      'seenZoneIntros":[],"skills":[],"stand":"street","version":12}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenZoneIntro',
-      's":[],"skills":["dash","speedy"],"stand":"street","version":11}',
+      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
+      'seenZoneIntros":[],"skills":["dash"],"stand":"street","version":12}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","at":"map","completed":[],"openingSeen":true,"seenZoneIn',
-      'tros":[],"skills":["dash","speedy"],"stand":"street","version":11}',
+      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
+      'seenZoneIntros":[],"skills":["dash","speedy"],"stand":"street","version":12}',
+    ].join(""),
+  ],
+  [
+    "chibis-way-home.save",
+    [
+      '{"activeSkill":"speedy","at":"map","completed":[],"openingSeen":true,"seenTips":',
+      '[],"seenZoneIntros":[],"skills":["dash","speedy"],"stand":"street","version":12}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
       '{"activeSkill":"speedy","at":"map","completed":[],"stand":"street","openingSeen"',
-      ':true,"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"version":1',
-      "1}",
+      ':true,"seenTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy',
+      '"],"version":12}',
     ].join(""),
   ],
   [
@@ -62,16 +63,16 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
     "chibis-way-home.save",
     [
       '{"activeSkill":"speedy","at":"map","completed":["street"],"openingSeen":true,"se',
-      'enZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand":"street","ve',
-      'rsion":11}',
+      'enTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand',
+      '":"street","version":12}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
       '{"activeSkill":"speedy","at":"map","completed":["street"],"openingSeen":true,"se',
-      'enZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand":"city-street',
-      's","version":11}',
+      'enTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand',
+      '":"city-streets","version":12}',
     ].join(""),
   ],
 ];
@@ -80,8 +81,8 @@ const REOPEN_WRITES: readonly (readonly [string, string])[] = [
     "chibis-way-home.save",
     [
       '{"activeSkill":"speedy","at":"map","completed":["street"],"openingSeen":true,"se',
-      'enZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand":"city-street',
-      's","version":11}',
+      'enTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand',
+      '":"city-streets","version":12}',
     ].join(""),
   ],
   [
@@ -171,6 +172,7 @@ it("reopens records saved before the move and writes them back byte for byte", a
     at: "map",
     completed: ["street"],
     openingSeen: true,
+    seenTips: [],
     seenZoneIntros: ["blue-cityscape"],
     skills: ["dash", "speedy"],
     stand: "city-streets",

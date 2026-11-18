@@ -52,6 +52,7 @@ import type {
   ArtHitbox,
   BirdTuning,
   Point,
+  Rect,
   SkillId,
   SpriteSilhouettes,
   ZoneLayout,
@@ -179,6 +180,7 @@ import {
   saveZoneIntro,
   seenZoneIntros,
   stageRunStats,
+  triggerZoneTips,
   wholeRunStats,
   zoneVisitStats,
 } from "./save.ts";
@@ -802,6 +804,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     }
     const frame = frameSteps(PLAY_STEP_LIMITS, time, this.clock);
     this.clock = frame.clock;
+    const frameStart = this.zone;
     let touches = [...this.heldTouches.values()];
     const intent = combineIntents(keyIntent(this.heldKeys), touchIntent(TOUCH, touches));
     if (this.opening && doorPhase(this.opening.ms, time - this.opening.at) === "room") {
@@ -883,6 +886,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.drawControls(time, touches);
     this.drawMoveHint(touches);
     this.drawProgress();
+    if (!this.preview && !this.backdrop) {
+      triggerZoneTips(this.layout, this.cameraView(), frameStart, this.zone);
+    }
   }
 
   // His tuning for the active skill, rebuilt only when the selection changes.
@@ -938,19 +944,21 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     );
   }
 
+  // The world camera's view, in the area's pixels.
+  private cameraView(): Rect {
+    const camera = this.cameras.main;
+    return {
+      height: camera.height / camera.zoomY,
+      width: camera.width / camera.zoomX,
+      x: camera.scrollX,
+      y: camera.scrollY,
+    };
+  }
+
   private barkOwnerOnscreen(owner: ZoneBark["owner"]): boolean {
     const camera = this.cameras.main;
     return barkOwnerOnscreen(
-      {
-        area: this.zone.area,
-        attempt: this.zone.attempt,
-        view: {
-          height: camera.height / camera.zoomY,
-          width: camera.width / camera.zoomX,
-          x: camera.scrollX,
-          y: camera.scrollY,
-        },
-      },
+      { area: this.zone.area, attempt: this.zone.attempt, view: this.cameraView() },
       (index) => {
         const sprite = this.objects?.sprite(index);
         return sprite

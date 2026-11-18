@@ -8,19 +8,17 @@ import { describe, expect, it, vi } from "vitest";
 
 const queue = vi.hoisted(() => ({
   ids: [] as string[],
-  selected: null as string | null,
-  tips: [] as string[],
+  tips: [] as { id: string; skill?: string }[],
 }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("./save.ts", () => ({
-  activeSkill: () => queue.selected,
   nextAchievementNotice: (blocked: () => boolean) => (blocked() ? undefined : queue.ids.shift()),
-  nextSkillTip: (blocked: () => boolean) =>
+  nextTip: (blocked: () => boolean) =>
     queue.ids.length > 0 || blocked() ? undefined : queue.tips.shift(),
 }));
 vi.mock("./domUi.ts", () => ({
-  artFrameUrl: (_scene: unknown, art: string, frame: string) =>
-    Promise.resolve(`blob:${art}/${frame}`),
+  artFrameUrl: (_scene: unknown, art: string, frame?: string) =>
+    Promise.resolve(`blob:${art}/${frame ?? ""}`),
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
     document.body.append(view);
     scene.events.once("shutdown", () => view.remove());
@@ -28,11 +26,13 @@ vi.mock("./domUi.ts", () => ({
   },
 }));
 
+import palette from "../../public/art/palette.json" with { type: "json" };
 import iconSheet from "../../public/art/sprites/icon-achievement.json" with { type: "json" };
 import dashSheet from "../../public/art/sprites/icon-skill-dash.json" with { type: "json" };
 import { ACHIEVEMENT_NOTICE_SECONDS } from "../data/achievements.ts";
+import { SPEAKERS } from "../data/dialogues.ts";
 import { TEXT } from "../data/text.ts";
-import type { AchievementId } from "../data/types/index.ts";
+import type { AchievementId, ControlAction } from "../data/types/index.ts";
 import { ACHIEVEMENT_IDS } from "../progress/index.ts";
 import { DIALOGUE_SCREEN } from "../ui/index.ts";
 import {
@@ -40,9 +40,12 @@ import {
   NOTICE_BLOCKING_SCENES,
   NOTICE_CHECKED_SCENES,
   noticeBlocked,
-  SKILL_TIP,
 } from "./achievementNotice.ts";
-import { achievementIconFrame, AchievementNoticeScene } from "./AchievementNoticeScene.ts";
+import {
+  achievementIconFrame,
+  AchievementNoticeScene,
+  TIP_SPEAKER,
+} from "./AchievementNoticeScene.ts";
 import { modalInput } from "./modalInput.ts";
 
 // The sources are read from disk, from the project root.
@@ -199,19 +202,22 @@ describe("the unlock notice", () => {
   });
 });
 
-describe("the skill tip", () => {
+describe("the tip", () => {
   const { box } = DIALOGUE_SCREEN;
+  const speaker = SPEAKERS[TIP_SPEAKER]!;
+  // A token's label: the tip's skill's title, or the control's.
+  const word = (token: string) =>
+    token === "skill" ? TEXT.skills.dash.title : TEXT.buttons[token as ControlAction];
 
-  // The notice scene with a tip for Dash queued behind one unlock, and whether play shows.
+  // The notice scene with the first power-up's tip for Dash queued behind one unlock, and whether
+  // play shows.
   async function tip() {
     queue.ids = [ACHIEVEMENT_IDS[0]!];
-    queue.selected = null;
-    queue.tips = ["dash"];
+    queue.tips = [{ id: "firstPowerUp", skill: "dash" }];
     const play = { shown: false };
+    const sheets: Readonly<Record<string, unknown>> = { "icon-achievement": iconSheet, palette };
     const scene = Object.assign(new AchievementNoticeScene(), {
-      cache: {
-        json: { get: (key: string) => (key === "icon-achievement" ? iconSheet : dashSheet) },
-      },
+      cache: { json: { get: (key: string) => sheets[key] ?? dashSheet } },
       events: new EventEmitter(),
       game: { events: new EventEmitter() },
       scene: {
@@ -239,7 +245,7 @@ describe("the skill tip", () => {
     return { panel, play, scene, step };
   }
 
-  it("waits behind the unlock and for play, then shows the filled tip with the skill's glyph", async () => {
+  it("waits behind the unlock and for play, then shows the Tip speaker with inline icons", async () => {
     const { panel, play, scene, step } = await tip();
     await step(0);
     expect(panel().dataset.notice).toBe("achievement");
@@ -247,35 +253,36 @@ describe("the skill tip", () => {
     expect(scene.showing()).toBe(false);
     play.shown = true;
     await step(0);
-    const portrait = panel().querySelector<HTMLImageElement>(".dialogue-portrait")!;
+    const line = panel().querySelector(".dialogue-line")!;
+    const tab = panel().querySelector<HTMLElement>(".dialogue-name-tab")!;
     expect({
-      heading: panel().querySelector<HTMLElement>(".dialogue-heading")?.hidden,
+      glyph: line.querySelector(".ui-action-help-glyph")?.getAttribute("src"),
       hidden: panel().hidden,
-      icon: portrait.getAttribute("src"),
-      line: panel().querySelector(".dialogue-line")?.textContent,
+      labels: [...line.querySelectorAll(".ui-action-help-label")].map(
+        ({ textContent }) => textContent,
+      ),
+      line: line.textContent,
       notice: panel().dataset.notice,
+      portrait: panel().querySelector(".dialogue-portrait")?.getAttribute("src"),
+      side: panel().dataset.side,
+      tab: [tab.hidden, tab.textContent, tab.dataset.colour],
     }).toEqual({
-      heading: true,
+      glyph: "blob:icon-skill-dash/icon-skill-dash 0.aseprite",
       hidden: false,
-      icon: "blob:icon-skill-dash/icon-skill-dash 0.aseprite",
-      line: fillNames(TEXT.skillHud.enableTip, { skill: TEXT.skills.dash.title }),
-      notice: "skill-tip",
+      labels: [...TEXT.tips.firstPowerUp.matchAll(/\{(\w+)\}/gu)].map(([, token]) => word(token!)),
+      line: TEXT.tips.firstPowerUp.replace(/\{(\w+)\}/gu, (_, token: string) => word(token)),
+      notice: "tip",
+      portrait: `blob:${speaker.portrait}/`,
+      side: speaker.side,
+      tab: [false, TEXT.dialogue.speakers[TIP_SPEAKER], speaker.colour],
     });
+    // Play keeps running: the tip opens no modal input scope, and hides while play does not show.
+    expect(modalInput(scene).accepts()).toBe(true);
     play.shown = false;
-    scene.update(0, SKILL_TIP.seconds * 2000);
+    scene.update(0, ACHIEVEMENT_NOTICE_SECONDS * 2000);
     expect([panel().hidden, scene.showing()]).toEqual([true, true]);
-    scene.events.emit("shutdown");
-    vi.restoreAllMocks();
-  });
-
-  it("ends early once its skill is selected", async () => {
-    const { panel, play, scene, step } = await tip();
-    queue.ids = [];
     play.shown = true;
-    await step(0);
-    expect(scene.showing()).toBe(true);
-    queue.selected = "dash";
-    scene.update(0, 1);
+    scene.update(0, ACHIEVEMENT_NOTICE_SECONDS * 1000);
     expect([panel().hidden, scene.showing()]).toEqual([true, false]);
     scene.events.emit("shutdown");
     vi.restoreAllMocks();

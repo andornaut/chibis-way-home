@@ -1,6 +1,5 @@
 import type { Scene } from "phaser";
 
-import { ACHIEVEMENT_NOTICE_SECONDS, ACHIEVEMENT_NOTICE_SIDE } from "../data/achievements.ts";
 import type { AchievementNoticeScene } from "./AchievementNoticeScene.ts";
 import { modalInput } from "./modalInput.ts";
 import type { ZoneBarkScene } from "./ZoneBarkScene.ts";
@@ -67,16 +66,9 @@ export function achievementNoticeShowing(scene: Scene): boolean {
   );
 }
 
-// A new grant's enable tip: how long it shows, unless its skill is selected first, and its icon's
-// side in the notice's panel, as an unlock notice's.
-export const SKILL_TIP = {
-  seconds: ACHIEVEMENT_NOTICE_SECONDS,
-  side: ACHIEVEMENT_NOTICE_SIDE,
-} as const;
-
-// Whether a skill tip must wait: whatever defers an unlock notice, or the skill HUD it points at
-// not showing in play (the zone paused or absent, or ZoneScene.skillState not shown).
-export function skillTipBlocked(scene: Scene): boolean {
+// Whether a tip must wait: whatever defers an unlock notice, or play not showing with its skill
+// HUD (the zone paused or absent, or ZoneScene.skillState not shown).
+export function tipBlocked(scene: Scene): boolean {
   return (
     noticeBlocked(scene) ||
     !scene.scene.isActive("zone") ||

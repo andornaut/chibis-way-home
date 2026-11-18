@@ -7,6 +7,11 @@ import type { SkillId } from "./bird.ts";
 import type { Point } from "./geometry.ts";
 import type { ControlAction } from "./ui.ts";
 
+// A first-time tip, by its trigger: bosses, a boss first acquires Chibi; controls, the first
+// stage starts; doors, a room door first shows in view; firstPowerUp, the first skill grant;
+// hazards, a red hazard first shows in view; secondPowerUp, two skills are first owned.
+export type TipId = "bosses" | "controls" | "doors" | "firstPowerUp" | "hazards" | "secondPowerUp";
+
 export interface DeathText {
   // The death card's accessible name, with the zone's name as {zone}.
   readonly label: string;
@@ -48,15 +53,17 @@ export interface GameText {
     readonly close: string;
     readonly disc: string;
   };
-  // The skill HUD's description of the selected skill's readiness, and the tip a new grant shows,
-  // with the skill's title as {skill}. Each skill button is named by its skill's title.
+  // The skill HUD's description of the selected skill's readiness. Each skill button is named by
+  // its skill's title.
   readonly skillHud: {
-    readonly enableTip: string;
     readonly ready: string;
     readonly recharging: string;
   };
   readonly skills: Readonly<Record<SkillId, SkillText>>;
   readonly stats: StatsText;
+  // Each first-time tip the Tip speaker shows, with inline control icons for {move}, {jump} and
+  // {use}, and for {skill} the granted skill's title and glyph.
+  readonly tips: Readonly<Record<TipId, string>>;
   readonly update: {
     readonly accept: string;
     readonly cancel: string;

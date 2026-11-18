@@ -63,11 +63,12 @@ export const DIALOGUE_FOOTER_LAYOUT: LayoutValues = {
 };
 
 // A paragraph as the panel shows it: its speaker's side, and their name tab, or none for a null
-// name; a heading is a bold first line above the text, in place of a name tab.
+// name; a heading is a bold first line above the text, in place of a name tab. The text is a
+// string, or nodes such as inline control illustrations (createActionHelp).
 export type PanelParagraph = {
   readonly heading?: string;
   readonly side: DialogueSpeaker["side"];
-  readonly text: string;
+  readonly text: string | readonly Node[];
 } & (
   { readonly colour: DialogueSpeaker["colour"]; readonly name: string } | { readonly name: null }
 );
@@ -128,7 +129,11 @@ export function showPanelParagraph(panel: DialoguePanelView, paragraph: PanelPar
   }
   panel.heading.hidden = paragraph.heading === undefined;
   panel.heading.textContent = paragraph.heading ?? "";
-  panel.line.textContent = paragraph.text;
+  if (typeof paragraph.text === "string") {
+    panel.line.textContent = paragraph.text;
+  } else {
+    panel.line.replaceChildren(...paragraph.text);
+  }
 }
 
 export interface DialogueWords {

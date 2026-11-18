@@ -43,6 +43,7 @@ export {
   createAchievementsCard,
   showAchievementsPage,
 } from "./dom/achievements.ts";
+export { createSkillActionHelp } from "./dom/actionHelp.ts";
 export {
   BUTTON_FACE_INSETS,
   BUTTON_TOKENS,

@@ -20,6 +20,7 @@ it("preserves opening acknowledgement through progress writes and resets it inde
     activeSkill: null,
     at: "beginning",
     openingSeen: false,
+    seenTips: [],
     skills: [],
   });
   save.saveOpeningSeen();
@@ -28,6 +29,7 @@ it("preserves opening acknowledgement through progress writes and resets it inde
     activeSkill: null,
     at: "beginning",
     openingSeen: true,
+    seenTips: [],
     skills: [],
   });
   const destination = ZONE_MAP.destinations[0]!;
@@ -47,6 +49,7 @@ it("preserves opening acknowledgement through progress writes and resets it inde
     activeSkill: null,
     at: "beginning",
     openingSeen: false,
+    seenTips: [],
     skills: [],
   });
   expect(save.stageRunStats(stage)).toEqual(stats);

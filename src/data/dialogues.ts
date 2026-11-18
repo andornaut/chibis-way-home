@@ -126,6 +126,7 @@ export const SPEAKERS: Readonly<Record<string, DialogueSpeaker>> = {
   pigeon: { colour: "tan", portrait: "portrait-pigeon", side: "right" },
   raccoon: { colour: "tan", portrait: "portrait-raccoon", side: "right" },
   "room-helper": { colour: "green", portrait: "dog-pug", side: "right" },
+  tip: { colour: "green", portrait: "portrait-tip", side: "right" },
 };
 
 export const ZONE_DIALOGUES: Readonly<Record<string, ZoneDialoguePlan>> = {

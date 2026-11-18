@@ -1,6 +1,6 @@
 // Progress through the game: the map and its destinations, stage completion routing, the
-// opening, skill ownership and selection, achievements, and the save formats. src/progress/save/pageSave.ts
-// opens the page's saves on load, so it stays out of this index.
+// opening, skill ownership and selection, achievements, first-time tips, and the save formats.
+// src/progress/save/pageSave.ts opens the page's saves on load, so it stays out of this index.
 export {
   ACHIEVEMENT_IDS,
   achievementEntries,
@@ -43,3 +43,4 @@ export {
   skillTuning,
 } from "./skills.ts";
 export { type StageCompletion, stageCompletion, stageExit } from "./stageCompletion.ts";
+export { isTipId, type QueuedTip, TIP_IDS } from "./tips.ts";

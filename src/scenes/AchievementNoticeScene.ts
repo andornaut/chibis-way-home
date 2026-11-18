@@ -3,9 +3,12 @@ import { fillNames } from "@andornaut/game-kit/runtime/lines";
 import { Scene } from "phaser";
 
 import { ACHIEVEMENT_NOTICE_SECONDS, ACHIEVEMENT_NOTICE_SIDE } from "../data/achievements.ts";
+import { SPEAKERS } from "../data/dialogues.ts";
 import { TEXT } from "../data/text.ts";
 import type { AchievementId, SkillId } from "../data/types/index.ts";
+import type { QueuedTip } from "../progress/index.ts";
 import {
+  createSkillActionHelp,
   createStatusPanel,
   onPanel,
   type PanelParagraph,
@@ -13,18 +16,16 @@ import {
   SKILL_ART,
   type StatusPanelView,
 } from "../ui/index.ts";
-import {
-  ACHIEVEMENT_NOTICE,
-  noticeBlocked,
-  SKILL_TIP,
-  skillTipBlocked,
-} from "./achievementNotice.ts";
+import { ACHIEVEMENT_NOTICE, noticeBlocked, tipBlocked } from "./achievementNotice.ts";
 import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView } from "./domUi.ts";
 import { modalInput } from "./modalInput.ts";
-import { activeSkill, nextAchievementNotice, nextSkillTip } from "./save.ts";
+import { nextAchievementNotice, nextTip } from "./save.ts";
+import { paletteColour } from "./scenePalette.ts";
 
 const ICON = "icon-achievement";
+// The SPEAKERS and TEXT.dialogue.speakers key every tip shows under.
+export const TIP_SPEAKER = "tip";
 
 // The frame of art's icon-achievement for id: its tag's first frame unlocked, its second locked.
 // The tag is never played.
@@ -54,29 +55,42 @@ export function achievementNoticeParagraph(id: AchievementId): PanelParagraph {
   };
 }
 
-// A new grant's enable tip as a dialogue paragraph without a name tab or heading: the tip with the
-// skill's title filled in, beside the portrait frame, which shows the skill's ready glyph.
-export function skillTipParagraph(skill: SkillId): PanelParagraph {
-  return {
-    name: null,
-    side: SKILL_TIP.side,
-    text: fillNames(TEXT.skillHud.enableTip, { skill: TEXT.skills[skill].title }),
-  };
+// A tip as the Tip speaker's paragraph: the name tab in its colour, the portrait at its side,
+// and the tip's text with inline control illustrations, its {skill} the granted skill's title and
+// glyph. glyphs: each {skill} glyph, whose source the caller sets.
+export function tipParagraph(
+  document: Document,
+  colours: Parameters<typeof createSkillActionHelp>[1],
+  tip: QueuedTip,
+): { readonly glyphs: readonly HTMLImageElement[]; readonly paragraph: PanelParagraph } {
+  const speaker = SPEAKERS[TIP_SPEAKER];
+  const name = TEXT.dialogue.speakers[TIP_SPEAKER];
+  if (speaker === undefined || name === undefined) {
+    throw new Error(`No ${TIP_SPEAKER} speaker`);
+  }
+  const { glyphs, nodes } = createSkillActionHelp(
+    document,
+    colours,
+    { actions: TEXT.buttons, icons: TEXT.actionIcons },
+    tip.skill === undefined ? undefined : TEXT.skills[tip.skill].title,
+    TEXT.tips[tip.id],
+  );
+  return { glyphs, paragraph: { colour: speaker.colour, name, side: speaker.side, text: nodes } };
 }
 
-// A notice the panel shows: an unlock, or a new grant's enable tip.
+// A notice the panel shows: an unlock, or a first-time tip.
 type Notice =
   | { readonly id: AchievementId; readonly kind: "achievement" }
-  | { readonly kind: "skill-tip"; readonly skill: SkillId };
+  | { readonly kind: "tip"; readonly tip: QueuedTip };
 
 // Unlock notices, one at a time in the shared dialogue panel for ACHIEVEMENT_NOTICE_SECONDS, with no
-// buttons and no modal input scope, then each new grant's enable tip for SKILL_TIP.seconds, in
-// grant order, behind every queued unlock. Launched once at boot, it runs above play and below
-// every modal card. A notice starts only while nothing defers it (noticeBlocked, and for a tip
-// skillTipBlocked, so it shows only in play); while one shows, barks wait. Something that defers
-// notices hides the one showing and holds its time until it ends. A tip also ends once its skill is
-// selected. A fresh tap on the panel dismisses only the notice. A notice shows, and its time
-// starts, once its icon's cut is ready (or has failed), so it never shows an empty portrait frame.
+// buttons and no modal input scope, then each triggered tip for as long, in trigger order, behind
+// every queued unlock. Launched once at boot, it runs above play and below every modal card, and
+// never pauses play. A notice starts only while nothing defers it (noticeBlocked, and for a tip
+// tipBlocked, so it shows only in play); while one shows, barks wait. Something that defers
+// notices hides the one showing and holds its time until it ends. A fresh tap on the panel
+// dismisses only the notice. A notice shows, and its time starts, once its icons' cuts are ready
+// (or have failed), so it never shows an empty portrait frame or glyph.
 // The panel is HTML in the UI layer (src/ui/dom/dialogue.ts), a polite status region whose panel
 // names the notice's kind in data-notice; it takes no presses itself, so the scene reads the tap
 // from the page (bindSceneActions) and the screen under it still takes the press.
@@ -111,13 +125,10 @@ export class AchievementNoticeScene extends Scene {
 
   // Whether the showing notice, or an unlock about to start, must wait.
   private blocked(): boolean {
-    return this.notice?.kind === "skill-tip" ? skillTipBlocked(this) : noticeBlocked(this);
+    return this.notice?.kind === "tip" ? tipBlocked(this) : noticeBlocked(this);
   }
 
   override update(_time: number, delta: number): void {
-    if (this.notice?.kind === "skill-tip" && activeSkill() === this.notice.skill) {
-      this.clear();
-    }
     const blocked = this.blocked();
     if (this.showing()) {
       const hidden = blocked || !this.ready;
@@ -138,55 +149,81 @@ export class AchievementNoticeScene extends Scene {
       this.show({ id, kind: "achievement" });
       return;
     }
-    const skill = nextSkillTip(() => skillTipBlocked(this));
-    if (skill !== undefined) {
-      this.show({ kind: "skill-tip", skill });
+    const tip = nextTip(() => tipBlocked(this));
+    if (tip !== undefined) {
+      this.show({ kind: "tip", tip });
     }
   }
 
   private show(notice: Notice): void {
     this.notice = notice;
     this.ready = false;
-    this.remaining =
-      (notice.kind === "achievement" ? ACHIEVEMENT_NOTICE_SECONDS : SKILL_TIP.seconds) * 1000;
+    this.remaining = ACHIEVEMENT_NOTICE_SECONDS * 1000;
     const view = this.view;
     if (view === undefined) {
       return;
     }
     const { panel } = view;
     panel.element.dataset.notice = notice.kind;
-    showPanelParagraph(
-      panel,
-      notice.kind === "achievement"
-        ? achievementNoticeParagraph(notice.id)
-        : skillTipParagraph(notice.skill),
-    );
+    const { glyphs, paragraph } =
+      notice.kind === "tip"
+        ? tipParagraph(document, this.colours(), notice.tip)
+        : { glyphs: [], paragraph: achievementNoticeParagraph(notice.id) };
+    showPanelParagraph(panel, paragraph);
     panel.portrait.hidden = true;
     const shows = () => this.notice === notice && this.view === view;
-    void this.iconUrl(notice)
-      .then((url) => {
-        if (shows()) {
-          panel.portrait.src = url;
-          panel.portrait.hidden = false;
+    const portrait = this.portraitUrl(notice).then((url) => {
+      if (shows() && url !== undefined) {
+        panel.portrait.src = url;
+        panel.portrait.hidden = false;
+      }
+    });
+    const skill = notice.kind === "tip" ? notice.tip.skill : undefined;
+    const glyphCuts = glyphs.map((glyph) =>
+      skill === undefined
+        ? Promise.resolve()
+        : this.glyphUrl(skill).then((url) => {
+            if (shows()) {
+              glyph.src = url;
+            }
+          }),
+    );
+    void Promise.allSettled([portrait, ...glyphCuts]).then((results) => {
+      for (const result of results) {
+        if (result.status === "rejected") {
+          console.warn("The notice's icon failed to load", result.reason);
         }
-      })
-      .catch((error: unknown) => console.warn("The notice's icon failed to load", error))
-      .finally(() => {
-        if (shows()) {
-          this.ready = true;
-        }
-      });
+      }
+      if (shows()) {
+        this.ready = true;
+      }
+    });
   }
 
-  // The notice's icon: the unlocked achievement's, or the skill's ready glyph unfilled, cream on
-  // the portrait frame's dark slot.
-  private iconUrl(notice: Notice): Promise<string> {
+  // The notice's portrait: the unlocked achievement's icon, or the Tip speaker's portrait.
+  private async portraitUrl(notice: Notice): Promise<string | undefined> {
     if (notice.kind === "achievement") {
       return artFrameUrl(this, ICON, achievementIconFrame(this, true, notice.id));
     }
-    const art = SKILL_ART[notice.skill];
+    const art = SPEAKERS[TIP_SPEAKER]?.portrait;
+    return art === null || art === undefined ? undefined : artFrameUrl(this, art);
+  }
+
+  // A skill's ready glyph unfilled, cream as the panel's text.
+  private async glyphUrl(skill: SkillId): Promise<string> {
+    const art = SKILL_ART[skill];
     const frame = sheetTags(this.cache.json.get(art) as AsepriteSheet).get("ready")?.[0]?.frame;
     return artFrameUrl(this, art, frame);
+  }
+
+  private colours(): Parameters<typeof tipParagraph>[1] {
+    const colour = (name: string) => paletteColour(this, name);
+    return {
+      cream: colour("cream"),
+      ink: colour("ink"),
+      navy: colour("navy"),
+      white: colour("white"),
+    };
   }
 
   private clear(): void {

@@ -25,3 +25,12 @@
   width: 100%;
   height: 100%;
 }
+
+/* A skill's glyph (createSkillActionHelp), drawn pixelated once its source is set. */
+.ui-action-help-glyph {
+  image-rendering: pixelated;
+}
+
+.ui-action-help-glyph:not([src]) {
+  visibility: hidden;
+}

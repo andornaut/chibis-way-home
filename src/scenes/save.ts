@@ -1,8 +1,9 @@
-import type { AchievementId, SkillId, ZoneLayout } from "../data/types/index.ts";
+import type { AchievementId, Rect, SkillId, ZoneLayout } from "../data/types/index.ts";
 import { developmentSkillOverrides, isDevelopmentSession } from "../dev/mode.ts";
 import type {
   AchievementEntry,
   Progress,
+  QueuedTip,
   RunStatsSummary,
   SavedSkillGrantResult,
   WholeRunStatsSummary,
@@ -12,6 +13,7 @@ import * as pageSave from "../progress/save/pageSave.ts";
 import { activeStepSeconds } from "../rules/death.ts";
 import { areaOf, type ZoneState } from "../rules/zone.ts";
 import { zoneStepRecord } from "../rules/zoneRecords.ts";
+import { stepTips, tipsInView } from "../rules/zoneTips.ts";
 
 export type { Progress };
 
@@ -89,8 +91,19 @@ export function recentStageChunks(stage: string): readonly string[] {
 export function savedRecentMiddleChunks(zone: string): readonly string[] {
   return pageSave.savedRecentMiddleChunks(zone);
 }
-export function nextSkillTip(blocked: () => boolean): SkillId | undefined {
-  return pageSave.nextSkillTip(SESSION, blocked);
+export function nextTip(blocked: () => boolean): QueuedTip | undefined {
+  return pageSave.nextTip(SESSION, blocked);
+}
+// The tips live steps from before to after and the view after them trigger: a boss acquiring him
+// (stepTips), and a room door or red hazard in view, a rect in the area's pixels (tipsInView).
+export function triggerZoneTips(
+  layout: ZoneLayout,
+  view: Rect,
+  before: ZoneState,
+  after: ZoneState,
+): void {
+  const area = areaOf(layout, after.area);
+  pageSave.triggerTips([...stepTips(area, before, after), ...tipsInView(area, after, view)]);
 }
 export function nextAchievementNotice(blocked: () => boolean): AchievementId | undefined {
   return pageSave.nextAchievementNotice(blocked);
