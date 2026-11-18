@@ -1,4 +1,11 @@
 export const DEV_TEXT = {
+  cheats: {
+    close: "Close",
+    runOnly: "Run-only",
+    saveChanging: "Save-changing",
+    title: "Cheats",
+  },
+  fps: "FPS counter",
   grantAllSkills: "Grant all power-ups",
   grantRecords: {
     achievements: "Achievements",
@@ -23,7 +30,33 @@ export const DEV_TEXT = {
   heading: "Developer controls",
   invulnerable: "Invulnerability (contact hazards only)",
   load: "Load stage",
+  openCheats: "Open Cheats",
+  powerUpEnable: "Enable {skill}",
+  resetSave: {
+    action: "Reset save",
+    confirm: {
+      accept: "Reset",
+      body: "This erases all progress, statistics and achievements.",
+      cancel: "Cancel",
+      title: "Reset save",
+    },
+  },
+  results: {
+    resetSave: "Save reset.",
+    showTipsAgain: "Tips will show again.",
+    unlockAllPowerUps: {
+      saved: "All power-ups are saved.",
+      unchanged: "All power-ups are already saved.",
+    },
+    unlockAllZones: {
+      saved: "All zones are unlocked.",
+      unchanged: "All zones are already unlocked.",
+    },
+  },
+  showTipsAgain: "Show tips again",
   stage: "Stage",
   toggle: "Dev",
+  unlockAllPowerUps: "Unlock all power-ups",
+  unlockAllZones: "Unlock all zones",
   zone: "Zone",
 } as const;
