@@ -301,3 +301,4 @@ decided or delivered, and why, in a line or two each.
 | cwh-0263 | Gate boss charges by reach and room to move                                                   | [cwh-0263.md](cwh-0263.md) |
 | cwh-0264 | Move developer controls into a Settings Cheats modal                                          | [cwh-0264.md](cwh-0264.md) |
 | cwh-0265 | Recapture every stage preview from the current game                                           | [cwh-0265.md](cwh-0265.md) |
+| cwh-0266 | Adopt the game-kit 0.59 install and update loader                                             | [cwh-0266.md](cwh-0266.md) |

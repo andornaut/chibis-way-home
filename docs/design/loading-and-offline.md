@@ -23,3 +23,4 @@ Reference: [assets and build](../../src/README.md#assets-and-build),
 | cwh-0005 | Install the game as a full-screen landscape app                    | [cwh-0005.md](../work/cwh-0005.md) |
 | cwh-0017 | Show the loading strip only for awaited loads                      | [cwh-0017.md](../work/cwh-0017.md) |
 | cwh-0018 | Retry a failed first offline installation through the shared Retry | [cwh-0018.md](../work/cwh-0018.md) |
+| cwh-0266 | Adopt the game-kit 0.59 install and update loader                  | [cwh-0266.md](../work/cwh-0266.md) |
