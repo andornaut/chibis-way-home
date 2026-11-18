@@ -449,6 +449,12 @@
       "once": []
     },
     {
+      "key": "portrait-tip",
+      "png": "sprites/portrait-tip.png",
+      "json": "sprites/portrait-tip.json",
+      "once": []
+    },
+    {
       "key": "raccoon-antagonist",
       "png": "sprites/raccoon-antagonist.png",
       "json": "sprites/raccoon-antagonist.json",
