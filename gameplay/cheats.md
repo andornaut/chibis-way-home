@@ -9,7 +9,7 @@ The [shared saves and cheats policy](https://github.com/andornaut/game-coordinat
 
 ## Cheat session
 
-Cheats never touch the save. Using any cheat starts a cheat session: from then on nothing is saved, earned or banked, including progress, unlocks, skill grants, seen tips, achievements and statistics. Returning to the start screen ends the session, and Continue then loads the save as it was before the first cheat.
+Cheats never touch the save. Using any cheat starts a cheat session: from then on nothing is saved, earned or banked, including progress, unlocks, skill grants, seen tips, achievements and statistics. Cheats chosen on the start screen apply to the session that the next Start or Continue begins. Returning to the start screen from play ends the session, and Continue then loads the save as it was before the first cheat.
 
 ## Cheats
 
