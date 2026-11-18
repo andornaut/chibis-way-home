@@ -16,17 +16,18 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 
 ## Work items
 
-| ID       | Title                                                         | Link                               |
-| -------- | ------------------------------------------------------------- | ---------------------------------- |
-| cwh-0001 | Serve the site as static pages with per-page security headers | [cwh-0001.md](../work/cwh-0001.md) |
-| cwh-0006 | Bundle a reduced WebGL-only Phaser build                      | [cwh-0006.md](../work/cwh-0006.md) |
-| cwh-0007 | Pack art into content-hashed lossless WebP atlas pages        | [cwh-0007.md](../work/cwh-0007.md) |
-| cwh-0010 | Add browser developer controls with run-only cheats           | [cwh-0010.md](../work/cwh-0010.md) |
-| cwh-0011 | Consume the shared kits as pinned published releases          | [cwh-0011.md](../work/cwh-0011.md) |
-| cwh-0012 | Run checks in isolated, load-admitted containers              | [cwh-0012.md](../work/cwh-0012.md) |
-| cwh-0015 | Ship local main through delivery-kit departures               | [cwh-0015.md](../work/cwh-0015.md) |
-| cwh-0021 | Pin delivery-kit 4.6.1                                        | [cwh-0021.md](../work/cwh-0021.md) |
-| cwh-0026 | Run only lint and attribution checks for docs-only changes    | [cwh-0026.md](../work/cwh-0026.md) |
-| cwh-0027 | Adopt design and work files                                   | [cwh-0027.md](../work/cwh-0027.md) |
-| cwh-0254 | Release landed and superseded Tech worktrees and branches     | [cwh-0254.md](../work/cwh-0254.md) |
-| cwh-0259 | Keep non-player copies out of the deployed build              | [cwh-0259.md](../work/cwh-0259.md) |
+| ID       | Title                                                                                         | Link                               |
+| -------- | --------------------------------------------------------------------------------------------- | ---------------------------------- |
+| cwh-0001 | Serve the site as static pages with per-page security headers                                 | [cwh-0001.md](../work/cwh-0001.md) |
+| cwh-0006 | Bundle a reduced WebGL-only Phaser build                                                      | [cwh-0006.md](../work/cwh-0006.md) |
+| cwh-0007 | Pack art into content-hashed lossless WebP atlas pages                                        | [cwh-0007.md](../work/cwh-0007.md) |
+| cwh-0010 | Add browser developer controls with run-only cheats                                           | [cwh-0010.md](../work/cwh-0010.md) |
+| cwh-0011 | Consume the shared kits as pinned published releases                                          | [cwh-0011.md](../work/cwh-0011.md) |
+| cwh-0012 | Run checks in isolated, load-admitted containers                                              | [cwh-0012.md](../work/cwh-0012.md) |
+| cwh-0015 | Ship local main through delivery-kit departures                                               | [cwh-0015.md](../work/cwh-0015.md) |
+| cwh-0021 | Pin delivery-kit 4.6.1                                                                        | [cwh-0021.md](../work/cwh-0021.md) |
+| cwh-0026 | Run only lint and attribution checks for docs-only changes                                    | [cwh-0026.md](../work/cwh-0026.md) |
+| cwh-0027 | Adopt design and work files                                                                   | [cwh-0027.md](../work/cwh-0027.md) |
+| cwh-0254 | Release landed and superseded Tech worktrees and branches                                     | [cwh-0254.md](../work/cwh-0254.md) |
+| cwh-0259 | Keep non-player copies out of the deployed build                                              | [cwh-0259.md](../work/cwh-0259.md) |
+| cwh-0260 | Strip verification hashes from the runtime layouts and ship the palette and art manifest once | [cwh-0260.md](../work/cwh-0260.md) |
