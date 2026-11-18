@@ -292,7 +292,7 @@ The base 720x360 view places these targets left to right in one horizontal top r
 
 The HUD discs are HTML buttons on the UI layer, each its 48x48 target, drawing the circle chrome as inline SVG from the skill chrome layers, sharp at every device pixel ratio, with the glyph drawn pixelated at native size. The selected skill's button is marked pressed to assistive technology and described by its readiness. Focused, the target's disc draws the shared focus ring. The room gift panel keeps its circle chrome in a CanvasTexture at screen resolution (the game's CSS scale times devicePixelRatio, repainted when either changes), displayed at 48x48 and sampled nearest-neighbour. Fractional RGBA coverage smooths only the circle boundaries; face and ring interiors remain opaque. Preserve the global pixel-art renderer and nearest-neighbour glyph sampling. Do not bake selection, circle chrome or target coordinates into the glyph exports.
 
-Locked icons are hidden. Unlocked icons remain visible, including when muted. Only one selected power-up affects play at a time. During play, tap selects that power-up without performing its movement action; a 400ms hold pauses and opens details without selecting the held skill. Selection and recharge produce three visual states:
+Locked icons are hidden. Unlocked icons remain visible, including when muted. Only one selected power-up affects play at a time. During play, tap selects that power-up without performing its movement action; a 500ms hold pauses and opens details without selecting the held skill. Selection and recharge produce three visual states:
 
 - Enabled and ready: the selected skill has the dark ink ring and a bright `yellow` (`#fee761`) face throughout, with its native `ready` glyph rendered in `ink` (`#181425`). The glyph holds 14.43:1 contrast against the face.
 - Enabled and recharging: the selected skill retains the dark ink ring, with an opaque `navy` (`#262b44`) face and its native `grey` (`#8b9bb4`) `muted` glyph, holding 4.93:1 contrast.
@@ -460,6 +460,7 @@ The loading bar is a 2px strip along the top of the 720px view, with no border: 
 - Layers: boot and entering a zone show over the first visit's precache and the newer-save update, which show only while neither runs. A finished measured load holds and fades before the other layer shows, unless boot or a zone load begins meanwhile.
 - Idle: nothing shows.
 - Under a modal: the bar stays painted over the canvas and inert, with its track and fills taking the same three `palette.darker` steps as the rest of the dimmed background, and keeps its state, full hold and travel.
+- Failure: the published game-kit loading-failure presentation shows the required title, message and Retry. Retry takes the primary button's colours, as Start does: a `dslate` face, `slate` highlight and `navy` lip with a `white` label (9.55:1).
 
 ## Map
 
