@@ -82,7 +82,7 @@ function tip(): pixel.Frame {
   glass(g, 0, 0, "amber");
   for (let y = 0; y < 48; y++) {
     for (let x = 0; x < 48; x++) {
-      if (g.px[y][x] && lit.px[y][x]) {
+      if (g.px[y]?.[x] && lit.px[y]?.[x]) {
         g.p(x, y, "yellow");
       }
     }
