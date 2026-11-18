@@ -11,7 +11,8 @@ time in a fixed top box with name tabs and portraits, advance only on Continue a
 ([dialogue](../../gameplay/design.md#dialogue)). Each zone introduces its antagonist once in a
 cinematic exchange and closes with an outgoing exchange, while spotting, escape and Fert's journey
 barks show as nonmodal messages ([quips](../../gameplay/design.md#quips),
-[Fert](../../gameplay/design.md#fert)). New games and confirmed Restart open with four manually
+[Fert](../../gameplay/design.md#fert)). A Tip speaker with a light-bulb portrait gives timed first-time tips
+about controls, doors, red hazards, bosses and power-ups ([dialogue](../../gameplay/design.md#dialogue)). New games and confirmed Restart open with four manually
 advanced still shots ([opening story](../../gameplay/design.md#opening-story)).
 
 Reference: [cast](../../gameplay/design.md#cast), [dialogue](../../gameplay/design.md#dialogue), [narrative](../../gameplay/narrative/README.md).

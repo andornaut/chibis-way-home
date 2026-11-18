@@ -5,8 +5,7 @@ Stages are built on 12 px tiles to Chibi's fixed reaches: a short press rises 3 
 walks and brakes smoothly, jumps with one uninterrupted decelerating ascent, flutters on every fall,
 and has coyote time and jump buffering ([Chibi](../../gameplay/design.md#chibi)). Gift rooms
 permanently grant Dash, Double jump and Speedy; at most one skill is selected and only its effect
-applies. No grant selects its skill; each new grant queues a tip to tap or click the skill to
-enable it, tapping another owned skill switches to it, and tapping the selected skill turns it off. Ordinary required routes never need a skill, and there is no life
+applies. No grant selects its skill; each newly owned skill shows a Tip naming it, tapping another owned skill switches to it, and tapping the selected skill turns it off. Ordinary required routes never need a skill, and there is no life
 counter.
 
 Reference: [Chibi](../../gameplay/design.md#chibi).
