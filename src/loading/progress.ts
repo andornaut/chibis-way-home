@@ -1,3 +1,4 @@
+import type { ProgressBarStyle } from "@andornaut/game-kit/runtime/progress";
 import {
   createLayeredProgress,
   createProgressState,
@@ -7,7 +8,25 @@ import {
 import { createDomProgressBar } from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
 
 import { loadingUnit } from "./presentation.ts";
-import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style.ts";
+import { LOADING_TIMING, modalProgressStyle, PROGRESS_RECT, stageProgressStyle } from "./style.ts";
+
+// The game element's attribute that marks a modal window open (src/scenes/modalInput.ts).
+const MODAL_OPEN = "data-modal-open";
+const cssColour = (colour: number) => `#${colour.toString(16).padStart(6, "0")}`;
+
+// Writes style's colours onto a mounted kit bar in place, so its state, full hold and travel carry
+// on: the frame on the bar, the track on its first child and each fill on its band's segment.
+function paintBar(element: HTMLElement, style: ProgressBarStyle): void {
+  const fill = (box: Element | null | undefined, colour: number | undefined) => {
+    if (box instanceof HTMLElement && colour !== undefined) {
+      box.style.backgroundColor = cssColour(colour);
+    }
+  };
+  const [track, ...bands] = element.children;
+  fill(element, style.frame);
+  fill(track, style.track);
+  bands.forEach((band, index) => fill(band.firstElementChild, style.fills[index]));
+}
 
 // The bar shows only loads the player waits for, each through its own entry point: boot (the
 // pre-script startupLoading, then BootScene's file load, which its loader watch measures as
@@ -54,7 +73,20 @@ export function mountLoading(parent: HTMLElement): () => void {
   if (!host.parentNode) {
     parent.append(host);
   }
-  let bar = createDomProgressBar(host, stageProgressStyle(), PROGRESS_RECT, LOADING_TIMING);
+  let style = stageProgressStyle();
+  let bar = createDomProgressBar(host, style, PROGRESS_RECT, LOADING_TIMING);
+  // Under a modal window the bar stays painted over the canvas, inert, in the modal dim's colours.
+  let dimmed = false;
+  const paint = () => paintBar(bar.element, dimmed ? modalProgressStyle(style) : style);
+  const followModal = () => {
+    if (dimmed !== parent.hasAttribute(MODAL_OPEN)) {
+      dimmed = !dimmed;
+      paint();
+    }
+  };
+  const modal = new MutationObserver(followModal);
+  modal.observe(parent, { attributeFilter: [MODAL_OPEN], attributes: true });
+  followModal();
   // The foreground over the background, each finished measured load held full and faded before
   // the other shows, unless a foreground load begins meanwhile.
   const layered = createLayeredProgress(window, LOADING_TIMING, {
@@ -72,7 +104,9 @@ export function mountLoading(parent: HTMLElement): () => void {
   // A stage's themed bar, reported the current snapshot at once.
   refreshStyle = (stage) => {
     bar.remove();
-    bar = createDomProgressBar(host, stageProgressStyle(stage), PROGRESS_RECT, LOADING_TIMING);
+    style = stageProgressStyle(stage);
+    bar = createDomProgressBar(host, style, PROGRESS_RECT, LOADING_TIMING);
+    paint();
     show();
   };
   const resize = () => host.style.setProperty("--loading-scale", String(loadingUnit(parent)));
@@ -86,6 +120,7 @@ export function mountLoading(parent: HTMLElement): () => void {
   return () => {
     off();
     layered.dispose();
+    modal.disconnect();
     observer.disconnect();
     bar.remove();
     host.remove();

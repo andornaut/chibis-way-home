@@ -33,7 +33,8 @@ const px = ({ height, width, x, y }: { height: number; width: number; x: number;
 // A separate stylesheet preserves the page's self-only style policy before modules load. The
 // markup is the kit's DOM progress bar, pending; the bands clip their segments here, since the
 // kit's adapter sets their overflow only from script. The track is the bar's first child, so
-// band n is child n + 2.
+// band n is child n + 2. The bar stacks over the canvas, under a modal window too, and takes no
+// presses.
 export const LOADING_CSS = `
 #game { position: relative; }
 #game-loading {
@@ -41,7 +42,6 @@ export const LOADING_CSS = `
   height: ${PROGRESS_RECT.height}px; pointer-events: none; z-index: 1;
   transform: translateX(-50%) scale(var(--loading-scale,1)); transform-origin: top center;
 }
-#game[data-modal-open] canvas { position: relative; z-index: 2; }
 #game-loading > .${PROGRESS_BAR_CLASS} {
   position: absolute; ${px(layout.frame)} background: ${colour(style.frame)};
 }

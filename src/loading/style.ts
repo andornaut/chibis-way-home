@@ -8,6 +8,7 @@ import { LOADING_LAYOUT } from "../data/layout.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { SCREEN } from "../data/screen.ts";
 import { zoneTheme } from "../presentation/zoneTheme.ts";
+import { modalColour } from "../ui/chrome/modalDim.ts";
 
 export const PROGRESS_RECT = { height: LOADING_LAYOUT.height, width: SCREEN.width, x: 0, y: 0 };
 
@@ -36,4 +37,17 @@ export function stageProgressStyle(stage = ZONE_MAP.start): ProgressBarStyle {
   };
   styles.set(stage, style);
   return style;
+}
+
+const modalDim = modalColour(palette);
+
+// style under the top modal window: each colour takes the modal dim's palette ramp, as every
+// colour outside that window does.
+export function modalProgressStyle(style: ProgressBarStyle): ProgressBarStyle {
+  return {
+    ...style,
+    fills: style.fills.map(modalDim),
+    frame: modalDim(style.frame),
+    track: modalDim(style.track),
+  };
 }

@@ -1,7 +1,8 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import { LOADING_TIMING } from "./style.ts";
+import { LOADING_CSS } from "./html.ts";
+import { LOADING_TIMING, modalProgressStyle, stageProgressStyle } from "./style.ts";
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["clearTimeout", "setTimeout"] });
@@ -20,7 +21,7 @@ async function mounted() {
   document.body.append(parent);
   const unmount = loading.mountLoading(parent);
   const bar = () => parent.querySelector<HTMLElement>(".progress-bar")!;
-  return { bar, loading, unmount };
+  return { bar, loading, parent, unmount };
 }
 
 // A finished measured bar holds full and then fades; the background shows once both have passed.
@@ -110,6 +111,44 @@ it("shows a forced update as the pending segment once boot's checks have ended",
   expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);
   update.finish();
   expect(bar().hidden).toBe(true);
+  unmount();
+});
+
+// The colours the bar's frame, track and fill segment are painted in, as the page reads them.
+function painted(bar: HTMLElement) {
+  const [track, band] = bar.children;
+  return [bar, track, band?.firstElementChild].map(
+    (box) => (box as HTMLElement).style.backgroundColor,
+  );
+}
+
+it("keeps a forced update's bar painted over the canvas, in the modal dim, while a modal is open", async () => {
+  const { bar, loading, parent, unmount } = await playing();
+  parent.prepend(document.createElement("canvas"));
+  const update = loading.beginRequiredUpdate();
+  const held = bar();
+  const lit = painted(held);
+  const css = (colour: number) => {
+    const probe = document.createElement("div");
+    probe.style.backgroundColor = `#${colour.toString(16).padStart(6, "0")}`;
+    return probe.style.backgroundColor;
+  };
+  const { fills, frame, track } = modalProgressStyle(stageProgressStyle());
+  parent.toggleAttribute("data-modal-open", true);
+  await Promise.resolve();
+  expect(bar()).toBe(held);
+  expect([held.dataset.state, held.hidden, held.style.pointerEvents]).toEqual([
+    "pending",
+    false,
+    "none",
+  ]);
+  expect(painted(held)).toEqual([frame, track, fills[0]!].map(css));
+  expect(painted(held)).not.toEqual(lit);
+  expect(LOADING_CSS).not.toMatch(/canvas/u);
+  parent.toggleAttribute("data-modal-open", false);
+  await Promise.resolve();
+  expect(painted(held)).toEqual(lit);
+  update.finish();
   unmount();
 });
 

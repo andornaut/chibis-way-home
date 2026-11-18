@@ -35,7 +35,7 @@ describe("modal input routes", () => {
     expect(clear).toHaveBeenCalledTimes(5);
   });
 
-  it("keeps DOM progress behind nested modal canvases until the final close and cleans up on game destruction", () => {
+  it("marks the game element modal-open until the final close and cleans up on game destruction", () => {
     const host = { removeAttribute: vi.fn(), toggleAttribute: vi.fn() };
     const events = new EventEmitter();
     const game = { canvas: { parentElement: host }, events };

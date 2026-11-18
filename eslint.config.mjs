@@ -98,7 +98,7 @@ const INDEXED = {
   ui: {
     crash: ["./input/actionBinding.ts"],
     dev: ["./input/actionBinding.ts"],
-    loading: ["./input/actionBinding.ts"],
+    loading: ["./chrome/modalDim.ts", "./input/actionBinding.ts"],
     "*": [
       "./dom/achievements.css",
       "./dom/actionHelp.css",

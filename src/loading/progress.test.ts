@@ -73,9 +73,6 @@ describe("loading lifecycle", () => {
     expect(LOADING_CSS).toContain(`#game-loading > .progress-bar {\n  ${timingRule}\n}`);
     expect(LOADING_CSS).toContain("height: 2px");
     expect(LOADING_CSS).toContain("pointer-events: none; z-index: 1;");
-    expect(LOADING_CSS).toContain(
-      "#game[data-modal-open] canvas { position: relative; z-index: 2; }",
-    );
     expect(html).not.toContain("style=");
     expect(html).toContain("/assets/loading-");
     expect(html).not.toContain("aria-valuenow");
