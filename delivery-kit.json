@@ -17,7 +17,7 @@
   },
   "resources": { "cpus": 4, "loadLimit": 30, "memoryMiB": 8192 },
   "ci": {
-    "requiredNames": ["AI attributions", "Lint", "Test"],
+    "requiredNames": ["AI attributions", "Changes", "Lint", "Test"],
     "pollSeconds": 60,
     "timeoutSeconds": 1800
   },
