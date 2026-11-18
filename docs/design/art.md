@@ -197,3 +197,4 @@ Reference: [art](../../art/README.md), [style guide](../../art/style-guide.md), 
 | cwh-0249 | Align the Settings row notes, heights and state words with source                | [cwh-0249.md](../work/cwh-0249.md) |
 | cwh-0257 | Stop shipping the unreferenced Liberation TTFs                                   | [cwh-0257.md](../work/cwh-0257.md) |
 | cwh-0258 | Subset the WOFF2 faces to the player-string glyphs with a coverage check         | [cwh-0258.md](../work/cwh-0258.md) |
+| cwh-0262 | Declare every art build set's outputs so the check catches stale files           | [cwh-0262.md](../work/cwh-0262.md) |

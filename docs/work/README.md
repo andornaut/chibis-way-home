@@ -297,3 +297,4 @@ decided or delivered, and why, in a line or two each.
 | cwh-0259 | Keep non-player copies out of the deployed build                                              | [cwh-0259.md](cwh-0259.md) |
 | cwh-0260 | Strip verification hashes from the runtime layouts and ship the palette and art manifest once | [cwh-0260.md](cwh-0260.md) |
 | cwh-0261 | Document the boss special moves in a catalogue table                                          | [cwh-0261.md](cwh-0261.md) |
+| cwh-0262 | Declare every art build set's outputs so the check catches stale files                        | [cwh-0262.md](cwh-0262.md) |
