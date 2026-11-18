@@ -29,3 +29,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0026 | Run only lint and attribution checks for docs-only changes    | [cwh-0026.md](../work/cwh-0026.md) |
 | cwh-0027 | Adopt design and work files                                   | [cwh-0027.md](../work/cwh-0027.md) |
 | cwh-0254 | Release landed and superseded Tech worktrees and branches     | [cwh-0254.md](../work/cwh-0254.md) |
+| cwh-0259 | Keep non-player copies out of the deployed build              | [cwh-0259.md](../work/cwh-0259.md) |

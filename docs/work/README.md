@@ -294,3 +294,4 @@ decided or delivered, and why, in a line or two each.
 | cwh-0256 | Adopt the shared Pause and Menu navigation                                       | [cwh-0256.md](cwh-0256.md) |
 | cwh-0257 | Stop shipping the unreferenced Liberation TTFs                                   | [cwh-0257.md](cwh-0257.md) |
 | cwh-0258 | Subset the WOFF2 faces to the player-string glyphs with a coverage check         | [cwh-0258.md](cwh-0258.md) |
+| cwh-0259 | Keep non-player copies out of the deployed build                                 | [cwh-0259.md](cwh-0259.md) |
