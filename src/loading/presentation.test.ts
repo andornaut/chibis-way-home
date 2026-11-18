@@ -37,7 +37,7 @@ it("keeps approved CSS panel and text metrics while scaling only the logical act
   });
   expect(small.palette).toEqual({
     action: palette.colours.green,
-    actionText: palette.colours.ink,
+    actionText: palette.colours.white,
     border: palette.colours.ink,
     highlight: palette.colours.yellow,
     lip: palette.colours.tan,
