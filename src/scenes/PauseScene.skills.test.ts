@@ -264,7 +264,7 @@ it.each([
   },
 );
 
-it("selects a tapped skill in play, but a 400ms hold opens its details without selecting it", () => {
+it("selects a tapped skill in play, but a hold opens its details without selecting it", () => {
   const { details, skill, update } = play();
   const tapping = press(skill("speedy"));
   vi.advanceTimersByTime(SKILL_GESTURE.holdMilliseconds - 1);
