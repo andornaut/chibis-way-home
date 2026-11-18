@@ -31,9 +31,9 @@
  *   and its press area in the game's 2:1 view, anchored to its top-left, ui-pause at the view's top
  *   and Use, Jump and the move hint at its bottom, and sizes their press areas
  *   (src/ui/layout/hitAreas.ts). Each drawn edge sits at least 8px from the edge it is placed
- *   against, and the pause disc 12px in from the top and left. Use, Jump and move hint
- *   placement belongs to the runtime layout
- *   (src/data/layout.ts) and the style guide's touch controls table.
+ *   against, and the pause disc 12px in from the left, centred on y 24 (src/ui/layout/topBar.ts).
+ *   Use, Jump and move hint placement belongs to the runtime layout (src/data/layout.ts) and the
+ *   style guide's touch controls table.
  * - ui-touch-use, 75x75, centre pixel 37,37.
  * - ui-touch-jump, 75x75, centre pixel 37,37, towards the bottom-right corner, with Use above and
  *   to its left.
@@ -43,8 +43,8 @@
  *   its top 5px above. No label. Tags rest (100ms); press, once (frame 0 the band and icon turn
  *   white and the ring swells 1px; frame 1 the same at rest size; 60ms each); held (as press frame
  *   1, 100ms).
- * - ui-pause, 35x35, centre pixel 17,17: top-left 11,11 for the centre 28,28, its disc 12px in from
- *   the top and left. A disc 33px across: an ink edge, a 2px cream ring (3px pressed) and a navy
+ * - ui-pause, 35x35, centre pixel 17,17: top-left 11,6.5, its disc 12px in from the left and
+ *   centred on y 24. A disc 33px across: an ink edge, a 2px cream ring (3px pressed) and a navy
  *   face (dslate pressed), with two pause bars (11x13, each 4 wide, 3 apart) centred on the centre;
  *   no label. Tags as for Use and Jump: rest; press, once (2 frames at 60ms, frame 0 swells 1px);
  *   held.
@@ -78,9 +78,8 @@
  *   line, drawn 720x48 at 0,0.
  * - ui-icon-button, 36x36, tags normal and pressed (the face sinks 2px): an ink line with cut
  *   corners, a dslate face with a slate top highlight on a navy lip. Its 20x20 icon goes at button
- *   + (8,6), or (8,8) pressed. With Exit: Settings at 632,6 (hit 628,2,44,44, icon 640,12) and Exit
- *   at 676,6 (hit 672,2,44,44, icon 684,12). Without Exit (Firefox for Android's installed app):
- *   Settings at 676,6 (hit 672,2,44,44, icon 684,12).
+ *   + (8,6), or (8,8) pressed. Exit, the only nav button, where supported: at 676,8, its face
+ *   above the lip centred on y 24 (hit 667,0,54,54, icon 684,14).
  * - Nav icons, 20x20: icon-settings-nav (the cog) and ui-quit's normal frame (Exit: the doorway
  *   and arrow).
  *
