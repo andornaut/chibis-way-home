@@ -1,11 +1,12 @@
 /**
  * Build the private native 16px Liberation Sans body BMFont for generator preview labels.
  *
- * font-body uses Liberation Sans Regular at native 1x. Runtime faces retain TTF and full WOFF2. The line
- * height is the ascent plus the descent plus one pixel of leading, and the base is the ascent. The
- * exported FNT metrics own layout. Printable ASCII and the middle dot cover current player text.
- * Native glyph bearings and rounded pair kerning are retained. White RGBA glyphs use grayscale
- * alpha for compositing preview labels independently of game art.
+ * font-body uses Liberation Sans Regular at native 1x. Runtime faces are full WOFF2 only; the source
+ * TTFs are encoding inputs and are not served. The line height is the ascent plus the descent plus
+ * one pixel of leading, and the base is the ascent. The exported FNT metrics own layout. Printable
+ * ASCII and the middle dot cover current player text. Native glyph bearings and rounded pair kerning
+ * are retained. White RGBA glyphs use grayscale alpha for compositing preview labels independently
+ * of game art.
  *
  * Glyphs rasterise with art-kit's Skia bitmap font renderer, so their coverage, advances and
  * kerning follow Skia rather than FreeType. The renderer fails the build when the font file has no
@@ -14,12 +15,12 @@
  *
  * Usage, from the repository root:
  *   node art/tools/fonts.ts build             write art/generated/fonts/font-body.png and .fnt,
- *                                             copy the TTFs and licence to public/art/fonts/liberation/
- *                                             and encode complete Regular and Bold WOFF2 faces
+ *                                             copy the licence to public/art/fonts/liberation/ and
+ *                                             encode complete Regular and Bold WOFF2 faces there
  *   node art/tools/fonts.ts preview OUT.png   every face with sample lines, 3x
  */
 
-import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename } from "node:path";
 
 import { rasteriseGlyphs } from "@andornaut/art-kit/build/fonts";
@@ -38,8 +39,10 @@ const FONTS: Readonly<Record<string, readonly [face: string, path: string, size:
 };
 const OUT = "art/generated/fonts";
 export const PREVIEW_FONT = `${OUT}/font-body`;
-// The Liberation TTFs and licence, served unchanged as the runtime UI fonts.
+// The Liberation sources. Their TTFs are encoded to the served WOFF2 faces and are not served
+// themselves; only the licence is copied unchanged.
 const LIBERATION = "art/fonts/liberation";
+const LICENCE = "OFL.txt";
 const SERVED_LIBERATION = "public/art/fonts/liberation";
 const CHARS: readonly string[] = [
   ...Array.from({ length: 127 - 32 }, (_, i) => String.fromCharCode(32 + i)),
@@ -126,12 +129,10 @@ function buildFont(key: string, face: string, size: number, path: string): void 
   writeFileSync(`${OUT}/${key}.fnt`, xml);
 }
 
-/** Copy the originals unchanged and encode both complete runtime faces as WOFF2. */
+/** Copy the licence unchanged and encode both complete runtime faces as WOFF2. */
 async function copyLiberation(): Promise<void> {
   mkdirSync(SERVED_LIBERATION, { recursive: true });
-  for (const name of readdirSync(LIBERATION).sort()) {
-    copyFileSync(`${LIBERATION}/${name}`, `${SERVED_LIBERATION}/${name}`);
-  }
+  copyFileSync(`${LIBERATION}/${LICENCE}`, `${SERVED_LIBERATION}/${LICENCE}`);
   await Promise.all(
     Object.values(FONTS).map(async ([, path]) => {
       const encoded = await encodeWoff2(readFileSync(path));
