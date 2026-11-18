@@ -34,10 +34,11 @@
  *
  * The stage picker reuses ui-settings-card at the large width family's width, with a zone heading,
  * the standard 24x24 close X and 16px outer padding on all four sides; its height fits its content.
- * Its two 48px stage buttons use equal widths derived from their actual labels and the shared
- * control padding. The latest available stage uses ui-button-primary with white text; the other
- * uses ui-button with ink. It opens only when more than one stage is unlocked. Close, back and
- * outside taps return to the map.
+ * A page holds three 208x162 stage faces 16px apart, each drawing a 168x84 stage capture, its
+ * Stage number and its name, with an optional pager below. The latest available stage uses the
+ * primary dark-steel face with white text; other available stages use ui-button with ink, and
+ * locked stages its disabled face with dslate text. Map Continue on an available zone always
+ * opens it. Close, Escape, back and outside taps return to the map.
  */
 
 import { run } from "./cli.ts";
