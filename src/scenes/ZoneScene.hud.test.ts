@@ -217,7 +217,8 @@ it("publishes actual frozen preview camera and steps only after rendering, then 
   const scene = Object.assign(fixture(), {
     bird: { anims: { isPlaying: false, stop: vi.fn() } },
     cameras: { main: camera },
-    drawBird: vi.fn(),
+    // The game's own camera at his start, which the requested scroll then replaces.
+    drawBird: () => camera.setScroll(40, 300),
     drawObjects: vi.fn(),
     input: { enabled: true },
     layout: { areas: { main: { height: 720, width: 2000 } } },
@@ -254,6 +255,7 @@ it("publishes actual frozen preview camera and steps only after rendering, then 
     motionSeed: 42,
     scroll: { x: 1280, y: 360 },
     stage: "street",
+    startScroll: { x: 40, y: 300 },
     steps: 0,
   });
   scene.events.emit("shutdown");

@@ -97,7 +97,12 @@ import { deathSupport } from "../rules/death.ts";
 import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams.ts";
 import { currentScreen } from "../rules/perception.ts";
 import { createStageBarks } from "../rules/stageBarks.ts";
-import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview.ts";
+import {
+  askedStagePreview,
+  type StagePreview,
+  stagePreviewPlan,
+  stagePreviewScroll,
+} from "../rules/stagePreview.ts";
 import { stageProgress } from "../rules/stageProgress.ts";
 import { zoneLayout } from "../rules/tiles.ts";
 import {
@@ -474,9 +479,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const seed =
       this.preview?.assemblySeed ?? askedSeed("assembly", window.location.search) ?? newSeed();
     if (this.preview) {
-      const key = this.preview.key;
-      const node = ZONE_MAP.nodes.find((node) => node.id === key && node.kind === "zone");
-      this.loadPlan(node ? zoneAt(seed, key) : zonePlanFor(seed, key));
+      this.loadPlan(stagePreviewPlan(ZONE_MAP, seed, this.preview.key));
       this.freezePreview(this.preview);
       return;
     }
@@ -625,6 +628,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
     }
     this.objects?.freezePreviewAnimations();
+    // drawBird left the camera at the game's own start scroll; the requested scroll replaces it.
+    const startScroll = { x: this.cameras.main.scrollX, y: this.cameras.main.scrollY };
     const scroll = stagePreviewScroll(SCREEN, areaOf(this.layout, this.zone.area), preview.scroll);
     this.cameras.main.setScroll(scroll.x, scroll.y);
     const ready = () => {
@@ -645,6 +650,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         motionSeed: preview.motionSeed,
         scroll: { x: camera.scrollX, y: camera.scrollY },
         stage: preview.key,
+        startScroll,
         steps: this.zone.steps,
       });
       this.game.canvas.dataset.stagePreview = preview.key;

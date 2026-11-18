@@ -7,10 +7,25 @@ import { parseArgs } from "node:util";
 
 import { decodePng } from "@andornaut/art-kit/build/png";
 
+import { BIRD_FRAME } from "../assets/index.ts";
+import { ARCHETYPES } from "../data/archetypes.ts";
+import { BIRD } from "../data/bird.ts";
+import { CHARACTERS } from "../data/characters.ts";
 import { STAGE_PREVIEW } from "../data/layout.ts";
-import { SCREEN } from "../data/screen.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { SCREEN, TILE } from "../data/screen.ts";
 import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
-import { askedStagePreview, type StagePreview, stagePreviewScroll } from "../rules/stagePreview.ts";
+import type { Point } from "../data/types/index.ts";
+import { currentScreen } from "../rules/perception.ts";
+import {
+  askedStagePreview,
+  type StagePreview,
+  stagePreviewPlan,
+  stagePreviewScroll,
+} from "../rules/stagePreview.ts";
+import { zoneLayout } from "../rules/tiles.ts";
+import { areaOf, enterArea, startZone } from "../rules/zone.ts";
+import { nodeArt } from "../sim/catalogue.ts";
 
 export interface CaptureFile {
   readonly path: string;
@@ -21,6 +36,15 @@ export interface CaptureBuild {
   readonly source: string;
   readonly artifact: { readonly treeSha256: string };
 }
+export interface BuildReceipt extends CaptureBuild {
+  readonly artifact: { readonly files: number; readonly path: "dist"; readonly treeSha256: string };
+}
+// explicit: the caller's previewX/previewY. start: the game's own start scroll, which prepare
+// computes and the frozen page must report as its startScroll.
+export type CaptureCamera = "explicit" | "start";
+// git: prepare read HEAD and a clean tracked tree itself. caller: the caller named the source and
+// attested a clean tracked tree, for a checkout without git such as the check container.
+export type CaptureSourceCheck = "caller" | "git";
 export interface PreviewMetadata {
   readonly area: string;
   readonly areaSize: { readonly width: number; readonly height: number };
@@ -36,6 +60,7 @@ export interface PreviewMetadata {
   readonly motionSeed: number;
   readonly scroll: { readonly x: number; readonly y: number };
   readonly stage: string;
+  readonly startScroll: { readonly x: number; readonly y: number };
   readonly steps: number;
 }
 export interface CaptureObservation {
@@ -56,6 +81,8 @@ export interface CaptureObservation {
 export interface CaptureRequest {
   readonly status: "prepared";
   readonly source: string;
+  readonly sourceCheck: CaptureSourceCheck;
+  readonly camera: CaptureCamera;
   readonly buildReceiptSha256: string;
   readonly dist: readonly CaptureFile[];
   readonly distSha256: string;
@@ -66,6 +93,39 @@ export interface CaptureRequest {
 const digest = (bytes: string | Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 const treeHash = (files: readonly CaptureFile[]) =>
   digest(JSON.stringify(files, ["path", "bytes", "sha256"]));
+// The browser probe repeats this list, since it runs as standalone source.
+const PREVIEW_HOSTS = ["localhost", "127.0.0.1", "[::1]", "chibi-preview"];
+const CAMERAS: readonly CaptureCamera[] = ["explicit", "start"];
+const SOURCE_CHECKS: readonly CaptureSourceCheck[] = ["caller", "git"];
+
+// The owner build receipt for the exact dist: its source and the hash of its file manifest.
+export function buildReceipt(source: string, dist: readonly CaptureFile[]): BuildReceipt {
+  if (!/^[a-f0-9]{40}$/.test(source) || !dist.some(({ path }) => path === "dist/play/index.html")) {
+    throw new Error("Build receipt needs an exact source and a built dist");
+  }
+  return { artifact: { files: dist.length, path: "dist", treeSha256: treeHash(dist) }, source };
+}
+
+// The game's own start scroll for preview, as ZoneScene computes it before a preview replaces it:
+// the same plan, layout and entry, and the camera following his feet. Art comes from public/art.
+export function startPreviewScroll(preview: Omit<StagePreview, "scroll">): Point {
+  const art = nodeArt();
+  const layout = zoneLayout(
+    TILE,
+    BIRD_FRAME,
+    { archetypes: ARCHETYPES, characters: CHARACTERS },
+    art.hitboxes,
+    art.tilesets,
+    new Set(),
+    stagePreviewPlan(ZONE_MAP, preview.assemblySeed, preview.key),
+  );
+  let zone = startZone(BIRD, layout, preview.motionSeed);
+  if (preview.area && preview.area !== zone.area) {
+    zone = enterArea(BIRD, layout, { area: preview.area, entry: "start" }, zone);
+  }
+  const { x, y } = currentScreen(BIRD, areaOf(layout, zone.area), zone.bird);
+  return { x, y };
+}
 
 // This recipe matches the owner build receipt's sorted dist/ file manifest.
 export function captureDist(directory: string): readonly CaptureFile[] {
@@ -95,8 +155,10 @@ export function captureDist(directory: string): readonly CaptureFile[] {
 
 export function prepareCapture(
   context: {
+    readonly camera: CaptureCamera;
     readonly origin: string;
     readonly source: string;
+    readonly sourceCheck: CaptureSourceCheck;
     readonly build: CaptureBuild;
     readonly buildReceiptSha256: string;
     readonly dist: readonly CaptureFile[];
@@ -105,7 +167,7 @@ export function prepareCapture(
 ): CaptureRequest {
   const origin = new URL(context.origin);
   if (
-    !["localhost", "127.0.0.1", "[::1]"].includes(origin.hostname) ||
+    !PREVIEW_HOSTS.includes(origin.hostname) ||
     !["http:", "https:"].includes(origin.protocol) ||
     origin.username ||
     origin.password ||
@@ -118,6 +180,8 @@ export function prepareCapture(
   const preview = askedStagePreview(Object.keys(STAGE_PREVIEWS), search);
   if (
     !preview ||
+    !CAMERAS.includes(context.camera) ||
+    !SOURCE_CHECKS.includes(context.sourceCheck) ||
     !/^[a-f0-9]{40}$/.test(context.source) ||
     !/^[a-f0-9]{64}$/.test(context.buildReceiptSha256) ||
     context.build.source !== context.source ||
@@ -137,11 +201,13 @@ export function prepareCapture(
   }
   return {
     buildReceiptSha256: context.buildReceiptSha256,
+    camera: context.camera,
     dist: context.dist,
     distSha256: treeHash(context.dist),
     imageKey: STAGE_PREVIEWS[preview.key]!,
     preview,
     source: context.source,
+    sourceCheck: context.sourceCheck,
     status: "prepared",
     url: url.href,
   };
@@ -151,7 +217,7 @@ export function prepareCapture(
 // Its observations are caller-supplied evidence; the CLI validates consistency, not authenticity.
 export async function observePreviewCapture(): Promise<CaptureObservation> {
   if (
-    !["localhost", "127.0.0.1", "[::1]"].includes(location.hostname) ||
+    !["localhost", "127.0.0.1", "[::1]", "chibi-preview"].includes(location.hostname) ||
     location.pathname !== "/play/" ||
     !new URLSearchParams(location.search).has("stagePreview")
   ) {
@@ -214,6 +280,8 @@ export function verifyCapture(
   const view = observation.canvas;
   if (
     request.status !== "prepared" ||
+    !CAMERAS.includes(request.camera) ||
+    !SOURCE_CHECKS.includes(request.sourceCheck) ||
     !/^[a-f0-9]{40}$/.test(request.source) ||
     !/^[a-f0-9]{64}$/.test(request.buildReceiptSha256) ||
     STAGE_PREVIEWS[request.preview.key] === undefined ||
@@ -262,6 +330,13 @@ export function verifyCapture(
   if (metadata.scroll.x !== expectedScroll.x || metadata.scroll.y !== expectedScroll.y) {
     throw new Error("Actual camera does not match clamped preview request");
   }
+  if (
+    request.camera === "start" &&
+    (metadata.startScroll?.x !== request.preview.scroll.x ||
+      metadata.startScroll?.y !== request.preview.scroll.y)
+  ) {
+    throw new Error("Actual start camera does not match the prepared start scroll");
+  }
   const expected = new Map(request.dist.map((file) => [file.path, file.sha256]));
   const observed = new Map<string, string>();
   for (const resource of observation.resources) {
@@ -301,6 +376,7 @@ export function verifyCapture(
     authority:
       "Caller-supplied browser observations checked against the exact owner build receipt; CLI did not capture",
     buildReceiptSha256: request.buildReceiptSha256,
+    camera: { mode: request.camera, scroll: metadata.scroll },
     distSha256: request.distSha256,
     observation,
     raw: { bytes: png.length, height: image.height, sha256: rawSha256, width: image.width },
@@ -311,11 +387,64 @@ export function verifyCapture(
 }
 
 const USAGE = `Usage:
-  node src/tools/stagePreviewCapture.ts prepare --dist DIR --build-receipt FILE \\
-    --origin URL --stage KEY --assembly N --seed N --x N --y N [--area NAME] --out NEW_DIR
+  node src/tools/stagePreviewCapture.ts build-receipt --dist DIR [--source SHA --clean-tree] --out NEW_FILE
+  node src/tools/stagePreviewCapture.ts prepare --dist DIR --build-receipt FILE [--source SHA --clean-tree] \\
+    --origin URL --stage KEY --assembly N --seed N (--x N --y N | --camera start) [--area NAME] --out NEW_DIR
   node src/tools/stagePreviewCapture.ts verify --request FILE --observation FILE --png FILE --out NEW_FILE
+Without --source, the tool reads HEAD and requires a clean tracked tree with git. --source SHA with
+--clean-tree attests both for a checkout without git; inside the check container, CHECK_REVISION
+must equal SHA and CHECK_SOURCE_DIRTY must be false. --camera start uses the game's own start scroll.
 Prepare does not capture. Run observe.js in the existing browser and capture its canvas as a 720x360 PNG.
 Then verify. No browser is launched.`;
+
+const STRING_OPTIONS = [
+  "area",
+  "assembly",
+  "build-receipt",
+  "camera",
+  "dist",
+  "observation",
+  "origin",
+  "out",
+  "png",
+  "request",
+  "seed",
+  "source",
+  "stage",
+  "x",
+  "y",
+] as const;
+
+// The checkout's source and how it was checked: git where it exists, otherwise the caller's
+// attestation, cross-checked against the check container's own revision and dirty flag.
+export function checkoutSource(
+  context: { readonly env: NodeJS.ProcessEnv; readonly root: string },
+  values: { readonly source?: string; readonly cleanTree?: boolean },
+): { readonly source: string; readonly sourceCheck: CaptureSourceCheck } {
+  if (values.source === undefined) {
+    if (values.cleanTree) {
+      throw new Error("--clean-tree attests a named --source");
+    }
+    const git = (args: string[]) =>
+      execFileSync("git", args, { cwd: context.root, encoding: "utf8" }).trim();
+    const source = git(["rev-parse", "HEAD"]);
+    if (git(["status", "--porcelain", "--untracked-files=no"])) {
+      throw new Error("Prepare requires a clean source checkout");
+    }
+    return { source, sourceCheck: "git" };
+  }
+  if (!/^[a-f0-9]{40}$/.test(values.source) || !values.cleanTree) {
+    throw new Error("--source needs a full commit SHA and --clean-tree");
+  }
+  const { CHECK_REVISION: revision, CHECK_SOURCE_DIRTY: dirty } = context.env;
+  if (
+    (revision !== undefined && revision !== values.source) ||
+    (dirty !== undefined && dirty !== "false")
+  ) {
+    throw new Error("--source differs from the check container's clean revision");
+  }
+  return { source: values.source, sourceCheck: "caller" };
+}
 
 function main() {
   const root = fileURLToPath(new URL("../../", import.meta.url));
@@ -325,63 +454,71 @@ function main() {
   }
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: Object.fromEntries(
-      [
-        "dist",
-        "build-receipt",
-        "origin",
-        "stage",
-        "assembly",
-        "seed",
-        "x",
-        "y",
-        "area",
-        "out",
-        "request",
-        "observation",
-        "png",
-      ].map((key) => [key, { type: "string" as const }]),
-    ),
+    options: {
+      ...(Object.fromEntries(STRING_OPTIONS.map((key) => [key, { type: "string" }])) as Record<
+        (typeof STRING_OPTIONS)[number],
+        { type: "string" }
+      >),
+      "clean-tree": { type: "boolean" },
+    },
   });
-  const required = (name: string) => {
+  const required = (name: (typeof STRING_OPTIONS)[number]) => {
     const value = values[name];
     if (typeof value !== "string" || !value) {
       throw new Error(`Missing --${name}`);
     }
     return value;
   };
-  const json = (name: string) => JSON.parse(readFileSync(required(name), "utf8"));
-  if (positionals[0] === "prepare" && positionals.length === 1) {
-    const source = execFileSync("git", ["rev-parse", "HEAD"], {
-      cwd: root,
-      encoding: "utf8",
-    }).trim();
-    if (
-      execFileSync("git", ["status", "--porcelain", "--untracked-files=no"], {
-        cwd: root,
-        encoding: "utf8",
-      }).trim()
-    ) {
-      throw new Error("Prepare requires a clean source checkout");
-    }
+  const json = (name: (typeof STRING_OPTIONS)[number]) =>
+    JSON.parse(readFileSync(required(name), "utf8"));
+  const checked = () =>
+    checkoutSource(
+      { env: process.env, root },
+      {
+        cleanTree: values["clean-tree"] === true,
+        ...(typeof values.source === "string" && { source: values.source }),
+      },
+    );
+  if (positionals[0] === "build-receipt" && positionals.length === 1) {
+    const receipt = buildReceipt(checked().source, captureDist(required("dist")));
+    writeFileSync(required("out"), `${JSON.stringify(receipt, null, 2)}\n`, { flag: "wx" });
+    console.log(JSON.stringify(receipt));
+  } else if (positionals[0] === "prepare" && positionals.length === 1) {
+    const { source, sourceCheck } = checked();
     const receipt = readFileSync(required("build-receipt"));
+    const camera = values.camera === undefined ? "explicit" : required("camera");
+    if (camera !== "start" && camera !== "explicit") {
+      throw new Error("--camera accepts only start");
+    }
+    if (camera === "start" && (values.x !== undefined || values.y !== undefined)) {
+      throw new Error("--camera start replaces --x and --y");
+    }
     const params = new URLSearchParams({
       assembly: required("assembly"),
-      previewX: required("x"),
-      previewY: required("y"),
       seed: required("seed"),
       stagePreview: required("stage"),
     });
     if (values.area !== undefined) {
       params.set("previewArea", required("area"));
     }
+    // The start scroll is computed from the same validated stage, seeds and area.
+    const scroll =
+      camera === "start"
+        ? startPreviewScroll(
+            askedStagePreview(Object.keys(STAGE_PREVIEWS), `?${params}&previewX=0&previewY=0`)!,
+          )
+        : { x: required("x"), y: required("y") };
+    params.set("previewX", String(scroll.x));
+    params.set("previewY", String(scroll.y));
     const request = prepareCapture(
       {
         build: JSON.parse(receipt.toString()),
         buildReceiptSha256: digest(receipt),
+        camera,
         dist: captureDist(required("dist")),
         origin: required("origin"),
         source,
+        sourceCheck,
       },
       `?${params}`,
     );
@@ -395,9 +532,11 @@ function main() {
     });
     console.log(
       JSON.stringify({
+        camera: request.camera,
         observationFormat: "function",
         observationScript: join(out, "observe.js"),
         request: join(out, "request.json"),
+        scroll: request.preview.scroll,
         status: request.status,
         url: request.url,
       }),
@@ -410,7 +549,12 @@ function main() {
     );
     writeFileSync(required("out"), `${JSON.stringify(receipt, null, 2)}\n`, { flag: "wx" });
     console.log(
-      JSON.stringify({ imageKey: receipt.art.imageKey, raw: receipt.raw, status: receipt.status }),
+      JSON.stringify({
+        camera: receipt.camera,
+        imageKey: receipt.art.imageKey,
+        raw: receipt.raw,
+        status: receipt.status,
+      }),
     );
   } else {
     throw new Error(USAGE);
