@@ -51,7 +51,7 @@ Equalize face widths within an action group using its widest actual label and pa
 
 ## Modals
 
-Centre actual modals horizontally and vertically within the logical game viewport, using the shared safe-margin clamp. Measure their contents at full font size. Minimum width is half the **full** logical viewport, expanded for content and capped by safe available width: `min(availableWidth, max(contentWidth + 32, viewportWidth * 0.5))`. Content width excludes outer padding. Height is content-fitted, with no fixed minimum or font reduction.
+Centre actual modals horizontally and vertically within the logical game viewport. Each takes its [width family's](controls.md#modal-content-fitting) width, held at least 16px in from the view's sides. Measure their contents at full font size. Height is content-fitted, with no fixed minimum or font reduction.
 
 | Token                     | Value                | Unit       | Scope                      | Status or source                                         |
 | ------------------------- | -------------------- | ---------- | -------------------------- | -------------------------------------------------------- |
@@ -60,6 +60,8 @@ Centre actual modals horizontally and vertically within the logical game viewpor
 | Close target              | 48x48                | logical px | Centred on the close face  | Derived through `hitAround`                              |
 | Symmetric title clearance | 50 per side          | logical px | Whole-modal title centring | Full positioned target extends 42px inward, plus 8px gap |
 | Modal body padding        | 16                   | logical px | Ordinary modal content     | Verified `CARD_CONTENT.padding`                          |
+| Modal screen margin       | 16                   | logical px | Each side of the view      | Verified `CARD_SCREEN_MARGIN`                            |
+| Modal width               | 688, 500 or 400      | logical px | Large, medium, small       | Verified `CARD_WIDTH`                                    |
 
 Centre titles across the whole modal and mirror the full close-target reservation on the opposite side. Keep other interactive targets clear of the close target by 8px, accounting for their own expansion. Wrap long titles and grow the measured header. A mandatory modal does not acquire a close control merely to match the frame.
 

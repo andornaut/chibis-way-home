@@ -32,8 +32,8 @@
  * map-bird remains 26x22 with idle 2x400ms, centred on the current node and standing on its top
  * ring. The six-zone V1 route has no fork markers.
  *
- * The stage picker reuses the content-fitted ui-settings-card, with a zone heading and standard
- * 24x24 close X included in the measured content union. Add 16px outer padding on all four sides.
+ * The stage picker reuses ui-settings-card at the large width family's width, with a zone heading,
+ * the standard 24x24 close X and 16px outer padding on all four sides; its height fits its content.
  * Its two 48px stage buttons use equal widths derived from their actual labels and the shared
  * control padding. The latest available stage uses ui-button-primary with white text; the other
  * uses ui-button with ink. It opens only when more than one stage is unlocked. Close, back and
