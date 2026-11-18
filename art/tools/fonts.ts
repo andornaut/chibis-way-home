@@ -1,35 +1,42 @@
 /**
- * Build the private native 16px Liberation Sans body BMFont for generator preview labels.
+ * Build the private native 16px Liberation Sans body BMFont for generator preview labels, and
+ * subset the Liberation Sans sources to the served Chibi Sans WOFF2 faces.
  *
- * font-body uses Liberation Sans Regular at native 1x. Runtime faces are full WOFF2 only; the source
- * TTFs are encoding inputs and are not served. The line height is the ascent plus the descent plus
- * one pixel of leading, and the base is the ascent. The exported FNT metrics own layout. Printable
- * ASCII and the middle dot cover current player text. Native glyph bearings and rounded pair kerning
- * are retained. White RGBA glyphs use grayscale alpha for compositing preview labels independently
- * of game art.
+ * font-body uses Liberation Sans Regular at native 1x. The line height is the ascent plus the
+ * descent plus one pixel of leading, and the base is the ascent. The exported FNT metrics own
+ * layout. Printable ASCII and the middle dot cover current player text. Native glyph bearings and
+ * rounded pair kerning are retained. White RGBA glyphs use grayscale alpha for compositing preview
+ * labels independently of game art.
  *
  * Glyphs rasterise with art-kit's Skia bitmap font renderer, so their coverage, advances and
  * kerning follow Skia rather than FreeType. The renderer fails the build when the font file has no
  * glyph for a character. Each glyph is cropped to its ink and art-kit packs it in insertion order
  * from the atlas's top-left with 1px spacing and a power-of-two atlas height.
  *
+ * Runtime faces are Chibi Sans Regular (400) and Bold (700), WOFF2 subsets of the Liberation Sans
+ * TTFs, which are not served. Each keeps playerCodePoints() plus printable ASCII (U+0020 to
+ * U+007E), so changed player strings change the faces, along with the glyphs, layout features and
+ * kerning those code points reach. The sources' SIL OFL 1.1 reserves the names Arimo, Cousine,
+ * Liberation and Tinos, and a subset is a Modified Version, so its family, unique, full and
+ * PostScript names are Chibi Sans ones; the copyright and licence records are kept.
+ *
  * Usage, from the repository root:
  *   node art/tools/fonts.ts build             write art/generated/fonts/font-body.png and .fnt,
- *                                             copy the licence to public/art/fonts/liberation/ and
- *                                             encode complete Regular and Bold WOFF2 faces there
+ *                                             copy the licence to public/art/fonts/chibi-sans/ and
+ *                                             subset the Regular and Bold WOFF2 faces there
  *   node art/tools/fonts.ts preview OUT.png   every face with sample lines, 3x
  */
 
 import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { basename } from "node:path";
 
 import { rasteriseGlyphs } from "@andornaut/art-kit/build/fonts";
 import { buildBitmapFontFromGlyphs } from "@andornaut/art-kit/build/glyphAtlas";
 import { encodeRgbaPng } from "@andornaut/art-kit/build/png";
 import { composite, filledImage, resizeNearest } from "@andornaut/art-kit/build/raster";
 import type { RgbaImage } from "@andornaut/art-kit/build/rgbaImage";
-import { encodeWoff2 } from "@andornaut/art-kit/build/woff2";
+import { subsetWoff2 } from "@andornaut/art-kit/build/woff2";
 
+import { playerCodePoints } from "../../src/ui/chrome/uiFontCodePoints.ts";
 import { commands, run } from "./cli.ts";
 import * as pixel from "./pixel.ts";
 
@@ -39,11 +46,23 @@ const FONTS: Readonly<Record<string, readonly [face: string, path: string, size:
 };
 const OUT = "art/generated/fonts";
 export const PREVIEW_FONT = `${OUT}/font-body`;
-// The Liberation sources. Their TTFs are encoded to the served WOFF2 faces and are not served
-// themselves; only the licence is copied unchanged.
+// The Liberation sources. Their TTFs are subset to the served faces and are not served themselves;
+// only the licence is copied unchanged.
 const LIBERATION = "art/fonts/liberation";
 const LICENCE = "OFL.txt";
-const SERVED_LIBERATION = "public/art/fonts/liberation";
+const SERVED = "public/art/fonts/chibi-sans";
+const FAMILY = "Chibi Sans";
+// The Reserved Font Names the sources' OFL.txt declares.
+const RESERVED = ["Arimo", "Cousine", "Liberation", "Tinos"];
+// The version string (name ID 5) of both sources, which the subsets keep.
+const SOURCE_VERSION = "2.1.5";
+// Each served style's source TTF.
+const FACES: Readonly<Record<string, string>> = {
+  Bold: `${LIBERATION}/LiberationSans-Bold.ttf`,
+  Regular: `${LIBERATION}/LiberationSans-Regular.ttf`,
+};
+// Printable ASCII, kept beside the player code points for runtime text the data does not hold.
+const ASCII_FLOOR = Array.from({ length: 0x7f - 0x20 }, (_, i) => 0x20 + i);
 const CHARS: readonly string[] = [
   ...Array.from({ length: 127 - 32 }, (_, i) => String.fromCharCode(32 + i)),
   "·",
@@ -129,14 +148,24 @@ function buildFont(key: string, face: string, size: number, path: string): void 
   writeFileSync(`${OUT}/${key}.fnt`, xml);
 }
 
-/** Copy the licence unchanged and encode both complete runtime faces as WOFF2. */
-async function copyLiberation(): Promise<void> {
-  mkdirSync(SERVED_LIBERATION, { recursive: true });
-  copyFileSync(`${LIBERATION}/${LICENCE}`, `${SERVED_LIBERATION}/${LICENCE}`);
+/** Copy the licence unchanged and subset both runtime faces as renamed WOFF2. */
+async function buildServedFaces(): Promise<void> {
+  const codePoints = new Set([...ASCII_FLOOR, ...playerCodePoints()]);
+  const strings = [...codePoints].map((codePoint) => String.fromCodePoint(codePoint));
+  mkdirSync(SERVED, { recursive: true });
+  copyFileSync(`${LIBERATION}/${LICENCE}`, `${SERVED}/${LICENCE}`);
   await Promise.all(
-    Object.values(FONTS).map(async ([, path]) => {
-      const encoded = await encodeWoff2(readFileSync(path));
-      writeFileSync(`${SERVED_LIBERATION}/${basename(path, ".ttf")}.woff2`, encoded);
+    Object.entries(FACES).map(async ([style, path]) => {
+      const postScriptName = `${FAMILY.replaceAll(" ", "")}-${style}`;
+      const names = {
+        family: FAMILY,
+        fullName: `${FAMILY} ${style}`,
+        postScriptName,
+        reserved: RESERVED,
+        uniqueId: `${FAMILY} ${style} ${SOURCE_VERSION}`,
+      };
+      const subset = await subsetWoff2({ label: style, names, strings }, readFileSync(path));
+      writeFileSync(`${SERVED}/${postScriptName}.woff2`, subset);
     }),
   );
 }
@@ -149,11 +178,11 @@ export function buildPreviewFont(): void {
 
 export async function build(): Promise<void> {
   buildPreviewFont();
-  await copyLiberation();
+  await buildServedFaces();
   const manifest = pixel.readManifest();
   manifest.fonts = [];
   pixel.writeJson({}, pixel.MANIFEST, manifest);
-  console.log("built private font-body and served Liberation fonts");
+  console.log("built private font-body and served Chibi Sans faces");
 }
 
 function drawLine(

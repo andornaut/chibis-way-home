@@ -18,14 +18,14 @@ The private preview-label body BMFont is a build input under `art/generated/font
 | ----------- | ------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------- |
 | font-body   | BMFont, Liberation Sans Regular | 16px, base 15, line 20; 96 glyphs; 256x64 PNG | [PNG](generated/fonts/font-body.png), [FNT](generated/fonts/font-body.fnt) |
 
-Ordinary UI and the native crash screen share the complete Liberation Sans Regular (400) and Bold (700) WOFF2 faces with CSS format `woff2`. Their two runtime URLs appear once in precaching. Source TTFs stay in `art/fonts/liberation/` as WOFF2 encoding inputs and are not shipped. Their SIL OFL 1.1 `OFL.txt` is served beside the WOFF2 faces; `node art/tools/fonts.ts build` copies it byte-identically from `art/fonts/liberation/`. Crash faces use `font-display: swap`, with system-ui/sans-serif fallback for labels and a deliberate monospace fallback for diagnostic stack text. Tiny5 and Silkscreen remain legacy sources without current runtime consumers.
+Ordinary UI and the native crash screen share the Chibi Sans Regular (400) and Bold (700) WOFF2 faces, a subset of Liberation Sans, with CSS format `woff2`. Their two runtime URLs appear once in precaching. Each face keeps the player code points plus printable ASCII (U+0020 to U+007E). A subset is a Modified Version, which the SIL OFL 1.1 bars from the Reserved Font Names Arimo, Cousine, Liberation and Tinos, so the subsets are named Chibi Sans. Source TTFs stay in `art/fonts/liberation/` as subset inputs and are not shipped. Their `OFL.txt` is served beside the WOFF2 faces; `node art/tools/fonts.ts build` copies it byte-identically from `art/fonts/liberation/`. Crash faces use `font-display: swap`, with system-ui/sans-serif fallback for labels and a deliberate monospace fallback for diagnostic stack text. Tiny5 and Silkscreen remain legacy sources without current runtime consumers.
 
-| Font                    | Use                                     | File                                                                                                                    |
-| ----------------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Liberation Sans Bold    | UI and crash titles/actions, weight 700 | [public/art/fonts/liberation/LiberationSans-Bold.woff2](../public/art/fonts/liberation/LiberationSans-Bold.woff2)       |
-| Liberation Sans Regular | UI and crash body, weight 400           | [public/art/fonts/liberation/LiberationSans-Regular.woff2](../public/art/fonts/liberation/LiberationSans-Regular.woff2) |
-| Silkscreen Regular      | Retained legacy source, no runtime use  | [art/fonts/silkscreen/Silkscreen-Regular.ttf](fonts/silkscreen/Silkscreen-Regular.ttf)                                  |
-| Tiny5                   | Retained legacy source, no runtime use  | [art/fonts/tiny5/Tiny5.ttf](fonts/tiny5/Tiny5.ttf)                                                                      |
+| Font               | Use                                     | File                                                                                                          |
+| ------------------ | --------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Chibi Sans Bold    | UI and crash titles/actions, weight 700 | [public/art/fonts/chibi-sans/ChibiSans-Bold.woff2](../public/art/fonts/chibi-sans/ChibiSans-Bold.woff2)       |
+| Chibi Sans Regular | UI and crash body, weight 400           | [public/art/fonts/chibi-sans/ChibiSans-Regular.woff2](../public/art/fonts/chibi-sans/ChibiSans-Regular.woff2) |
+| Silkscreen Regular | Retained legacy source, no runtime use  | [art/fonts/silkscreen/Silkscreen-Regular.ttf](fonts/silkscreen/Silkscreen-Regular.ttf)                        |
+| Tiny5              | Retained legacy source, no runtime use  | [art/fonts/tiny5/Tiny5.ttf](fonts/tiny5/Tiny5.ttf)                                                            |
 
 ## Icons
 
