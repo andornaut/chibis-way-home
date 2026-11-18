@@ -308,7 +308,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 
 ## Stage scenery previews
 
-Opaque 168x84 PNGs of the actual stages in `public/art/images/`, registered as manifest images. They are hand captures, not generator output.
+Opaque 168x84 PNGs of the actual stages in `public/art/images/`, registered as manifest images. They are captures, not generator output: [`src/tools/stagePreviewCapture.ts`](../src/tools/stagePreviewCapture.ts) records each stage at its start camera (assembly 0, seed 1) as a verified 720x360 frame, resized once to 168x84 with nearest-neighbour sampling. Recapture a stage when its scenery changes.
 
 | Key                          | Stage                  |
 | ---------------------------- | ---------------------- |
