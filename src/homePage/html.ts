@@ -53,12 +53,17 @@ export function homePageHtml(text: GameText, html: string): string {
     });
 }
 
+// The play page's title and game element take the game's name.
+export function gameNameHtml(text: GameText, html: string): string {
+  return html.replaceAll("%GAME_NAME%", escaped(text.game.name));
+}
+
 // Vite renders the copy in dev and production, before HTML assets and headers are processed.
 export function homePagePlugin(): Plugin {
   return {
     name: "home-page-copy",
     transformIndexHtml: {
-      handler: (html) => homePageHtml(TEXT, html),
+      handler: (html) => gameNameHtml(TEXT, homePageHtml(TEXT, html)),
       order: "pre",
     },
   };

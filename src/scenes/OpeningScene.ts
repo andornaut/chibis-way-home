@@ -91,7 +91,7 @@ export class OpeningScene extends Scene {
     this.input.keyboard?.on("keyup", keyup);
     this.drawFrame();
     if (sceneDomUi(this) !== undefined) {
-      const view = createOpeningView(document, TEXT.dialogue);
+      const view = createOpeningView(document, { ...TEXT.dialogue, name: TEXT.opening.name });
       this.view = view;
       const frame = this.playback.frame();
       showOpeningCaption(TEXT.lines[frame.beat.text]!, view);

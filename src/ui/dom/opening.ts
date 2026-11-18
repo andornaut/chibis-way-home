@@ -23,13 +23,19 @@ export interface OpeningView {
   readonly root: HTMLElement;
 }
 
+export interface OpeningWords {
+  readonly continue: string;
+  // The screen's accessible name.
+  readonly name: string;
+  readonly skip: string;
+}
+
 // Native text determines both equal-width faces. Continue leads the focus order, with Skip left.
-export function createOpeningView(
-  document: Document,
-  words: { readonly continue: string; readonly skip: string },
-): OpeningView {
+export function createOpeningView(document: Document, words: OpeningWords): OpeningView {
   const root = document.createElement("div");
   root.className = "opening-scene";
+  root.setAttribute("role", "region");
+  root.setAttribute("aria-label", words.name);
   writeLayoutProperties(OPENING_PROPERTIES, root);
   const backdrop = document.createElement("div");
   backdrop.className = "ui-backdrop";

@@ -25,7 +25,10 @@ it.each([false, true])(
       expect(button.getAttribute("aria-label")).toBe(TEXT.start[control]);
       expect(Number(button.style.getPropertyValue("--start-x"))).toBe(layout[control]!.hit.x);
     }
-    expect(view.images.get("logo")!.alt).toBe("");
+    expect(view.root.getAttribute("role")).toBe("region");
+    expect(view.root.getAttribute("aria-label")).toBe(TEXT.start.name);
+    expect(view.images.get("logo")!.alt).toBe(TEXT.start.logo);
+    expect(view.images.get("exit")!.alt).toBe("");
     expect(Number(view.images.get("logo")!.style.getPropertyValue("--start-width"))).toBe(
       layout.logo.width,
     );

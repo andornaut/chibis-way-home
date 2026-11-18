@@ -6,6 +6,14 @@ import { OPENING } from "../../data/opening.ts";
 import { TEXT } from "../../data/text.ts";
 import { createOpeningView, showOpeningCaption } from "./opening.ts";
 
+const WORDS = { ...TEXT.dialogue, name: TEXT.opening.name };
+
+it("names the opening story region from the text data", () => {
+  const view = createOpeningView(document, WORDS);
+  expect(view.root.getAttribute("role")).toBe("region");
+  expect(view.root.getAttribute("aria-label")).toBe(TEXT.opening.name);
+});
+
 it("keeps each caption as plain text and Continue first without freezing native text geometry", () => {
   const measure = vi
     .spyOn(HTMLElement.prototype, "getBoundingClientRect")
@@ -13,7 +21,7 @@ it("keeps each caption as plain text and Continue first without freezing native 
       throw new Error("The native opening must not measure a caption during playback");
     });
   try {
-    const view = createOpeningView(document, TEXT.dialogue);
+    const view = createOpeningView(document, WORDS);
     expect(
       view.buttons.continue
         .querySelector(".ui-text-button-face")!
@@ -41,7 +49,7 @@ it("keeps each caption as plain text and Continue first without freezing native 
 });
 
 it("keeps the fixed footer and play mark geometry while the browser supplies label widths", () => {
-  const view = createOpeningView(document, TEXT.dialogue);
+  const view = createOpeningView(document, WORDS);
   expect(view.root.style.getPropertyValue("--opening-footer-height")).toBe(
     String(TEXT_BUTTON.height + 2 * CARD_CONTENT.padding),
   );
@@ -56,11 +64,11 @@ it("keeps the fixed footer and play mark geometry while the browser supplies lab
 });
 
 it("materializes a fresh authoring view without inheriting a live opening's caption or mark", () => {
-  const live = createOpeningView(document, TEXT.dialogue);
+  const live = createOpeningView(document, WORDS);
   document.body.append(live.root);
   showOpeningCaption(TEXT.lines[OPENING[0]!.text]!, live);
   live.mark.src = "blob:runtime-mark";
-  const authored = createOpeningView(document, TEXT.dialogue);
+  const authored = createOpeningView(document, WORDS);
   expect(authored.caption.textContent).toBe("");
   expect(authored.mark.getAttribute("src")).toBeNull();
   expect(authored.buttons.continue).not.toBe(live.buttons.continue);

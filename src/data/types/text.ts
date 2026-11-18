@@ -82,6 +82,8 @@ export interface GameText {
     readonly skip: string;
     readonly speakers: Readonly<Record<string, string>>;
   };
+  // The play page's game element and title, by the game's name.
+  readonly game: { readonly name: string };
   readonly homePage: {
     readonly description: string;
     readonly instructions: readonly string[];
@@ -114,6 +116,8 @@ export interface GameText {
     readonly button: string;
     readonly title: string;
   };
+  // The opening story screen's accessible name.
+  readonly opening: { readonly name: string };
   // Canonical action names used by control help and the touch buttons.
   readonly buttons: {
     readonly jump: string;
@@ -161,12 +165,15 @@ export interface GameText {
     readonly title: string;
   };
   readonly stageProgress: { readonly label: string };
-  // The start screen: Start without saved progress, or Continue and Restart with it, and the nav
-  // bar's Achievements, Settings and Exit buttons.
+  // The start screen: its accessible name and the logo's text alternative, Start without saved
+  // progress, or Continue and Restart with it, and the nav bar's Achievements, Settings and Exit
+  // buttons.
   readonly start: {
     readonly achievements: string;
     readonly continue: string;
     readonly exit: string;
+    readonly logo: string;
+    readonly name: string;
     readonly restart: string;
     readonly settings: string;
     readonly start: string;

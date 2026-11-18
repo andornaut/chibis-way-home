@@ -12,12 +12,13 @@ import { TEXT } from "../data/text.ts";
 import { RECIPES } from "../data/zones.ts";
 import { themesOf } from "../rules/assemble.ts";
 import { escaped } from "./actionHelp.ts";
-import { homePageHtml, webManifestJson } from "./html.ts";
+import { gameNameHtml, homePageHtml, webManifestJson } from "./html.ts";
 
 // The home page and the nav bar are static files, so what they state is checked against the
 // game here.
 const HOME_PAGE = new URL("../../pages/index.html", import.meta.url);
 const NAV_SCRIPT = new URL("../../public/nav.js", import.meta.url);
+const PLAY_PAGE = new URL("../../pages/play/index.html", import.meta.url);
 const WEB_MANIFEST = new URL("../../public/manifest.webmanifest", import.meta.url);
 
 const pageText = async () =>
@@ -38,6 +39,18 @@ it("renders one escaped description in the pitch and metadata", async () => {
   expect(rendered).toContain(`name="description" content="${description}"`);
   expect(rendered).toContain(`<p class="pitch">${description}</p>`);
   expect(rendered).not.toMatch(/%HOME_[A-Z_]+%/u);
+});
+
+it("names the play page's title and game element from the text data", async () => {
+  const source = await readFile(PLAY_PAGE, "utf8");
+  expect(source).not.toContain(TEXT.game.name);
+  const text = { ...TEXT, game: { name: 'A "bird" & <ferret>' } };
+  const html = gameNameHtml(text, source);
+  const shown = "A &quot;bird&quot; &amp; &lt;ferret&gt;";
+  expect(html).toContain(`<title>${shown}</title>`);
+  expect(html).toContain(`name="apple-mobile-web-app-title" content="${shown}"`);
+  expect(html).toContain(`id="game" role="application" aria-label="${shown}"`);
+  expect(html).not.toContain("%GAME_NAME%");
 });
 
 it("spaces Install and Play the kit's button gap apart", async () => {

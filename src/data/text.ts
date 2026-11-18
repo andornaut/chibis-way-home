@@ -138,6 +138,7 @@ export const TEXT: GameText = {
       tip: "Tip",
     },
   },
+  game: { name: "Chibi's Way Home" },
   homePage: {
     description: "Help Chibi get home after Fert, his former best friend, mails him far away.",
     instructions: [
@@ -272,6 +273,7 @@ export const TEXT: GameText = {
     },
   },
   menu: { button: "Menu", title: "Menu" },
+  opening: { name: "Opening story" },
   pause: {
     button: "Pause",
     close: "Close",
@@ -367,6 +369,8 @@ export const TEXT: GameText = {
     achievements: "Achievements",
     continue: "Continue",
     exit: "Exit",
+    logo: "Chibi's Way Home",
+    name: "Start screen",
     restart: "Restart",
     settings: "Settings",
     start: "Start",

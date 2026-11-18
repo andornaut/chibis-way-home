@@ -12,6 +12,10 @@ export type StartControl = "exit" | "restart" | "start";
 export interface StartWords {
   readonly continue: string;
   readonly exit: string;
+  // The logo's text alternative.
+  readonly logo: string;
+  // The screen's accessible name.
+  readonly name: string;
   readonly restart: string;
   readonly start: string;
 }
@@ -48,15 +52,18 @@ export function createStart(
 ): StartView {
   const root = document.createElement("div");
   root.className = "start-scene";
+  root.setAttribute("role", "region");
+  root.setAttribute("aria-label", words.name);
   const view = document.createElement("div");
   view.className = "ui-view start-view";
   const nav = document.createElement("div");
   nav.className = "start-nav ui-frame";
   box(layout.nav, nav);
   const images = new Map<string, HTMLImageElement>();
-  const image = (key: string, rect: Rect) => {
+  // Icon images are decorative: their buttons carry the names.
+  const image = (key: string, rect: Rect, alt = "") => {
     const img = document.createElement("img");
-    img.alt = "";
+    img.alt = alt;
     img.draggable = false;
     box(rect, img);
     images.set(key, img);
@@ -68,7 +75,7 @@ export function createStart(
       component: "Native",
       key: "logo",
       kind: "component",
-      props: { element: image("logo", layout.logo) },
+      props: { element: image("logo", layout.logo, words.logo) },
     },
   ];
   const buttons = new Map<StartControl, HTMLButtonElement>();
