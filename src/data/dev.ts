@@ -1,9 +1,10 @@
 export const DEV_TEXT = {
   cheats: {
     close: "Close",
-    runOnly: "Run-only",
-    saveChanging: "Save-changing",
+    group: "Cheats",
+    groupDescription: "Using a cheat stops saving until you return to the title.",
     title: "Cheats",
+    tools: "Tools",
   },
   fps: "FPS counter",
   grantAllSkills: "Grant all power-ups",
@@ -44,14 +45,8 @@ export const DEV_TEXT = {
   results: {
     resetSave: "Save reset.",
     showTipsAgain: "Tips will show again.",
-    unlockAllPowerUps: {
-      saved: "All power-ups are saved.",
-      unchanged: "All power-ups are already saved.",
-    },
-    unlockAllZones: {
-      saved: "All zones are unlocked.",
-      unchanged: "All zones are already unlocked.",
-    },
+    unlockAllPowerUps: "All power-ups are unlocked until you return to the title.",
+    unlockAllZones: "All zones are unlocked until you return to the title.",
   },
   showTipsAgain: "Show tips again",
   stage: "Stage",

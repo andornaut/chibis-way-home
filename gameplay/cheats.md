@@ -5,22 +5,24 @@ The [shared saves and cheats policy](https://github.com/andornaut/game-coordinat
 ## Entry and modal
 
 - **Entry:** in a browser tab only, Settings shows Open Cheats beside its Back button. Availability is checked with the shared app-window check when Cheats opens and again before every action; an installed app window shows no entry and refuses every action. There is no other entry.
-- **Modal:** the Cheats card uses the Large width family. Its body scrolls rather than pages, and Close is its bottom primary action. Run-only comes first, then Save-changing; a group with no actions is hidden.
+- **Modal:** the Cheats card uses the Large width family. Its body scrolls rather than pages, and Close is its bottom primary action. It holds two groups: Cheats, then Tools.
 
-## Run-only
+## Cheat session
 
-Run-only cheats last for this browser session and never change the save, progress, statistics or achievements.
+Cheats never touch the save. Using any cheat starts a cheat session: from then on nothing is saved, earned or banked, including progress, unlocks, skill grants, seen tips, achievements and statistics. Returning to the start screen ends the session, and Continue then loads the save as it was before the first cheat.
+
+## Cheats
 
 - **Invulnerability (contact hazards only):** red hazards and boss contact do not kill Chibi; falling out of the world still uses its safety fallback.
-- **Enable a power-up:** each of Dash, Double jump and Speedy can be made selectable for the session. An enabled power-up never selects itself and never becomes owned.
-- **Load stage:** enters any catalogued stage, chosen by zone and stage, without unlocking or clearing it.
-- **FPS counter:** Off by default. On shows frames per second in the bottom-right corner of the device viewport, inset from the safe area and drawn above everything, letterbox bars included.
+- **Enable a power-up:** each of Dash, Double jump and Speedy can be made selectable. An enabled power-up never selects itself.
+- **Load stage:** enters any catalogued stage, chosen by zone and stage.
+- **Unlock all power-ups:** makes Dash, Double jump and Speedy owned for the session. No power-up selects itself and any current selection stays.
+- **Unlock all zones:** makes every zone and stage available on the map for the session.
 
-## Save-changing
+## Tools
 
-Save-changing actions write the save. None grants or counts toward an achievement, adds statistics or marks a stage cleared. Each reports saved, unchanged, blocked, invalid and unavailable outcomes distinctly; after a partial write it says that some changes were saved, names the saved records and offers retry.
+Tools are not cheats and start no cheat session.
 
-- **Unlock all zones:** every zone and stage becomes available on the map. Nothing is marked cleared, and no attempt, time or death is recorded.
-- **Unlock all power-ups:** grants Dash, Double jump and Speedy to the save with ordinary grant semantics: no grant selects itself, any current selection stays and repeated grants do not stack. Each newly owned power-up shows its tip once a zone plays.
 - **Show tips again:** clears the saved seen-tips record, so every first-time tip, including each power-up's, can show again.
-- **Reset save:** last in the group, after a confirmation card. It resets the save entirely: progress, statistics, achievements, seen tips and every cheat grant. Device settings outside the save stay.
+- **FPS counter:** Off by default. On shows frames per second in the bottom-right corner of the device viewport, inset from the safe area and drawn above everything, letterbox bars included. It is a device setting, not part of the save.
+- **Reset save:** last, after a confirmation card. It resets the save entirely: progress, statistics, achievements and seen tips. Device settings outside the save stay.
