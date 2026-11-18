@@ -2,6 +2,18 @@
 
 Art owns the art rules, asset specifications and pipeline in [art/](../../art/README.md); assets ship from `public/art/`.
 
+- Game art is pixel art at the 720x360 logical base, sampled nearest at the fit scale times min(DPR, 2); HTML text, SVG chrome and help illustrations render with native antialiasing ([style guide](../../art/style-guide.md#direction)).
+- Playable and speaking characters use chibi proportions; background foliage, trees and animals use naturalistic forms and anatomy, with hind legs at the rump ([anatomy](../../art/style-guide.md#naturalistic-animal-anatomy)).
+- One house palette, Endesga 32, plus game ramps; each V1 destination has one muted zone primary. Shadows and dims step down ramps, never blend with black, and canonical red marks hazards only ([palette](../../art/style-guide.md#palette)).
+- Background layers take computed OKLab depth ranks below the flat zone sky; world fauna uses the zone fauna token at 2:1 against the near layer.
+- Raster pixels are fully opaque or fully transparent; characters take outlines two ramp steps darker than their fill, and effects a 1px rim ([outlines](../../art/style-guide.md#outlines)).
+- Generators in `art/tools/` use art-kit's public API and run with Node 24.22.2 in an isolated container. Change the generator, never its output; `build.ts --check` must leave a clean rebuild ([pipeline](../../art/README.md#pipeline)).
+- UI is HTML over a world-only canvas, set in the Liberation Sans WOFF2 faces. Every region outside the top modal stays painted and dimmed by three palette steps ([modal backdrops](../../art/style-guide.md#modal-backdrops)).
+- Modal cards use width families (large 688, medium 500, small 400) held 16px inside the view; height fits content and text never shrinks ([controls](../../art/controls.md#sizing-and-spacing), [layout](../../art/layout.md#modals)).
+- Buttons are 48px high with 48x48 minimum targets, 16px apart side by side, 8px in vertical stacks and 24px between small buttons. Primary actions are dslate with white labels.
+- Touch controls are SVG at 85% opacity, 60px in from the page's sides and 40px up, held 8px inside the 2:1 view ([touch controls](../../art/style-guide.md#touch-controls)).
+- [Inventory](../../art/inventory.md) lists every served asset with its key, size and tags.
+
 Reference: [art](../../art/README.md), [style guide](../../art/style-guide.md), [controls](../../art/controls.md), [layout](../../art/layout.md).
 
 ## Work items
