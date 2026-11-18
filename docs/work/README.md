@@ -289,3 +289,6 @@ decided or delivered, and why, in a line or two each.
 | cwh-0251 | Add the Tip speaker and first-time tips                                          | [cwh-0251.md](cwh-0251.md) |
 | cwh-0252 | Turn the selected power-up off with a tap                                        | [cwh-0252.md](cwh-0252.md) |
 | cwh-0253 | Author and qualify Blue city layouts toward 16                                   | [cwh-0253.md](cwh-0253.md) |
+| cwh-0254 | Release landed and superseded Tech worktrees and branches                        | [cwh-0254.md](cwh-0254.md) |
+| cwh-0255 | Name the opening and start screens and the game page from the text data          | [cwh-0255.md](cwh-0255.md) |
+| cwh-0256 | Adopt the shared Pause and Menu navigation                                       | [cwh-0256.md](cwh-0256.md) |
