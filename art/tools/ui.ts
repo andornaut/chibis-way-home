@@ -94,14 +94,15 @@
  * - ui-close, 24x24, at 510,94 (hit 500,88,44,44), the card's top right, on every card. Tags normal
  *   (ink X), pressed (white X on dslate).
  * - A settings row has no art, as on dog-walker-game's settings card: a 352x48 hit area at x 184
- *   holding its 16x16 icon at 198,y+16 (Reduced motion and Install; Move controls and Action
- *   buttons show the game's inline control icons instead), its label (font-body, ink) at origin
- *   228,y+15 and, for a toggle, ui-switch at 496,y+16.
+ *   holding its 16x16 icon at 198,y+16 (Reduced motion and Install; Display joystick and Display
+ *   Jump and Use buttons show the game's inline control icons instead), its label (font-body, ink)
+ *   at origin 228,y+15 and, for a toggle, ui-switch at 496,y+16.
  * - Pause card, 368x236, title "Paused": three buttons 352x48 at x 184, 4 apart: Resume
  *   (ui-button-primary) at y 136, Settings at y 188 and Back to title at y 240 (ui-button). Labels
  *   centred, origin y = button y + 13.
- * - Settings card, title "Settings": 368x236 with the Install row, 368x184 without it. Rows: "Move
- *   controls" at y 136 (the move hint), "Action buttons" at y 188 (Use and Jump) and
+ * - Settings card, title "Settings": 368x236 with the Install row, 368x184 without it. Rows:
+ *   "Display joystick" at y 136 (the move hint), "Display Jump and Use buttons" at y 188 (Use
+ *   and Jump) and
  *   "Reduced motion" (icon-reduced-motion), each with ui-switch, the first two on by default;
  *   Install last, only while the app is installable
  *   (icon-install; ui-button drawn 72x28 at 452,250, centred on x 488, label ink, origin y 253;
