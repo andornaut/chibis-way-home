@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ART_PATH, type ArtManifest, BIRD_SHEET_URL } from "../assets/index.ts";
 import { UI_FONT_RESOURCES } from "../ui/index.ts";
-import { ART_MANIFEST_URL, artUrls } from "./precacheArt.ts";
+import { artUrls } from "./precacheArt.ts";
 
 const EMPTY: ArtManifest = {
   backdrops: [],
@@ -28,6 +28,11 @@ describe("artUrls", () => {
     ],
     ["a data file", { ...EMPTY, data: [{ json: "c.json", key: "c" }] }, ["c.json"]],
     [
+      "a data file the code bundles",
+      { ...EMPTY, data: [{ json: "palette.json", key: "palette" }] },
+      [],
+    ],
+    [
       "a tileset",
       { ...EMPTY, tilesets: [{ json: "t/d.json", key: "d", png: "t/d.png" }] },
       ["t/d.json"],
@@ -45,9 +50,8 @@ describe("artUrls", () => {
       { ...EMPTY, images: [{ height: 2, key: "f", png: "f.png", width: 3 }] },
       ["f.png"],
     ],
-  ])("lists the manifest and what a build loads from its files for %s", (_, manifest, files) => {
+  ])("lists what a build loads from art's files for %s", (_, manifest, files) => {
     expect(artUrls(manifest)).toEqual([
-      ART_MANIFEST_URL,
       ...files.map((file) => ART_PATH + file),
       BIRD_SHEET_URL,
       ...UI_FONT_RESOURCES.map(({ url }) => url),

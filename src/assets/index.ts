@@ -1,5 +1,6 @@
-// Art's files as the game reads them: the manifest and json-hash sprite sheets, the build's atlas
-// manifest, sprite contact silhouettes and the bird's frame size.
+// Art's files as the game reads them: the manifest and json-hash sprite sheets, the data files
+// the code bundles, the build's atlas manifest, sprite contact silhouettes and the bird's frame
+// size.
 export {
   ART_MANIFEST_FILE,
   ART_MANIFEST_KEY,
@@ -17,4 +18,5 @@ export {
   BASE_FRAME,
 } from "./atlasManifest.ts";
 export { BIRD_FRAME, BIRD_SHEET_URL } from "./birdFrame.ts";
+export { BUNDLED_ART_DATA } from "./bundledArt.ts";
 export { CONTACT_SILHOUETTES, spriteContacts } from "./spriteContacts.ts";

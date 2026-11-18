@@ -6,6 +6,7 @@ export { loadingPlugin } from "../loading/html.ts";
 export { ICONS } from "../pwa/icons.ts";
 export { precachePlugin } from "../pwa/precachePlugin.ts";
 export { atlasPlugin } from "./atlas/atlasPlugin.ts";
+export { certifiedPoolsPlugin } from "./certifiedPools.ts";
 export { PHASER_BUILD } from "./phaserBuild.ts";
 export { publicFilesPlugin, UNNAMED_PUBLIC_FILES } from "./publicFiles.ts";
 export { hashedIconsPlugin } from "@andornaut/game-kit/build/hashedIconsPlugin";

@@ -20,6 +20,7 @@ async function pluginNames(plugins: PluginOption[]): Promise<string[]> {
 it("retains the game's ordered HTML, loading, atlas, offline and security pipeline", async () => {
   const config = await configPromise;
   expect(await pluginNames(config.plugins ?? [])).toEqual([
+    "chibis-way-home-certified-pools",
     "home-page-copy",
     "game-loading-indicator",
     "bird-atlas",

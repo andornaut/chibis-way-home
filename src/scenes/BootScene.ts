@@ -15,7 +15,13 @@ import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/up
 import { Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json" with { type: "json" };
-import { ART_MANIFEST_KEY, ART_PATH, type ArtManifest, atlasPageKey } from "../assets/index.ts";
+import {
+  ART_MANIFEST_KEY,
+  ART_PATH,
+  type ArtManifest,
+  atlasPageKey,
+  BUNDLED_ART_DATA,
+} from "../assets/index.ts";
 import { TILE } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
 import {
@@ -90,7 +96,12 @@ export class BootScene extends Scene {
     this.load.setPath(ART_PATH);
     this.cache.json.add(ART_MANIFEST_KEY, MANIFEST);
     for (const { json, key } of MANIFEST.data) {
-      this.load.json(key, json);
+      const bundled = BUNDLED_ART_DATA[key];
+      if (bundled === undefined) {
+        this.load.json(key, json);
+      } else {
+        this.cache.json.add(key, bundled);
+      }
     }
     for (const { json, key } of MANIFEST.tilesets) {
       this.load.json(key, json);

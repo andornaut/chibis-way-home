@@ -108,3 +108,10 @@ export interface CertifiedChunks {
   readonly version: 1;
   readonly zone: ZoneKey;
 }
+
+// The fields of a certified list the game reads. A build ships only these.
+export interface CertifiedPool {
+  readonly arenas: readonly Pick<CertifiedArena, "id">[];
+  readonly entries: readonly Pick<CertifiedEntry, "id" | "kind" | "modules">[];
+  readonly zone: ZoneKey;
+}

@@ -68,7 +68,12 @@ vi.mock("./atlasArt.ts", () => ({
   queueAtlasPages: vi.fn(),
 }));
 
-import { type ArtManifest, type AtlasManifest, atlasPageKey } from "../assets/index.ts";
+import {
+  type ArtManifest,
+  type AtlasManifest,
+  atlasPageKey,
+  BUNDLED_ART_DATA,
+} from "../assets/index.ts";
 import { TEXT } from "../data/text.ts";
 import { backgroundProgress, loadingProgress } from "../loading/progress.ts";
 import { requiredUpdate } from "../pwa/index.ts";
@@ -104,6 +109,25 @@ it("loads standalone manifest images in development and atlas mode", () => {
       "standalone-image",
       "images/standalone.png",
     );
+  }
+});
+
+it("caches the data files the code bundles and loads the others", () => {
+  const original = manifest.data;
+  Object.assign(manifest, {
+    data: [
+      { json: "palette.json", key: "palette" },
+      { json: "themes.json", key: "themes" },
+    ],
+  });
+  try {
+    const scene = bootScene();
+    const { json } = scene.load;
+    scene.preload();
+    expect(scene.cache.json.add).toHaveBeenCalledWith("palette", BUNDLED_ART_DATA.palette);
+    expect(json).toHaveBeenCalledExactlyOnceWith("themes", "themes.json");
+  } finally {
+    Object.assign(manifest, { data: original });
   }
 });
 

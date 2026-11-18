@@ -33,6 +33,7 @@ export default gameViteConfig<typeof ConfigModules>({
       PHASER_BUILD,
       UNNAMED_PUBLIC_FILES,
       atlasPlugin,
+      certifiedPoolsPlugin,
       hashedIconsPlugin,
       homePagePlugin,
       loadingPlugin,
@@ -46,6 +47,7 @@ export default gameViteConfig<typeof ConfigModules>({
   ) => {
     const atlas = atlasPlugin();
     return [
+      certifiedPoolsPlugin(repoPath("src/data/certified")),
       homePagePlugin(),
       loadingPlugin(),
       atlas,

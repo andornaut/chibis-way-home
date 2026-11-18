@@ -6,16 +6,26 @@ import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks.ts";
 import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules/index.ts";
 import { ZONE_ROWS } from "../data/screen.ts";
 import { SEAM_ROWS } from "../data/seams.ts";
-import type { ChunkArena, ChunkPlan, StageRecipe, ZoneKey, ZonePlan } from "../data/types/index.ts";
+import type {
+  CertifiedPool,
+  ChunkArena,
+  ChunkPlan,
+  StageRecipe,
+  ZoneKey,
+  ZonePlan,
+} from "../data/types/index.ts";
 import { ZONE_FRAMES } from "../data/zoneFrames.ts";
 import { RECIPES } from "../data/zones.ts";
 import { arenaChunk } from "./arenas.ts";
 import { assembleZoneAvoiding, type ChunkLibrary } from "./assemble.ts";
 import { certifiedChunks } from "./modules.ts";
 
+// The certified lists as a build loads them: only their pool fields.
+const POOLS: readonly CertifiedPool[] = CERTIFIED_LISTS;
+
 const CERTIFIED = certifiedChunks(
   { frames: ZONE_FRAMES, grades: PAIR_GRADES, modules: MODULES, rules: MODULE_RULES },
-  CERTIFIED_LISTS,
+  POOLS,
 );
 
 // The zone whose frame draws a stage theme, if any.
@@ -53,9 +63,7 @@ export function arenaChunks(arenas: readonly ChunkArena[]): {
 
 // The admitted arenas: those the certified lists name.
 const ADMITTED = arenaChunks(
-  ARENAS.filter(({ id }) =>
-    CERTIFIED_LISTS.some((list) => (list.arenas ?? []).some((entry) => entry.id === id)),
-  ),
+  ARENAS.filter(({ id }) => POOLS.some((list) => list.arenas.some((entry) => entry.id === id))),
 );
 
 // The game's chunks, certified pairs and admitted arenas included, and themes.

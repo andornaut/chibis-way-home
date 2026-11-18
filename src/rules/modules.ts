@@ -1,5 +1,5 @@
 import type {
-  CertifiedChunks,
+  CertifiedPool,
   ChunkModule,
   ChunkPlan,
   ChunkSeam,
@@ -334,7 +334,7 @@ interface CertifiedContext {
 // singles in list order. Only listed pairs are composed, so an unlisted pair is never drawn.
 export function certifiedChunks(
   context: CertifiedContext,
-  lists: readonly CertifiedChunks[],
+  lists: readonly CertifiedPool[],
 ): {
   readonly chunks: Readonly<Record<string, ChunkPlan>>;
   readonly pools: Readonly<Partial<Record<ZoneKey, readonly string[]>>>;

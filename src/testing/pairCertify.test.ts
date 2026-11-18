@@ -99,8 +99,6 @@ describe("certifiedChunks", () => {
       {
         arenas: [],
         entries: [entry("fixture-step", "fixture-red-strip")],
-        inputs: { data: "", proofs: "" },
-        version: 1,
         zone: "blue",
       },
     ]);
@@ -114,8 +112,6 @@ describe("certifiedChunks", () => {
         {
           arenas: [],
           entries: [entry("fixture-step", "fixture-gone")],
-          inputs: { data: "", proofs: "" },
-          version: 1,
           zone: "blue",
         },
       ]),
