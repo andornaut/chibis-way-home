@@ -5,7 +5,7 @@ game module runs. A two-pixel loading strip at the top shows only loads the play
 stays painted and dimmed under modals. Each build writes `/sw.js` with its own cache of `/play/`,
 its resources and atlas pages, so the game plays offline; a failed first offline installation
 shows game-kit's loading failure with Retry on the primary plate. A fresh document applies a
-complete waiting build, a dismissed update offer stays hidden for the page session, and a save
+complete waiting build, a dismissed update offer returns on the next start-screen arrival, and a save
 from a newer version requires the update before any save write. The home page and Settings offer
 Install in every browser until the game is installed, and back is caught with a CloseWatcher or a
 guard history entry.
