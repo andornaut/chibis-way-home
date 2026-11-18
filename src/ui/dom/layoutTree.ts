@@ -11,6 +11,7 @@ import {
   type CardWords,
   createCardElement,
   createTextButtonElement,
+  setCardWidth,
 } from "./cardElements.ts";
 
 type TextTag = "h1" | "h2" | "h3" | "p" | "span";
@@ -97,6 +98,7 @@ export function createUiLayoutPorts(document: Document): LayoutComponentPorts<Ui
           ) {
             throw new RangeError("Changed card structure requires a new layout key");
           }
+          setCardWidth(props.words.width, view.dialog);
           view.dialog.setAttribute("role", props.words.alert ? "alertdialog" : "dialog");
           view.dialog.querySelector(".ui-card-title")!.textContent = props.words.title;
           const text = view.dialog.querySelector(".ui-card-text");

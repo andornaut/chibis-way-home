@@ -1,13 +1,15 @@
 import { CARD_CONTENT, CELEBRATION_LAYOUT } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
 import type { Point, Rect } from "../../data/types/index.ts";
+import { cardWidth } from "./contentCard.ts";
 import { FONT_SCALE } from "./fontRoles.ts";
 import { hitAround } from "./hitAreas.ts";
 
 export const CARD_TEXT_SCALE = FONT_SCALE;
 
-// Fixed frame geometry for the celebration card.
-const CARD_AT: Point = CELEBRATION_LAYOUT.at;
-const CARD_WIDTH = CELEBRATION_LAYOUT.width;
+// Fixed frame geometry for the celebration card: the small width family's width, centred across.
+const CARD_WIDTH = cardWidth("small");
+const CARD_AT: Point = { x: (SCREEN.width - CARD_WIDTH) / 2, y: CELEBRATION_LAYOUT.top };
 
 const CLOSE_ART: Rect = {
   height: CARD_CONTENT.closeSize,

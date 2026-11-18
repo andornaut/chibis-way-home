@@ -63,8 +63,10 @@ it("keeps card and text-button facade markup on the production component ports",
     actionsLayout: "stack",
     close: TEXT.pause.close,
     title: TEXT.pause.title,
+    width: "small",
   });
   expect(card.root.className).toBe("ui-card-scene");
+  expect(card.dialog.dataset.cardWidth).toBe("small");
   expect(card.dialog.getAttribute("role")).toBe("dialog");
   expect(card.dialog.getAttribute("aria-labelledby")).toBe("pause-title");
   expect(card.dialog.querySelector(".ui-card-header h2")?.textContent).toBe(TEXT.pause.title);

@@ -9,6 +9,7 @@ import { PAGE_TITLE } from "../layout/pageTitle.ts";
 import { ROOM_SCREEN } from "../layout/roomScreen.ts";
 import { SKILL_ROOM } from "../layout/skillDetails.ts";
 import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";
+import { setCardWidth } from "./card.ts";
 import {
   createDialoguePanel,
   DIALOGUE_PANEL_LAYOUT,
@@ -110,6 +111,8 @@ export function createRoomView(
     showPanelParagraph(panel, gift.paragraph);
     const area = make("div", "room-gift-area");
     const card = make("section", "ui-card ui-frame room-gift-card");
+    // The skill details card's body.
+    setCardWidth("large", card);
     card.setAttribute("aria-labelledby", "room-title");
     card.setAttribute("aria-describedby", "room-description");
     const body = make("div", "room-skill-body");

@@ -1,9 +1,10 @@
+import type { CardWidth } from "../layout/contentCard.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";
 
 // A modal card in the HTML UI (ui.css .ui-card): a scene's view holding a full-area backdrop
-// that takes outside taps, and the card on the play view, in art's ui-settings-card frame, with
-// its title, an optional line of text and a row of equal text buttons in art's ui-button (or
-// ui-button-primary), and an optional close X in its top-right corner.
+// that takes outside taps, and the card on the play view, in art's ui-settings-card frame, at its
+// width family's width, with its title, an optional line of text and a row of equal text buttons
+// in art's ui-button (or ui-button-primary), and an optional close X in its top-right corner.
 
 export interface CardWords<Key extends string> {
   // Each button's key and label, in the order the keyboard's focus moves through them, and
@@ -21,6 +22,7 @@ export interface CardWords<Key extends string> {
   readonly close?: string;
   readonly text?: string;
   readonly title: string;
+  readonly width: CardWidth;
 }
 
 export interface CardView<Key extends string> {
@@ -54,6 +56,11 @@ export function createTextButtonElement(
   return button;
 }
 
+// Sizes card, a .ui-card, at family's width (ui.css).
+export function setCardWidth(family: CardWidth, card: HTMLElement): void {
+  card.dataset.cardWidth = family;
+}
+
 // The close X: the button is its press area (ui.css .ui-close-button), and its face is art's
 // ui-close, which the focus ring wraps. Its name is the accessible one; it shows no text.
 export function closeButton(document: Document, name: string): HTMLButtonElement {
@@ -82,6 +89,7 @@ export function createCardElement<Key extends string>(
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
   const dialog = element("section", "ui-card ui-frame");
+  setCardWidth(words.width, dialog);
   dialog.id = id;
   dialog.setAttribute("role", words.alert === true ? "alertdialog" : "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-title`);

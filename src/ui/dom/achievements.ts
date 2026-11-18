@@ -1,7 +1,7 @@
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { achievementsCardProperties } from "../layout/achievementsCard.ts";
-import { closeButton, textButton } from "./card.ts";
+import { closeButton, setCardWidth, textButton } from "./card.ts";
 
 // The Achievements card in the HTML UI (achievements.css, on ui.css's .ui-card): its title, a
 // list of every entry, a page of them at a time, Previous, the page count and Next, and the close
@@ -67,6 +67,8 @@ export function createAchievementsCard(
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
   const dialog = element("section", "ui-card ui-frame ui-card-closeable achievements-card");
+  // Two entry columns.
+  setCardWidth("large", dialog);
   dialog.id = id;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-title`);

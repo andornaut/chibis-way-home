@@ -1,6 +1,16 @@
-import { CARD_CONTENT } from "../../data/layout.ts";
+import { CARD_CONTENT, CARD_SCREEN_MARGIN, CARD_WIDTH } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
 import type { Size } from "../../data/types/index.ts";
 import { CARD_CLOSE } from "./cardClose.ts";
+
+// A modal card's width family. Every card declares one; its height follows its content.
+export type CardWidth = keyof typeof CARD_WIDTH;
+
+// A card's width: its family's, or the view's width less the screen margin on each side where
+// that is narrower.
+export function cardWidth(family: CardWidth): number {
+  return Math.min(CARD_WIDTH[family], SCREEN.width - 2 * CARD_SCREEN_MARGIN);
+}
 
 // Title geometry supplied by the native layout's declared type role.
 export interface CardTitle extends Size {

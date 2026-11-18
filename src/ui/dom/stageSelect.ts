@@ -1,8 +1,8 @@
 import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard.ts";
-import { closeButton, textButton } from "./card.ts";
+import { STAGE_SELECT_LAYOUT, STAGE_SELECT_WIDTH } from "../layout/stageSelectCard.ts";
+import { closeButton, setCardWidth, textButton } from "./card.ts";
 
 // The stage picker card in the HTML UI (stageSelect.css): the destination's name, the close X,
 // one row of stage faces per page, of which one shows, and on a paged card Previous, the page
@@ -64,6 +64,7 @@ export function createStageSelect(
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
   const dialog = element("section", "ui-card ui-card-closeable ui-frame stage-select");
+  setCardWidth(STAGE_SELECT_WIDTH, dialog);
   dialog.id = ID;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${ID}-title`);

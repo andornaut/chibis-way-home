@@ -5,7 +5,7 @@ import {
 
 import { SKILL_DETAILS } from "../../data/layout.ts";
 import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";
-import { closeButton } from "./card.ts";
+import { closeButton, setCardWidth } from "./card.ts";
 import { createSkillDisc } from "./skillDisc.ts";
 
 // The skill details card in the HTML UI (skillDetails.css, on ui.css's .ui-card): its title, the
@@ -62,6 +62,8 @@ export function createSkillDetailsCard(
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
   const dialog = element("section", "ui-card ui-frame ui-card-closeable skill-details-card");
+  // The disc beside a description up to its full width.
+  setCardWidth("large", dialog);
   dialog.id = id;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-title`);

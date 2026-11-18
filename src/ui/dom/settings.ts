@@ -1,5 +1,6 @@
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
+import type { CardWidth } from "../layout/contentCard.ts";
 import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
 import {
   TOUCH_SETTING_ACTIONS,
@@ -7,7 +8,7 @@ import {
   type TouchSetting,
 } from "../settings/touchControls.ts";
 import { createActionIcon } from "./actionHelp.ts";
-import { closeButton } from "./card.ts";
+import { closeButton, setCardWidth } from "./card.ts";
 
 // The settings card in the HTML UI (settings.css, on ui.css's .ui-card): its title, a switch row
 // for each setting, the Install row while the game can be installed, the build label and the close
@@ -106,8 +107,9 @@ export function createSettingsCard(
     created.textContent = value;
     return created;
   };
-  const dialogFor = (dialogId: string, title: string, className: string) => {
+  const dialogFor = (dialogId: string, title: string, className: string, family: CardWidth) => {
     const dialog = element("section", `ui-card ui-frame ui-card-closeable ${className}`);
+    setCardWidth(family, dialog);
     dialog.id = dialogId;
     dialog.setAttribute("role", "dialog");
     dialog.setAttribute("aria-labelledby", `${dialogId}-title`);
@@ -122,7 +124,7 @@ export function createSettingsCard(
   writeLayoutProperties(SETTINGS_LAYOUT, root);
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
-  const { dialog } = dialogFor(id, words.title, "settings-card");
+  const { dialog } = dialogFor(id, words.title, "settings-card", "medium");
   const list = element("div", "settings-rows");
   const icons: Partial<Record<SettingsSpriteRow, HTMLImageElement>> = {};
   // A row's button with its icons and its label, which names it. Each switch's note describes
@@ -184,7 +186,7 @@ export function createSettingsCard(
   }
   const close = closeButton(document, words.close);
   dialog.append(list, text("p", "ui-card-text settings-build", rows.build), close);
-  const steps = dialogFor(`${id}-steps`, "", "settings-steps");
+  const steps = dialogFor(`${id}-steps`, "", "settings-steps", "medium");
   steps.dialog.hidden = true;
   steps.dialog.setAttribute("aria-describedby", `${id}-steps-text`);
   const body = element("div", "settings-steps-body");

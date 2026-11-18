@@ -1,4 +1,3 @@
-import { MODAL_CONTENT } from "@andornaut/game-kit/runtime/modalLayout";
 import type { RenderFit } from "@andornaut/game-kit/runtime/view/renderScale";
 import {
   type LayoutValues,
@@ -11,11 +10,10 @@ import {
 import { createViewUnits, slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT, DEATH_CARD, FOCUS_RING, TEXT_BUTTON } from "../../data/layout.ts";
-import { SCREEN } from "../../data/screen.ts";
 import type { Point } from "../../data/types/index.ts";
 import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
 import { CARD_CLOSE } from "../layout/cardClose.ts";
-import { cardTitleReserve } from "../layout/contentCard.ts";
+import { cardTitleReserve, cardWidth } from "../layout/contentCard.ts";
 import { FONT_METRICS } from "../layout/fontRoles.ts";
 import { hitMargin } from "../layout/hitAreas.ts";
 import { playView } from "../layout/playView.ts";
@@ -57,8 +55,11 @@ export const UI_LAYOUT: LayoutValues = {
   "--card-edge": slice(CARD_CONTENT.frameBorder),
   "--card-frame": CARD_CONTENT.frameBorder,
   "--card-gap": CARD_CONTENT.gap,
-  "--card-min-width": SCREEN.width * MODAL_CONTENT.minWidthFraction,
   "--card-padding": CARD_CONTENT.padding,
+  // Each width family's card width (ui.css .ui-card[data-card-width]).
+  "--card-width-large": cardWidth("large"),
+  "--card-width-medium": cardWidth("medium"),
+  "--card-width-small": cardWidth("small"),
   // How far below the card's top a card with a close X starts its body's press areas, the gap
   // past the X's press area.
   "--close-clear": CLOSE_HIT.y + CLOSE_HIT.height + CARD_CONTENT.gap,

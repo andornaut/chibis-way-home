@@ -115,6 +115,7 @@ export function createPauseView(
     actionsLayout: "stack",
     close: words.card.close,
     title: words.card.title,
+    width: "medium",
   });
   const close = card.close!;
   card.dialog.classList.add("pause-card");

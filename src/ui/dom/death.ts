@@ -6,7 +6,7 @@ import {
 import { CARD_CONTENT, DEATH_CARD } from "../../data/layout.ts";
 import type { DeathAction } from "../input/deathInput.ts";
 import type { StatsMetricRow } from "../layout/runStats.ts";
-import { textButton } from "./card.ts";
+import { setCardWidth, textButton } from "./card.ts";
 import { mountUiLayout } from "./layoutTree.ts";
 import { createRunStats } from "./runStats.ts";
 
@@ -67,6 +67,8 @@ export function createDeathCard(document: Document, words: DeathCardWords): Deat
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
   const dialog = element("section", "ui-card ui-frame ui-death-card");
+  // The stage's metrics beside the totals, and two actions side by side.
+  setCardWidth("large", dialog);
   dialog.id = ID;
   dialog.setAttribute("role", "alertdialog");
   dialog.setAttribute("aria-label", words.label);

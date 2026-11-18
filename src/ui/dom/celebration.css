@@ -1,11 +1,10 @@
-/* Fixed placeholder geometry, in logical pixels supplied by celebration.ts. */
+/* Fixed placeholder geometry, in logical pixels supplied by celebration.ts, at the small width
+   family's width (ui.css). */
 .celebration-card {
   position: absolute;
   top: calc(var(--ui-unit) * var(--celebration-card-y) * 1px);
   left: calc(var(--ui-unit) * var(--celebration-card-x) * 1px);
-  width: calc(var(--ui-unit) * var(--celebration-card-width) * 1px);
   height: calc(var(--ui-unit) * var(--celebration-card-height) * 1px);
-  min-width: 0;
   padding: 0;
 }
 

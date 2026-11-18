@@ -1,8 +1,7 @@
 import type { LayoutValues } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SELECT } from "../../data/layout.ts";
-import { SCREEN } from "../../data/screen.ts";
-import { cardHeaderLayout } from "./contentCard.ts";
+import { CARD_CONTENT, STAGE_PREVIEW, STAGE_SELECT, TEXT_BUTTON } from "../../data/layout.ts";
+import { cardHeaderLayout, type CardWidth, cardWidth } from "./contentCard.ts";
 import { FONT_METRICS } from "./fontRoles.ts";
 import { hitMargin } from "./hitAreas.ts";
 
@@ -29,9 +28,15 @@ const HEADER = cardHeaderLayout(
   { height: FONT_METRICS.mainHeading.lineHeight, text: "", width: 0 },
 );
 
+// The card takes the large width family; a page holds as many faces as fit inside its padding,
+// the kit's button gap apart.
+export const STAGE_SELECT_WIDTH: CardWidth = "large";
 export const STAGES_PER_PAGE = Math.max(
   1,
-  Math.floor((SCREEN.width - 3 * CARD_CONTENT.padding) / (FACE.width + CARD_CONTENT.padding)),
+  Math.floor(
+    (cardWidth(STAGE_SELECT_WIDTH) - 2 * CARD_CONTENT.padding + TEXT_BUTTON.gap) /
+      (FACE.width + TEXT_BUTTON.gap),
+  ),
 );
 
 export function stagePageOf(stages: readonly string[], stage: string): number {

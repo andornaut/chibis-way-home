@@ -62,7 +62,7 @@
   place-items: center;
 }
 
-/* A card fitted to its content, at least the minimum width and no wider than the view, in art's
+/* A card at its width family's width (data-card-width), as tall as its content, in art's
    ui-settings-card frame. The padding inside the frame keeps the content its padding in from the
    card's edge. */
 .ui-card {
@@ -76,13 +76,23 @@
   flex-direction: column;
   align-items: center;
   gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
-  min-width: calc(var(--ui-unit) * var(--card-min-width) * 1px);
-  max-width: 100%;
   max-height: 100%;
   padding: var(--card-inside);
   pointer-events: auto;
   touch-action: none;
   text-align: center;
+}
+
+.ui-card[data-card-width="large"] {
+  width: calc(var(--ui-unit) * var(--card-width-large) * 1px);
+}
+
+.ui-card[data-card-width="medium"] {
+  width: calc(var(--ui-unit) * var(--card-width-medium) * 1px);
+}
+
+.ui-card[data-card-width="small"] {
+  width: calc(var(--ui-unit) * var(--card-width-small) * 1px);
 }
 
 .ui-card:focus {

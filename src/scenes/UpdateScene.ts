@@ -71,6 +71,7 @@ export class UpdateScene extends Scene {
       alert: true,
       close: words.close,
       title: words.title,
+      width: "small",
     });
     card.root.hidden = true;
     // P closes other cards in the modal layer, not this one: it stops here, before the layer and

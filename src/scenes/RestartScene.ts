@@ -54,6 +54,7 @@ export class RestartScene extends Scene {
       close: TEXT.update.close,
       text: words.question,
       title: words.title,
+      width: "small",
     });
     card.root.hidden = true;
     const input = modalInput(this);

@@ -101,6 +101,11 @@ export const FOCUS_RING = { inkLine: 1, outset: 4 } as const;
 
 // Modal cards
 
+// Each modal card takes one width family's width, held CARD_SCREEN_MARGIN in from the view's sides
+// (src/ui/layout/contentCard.ts cardWidth); its height follows its content.
+export const CARD_WIDTH = { large: 688, medium: 500, small: 400 } as const;
+export const CARD_SCREEN_MARGIN = 16;
+
 export const CARD_CONTENT = {
   // The close X's drawn edge in from the card's top and right edges.
   closeInset: 6,
@@ -202,8 +207,6 @@ export const STAGE_PREVIEW = { height: 84, width: 168 } satisfies Size;
 
 // PLACEHOLDER: the celebration card after the last zone, until art draws one.
 export const CELEBRATION_LAYOUT = {
-  // The card's top-left corner.
-  at: { x: 176, y: 88 } satisfies Point,
   // Restart and Continue's drawn size.
   button: { height: 44, width: 160 } satisfies Size,
   // Restart and Continue's top below the first row's top.
@@ -222,8 +225,8 @@ export const CELEBRATION_LAYOUT = {
   room: 324,
   // The title slot's top below the card's top.
   titleTop: 8,
-  // The card's width.
-  width: 368,
+  // The card's top below the view's top; the small width family sets its width, centred across.
+  top: 88,
 } as const;
 
 // Dialogue

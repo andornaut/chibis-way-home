@@ -1,4 +1,4 @@
-import { textButton } from "./card.ts";
+import { setCardWidth, textButton } from "./card.ts";
 import { mountUiLayout } from "./layoutTree.ts";
 
 // A conversation's required choice in the HTML UI (ui.css's shared card and stack): over a
@@ -37,6 +37,8 @@ export function createChoiceCard(
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
   const dialog = element("section", "ui-card ui-frame dialogue-choice");
+  // A prompt over stacked answers.
+  setCardWidth("small", dialog);
   dialog.id = id;
   dialog.setAttribute("role", "alertdialog");
   dialog.setAttribute("aria-labelledby", `${id}-prompt`);

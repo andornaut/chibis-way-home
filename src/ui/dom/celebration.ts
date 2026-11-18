@@ -101,6 +101,7 @@ export function createCelebrationView(
         ],
         text: words.message,
         title: words.title,
+        width: "small",
       },
     },
   });
