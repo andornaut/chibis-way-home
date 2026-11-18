@@ -340,7 +340,6 @@ export const TEXT: GameText = {
     reducedMotion: "Reduced motion",
     state: { hidden: "Hidden", off: "Off", on: "On", shown: "Shown" },
     title: "Settings",
-    touchStillWorks: "Touch still works when hidden",
   },
   skillDetails: {
     close: "Close",

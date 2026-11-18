@@ -203,7 +203,6 @@ export interface GameText {
     readonly title: string;
     // The note under the Move controls and Action buttons rows' names: hiding either hides only
     // its drawing.
-    readonly touchStillWorks: string;
   };
 }
 
