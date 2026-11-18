@@ -30,11 +30,9 @@ it("excludes analytics from the game while retaining website permissions and fun
   expect(policy).toContain("connect-src 'self';");
   expect(policy).toContain("worker-src 'self';");
   expect(policy).toContain("img-src 'self' data: blob:;");
-  for (const path of ["/", "/art/", "/tuning/"]) {
-    const website = rules.find((rule) => pathMatches(rule.path, path))!;
-    expect(website.headers[0]![1]).toContain("https://static.cloudflareinsights.com");
-    expect(website.headers[0]![1]).toContain("https://cloudflareinsights.com");
-  }
+  const website = rules.find((rule) => pathMatches(rule.path, "/"))!;
+  expect(website.headers[0]![1]).toContain("https://static.cloudflareinsights.com");
+  expect(website.headers[0]![1]).toContain("https://cloudflareinsights.com");
   for (const path of ["/play/", "/play/index.html"]) {
     const headers = FILE_RULES.filter((rule) => pathMatches(rule.path, path)).flatMap(
       ({ headers }) => headers,
@@ -44,7 +42,7 @@ it("excludes analytics from the game while retaining website permissions and fun
       "public, max-age=0, must-revalidate, no-transform",
     ]);
   }
-  for (const path of ["/", "/art/", "/tuning/", "/sw.js"]) {
+  for (const path of ["/", "/sw.js"]) {
     expect(
       FILE_RULES.filter((rule) => pathMatches(rule.path, path))
         .flatMap(({ headers }) => headers)

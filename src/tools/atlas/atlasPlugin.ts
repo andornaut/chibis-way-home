@@ -23,8 +23,7 @@ interface AtlasPluginApi {
 // In a build, packs every PNG art's manifest lists into atlas pages, writes each to the build
 // output as a lossless WebP (every target browser decodes WebP) under a content-hashed name,
 // and makes ATLAS_MODULE the atlas manifest that maps each art key and frame to its page and
-// rect. The files under public/art/ are still copied as they are, for the dev server, which
-// loads each file on its own.
+// rect. The dev server loads each file under public/art/ on its own instead.
 export function atlasPlugin(): Plugin & { api: AtlasPluginApi } {
   let manifest: AtlasManifest | null = null;
   return {

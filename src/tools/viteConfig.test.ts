@@ -26,21 +26,21 @@ it("retains the game's ordered HTML, loading, atlas, offline and security pipeli
     "game-kit-phaser-build",
     "game-kit-hashed-icons",
     "home-page-web-manifest",
+    "chibis-way-home-public-files",
     "chibis-way-home-precache-art",
     "game-kit-precache",
     "game-kit-security-headers",
   ]);
 });
 
-it("passes the game's page entries, preview host and existing limits to its local config", async () => {
+it("builds only the player's pages and named public files, with the preview host and limits", async () => {
   const config = await configPromise;
   const repoRoot = resolve(import.meta.dirname, "../..");
   expect(config.build?.rolldownOptions?.input).toEqual({
-    art: resolve(repoRoot, "pages/art/index.html"),
     main: resolve(repoRoot, "pages/index.html"),
     play: resolve(repoRoot, "pages/play/index.html"),
-    tuning: resolve(repoRoot, "pages/tuning/index.html"),
   });
+  expect(config.build?.copyPublicDir).toBe(false);
   expect([config.preview?.allowedHosts, config.server?.allowedHosts]).toEqual([
     ["chibi-preview"],
     ["chibi-preview"],

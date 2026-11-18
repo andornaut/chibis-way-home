@@ -21,22 +21,24 @@ const DOM_TESTS = globSync(TESTS, { cwd: import.meta.dirname }).filter((path) =>
 export default gameViteConfig<typeof ConfigModules>({
   chunkSizeWarningLimit: 1100,
   configModules: "src/tools/viteConfigModules.ts",
+  // The player's pages. The development server also serves the gallery (pages/art/) and tuning
+  // (pages/tuning/), which the build leaves out.
   pages: {
-    art: "pages/art/index.html",
     main: "pages/index.html",
     play: "pages/play/index.html",
-    tuning: "pages/tuning/index.html",
   },
   plugins: (
     {
       ICONS,
       PHASER_BUILD,
+      UNNAMED_PUBLIC_FILES,
       atlasPlugin,
       hashedIconsPlugin,
       homePagePlugin,
       loadingPlugin,
       phaserBuildPlugin,
       precachePlugin,
+      publicFilesPlugin,
       securityHeadersPlugin,
       webManifestPlugin,
     },
@@ -50,6 +52,7 @@ export default gameViteConfig<typeof ConfigModules>({
       phaserBuildPlugin(PHASER_BUILD),
       hashedIconsPlugin({ icons: ICONS }),
       webManifestPlugin(),
+      publicFilesPlugin(UNNAMED_PUBLIC_FILES),
       precachePlugin("play/index.html", repoPath("src/pwa/serviceWorker.ts"), atlas.api.pageUrls),
       securityHeadersPlugin(),
     ];
@@ -60,6 +63,9 @@ export default gameViteConfig<typeof ConfigModules>({
   testTimeout: 5_000,
 }).then((config) => ({
   ...config,
+  // The public files the output names ship instead (publicFilesPlugin), so per-file art the build
+  // packs into atlas pages and other development-only copies stay out of the deployment.
+  build: { ...config.build, copyPublicDir: false },
   test: {
     ...config.test,
     // Each project names its own tests, since a project extends the root include list.
