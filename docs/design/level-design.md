@@ -34,3 +34,4 @@ Reference: [stages](../../gameplay/design.md#stages), [chunks](../../gameplay/de
 | cwh-0072 | Aim for at least 16 ordinary layouts in every zone                        | [cwh-0072.md](../work/cwh-0072.md) |
 | cwh-0073 | Qualify more Blue city layouts                                            | [cwh-0073.md](../work/cwh-0073.md) |
 | cwh-0074 | Finish only the started Blue and Woodland layout work                     | [cwh-0074.md](../work/cwh-0074.md) |
+| cwh-0253 | Author and qualify Blue city layouts toward 16                            | [cwh-0253.md](../work/cwh-0253.md) |

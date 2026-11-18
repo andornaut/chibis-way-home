@@ -288,3 +288,4 @@ decided or delivered, and why, in a line or two each.
 | cwh-0250 | Grant every skill unselected, including the first gift                           | [cwh-0250.md](cwh-0250.md) |
 | cwh-0251 | Add the Tip speaker and first-time tips                                          | [cwh-0251.md](cwh-0251.md) |
 | cwh-0252 | Turn the selected power-up off with a tap                                        | [cwh-0252.md](cwh-0252.md) |
+| cwh-0253 | Author and qualify Blue city layouts toward 16                                   | [cwh-0253.md](cwh-0253.md) |
