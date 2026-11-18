@@ -458,7 +458,8 @@ The loading bar is a 2px strip along the top of the 720px view, with no border: 
 - Measured load: the fill grows with the reported progress, holds full for 250ms, then fades out over 150ms before the bar shows anything else. When the startup checks begin, boot's file load skips its full hold and the travelling segment takes over. The track stays opaque. Reduced motion keeps the fade, which changes opacity only.
 - Unknown load (the page's pre-script load, the startup checks, stage preparation, the first visit's precache and the newer-save update): a travelling segment a quarter of the track wide crosses it every 1.5s, stepping one whole frame pixel at a time. Reduced motion keeps the same travelling segment.
 - Layers: boot and entering a zone show over the first visit's precache and the newer-save update, which show only while neither runs. A finished measured load holds and fades before the other layer shows, unless boot or a zone load begins meanwhile.
-- Idle: nothing shows. While a modal is open, its dim and panels cover the bar.
+- Idle: nothing shows.
+- Under a modal: the bar stays painted over the canvas and inert, with its track and fills taking the same three `palette.darker` steps as the rest of the dimmed background, and keeps its state, full hold and travel.
 
 ## Map
 
