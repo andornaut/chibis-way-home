@@ -4,7 +4,7 @@ import { ZONE_MAP } from "../data/map.ts";
 import type { ZoneState } from "../rules/zone.ts";
 
 // Exact storage records for the scripted session from empty storage and reopening its final
-// records. The first gift selects Dash, the next keeps it, then the player selects Speedy.
+// records. The gifts of Dash and Speedy leave no skill selected, then the player selects Speedy.
 const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
@@ -22,14 +22,14 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"dash","at":"map","completed":[],"openingSeen":true,"seenZoneIntro',
+      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenZoneIntro',
       's":[],"skills":["dash"],"stand":"street","version":11}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"dash","at":"map","completed":[],"openingSeen":true,"seenZoneIntro',
+      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenZoneIntro',
       's":[],"skills":["dash","speedy"],"stand":"street","version":11}',
     ].join(""),
   ],
