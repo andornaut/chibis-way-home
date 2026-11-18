@@ -11,6 +11,7 @@ The shared [game policies](https://github.com/andornaut/game-coordinator/blob/ma
 The folder READMEs describe the current design and implementation:
 
 - [art/](art/README.md): pipeline and tooling, with the [visual style guide](art/style-guide.md)
+- [docs/design/](docs/design/README.md): design areas and their work items, with the [work item convention and index](docs/work/README.md)
 - [gameplay/](gameplay/README.md): gameplay scope, tuning and playtesting, with links to [current rules](gameplay/design.md), [undecided ideas](gameplay/ideas.md) and [later work](gameplay/next.md)
 - [src/](src/README.md): stack, architecture and save data
 

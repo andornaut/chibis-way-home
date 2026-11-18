@@ -1,0 +1,19 @@
+# Design
+
+Each area has a short design summary and an index of its work items. The owned topic docs in
+[art/](../../art/README.md), [gameplay/](../../gameplay/README.md) and [src/](../../src/README.md)
+remain the detailed reference. Work items and their convention are in
+[docs/work/](../work/README.md).
+
+| Area                                                | Covers                                                                                    | Topic docs                                                                                                                                        |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [architecture](architecture.md)                     | Data-driven entities, component layering, the Phaser boundary and the behaviour pipeline  | [architecture](../../src/README.md#architecture), [game data](../../src/README.md#game-data)                                                      |
+| [art](art.md)                                       | Art rules, assets, layout specifications and the pipeline                                 | [art](../../art/README.md), [style guide](../../art/style-guide.md), [controls](../../art/controls.md), [layout](../../art/layout.md)             |
+| [bosses](bosses.md)                                 | Boss behaviour and encounters                                                             | [rulebook](../../gameplay/design.md#boss-behaviour)                                                                                               |
+| [controls-and-interface](controls-and-interface.md) | Screen and controls, the HTML interface, input, holds, modals, the start screen, Settings | [rulebook](../../gameplay/design.md#screen-and-controls), [screens and UI](../../src/README.md#screens-and-ui), [controls](../../art/controls.md) |
+| [level-design](level-design.md)                     | Stages, chunks, objects, rooms and the route                                              | [rulebook](../../gameplay/design.md#stages), [targets](../../gameplay/README.md#targets)                                                          |
+| [loading-and-offline](loading-and-offline.md)       | The crash screen, the loading strip, offline play, updates and the installed app          | [assets and build](../../src/README.md#assets-and-build), [phone](../../src/README.md#phone)                                                      |
+| [movement-and-skills](movement-and-skills.md)       | Chibi's movement and the Dash, Double jump and Speedy skills                              | [rulebook](../../gameplay/design.md#chibi)                                                                                                        |
+| [progression](progression.md)                       | The map, runs and attempts, statistics, achievements and saved progress                   | [rulebook](../../gameplay/design.md#map), [save data](../../src/README.md#save-data)                                                              |
+| [story-and-cast](story-and-cast.md)                 | The premise, cast, voice, opening story, dialogue and quips                               | [rulebook](../../gameplay/design.md#cast), [narrative](../../gameplay/narrative/README.md)                                                        |
+| [tooling](tooling.md)                               | Checks, the check containers, CI, the build, delivery, the shared kit pins and dev tools  | [developing](../../README.md#developing), [deploying](../../README.md#deploying), [dev tools](../../src/README.md#dev-tools)                      |
