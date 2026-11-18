@@ -814,7 +814,8 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   }
 
   // A control's action: the pause button opens the card, and the card's controls act while it is
-  // open. During uncovered play a skill tap selects it and its explicit hold opens details.
+  // open. During uncovered play a skill tap selects it, or turns it off when it is selected, and
+  // its explicit hold opens details.
   private activate(view: PauseView, control: HTMLButtonElement): void {
     const { buttons, close } = view.card;
     const skill = control.dataset.skill as SkillId | undefined;
@@ -829,7 +830,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     } else if (control === buttons.home && this.state === "open") {
       this.returnHome();
     } else if (skill !== undefined && this.skillHudLive()) {
-      selectActiveSkill(skill);
+      selectActiveSkill(skill === activeSkill() ? null : skill);
     }
   }
 

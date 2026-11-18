@@ -54,8 +54,9 @@ const storage = localSaveStorage();
 const format = progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS)));
 const store = saveStore(storage, PROGRESS_KEYS, format);
 let progress: Progress = BEGINNING;
-// A developer session's selection of an enabled skill it does not own, held for the page.
-let temporarySelection: SkillId | undefined;
+// A developer session's selection of an enabled skill it does not own, or none after turning that
+// selection off, held for the page.
+let temporarySelection: SkillId | null | undefined;
 // Each new grant's enable tip not shown yet, in grant order. They are not saved.
 let skillTips: SkillId[] = [];
 const STAGES = new Set(ZONE_MAP.destinations.flatMap(({ stages }) => stages));
@@ -280,23 +281,37 @@ export function savedSkills(): readonly SkillId[] {
 }
 
 // The selected skill while it is eligible, or none. A developer session's temporary selection
-// holds while its override stays enabled; then the saved selection applies again.
+// holds while its override stays enabled; then the saved selection applies again. Turning a
+// temporary selection off holds none until the next selection.
 export function activeSkill(session: SaveSession): SkillId | null {
   const eligible = eligibleSkills(session.skillOverrides(), savedSkills());
   const saved = resolveActiveSkill(eligible, progress.activeSkill);
   if (!session.development() || temporarySelection === undefined) {
     return saved;
   }
+  if (temporarySelection === null) {
+    return null;
+  }
   temporarySelection = resolveActiveSkill(eligible, temporarySelection) ?? undefined;
   return temporarySelection ?? saved;
 }
 
-export function selectActiveSkill(session: SaveSession, skill: SkillId): boolean {
+// Selects an eligible skill, or with null turns the selection off. An unchanged or ineligible
+// selection is rejected.
+export function selectActiveSkill(session: SaveSession, skill: SkillId | null): boolean {
   const eligible = eligibleSkills(session.skillOverrides(), savedSkills());
-  if (!eligible.includes(skill) || activeSkill(session) === skill) {
+  const current = activeSkill(session);
+  if ((skill !== null && !eligible.includes(skill)) || current === skill) {
     return false;
   }
-  if (!progress.skills.includes(skill)) {
+  if (skill === null) {
+    if (current === temporarySelection) {
+      temporarySelection = null;
+    } else {
+      temporarySelection = undefined;
+      write(session, { ...progress, activeSkill: null });
+    }
+  } else if (!progress.skills.includes(skill)) {
     temporarySelection = skill;
     if (skill === "speedy") {
       stats.useSkill();

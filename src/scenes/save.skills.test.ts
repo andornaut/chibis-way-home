@@ -41,7 +41,7 @@ it("persists each room grant once through progress writes and reopen, then reset
   expect(save.activeSkill()).toBeNull();
 });
 
-it("leaves the first gift unselected and tipped, keeps the selection and rejects unowned selection", async () => {
+it("leaves the first gift unselected and tipped, turns a selection off and rejects unowned selection", async () => {
   const values = new Map<string, string>();
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => values.get(key) ?? null,
@@ -58,6 +58,11 @@ it("leaves the first gift unselected and tipped, keeps the selection and rejects
   expect(save.selectActiveSkill("dash")).toBe(false);
   expect(save.selectActiveSkill("doubleJump")).toBe(true);
   expect(save.selectActiveSkill("doubleJump")).toBe(false);
+  expect(save.selectActiveSkill(null)).toBe(true);
+  expect(save.selectActiveSkill(null)).toBe(false);
+  await save.loadProgress();
+  expect(save.activeSkill()).toBeNull();
+  expect(save.selectActiveSkill("doubleJump")).toBe(true);
   expect(save.activeSkill()).toBe("doubleJump");
   save.beginStageRun(ZONE_MAP.start);
   await save.loadProgress();
@@ -124,6 +129,9 @@ it("keeps Dev-only selection temporary and falls back to saved ownership when an
   expect(save.activeSkill()).toBe("dash");
   expect(save.selectActiveSkill("speedy")).toBe(true);
   expect(save.activeSkill()).toBe("speedy");
+  expect(save.selectActiveSkill(null)).toBe(true);
+  expect(save.activeSkill()).toBeNull();
+  expect(save.selectActiveSkill("speedy")).toBe(true);
   const { changeSkillOverride } = await import("../dev/mode.ts");
   changeSkillOverride(host as unknown as Window, false, "speedy");
   expect(save.activeSkill()).toBe("dash");

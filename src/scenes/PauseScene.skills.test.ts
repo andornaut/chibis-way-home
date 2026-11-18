@@ -282,6 +282,12 @@ it("selects a tapped skill in play, but a hold opens its details without selecti
   expect(details()).toHaveLength(1);
 });
 
+it("turns the selected skill off with a tap", () => {
+  const { skill } = play();
+  press(skill(selection.active as SkillId)).lift();
+  expect(selection.select).toHaveBeenCalledExactlyOnceWith(null);
+});
+
 it("opens details for a hold that lifts before a frame sees it", () => {
   const { details, skill } = play();
   const holding = press(skill("speedy"));

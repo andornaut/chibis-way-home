@@ -116,7 +116,7 @@ export function savedSkills(): readonly SkillId[] {
 export function activeSkill(): SkillId | null {
   return pageSave.activeSkill(SESSION);
 }
-export function selectActiveSkill(skill: SkillId): boolean {
+export function selectActiveSkill(skill: SkillId | null): boolean {
   return pageSave.selectActiveSkill(SESSION, skill);
 }
 export function grantSkill(skill: SkillId): boolean {
