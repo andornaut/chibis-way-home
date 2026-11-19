@@ -18,6 +18,66 @@
     },
     {
       "encounters": 0,
+      "grade": 4,
+      "id": "countryside-countryside-raised-red-channel--countryside-recovery-trench",
+      "kind": "pair",
+      "layout": "5a3a4ddb2d50a2d9",
+      "modules": ["countryside-raised-red-channel", "countryside-recovery-trench"],
+      "route": "c8defc6066dd4b6b",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "9f2e939ea010d273:1307",
+      "work": 1307
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "countryside-countryside-raised-red-channel--countryside-red-gully",
+      "kind": "pair",
+      "layout": "4306b7715f275e64",
+      "modules": ["countryside-raised-red-channel", "countryside-red-gully"],
+      "route": "36bc3ebd18da52dd",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "7005772ac6a067ae:653",
+      "work": 653
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "countryside-countryside-raised-red-channel--countryside-terrace-spine",
+      "kind": "pair",
+      "layout": "a68d7b651591a772",
+      "modules": ["countryside-raised-red-channel", "countryside-terrace-spine"],
+      "route": "498e3f481f791f24",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "6dcb07dbcdbc7a7b:985",
+      "work": 985
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "countryside-countryside-raised-red-channel--windmill",
+      "kind": "pair",
+      "layout": "8c97fe0f30664e7f",
+      "modules": ["countryside-raised-red-channel", "windmill"],
+      "route": "b5cd1d03334180a8",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "c28c4d4fd674ff1d:501536",
+      "work": 501536
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "countryside-countryside-recovery-trench--countryside-raised-red-channel",
+      "kind": "pair",
+      "layout": "03c2f5db328b20d6",
+      "modules": ["countryside-recovery-trench", "countryside-raised-red-channel"],
+      "route": "1c547c28ce2fc74d",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "4452ef4b4303fb4f:1832",
+      "work": 1832
+    },
+    {
+      "encounters": 0,
       "grade": 3,
       "id": "countryside-countryside-recovery-trench--countryside-recovery-trench",
       "kind": "pair",
@@ -28,6 +88,66 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "d72e3fc67e7b9c9c:1575",
       "work": 1575
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-countryside-recovery-trench--countryside-red-gully",
+      "kind": "pair",
+      "layout": "c60095c5d6e8c229",
+      "modules": ["countryside-recovery-trench", "countryside-red-gully"],
+      "route": "2c025e29c1f9e171",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "f10b8faeb29e515e:1495",
+      "work": 1495
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-countryside-recovery-trench--countryside-terrace-spine",
+      "kind": "pair",
+      "layout": "56c5cd25f6d4f7d8",
+      "modules": ["countryside-recovery-trench", "countryside-terrace-spine"],
+      "route": "4d65f32195386682",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "42592804c6760e84:1924",
+      "work": 1924
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "countryside-countryside-recovery-trench--windmill",
+      "kind": "pair",
+      "layout": "e4df948adb8bc481",
+      "modules": ["countryside-recovery-trench", "windmill"],
+      "route": "32e330e2e697da4c",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "a6a92042190d5067:16421",
+      "work": 16421
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "countryside-countryside-red-gully--countryside-raised-red-channel",
+      "kind": "pair",
+      "layout": "0428bd340a414049",
+      "modules": ["countryside-red-gully", "countryside-raised-red-channel"],
+      "route": "f3eb1eb420ab2ba3",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "7bdaa8e8fce4981b:547",
+      "work": 547
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-countryside-red-gully--countryside-recovery-trench",
+      "kind": "pair",
+      "layout": "63e4d08c0eb3d0a6",
+      "modules": ["countryside-red-gully", "countryside-recovery-trench"],
+      "route": "1a7661e8895682ac",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "9e285a8dfac25f5a:816",
+      "work": 816
     },
     {
       "encounters": 0,
@@ -45,6 +165,66 @@
     {
       "encounters": 0,
       "grade": 3,
+      "id": "countryside-countryside-red-gully--countryside-terrace-spine",
+      "kind": "pair",
+      "layout": "e567ede4611d8d00",
+      "modules": ["countryside-red-gully", "countryside-terrace-spine"],
+      "route": "cf38a6b72b52e26b",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b00244830a209a0d:547",
+      "work": 547
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "countryside-countryside-red-gully--windmill",
+      "kind": "pair",
+      "layout": "94d9b5836fb0af4f",
+      "modules": ["countryside-red-gully", "windmill"],
+      "route": "fbdddd9d00f5b0f7",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "55bd4afc2bc95b69:13260",
+      "work": 13260
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "countryside-countryside-terrace-spine--countryside-raised-red-channel",
+      "kind": "pair",
+      "layout": "35a20c1e356987c2",
+      "modules": ["countryside-terrace-spine", "countryside-raised-red-channel"],
+      "route": "62dfaffaa427203d",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b2df0edeb5176f14:987",
+      "work": 987
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-countryside-terrace-spine--countryside-recovery-trench",
+      "kind": "pair",
+      "layout": "c38c033dfdd62d5b",
+      "modules": ["countryside-terrace-spine", "countryside-recovery-trench"],
+      "route": "7b23451b643daa39",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "1e266dfbc247209a:889",
+      "work": 889
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-countryside-terrace-spine--countryside-red-gully",
+      "kind": "pair",
+      "layout": "e1fdcfad0992721b",
+      "modules": ["countryside-terrace-spine", "countryside-red-gully"],
+      "route": "3932c8180c5ae38b",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "4bb30c9cf9ffa467:697",
+      "work": 697
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
       "id": "countryside-countryside-terrace-spine--countryside-terrace-spine",
       "kind": "pair",
       "layout": "1f6032772f9119e2",
@@ -54,6 +234,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "a4d73f542df8b823:988",
       "work": 988
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "countryside-countryside-terrace-spine--windmill",
+      "kind": "pair",
+      "layout": "132ce226a9e31440",
+      "modules": ["countryside-terrace-spine", "windmill"],
+      "route": "d535e92548776631",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b950c6f513793f1d:16255",
+      "work": 16255
     },
     {
       "encounters": 0,
@@ -377,6 +569,18 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "86dbec3f7eaf88d1:817",
       "work": 817
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
+      "id": "countryside-windmill-lookout--countryside-red-gully",
+      "kind": "pair",
+      "layout": "b31ce66c24bbf281",
+      "modules": ["windmill-lookout", "countryside-red-gully"],
+      "route": "0d00c3c6ceda76ac",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "0c4a1555fbe41ee1:680",
+      "work": 680
     },
     {
       "encounters": 0,
