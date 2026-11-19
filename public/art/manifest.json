@@ -847,6 +847,15 @@
       "repeat": "x"
     },
     {
+      "key": "apartment-wall-penthouse",
+      "png": "backdrops/apartment-wall-penthouse.png",
+      "width": 96,
+      "height": 144,
+      "anchor": "bottom-left",
+      "y": 720,
+      "repeat": "x"
+    },
+    {
       "key": "apartment-wall-pool",
       "png": "backdrops/apartment-wall-pool.png",
       "width": 48,
