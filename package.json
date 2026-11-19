@@ -44,7 +44,7 @@
     "harfbuzzjs": "1.6.4",
     "husky": "^9.1.7",
     "lint-staged": "^17.6.0",
-    "markdownlint-cli2": "0.24.0",
+    "markdownlint-cli2": "0.24.1",
     "pngjs": "7.0.0",
     "prettier": "^3.10.1",
     "skia-canvas": "4.0.0",
