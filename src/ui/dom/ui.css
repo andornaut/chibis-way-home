@@ -57,14 +57,17 @@
   touch-action: none;
 }
 
+/* One row as tall as the view, so a card's max-height: 100% is the view's height rather than an
+   auto row's, which grows to the card's content. */
 .ui-card-view {
   display: grid;
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
 }
 
-/* A card at its width family's width (data-card-width), as tall as its content, in art's
-   ui-settings-card frame. The padding inside the frame keeps the content its padding in from the
-   card's edge. */
+/* A card at its width family's width (data-card-width), as tall as its content up to the view's
+   height, in art's ui-settings-card frame. The padding inside the frame keeps the content its
+   padding in from the card's edge. */
 .ui-card {
   --ui-frame-image: var(--ui-settings-card-image);
   --ui-frame-slice: var(--ui-settings-card-slice);
