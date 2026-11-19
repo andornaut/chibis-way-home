@@ -307,3 +307,4 @@ decided or delivered, and why, in a line or two each.
 | cwh-0267 | Give Penthouse its own opening screen                                                         | [cwh-0267.md](cwh-0267.md) |
 | cwh-0268 | Admit the proven extra Countryside, Industrial and Woodland layouts                           | [cwh-0268.md](cwh-0268.md) |
 | cwh-0269 | Draw the Industrial underwater window backdrop                                                | [cwh-0269.md](cwh-0269.md) |
+| cwh-0270 | Keep analytics out of the playable game                                                       | [cwh-0270.md](cwh-0270.md) |

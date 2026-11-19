@@ -18,3 +18,4 @@ Reference: [architecture](../../src/README.md#architecture),
 | -------- | --------------------------------------------------------- | ---------------------------------- |
 | cwh-0013 | Run boss behaviour as perceive, decide and act            | [cwh-0013.md](../work/cwh-0013.md) |
 | cwh-0014 | Layer the source into components behind a Phaser boundary | [cwh-0014.md](../work/cwh-0014.md) |
+| cwh-0270 | Keep analytics out of the playable game                   | [cwh-0270.md](../work/cwh-0270.md) |
