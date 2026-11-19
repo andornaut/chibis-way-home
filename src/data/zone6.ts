@@ -48,7 +48,7 @@ export function apartmentWallBands(
 
 export function interiorPlanes(backdrops: readonly Instance[]): readonly Instance[] {
   return backdrops
-    .filter(({ role }) => role === "wall")
+    .filter(({ role }) => role === "wall" || role === "opening-wall")
     .map((band) => ({
       ...band,
       backdropPlane: "interior",
