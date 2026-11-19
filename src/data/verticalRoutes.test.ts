@@ -620,91 +620,94 @@ it("connects Home city lower climbing yards through the proven lift and upper ga
   expect(ids).toContain("outdoor-upper-ascent");
 });
 
-it("climbs the four-screen Apartment opening with continuous ordinary phase carry", () => {
-  const original = zonePlanOf(
-    CHUNK_LIBRARY,
-    () => 0,
-    { door: [], event: [] },
-    "apartment-lobby",
-    2,
-    ["apartment-floor-start"],
-  );
-  const plan = {
-    ...original,
-    areas: {
-      ...original.areas,
-      main: {
-        ...original.areas.main!,
-        entries: { ...original.areas.main!.entries, start: { col: 2, row: APARTMENT_SPAWN_ROW } },
+it.each(["apartment-floor-start", "apartment-penthouse-start"])(
+  "climbs the four-screen Apartment opening %s with continuous ordinary phase carry",
+  (id) => {
+    const original = zonePlanOf(
+      CHUNK_LIBRARY,
+      () => 0,
+      { door: [], event: [] },
+      "apartment-lobby",
+      2,
+      [id],
+    );
+    const plan = {
+      ...original,
+      areas: {
+        ...original.areas,
+        main: {
+          ...original.areas.main!,
+          entries: { ...original.areas.main!.entries, start: { col: 2, row: APARTMENT_SPAWN_ROW } },
+        },
       },
-    },
-  };
-  const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
-  let zone = startZone(BIRD, layout, 1);
-  const phases = [
-    [
-      ...APARTMENT_LOWER_SHELVES.map(({ col, cols, row }) => ({
-        col: col + cols / 2 - BIRD.width / TILE / 2,
-        row,
-      })),
-      { col: 1, row: 80 },
-    ],
-    [
-      { col: 7, row: 75 },
-      { col: 16, row: 70 },
-      { col: 21, row: 65 },
-      { col: 26, row: 60 },
-      { col: 31, row: 55 },
-      { col: 37, row: 50 },
-    ],
-  ];
-  const counts: number[] = [];
-  for (const points of phases) {
-    const startSteps = zone.steps;
-    let target = 0;
-    let jumpAt = -1000;
-    let previousHeld = false;
-    let tick = 0;
-    for (; tick < 600 && !zone.death && target < points.length; tick++) {
-      const goal = points[target]!;
-      const feet = zone.bird.y + BIRD.height;
-      if (
-        zone.bird.grounded &&
-        Math.abs(feet - goal.row * TILE) < 0.1 &&
-        Math.abs(zone.bird.x - goal.col * TILE) < TILE
-      ) {
-        target++;
-        previousHeld = false;
-        continue;
+    };
+    const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+    let zone = startZone(BIRD, layout, 1);
+    const phases = [
+      [
+        ...APARTMENT_LOWER_SHELVES.map(({ col, cols, row }) => ({
+          col: col + cols / 2 - BIRD.width / TILE / 2,
+          row,
+        })),
+        { col: 1, row: 80 },
+      ],
+      [
+        { col: 7, row: 75 },
+        { col: 16, row: 70 },
+        { col: 21, row: 65 },
+        { col: 26, row: 60 },
+        { col: 31, row: 55 },
+        { col: 37, row: 50 },
+      ],
+    ];
+    const counts: number[] = [];
+    for (const points of phases) {
+      const startSteps = zone.steps;
+      let target = 0;
+      let jumpAt = -1000;
+      let previousHeld = false;
+      let tick = 0;
+      for (; tick < 600 && !zone.death && target < points.length; tick++) {
+        const goal = points[target]!;
+        const feet = zone.bird.y + BIRD.height;
+        if (
+          zone.bird.grounded &&
+          Math.abs(feet - goal.row * TILE) < 0.1 &&
+          Math.abs(zone.bird.x - goal.col * TILE) < TILE
+        ) {
+          target++;
+          previousHeld = false;
+          continue;
+        }
+        if (zone.bird.grounded && !previousHeld) {
+          jumpAt = tick;
+        }
+        const held = (tick - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime;
+        const dx = goal.col * TILE - zone.bird.x;
+        const brake = (zone.bird.vx * Math.abs(zone.bird.vx)) / (2 * BIRD.brakeAccel);
+        const move: -1 | 0 | 1 = Math.abs(dx - brake) < 1 ? 0 : dx - brake > 0 ? 1 : -1;
+        zone = stepZone(
+          SKILL_PROFILES,
+          BIRD,
+          layout,
+          STEP_SECONDS,
+          { jumpHeld: held, move, useHeld: false },
+          zone,
+        );
+        previousHeld = held;
       }
-      if (zone.bird.grounded && !previousHeld) {
-        jumpAt = tick;
-      }
-      const held = (tick - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime;
-      const dx = goal.col * TILE - zone.bird.x;
-      const brake = (zone.bird.vx * Math.abs(zone.bird.vx)) / (2 * BIRD.brakeAccel);
-      const move: -1 | 0 | 1 = Math.abs(dx - brake) < 1 ? 0 : dx - brake > 0 ? 1 : -1;
-      zone = stepZone(
-        SKILL_PROFILES,
-        BIRD,
-        layout,
-        STEP_SECONDS,
-        { jumpHeld: held, move, useHeld: false },
-        zone,
-      );
-      previousHeld = held;
+      counts.push(zone.steps - startSteps);
+      expect(zone.steps - startSteps).toBeLessThanOrEqual(600);
+      expect(zone.death, JSON.stringify({ bird: zone.bird, counts, target })).toBeUndefined();
+      expect(target, JSON.stringify({ bird: zone.bird, counts, target })).toBe(points.length);
+      expect(zone.bird.grounded).toBe(true);
+      expect(zone.bird.airJumpUsed).toBe(false);
+      expect(zone.bird.dash?.airUsed).not.toBe(true);
     }
-    counts.push(zone.steps - startSteps);
-    expect(zone.steps - startSteps).toBeLessThanOrEqual(600);
-    expect(zone.death, JSON.stringify({ bird: zone.bird, counts, target })).toBeUndefined();
-    expect(target, JSON.stringify({ bird: zone.bird, counts, target })).toBe(points.length);
-    expect(zone.bird.grounded).toBe(true);
-    expect(zone.bird.airJumpUsed).toBe(false);
-    expect(zone.bird.dash?.airUsed).not.toBe(true);
-  }
-  expect(zone.bird.y + BIRD.height).toBe(50 * TILE);
-  expect(zone.steps).toBe(counts.reduce((sum, count) => sum + count, 0));
-});
+    expect(zone.bird.y + BIRD.height).toBe(50 * TILE);
+    expect(zone.steps).toBe(counts.reduce((sum, count) => sum + count, 0));
+  },
+);
 
 it.each(["city-boundary-steps", "outdoor-surface-return"])(
   "connects grounded landings through %s with ordinary fixed controls",

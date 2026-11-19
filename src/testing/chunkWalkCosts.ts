@@ -3,6 +3,7 @@
 export const CHUNK_WALK_COSTS: Readonly<Record<string, number>> = {
   "apartment-floor-finish": 46,
   "apartment-floor-start": 73,
+  "apartment-penthouse-start": 73,
   "apartment-tall-broad-mesa": 23,
   "apartment-tall-city-boundary-edge-yard": 5,
   "apartment-tall-city-boundary-gaps": 7,

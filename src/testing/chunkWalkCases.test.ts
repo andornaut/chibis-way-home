@@ -59,10 +59,14 @@ it("keeps autonomous Woodland motion distinct from the same terrain without wild
   );
 });
 
-it.each(["empty", "filled"] as const)(
-  "starts the %s opening profile on its production spawn without changing the seam",
-  (profile) => {
-    const subject = byName.get("apartment-floor-start")!;
+it.each(
+  (["apartment-floor-start", "apartment-penthouse-start"] as const).flatMap((id) =>
+    (["empty", "filled"] as const).map((profile) => [id, profile] as const),
+  ),
+)(
+  "starts the %s %s opening profile on its production spawn without changing the seam",
+  (id, profile) => {
+    const subject = byName.get(id)!;
     const fills = profile === "filled" ? FILLED_CHUNK_SLOTS[subject[0]]! : { door: [], event: [] };
     const plan = chunkWalkPlan(fills, subject);
     expect(plan.areas[plan.start.area]!.entries[plan.start.entry]!.row).toBe(APARTMENT_SPAWN_ROW);

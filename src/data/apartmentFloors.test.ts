@@ -101,19 +101,22 @@ describe("Apartment floor geometry", () => {
       expect(chunkProblems(CHUNK_LIBRARY, CATALOGUE, chunk)).toEqual([]);
     }
   });
-  it("leaves the actual cinematic sprite runway clear at the lower spawn height", () => {
-    const frame = Object.values(ferretSheet.frames)[0]!.sourceSize;
-    const left = SCREEN.width / 2 - frame.w / 2;
-    const top = APARTMENT_SPAWN_ROW * TILE - frame.h;
-    const blocked = APARTMENT_CHUNKS["apartment-floor-start"]!.solids.filter(
-      (solid) =>
-        solid.col * TILE < SCREEN.width + frame.w &&
-        (solid.col + solid.cols) * TILE > left &&
-        solid.row * TILE < APARTMENT_SPAWN_ROW * TILE &&
-        (solid.row + solid.rows) * TILE > top,
-    );
-    expect(blocked).toEqual([]);
-  });
+  it.each(["apartment-floor-start", "apartment-penthouse-start"])(
+    "leaves the actual cinematic sprite runway clear at the lower spawn height of %s",
+    (id) => {
+      const frame = Object.values(ferretSheet.frames)[0]!.sourceSize;
+      const left = SCREEN.width / 2 - frame.w / 2;
+      const top = APARTMENT_SPAWN_ROW * TILE - frame.h;
+      const blocked = APARTMENT_CHUNKS[id]!.solids.filter(
+        (solid) =>
+          solid.col * TILE < SCREEN.width + frame.w &&
+          (solid.col + solid.cols) * TILE > left &&
+          solid.row * TILE < APARTMENT_SPAWN_ROW * TILE &&
+          (solid.row + solid.rows) * TILE > top,
+      );
+      expect(blocked).toEqual([]);
+    },
+  );
   it.each(floors)(
     "assembles %s with its authored lower spawn, upper goal and left map exit",
     (id) => {
@@ -253,22 +256,25 @@ describe("Apartment floor geometry", () => {
       });
     }
   });
-  it("climbs from the retained opening shelf to its upper seam", () => {
-    const plan = cap("apartment-floor-start");
-    const control = climb(
-      [75, 70, 65, 60, 55, 50].map((row, index) => ({ col: 12 + index * 5, row })),
-      true,
-    );
-    const zone = stepUntil(
-      plan,
-      { col: 2, row: 80 },
-      control,
-      (state) => state.bird.grounded && state.bird.y + BIRD.height === 50 * TILE,
-    );
-    expect(zone.death).toBeUndefined();
-    expect(zone.bird.grounded).toBe(true);
-    expect(zone.bird.y + BIRD.height).toBe(50 * TILE);
-  });
+  it.each(["apartment-floor-start", "apartment-penthouse-start"])(
+    "climbs from the retained opening shelf of %s to its upper seam",
+    (id) => {
+      const plan = cap(id);
+      const control = climb(
+        [75, 70, 65, 60, 55, 50].map((row, index) => ({ col: 12 + index * 5, row })),
+        true,
+      );
+      const zone = stepUntil(
+        plan,
+        { col: 2, row: 80 },
+        control,
+        (state) => state.bird.grounded && state.bird.y + BIRD.height === 50 * TILE,
+      );
+      expect(zone.death).toBeUndefined();
+      expect(zone.bird.grounded).toBe(true);
+      expect(zone.bird.y + BIRD.height).toBe(50 * TILE);
+    },
+  );
   it("boards a retained lift, rides its ascent and transfers to the upper refuge", () => {
     const plan = cap("apartment-tall-compound-double-lift");
     const layout = layoutOf(plan);

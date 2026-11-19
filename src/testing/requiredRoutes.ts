@@ -269,7 +269,10 @@ register(
   ],
   ["outdoor-surface-return"],
 );
-register(() => [point(2, 110), point(2, 80), point(37, 50)], ["apartment-floor-start"]);
+register(
+  () => [point(2, 110), point(2, 80), point(37, 50)],
+  ["apartment-floor-start", "apartment-penthouse-start"],
+);
 register(
   () => [point(11, 25), point(23, 20), point(35, 15), point(50, 10)],
   ["apartment-floor-finish"],
