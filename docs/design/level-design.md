@@ -36,3 +36,4 @@ Reference: [stages](../../gameplay/design.md#stages), [chunks](../../gameplay/de
 | cwh-0074 | Finish only the started Blue and Woodland layout work                     | [cwh-0074.md](../work/cwh-0074.md) |
 | cwh-0253 | Author and qualify Blue city layouts toward 16                            | [cwh-0253.md](../work/cwh-0253.md) |
 | cwh-0267 | Give Penthouse its own opening screen                                     | [cwh-0267.md](../work/cwh-0267.md) |
+| cwh-0268 | Admit the proven extra Countryside, Industrial and Woodland layouts       | [cwh-0268.md](../work/cwh-0268.md) |

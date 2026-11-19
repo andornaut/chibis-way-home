@@ -303,3 +303,4 @@ decided or delivered, and why, in a line or two each.
 | cwh-0265 | Recapture every stage preview from the current game                                           | [cwh-0265.md](cwh-0265.md) |
 | cwh-0266 | Adopt the game-kit 0.59 install and update loader                                             | [cwh-0266.md](cwh-0266.md) |
 | cwh-0267 | Give Penthouse its own opening screen                                                         | [cwh-0267.md](cwh-0267.md) |
+| cwh-0268 | Admit the proven extra Countryside, Industrial and Woodland layouts                           | [cwh-0268.md](cwh-0268.md) |
