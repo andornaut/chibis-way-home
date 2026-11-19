@@ -1,26 +1,28 @@
 # Work items
 
-Each approved task is one file, `docs/work/<id>.md`. It records scope and milestones; live
+Each user request is one file, `docs/work/<id>.md`, whether or not it is approved. It records scope and milestones; live
 progress (claims, blocks, receipts and acceptance) stays in the work protocol state root. The
 [design index](../design/README.md) lists the work items of each area.
 
-| Front matter | Content                                                                           |
-| ------------ | --------------------------------------------------------------------------------- |
-| `id`         | `cwh-` and a zero-padded sequence (`cwh-0001`), allocated in chronological order. |
-| `title`      | A short imperative title.                                                         |
-| `status`     | `approved`, `done`, `cancelled` or `superseded`.                                  |
-| `approved`   | A short approval reference, such as `user, 2026-11-18`.                           |
-| `design`     | The design area in `docs/design/`.                                                |
-| `related`    | A list of related work IDs.                                                       |
-| `supersedes` | The ID of the item this one replaces; omitted otherwise.                          |
+| Front matter | Content                                                                                                       |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| `id`         | `cwh-` and a zero-padded sequence (`cwh-0001`), allocated in chronological order.                             |
+| `title`      | A short imperative title.                                                                                     |
+| `status`     | `proposed` until the user approves, then `approved` or `declined`; later `done`, `cancelled` or `superseded`. |
+| `approved`   | A short approval reference, such as `user, 2026-11-18`; omitted while `proposed`.                             |
+| `design`     | The design area in `docs/design/`.                                                                            |
+| `related`    | A list of related work IDs.                                                                                   |
+| `supersedes` | The ID of the item this one replaces; omitted otherwise.                                                      |
 
 The sections are Scope, Criteria, Decisions and Outcome. Decisions and Outcome state what was
 decided or delivered, and why, in a line or two each.
 
-- Only `main` edits design index tables and approved scope. Approval commits the work-file stub
-  and its index row on `main`, and that commit allocates the ID.
+- Only `main` edits design index tables and approved scope. A request commits the work-file stub
+  and its index row on `main`, and that commit allocates the ID; approval or decline updates its
+  status there.
 - Workers edit only their own work file and the design prose that ships with their feature.
-  Integration sets `status: done` in the merge.
+  Integration sets `status: done` in the landing commit itself, which is how landing and
+  deployment are traced.
 - A changed or reverted decision is a new work item with `supersedes`. A finished item's outcome
   is never rewritten.
 - Work files are public: no session IDs, hostnames, local home-directory paths or quoted
