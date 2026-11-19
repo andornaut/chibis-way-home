@@ -198,6 +198,7 @@ Pieces placed from stage data by their bottom-left corner at the bottom y given:
 | apartment-stairwell-door     | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                    |
 | apartment-stairwell-down     | decorative backdrop                | 48x72   | Bottom-left, y 720, repeat none                    |
 | apartment-wall-lobby         | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
+| apartment-wall-penthouse     | decorative backdrop                | 96x144  | Bottom-left, y 720, repeat x                       |
 | apartment-wall-pool          | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
 | apartment-wall-residential   | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |
 | apartment-wall-restaurant    | decorative backdrop                | 48x144  | Bottom-left, y 720, repeat x                       |

@@ -12,8 +12,11 @@
  * and movers retain tiles-platforming.
  *
  * Backdrops: apartment-sky 48x720, apartment-far 720x720, apartment-exterior-mid 720x720, all
- * repeat x; apartment-wall-lobby/restaurant/pool/spa/residential 48x144 repeat x; apartment-facade
- * 48x180 repeat x. All bottom-left, default y 720. Near walls/facade align to local floor and move
+ * repeat x; apartment-wall-lobby/restaurant/pool/spa/residential 48x144 repeat x;
+ * apartment-wall-penthouse 96x144 repeat x: one wood-framed 36x100 window at x 30 to 66 per repeat,
+ * 32x96 glass with a mullion and transom over a calm sky and stepped towers, a raised panel on
+ * pale plaster centred on the seam, a warm crown moulding and skirting; apartment-facade 48x180
+ * repeat x. All bottom-left, default y 720. Near walls/facade align to local floor and move
  * with terrain (factor 1,1). Suggested outdoor factors: sky 0,0 far .15,.05 mid .4,.15. Keep gaps
  * open to the distant layers. Wall names indicate materials, not room behaviour. Pool wall tiles
  * depict no water or hidden danger. No actors, stairs, props, story, route layout or physics. Decor
@@ -188,6 +191,51 @@ function wall(style: (typeof STYLES)[number]): RgbaImage {
   return im;
 }
 
+/** One tall skyline window per repeat, centred between panelled pale plaster and warm trim. */
+function penthouseWall(): RgbaImage {
+  const im = image(96, 144, "white");
+  // Warm crown moulding and skirting at the same rows as the other walls' bands.
+  rect("zone-peach", [0, 0, 96, 4], im);
+  rect("brown", [0, 4, 96, 6], im);
+  rect("zone-peach", [0, 128, 96, 132], im);
+  rect("brown", [0, 132, 96, 144], im);
+  // A raised panel centred on the repeat seam, so the wall between two windows holds one panel.
+  for (const [x0, x1] of [
+    [-12, 12],
+    [84, 108],
+  ] as const) {
+    rect("zone-red", [x0, 18, x1, 116], im);
+    rect("white", [x0 + 2, 20, x1 - 2, 114], im);
+    rect("zone-red-shade", [x0 + 2, 112, x1 - 2, 114], im);
+    rect("zone-red-shade", [x1 - 4, 20, x1 - 2, 114], im);
+  }
+  // Wooden frame, glass 32x96, then the sill.
+  rect("zone-peach", [30, 14, 66, 114], im);
+  rect("brown", [64, 16, 66, 114], im);
+  rect("sky", [32, 16, 64, 112], im);
+  // Skyline: far towers in the lighter step, nearer stepped towers in the shade step.
+  for (const [x0, x1, top] of [
+    [32, 40, 58],
+    [42, 52, 50],
+    [58, 64, 56],
+  ] as const) {
+    rect("zone-blue", [x0, top, x1, 112], im);
+  }
+  for (const [x0, x1, top, step] of [
+    [32, 44, 80, 6],
+    [50, 64, 72, 8],
+  ] as const) {
+    rect("zone-blue-shade", [x0 + 2, top - step, x1 - 2, top], im);
+    rect("zone-blue-shade", [x0, top, x1, 112], im);
+  }
+  // Mullion and transom.
+  rect("zone-peach", [47, 16, 49, 112], im);
+  rect("zone-peach", [32, 40, 64, 42], im);
+  rect("zone-peach", [27, 114, 69, 118], im);
+  rect("brown", [27, 118, 69, 120], im);
+  return im;
+}
+
 function facade(): RgbaImage {
   const im = image(48, 180, PRIMARY);
   rect(SHADE, [0, 0, 48, 8], im);
@@ -292,6 +340,7 @@ export const BACKDROPS: Readonly<Record<string, readonly [draw: () => RgbaImage,
     "apartment-facade": [facade, "x"],
     "apartment-far": [far, "x"],
     "apartment-sky": [sky, "x"],
+    "apartment-wall-penthouse": [penthouseWall, "x"],
     ...Object.fromEntries(
       STYLES.map((style) => [`apartment-wall-${style}`, [() => wall(style), "x"] as const]),
     ),

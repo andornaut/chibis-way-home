@@ -71,6 +71,7 @@ const MID: ReadonlySet<string> = new Set([
 const NEAR: ReadonlySet<string> = new Set([
   "apartment-facade",
   "apartment-wall-lobby",
+  "apartment-wall-penthouse",
   "apartment-wall-pool",
   "apartment-wall-residential",
   "apartment-wall-restaurant",
@@ -155,6 +156,15 @@ const WALLS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     "zone-red-shade": "bg-apartment-near-shade",
     "zone-green": "bg-apartment-near-green",
     "zone-green-shade": "bg-apartment-near-green-shade",
+  },
+  // Pale plaster (white) and the window's sky (sky) keep their source-colour residuals.
+  "apartment-wall-penthouse": {
+    "zone-red": "bg-apartment-near-light",
+    "zone-red-shade": "bg-apartment-near-shade",
+    "zone-peach": "bg-apartment-near-wood",
+    brown: "bg-apartment-near-wood-shade",
+    "zone-blue": "bg-apartment-near-blue",
+    "zone-blue-shade": "bg-apartment-near-blue-shade",
   },
   "apartment-wall-residential": {
     "zone-red": "bg-apartment-near-light",

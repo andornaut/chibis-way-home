@@ -44,24 +44,24 @@ Interior decorative depth planes use `backdropPlane: "interior"`, `backdropSpan:
 
 Stage cards use captures of actual stage scenery. Keep each zone’s stages inside its zone palette while selecting different existing middle-distance silhouettes and near materials. Interior scenes remain enclosed rooms; exterior silhouettes appear only in exterior sections or through framed depth windows. The bindings below describe appearance, not platform geometry or thumbnail-only illustrations.
 
-| Zone                 | Stage                  | Scenery building blocks                                          |
-| -------------------- | ---------------------- | ---------------------------------------------------------------- |
-| Blue cityscape       | Depot and streets      | Depot opening, `street-city-mid`, complete street facades        |
-| Blue cityscape       | City boundary          | `street-boundary-mid`, sparse street facades, open skyline       |
-| Industrial outskirts | Warehouse district     | `warehouse-mid`, warehouse walls and closed loading bays         |
-| Industrial outskirts | Freight terminal       | `freight-mid`, service gantries and container materials          |
-| Countryside          | Farmland               | `farmland-mid`, complete barn, timber fence and hay materials    |
-| Countryside          | River crossing         | `river-mid`, reeds, bank and timber materials                    |
-| Woodland             | Forest paths           | `forest-mid`, tonal trees, shrubs and root materials             |
-| Woodland             | Ravine                 | `ravine-mid`, rock silhouettes and stone materials               |
-| Home city            | City outskirts         | `outskirts-mid`, low masonry boundary walls                      |
-| Home city            | Familiar neighbourhood | `neighbourhood-mid`, complete windowed facades and garden crowns |
-| Apartment            | Lobby                  | Lobby walls, wood and plaster, sofa and desk                     |
-| Apartment            | Restaurant             | Restaurant walls, wood and tile, counter and booth               |
-| Apartment            | Pool                   | Pool walls, tile and stone, contained water panel and bench      |
-| Apartment            | Spa                    | Spa walls, tile and plaster, folding screen and bench            |
-| Apartment            | Residential floors     | Residential walls, wood and plaster, shelf                       |
-| Apartment            | Penthouse              | Residential wall skin, stone and wood, lobby sofa                |
+| Zone                 | Stage                  | Scenery building blocks                                                        |
+| -------------------- | ---------------------- | ------------------------------------------------------------------------------ |
+| Blue cityscape       | Depot and streets      | Depot opening, `street-city-mid`, complete street facades                      |
+| Blue cityscape       | City boundary          | `street-boundary-mid`, sparse street facades, open skyline                     |
+| Industrial outskirts | Warehouse district     | `warehouse-mid`, warehouse walls and closed loading bays                       |
+| Industrial outskirts | Freight terminal       | `freight-mid`, service gantries and container materials                        |
+| Countryside          | Farmland               | `farmland-mid`, complete barn, timber fence and hay materials                  |
+| Countryside          | River crossing         | `river-mid`, reeds, bank and timber materials                                  |
+| Woodland             | Forest paths           | `forest-mid`, tonal trees, shrubs and root materials                           |
+| Woodland             | Ravine                 | `ravine-mid`, rock silhouettes and stone materials                             |
+| Home city            | City outskirts         | `outskirts-mid`, low masonry boundary walls                                    |
+| Home city            | Familiar neighbourhood | `neighbourhood-mid`, complete windowed facades and garden crowns               |
+| Apartment            | Lobby                  | Lobby walls, wood and plaster, sofa and desk                                   |
+| Apartment            | Restaurant             | Restaurant walls, wood and tile, counter and booth                             |
+| Apartment            | Pool                   | Pool walls, tile and stone, contained water panel and bench                    |
+| Apartment            | Spa                    | Spa walls, tile and plaster, folding screen and bench                          |
+| Apartment            | Residential floors     | Residential walls, wood and plaster, shelf                                     |
+| Apartment            | Penthouse              | Skyline-window opening wall, residential wall skin, stone and wood, lobby sofa |
 
 `street-boundary-mid` is a 720x600 repeating backdrop, bottom-left anchored at y600, with suggested parallax 0.4,0.15. It replaces only the `mid-background` art binding in the City boundary theme; all other existing assets and bindings retain their contracts.
 
@@ -735,16 +735,19 @@ City boundary is Blue cityscape, Zone 1 Stage 2. It reuses the street's art apar
 
 The artwork separates geometry from appearance. `tiles-apartment` contains 78 cells of 12x12 in eight columns, exported as a 96x120 sheet. Its six families are `apartment-wood`, `apartment-tile`, `apartment-plaster`, `apartment-stone`, `apartment-brick` and `apartment-metal`. Each supplies the common `top`, `top-left`, `top-right`, `top-joint`, `face`, `face-left` and `face-right` suffixes. Every family also supplies `bottom-left`, `bottom` and `bottom-right`, appended after all the families' other tiles: the face closed by a 2px navy band along its bottom, as the side tiles close their open side, for the underside of a raised or floating block. After those come `slab-left`, `slab` and `slab-right`: a one-row block closed top and bottom, the top's edge and lip over the bottom's closing band. Data can mix these families across short floor sections while using the existing ground, raised, wall and ceiling structures. Standable tops retain the dark edge and white lip. Shared ledges, movers and red contact bands keep their existing geometry and skins.
 
-| Section     | Wall or facade             | Material cues    | Decorative cues                     |
-| ----------- | -------------------------- | ---------------- | ----------------------------------- |
-| Exterior    | apartment-facade           | Brick and metal  | Existing fire-escape railing        |
-| Lobby       | apartment-wall-lobby       | Wood and plaster | Desk, sofa and plant                |
-| Pool        | apartment-wall-pool        | Tile and stone   | Water panel and bench               |
-| Residential | apartment-wall-residential | Wood and plaster | Shelf and existing room furnishings |
-| Restaurant  | apartment-wall-restaurant  | Wood and tile    | Counter and booth                   |
-| Spa         | apartment-wall-spa         | Tile and plaster | Folding screen and bench            |
+| Section     | Wall or facade                                                           | Material cues    | Decorative cues                                      |
+| ----------- | ------------------------------------------------------------------------ | ---------------- | ---------------------------------------------------- |
+| Exterior    | apartment-facade                                                         | Brick and metal  | Existing fire-escape railing                         |
+| Lobby       | apartment-wall-lobby                                                     | Wood and plaster | Desk, sofa and plant                                 |
+| Penthouse   | apartment-wall-penthouse in the opening, then apartment-wall-residential | Stone and wood   | Tall skyline windows, panelled pale plaster and sofa |
+| Pool        | apartment-wall-pool                                                      | Tile and stone   | Water panel and bench                                |
+| Residential | apartment-wall-residential                                               | Wood and plaster | Shelf and existing room furnishings                  |
+| Restaurant  | apartment-wall-restaurant                                                | Wood and tile    | Counter and booth                                    |
+| Spa         | apartment-wall-spa                                                       | Tile and plaster | Folding screen and bench                             |
 
 Short wall pieces belong to each section, rather than repeating one indoor wall over an entire stage. Leave exterior sections open to the sky, far city and middle-distance silhouettes. Whole-stage atmosphere may repeat with sky factors 0,0; far factors 0.15,0.05; middle factors 0.4,0.15. Wall panels, facades, props, doors and stairwell markers stay on the gameplay plane at factors 1,1 and align through placement data to their local floor. All new backdrop metadata uses a bottom-left anchor and default bottom y 720; this default does not prescribe world placement.
+
+`apartment-wall-penthouse` is the lighter, upscale opening wall: one wood-framed 36x100 window per 96px repeat, its 32x96 glass split by a mullion and transom over a calm sky and stepped tower silhouettes in the near blue steps, between raised panels of pale plaster, under a warm crown moulding and over a wood skirting. The plaster and the glass sky keep their source-colour residuals at the near rank, so the wall stays behind play like the other apartment walls.
 
 | Backdrop                   | Size    | Repeat | Plane                |
 | -------------------------- | ------- | ------ | -------------------- |
@@ -753,6 +756,7 @@ Short wall pieces belong to each section, rather than repeating one indoor wall 
 | apartment-far              | 720x720 | x      | Far distance         |
 | apartment-sky              | 48x720  | x      | Fixed sky            |
 | apartment-wall-lobby       | 48x144  | x      | Gameplay, decorative |
+| apartment-wall-penthouse   | 96x144  | x      | Gameplay, decorative |
 | apartment-wall-pool        | 48x144  | x      | Gameplay, decorative |
 | apartment-wall-residential | 48x144  | x      | Gameplay, decorative |
 | apartment-wall-restaurant  | 48x144  | x      | Gameplay, decorative |
