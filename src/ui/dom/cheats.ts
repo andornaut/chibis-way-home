@@ -89,7 +89,7 @@ export function createCheatsCard(
   dialog.setAttribute("aria-labelledby", `${id}-title`);
   const heading = text("h2", "ui-card-title", words.title);
   heading.id = `${id}-title`;
-  const body = element("div", "cheats-body");
+  const body = element("div", "cheats-body ui-card-scroll");
   // A row's button named by its label, with its value at its right end.
   const row = (key: string, label: string, value: HTMLElement, into: HTMLElement) => {
     const button = element("button", "settings-row ui-press");

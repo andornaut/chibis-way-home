@@ -4,10 +4,14 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 
 import { DEV_TEXT } from "../../data/dev.ts";
+import { CARD_SCREEN_MARGIN } from "../../data/layout.ts";
 import { TEXT } from "../../data/text.ts";
 import type { SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
+import { TOUCH_SETTINGS } from "../settings/touchControls.ts";
 import { type CheatsCardWords, createCheatsCard } from "./cheats.ts";
+import { UI_LAYOUT } from "./layer.ts";
+import { createSettingsCard } from "./settings.ts";
 
 const WORDS: CheatsCardWords = {
   close: DEV_TEXT.cheats.close,
@@ -40,21 +44,26 @@ const rule = (sheet: string, selector: string) =>
     readFileSync(new URL(sheet, import.meta.url), "utf8"),
   )?.[1];
 
-// The view's one row is the view's height and the card is no taller than its row, so a card taller
-// than the view shrinks its body, the one scroll container, and keeps its title and Close in view.
-it("fits the Cheats card in its view with only the body between title and Close scrolling", () => {
+// The view's one row is the view's height and a card is no taller than that less the screen margin
+// above and below, so a card taller than that shrinks its scroll body and keeps the rest in view.
+it("bounds every card at the view less the screen margin above and below", () => {
   expect(rule("ui.css", ".ui-card-view")).toContain("grid-template-rows: minmax(0, 1fr);");
-  expect(rule("ui.css", ".ui-card")).toContain("max-height: 100%;");
-  const body = rule("cheats.css", ".cheats-body");
-  expect(body).toContain("flex: 1 1 auto;");
-  expect(body).toContain("min-height: 0;");
-  expect(body).toContain("overflow-y: auto;");
+  expect(rule("ui.css", ".ui-card")).toContain(
+    "max-height: calc(100% - 2 * var(--ui-unit) * var(--card-screen-margin) * 1px);",
+  );
+  expect(UI_LAYOUT["--card-screen-margin"]).toBe(CARD_SCREEN_MARGIN);
+  const scroll = rule("ui.css", ".ui-card-scroll");
+  expect(scroll).toContain("flex: 1 1 auto;");
+  expect(scroll).toContain("min-height: 0;");
+  expect(scroll).toContain("overflow-y: auto;");
+});
 
+it("scrolls only the Cheats groups between the title and Close", () => {
   const view = createCheatsCard(document, "cheats", WORDS, SKILL_IDS);
   const [title, scroller, status, actions] = view.dialog.children;
   expect(view.dialog.children).toHaveLength(4);
   expect(title?.textContent).toBe(WORDS.title);
-  expect(scroller?.className).toBe("cheats-body");
+  expect([...view.dialog.querySelectorAll(".ui-card-scroll")]).toEqual([scroller]);
   expect(status).toBe(view.status);
   expect(actions?.contains(view.close)).toBe(true);
   const rows = [
@@ -64,4 +73,26 @@ it("fits the Cheats card in its view with only the body between title and Close 
   ];
   expect(rows.every((row) => scroller?.contains(row))).toBe(true);
   expect(scroller?.contains(view.close)).toBe(false);
+});
+
+it("scrolls only the Settings rows between the title and Open Cheats", () => {
+  const colours = { cream: 0, ink: 0, navy: 0, white: 0 };
+  const view = createSettingsCard(document, colours, "settings", TEXT.settings, {
+    build: "build",
+    cheats: DEV_TEXT.openCheats,
+    install: true,
+    switches: [...TOUCH_SETTINGS, "reducedMotion"],
+  });
+  const scrollers = view.dialog.querySelectorAll(".ui-card-scroll");
+  expect(scrollers).toHaveLength(1);
+  const [scroller] = scrollers;
+  const rows = [...Object.values(view.switches), view.install!];
+  expect(rows.every((row) => scroller?.contains(row))).toBe(true);
+  for (const fixed of [
+    view.dialog.querySelector(".ui-card-title")!,
+    view.openCheats!,
+    view.close,
+  ]) {
+    expect(scroller?.contains(fixed)).toBe(false);
+  }
 });

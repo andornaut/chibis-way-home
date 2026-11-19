@@ -9,7 +9,13 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 import { createViewUnits, slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
-import { CARD_CONTENT, DEATH_CARD, FOCUS_RING, TEXT_BUTTON } from "../../data/layout.ts";
+import {
+  CARD_CONTENT,
+  CARD_SCREEN_MARGIN,
+  DEATH_CARD,
+  FOCUS_RING,
+  TEXT_BUTTON,
+} from "../../data/layout.ts";
 import type { Point } from "../../data/types/index.ts";
 import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
 import { CARD_CLOSE } from "../layout/cardClose.ts";
@@ -56,6 +62,8 @@ export const UI_LAYOUT: LayoutValues = {
   "--card-frame": CARD_CONTENT.frameBorder,
   "--card-gap": CARD_CONTENT.gap,
   "--card-padding": CARD_CONTENT.padding,
+  // The least gap between a card and the view's top and bottom (ui.css .ui-card max-height).
+  "--card-screen-margin": CARD_SCREEN_MARGIN,
   // Each width family's card width (ui.css .ui-card[data-card-width]).
   "--card-width-large": cardWidth("large"),
   "--card-width-medium": cardWidth("medium"),

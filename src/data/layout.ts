@@ -102,7 +102,8 @@ export const FOCUS_RING = { inkLine: 1, outset: 4 } as const;
 // Modal cards
 
 // Each modal card takes one width family's width, held CARD_SCREEN_MARGIN in from the view's sides
-// (src/ui/layout/contentCard.ts cardWidth); its height follows its content.
+// (src/ui/layout/contentCard.ts cardWidth); its height follows its content up to the view's height
+// less CARD_SCREEN_MARGIN above and below, past which its body scrolls (ui.css .ui-card-scroll).
 export const CARD_WIDTH = { large: 688, medium: 500, small: 400 } as const;
 export const CARD_SCREEN_MARGIN = 16;
 

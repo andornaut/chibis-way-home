@@ -13,14 +13,15 @@
   display: none;
 }
 
-/* The rows as wide as the widest, stacked the kit's stack button gap apart. They are their own press
-   areas, so the first starts where the header's text buttons' press areas would. */
+/* The rows as wide as the widest, stacked the kit's stack button gap apart, in ui.css's
+   .ui-card-scroll. They are their own press areas, so the first starts where the header's text
+   buttons' press areas would; the margin also takes back the scroll body's focus ring room. */
 .settings-rows {
   display: grid;
   align-self: stretch;
   min-width: 0;
   row-gap: var(--ui-stack-button-gap);
-  margin-top: calc(-1 * var(--ui-unit) * var(--button-hit) * 1px);
+  margin-top: calc(-1 * var(--ui-unit) * var(--button-hit) * 1px - var(--focus-outset));
 }
 
 /* A row: its icons, its name and, at the row's right end, its current state and switch or Install

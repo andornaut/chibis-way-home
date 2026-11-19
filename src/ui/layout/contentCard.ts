@@ -3,7 +3,8 @@ import { SCREEN } from "../../data/screen.ts";
 import type { Size } from "../../data/types/index.ts";
 import { CARD_CLOSE } from "./cardClose.ts";
 
-// A modal card's width family. Every card declares one; its height follows its content.
+// A modal card's width family. Every card declares one; its height follows its content up to the
+// view's height less the screen margin above and below.
 export type CardWidth = keyof typeof CARD_WIDTH;
 
 // A card's width: its family's, or the view's width less the screen margin on each side where

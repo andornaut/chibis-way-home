@@ -12,23 +12,11 @@
   display: none;
 }
 
-/* The card is no taller than the view: its title, status line and Close stay, and the groups
-   between them scroll. Rows pan the body as well as press. */
+/* The groups between the title and the status line and Close, in ui.css's .ui-card-scroll. */
 .cheats-body {
   display: flex;
-  flex: 1 1 auto;
   flex-direction: column;
-  align-self: stretch;
   gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
-
-.cheats-body .settings-row,
-.cheats-body .ui-text-button {
-  touch-action: pan-y;
 }
 
 .cheats-group {

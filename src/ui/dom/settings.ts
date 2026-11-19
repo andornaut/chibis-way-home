@@ -134,7 +134,7 @@ export function createSettingsCard(
   // Large: at medium the rows' wrapped notes leave the card taller than the view less its screen
   // margins. The install steps card over it stays medium.
   const { dialog } = dialogFor(id, words.title, "settings-card", "large");
-  const list = element("div", "settings-rows");
+  const list = element("div", "settings-rows ui-card-scroll");
   const icons: Partial<Record<SettingsSpriteRow, HTMLImageElement>> = {};
   // A row's button with its icons and its label, which names it. Each switch's note describes
   // its effect; aria-checked exposes the current state without repeating the visible state text.

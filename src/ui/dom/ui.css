@@ -57,8 +57,8 @@
   touch-action: none;
 }
 
-/* One row as tall as the view, so a card's max-height: 100% is the view's height rather than an
-   auto row's, which grows to the card's content. */
+/* One row as tall as the view, so a card's max-height is measured from the view's height rather
+   than from an auto row's, which grows to the card's content. */
 .ui-card-view {
   display: grid;
   grid-template-rows: minmax(0, 1fr);
@@ -66,8 +66,8 @@
 }
 
 /* A card at its width family's width (data-card-width), as tall as its content up to the view's
-   height, in art's ui-settings-card frame. The padding inside the frame keeps the content its
-   padding in from the card's edge. */
+   height less the screen margin above and below, in art's ui-settings-card frame. The padding
+   inside the frame keeps the content its padding in from the card's edge. */
 .ui-card {
   --ui-frame-image: var(--ui-settings-card-image);
   --ui-frame-slice: var(--ui-settings-card-slice);
@@ -79,7 +79,7 @@
   flex-direction: column;
   align-items: center;
   gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
-  max-height: 100%;
+  max-height: calc(100% - 2 * var(--ui-unit) * var(--card-screen-margin) * 1px);
   padding: var(--card-inside);
   pointer-events: auto;
   touch-action: none;
@@ -100,6 +100,26 @@
 
 .ui-card:focus {
   outline: none;
+}
+
+/* A card's body that scrolls once the card reaches its greatest height: it shrinks first, so the
+   card's title and bottom actions stay in view. Rows pan the body as well as press. Its padding,
+   which its margin takes back, leaves room inside the scroll clip for art's focus ring round a row
+   at the body's edges. */
+.ui-card-scroll {
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-height: 0;
+  margin: calc(-1 * var(--focus-outset));
+  padding: var(--focus-outset);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.ui-card-scroll .settings-row,
+.ui-card-scroll .ui-text-button {
+  touch-action: pan-y;
 }
 
 /* Text boxes trim to the ink's cap height and baseline where the browser supports it, so the
