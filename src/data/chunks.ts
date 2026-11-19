@@ -236,6 +236,7 @@ function apartmentTheme(
   ground: string,
   raised: string,
   prop: string,
+  openingWall: string | null = wall,
 ): ThemePlan {
   return {
     backdrops:
@@ -272,6 +273,10 @@ function apartmentTheme(
         skin: { art: "apartment-exterior-mid", tileset: null },
       },
       "near-wall": { character: "facade-one-storey", skin: { art: prop, tileset: null } },
+      "opening-wall": {
+        character: "apartment-wall-panel",
+        skin: { art: openingWall ?? "apartment-facade", tileset: null },
+      },
       sky: { character: "street-sky", skin: { art: "apartment-sky", tileset: null } },
       "transition-down": {
         character: "apartment-stairwell",
@@ -314,6 +319,7 @@ export const THEMES: Readonly<Record<string, ThemePlan>> = {
     "apartment-wood",
     "apartment-stone",
     "apartment-lobby-sofa",
+    "apartment-wall-penthouse",
   ),
   "apartment-pool": apartmentTheme(
     "apartment-wall-pool",

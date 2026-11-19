@@ -28,14 +28,19 @@ export const APARTMENT_LOWER_SHELVES: readonly TerrainRect[] = [105, 100, 95, 90
   (row, index) => shelf(index % 2 === 0 ? 6 : 0, 4, row),
 );
 
-export function apartmentWallBands(col: number, cols: number, fromRow = 0): readonly Instance[] {
+export function apartmentWallBands(
+  col: number,
+  cols: number,
+  fromRow = 0,
+  role = "wall",
+): readonly Instance[] {
   const rows = CHARACTERS["apartment-wall-panel"]!.rows;
   return Array.from({ length: Math.ceil((APARTMENT_ROWS - fromRow) / rows) }, (_, index) => ({
     character: "apartment-wall-panel",
     col,
     cols,
     parallax: { x: 1, y: 1 },
-    role: "wall",
+    role,
     row: fromRow + index * rows,
     rows: Math.min(rows, APARTMENT_ROWS - fromRow - index * rows),
   }));
@@ -164,6 +169,44 @@ const FLOOR_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       shelf(35, CHUNK_COLS - 35, 50),
     ],
     theme: APARTMENT_THEMES,
+  },
+  // Penthouse's own opening: the shared floor start's geometry before its skyline wall.
+  "apartment-penthouse-start": {
+    backdrops: apartmentWallBands(0, CHUNK_COLS, 0, "opening-wall"),
+    cols: CHUNK_COLS,
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 50 },
+    exit: { row: 50 },
+    objects: [],
+    rows: APARTMENT_ROWS,
+    slots: [
+      {
+        area: { col: 2, cols: 4, row: APARTMENT_SPAWN_ROW - 6, rows: 6 },
+        id: "apartment-room",
+        kind: "door",
+      },
+    ],
+    solids: [
+      shelf(0, 4, 50),
+      {
+        col: 0,
+        cols: 10,
+        look: "ground",
+        row: APARTMENT_SPAWN_ROW,
+        rows: APARTMENT_ROWS - APARTMENT_SPAWN_ROW,
+      },
+      ...APARTMENT_LOWER_SHELVES,
+      shelf(0, 4, 80),
+      shelf(6, 9, 75),
+      shelf(0, 4, 70),
+      shelf(6, 4, 65),
+      shelf(0, 4, 60),
+      shelf(6, 4, 55),
+      ...[70, 65, 60, 55].map((row, index) => shelf(15 + index * 5, 5, row)),
+      shelf(35, CHUNK_COLS - 35, 50),
+    ],
+    theme: "apartment-penthouse",
   },
 };
 

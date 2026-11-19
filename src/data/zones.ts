@@ -57,7 +57,12 @@ const APARTMENT_CHALLENGE_CHUNKS: ChunkPool = [
   "compound-return-high",
 ];
 const APARTMENT_LENGTH = { max: 12 * CHUNK_COLS, min: 11 * CHUNK_COLS };
-const apartmentRecipe = (room: string, theme: string, encounters: number): StageRecipe => ({
+const apartmentRecipe = (
+  room: string,
+  theme: string,
+  encounters: number,
+  start = "apartment-floor-start",
+): StageRecipe => ({
   ...DIFFICULTY_PROFILES.apartment,
   chunks: APARTMENT_CHALLENGE_CHUNKS.map(apartmentChunkId),
   doors: [{ count: 1, room }],
@@ -70,7 +75,7 @@ const apartmentRecipe = (room: string, theme: string, encounters: number): Stage
   spawnCol: 2,
   spawnRow: APARTMENT_SPAWN_ROW,
   stageExit: APARTMENT_STAGE_EXIT,
-  start: "apartment-floor-start",
+  start,
   theme,
 });
 
@@ -164,7 +169,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
     start: "park-start",
     theme: "park",
   },
-  penthouse: apartmentRecipe("speedy-gift", "apartment-penthouse", 1),
+  penthouse: apartmentRecipe("speedy-gift", "apartment-penthouse", 1, "apartment-penthouse-start"),
   pool: apartmentRecipe("speedy-gift", "apartment-pool", 0),
   ravine: outdoorRecipe("woodland", "third", "ravine"),
   "residential-floors": apartmentRecipe("double-jump-gift", "apartment-residential", 1),
