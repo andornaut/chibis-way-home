@@ -2,22 +2,25 @@ import { precachePlugin as kitPrecachePlugin } from "@andornaut/game-kit/build/p
 import type { Plugin } from "vite";
 
 import type { ArtManifest } from "../assets/index.ts";
-import { CACHE_POLICY } from "./cachePolicy.ts";
+import { CACHE_POLICY, SOUNDS } from "./cachePolicy.ts";
 import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
-import { ART_MANIFEST_URL, artUrls } from "./precacheArt.ts";
+import { ART_MANIFEST_URL, artUrls, bootArtUrls } from "./precacheArt.ts";
 
-// The kit's precache plugin with the game's cache policy, building /sw.js from
-// serviceWorkerSource (serviceWorker.ts) to precache the game page at pageHtmlFile and what it
-// loads. BootScene loads the art at runtime rather than linking it, and the kit precaches only
-// build output beyond the page's links, so a first plugin emits every file it loads from
-// public/art/ into the build output at its own path, for the kit's to name with the atlas pages
-// atlasPageUrls gives.
+// The kit's precache plugin with the game's cache policy, building the router /sw.js from
+// serviceWorkerSource (serviceWorker.ts) and writing the build's manifest of the game page at
+// pageHtmlFile and what it loads, with its pointer /.game-kit/build.json. BootScene loads the art
+// at runtime rather than linking it, and the kit lists only build output beyond the page's links,
+// so a first plugin emits every file it loads from public/art/ into the build output at its own
+// path, for the kit's to name with the atlas pages atlasPageUrls gives. The boot files, which the
+// launch counts into the first install's one progress value, are the atlas pages and the art
+// BootScene's file load reads.
 export function precachePlugin(
   pageHtmlFile: string,
   serviceWorkerSource: string,
   atlasPageUrls: () => readonly string[],
 ): Plugin[] {
   let urls: string[] = [];
+  let boot: string[] = [];
   const emitArt: Plugin = {
     apply: "build",
     async generateBundle() {
@@ -27,6 +30,7 @@ export function precachePlugin(
         new TextDecoder().decode(await read(ART_MANIFEST_URL)),
       ) as ArtManifest;
       urls = artUrls(manifest);
+      boot = bootArtUrls(manifest);
       const files = await mapBounded(
         FILE_READ_CONCURRENCY,
         async (url) => [url, await read(url)] as const,
@@ -41,7 +45,8 @@ export function precachePlugin(
   return [
     emitArt,
     kitPrecachePlugin({
-      hashedFiles: () => ({ sounds: {}, urls: [...urls, ...atlasPageUrls()] }),
+      boot: () => [...boot, ...atlasPageUrls()],
+      hashedFiles: () => ({ sounds: SOUNDS, urls: [...urls, ...atlasPageUrls()] }),
       pageHtmlFile,
       policy: CACHE_POLICY,
       serviceWorkerSource,

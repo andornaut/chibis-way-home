@@ -14,7 +14,6 @@ import * as deathPresentation from "../presentation/index.ts";
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 vi.mock("../pwa/index.ts", () => ({
-  coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
 }));

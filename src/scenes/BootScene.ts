@@ -11,7 +11,7 @@ import {
   watchLoader,
 } from "@andornaut/game-kit/runtime/load/phaser/watchLoader";
 import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
-import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/updateReady";
+import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { Scene } from "phaser";
 
 import manifestJson from "../../public/art/manifest.json" with { type: "json" };
@@ -24,12 +24,8 @@ import {
 } from "../assets/index.ts";
 import { TILE } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
-import {
-  beginRequiredUpdate,
-  beginStartupChecks,
-  loadingProgress,
-  startupLoading,
-} from "../loading/progress.ts";
+import { launchLoading } from "../loading/launch.ts";
+import { beginRequiredUpdate, beginStartupChecks, startupLoading } from "../loading/progress.ts";
 import { observeRequiredAttempt, requiredLoading } from "../loading/required.ts";
 import { requiredUpdate, requireNewer } from "../pwa/index.ts";
 import { createMessageCard, UI_FRAMES } from "../ui/index.ts";
@@ -62,8 +58,9 @@ export class BootScene extends Scene {
 
   // A production build loads game art from shared atlas pages. The HTML UI loads its font
   // faces through DOM readiness. create filters every world texture (textureFilters.ts).
-  // The kit's loader watch measures the file load as one the player waits for, which the bar
-  // shows by its settled files, and logs and retries failed files; it ends with the scene.
+  // The kit's loader watch measures the file load as one the player waits for, by its settled
+  // files, which the bar shows through the launch's one value after a first install
+  // (launchLoading), and logs and retries failed files; it ends with the scene.
   preload(): void {
     if (this.startupSignal?.aborted) {
       return;
@@ -71,7 +68,7 @@ export class BootScene extends Scene {
     const watch = watchLoader(
       {
         console,
-        progress: loadingProgress,
+        progress: launchLoading.boot,
         retryMode: (failure) => (this.requiredFile(failure) ? "manual" : "automatic"),
         timer: window,
       },

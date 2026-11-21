@@ -5,14 +5,7 @@ import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
 import { openingDestination } from "../progress/index.ts";
-import {
-  backLeavesGame,
-  closeApp,
-  coverZone,
-  exitShown,
-  PHONE_EVENTS,
-  startScreenShown,
-} from "../pwa/index.ts";
+import { backLeavesGame, closeApp, exitShown, PHONE_EVENTS } from "../pwa/index.ts";
 import {
   createStart,
   focusKeyAction,
@@ -97,17 +90,13 @@ export class StartScene extends Scene implements RestartOpener {
     window.addEventListener(PHONE_EVENTS.backPressed, onBack);
     captureTab(this, true);
     this.events.once("shutdown", () => {
-      startScreenShown(false);
-      coverZone("startCard", false);
       window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
       captureTab(this, false);
     });
-    startScreenShown(true);
   }
 
   restartClosed(): void {
     this.card = undefined;
-    coverZone("startCard", false);
     this.drawFocus();
   }
 
@@ -271,7 +260,6 @@ export class StartScene extends Scene implements RestartOpener {
       this.scene.start(openingDestination(savedProgress()));
     } else if (control === "restart") {
       this.card = "restart";
-      coverZone("startCard", true);
       this.drawFocus();
       this.scene.launch(RESTART, { opener: this.scene.key } satisfies RestartData);
     } else {

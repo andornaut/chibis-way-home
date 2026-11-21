@@ -14,7 +14,6 @@ const gate = vi.hoisted(() => ({
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("../pwa/index.ts", () => ({ coverZone: vi.fn() }));
 vi.mock("./save.ts", () => ({ achievementCard: () => saved.entries }));
 vi.mock("./modalInput.ts", async (original) => ({
   ...(await original<typeof import("./modalInput.ts")>()),

@@ -14,7 +14,6 @@ vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scen
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { onChange: () => () => {} } }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
-  coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
   updateOffer: {
@@ -27,7 +26,6 @@ vi.mock("../pwa/index.ts", () => ({
       };
     },
   },
-  zoneShown: vi.fn(),
 }));
 vi.mock("./save.ts", () => ({ activeSkill: () => undefined, savedSkills: () => [] }));
 vi.mock("./modalBackdrop.ts", () => ({

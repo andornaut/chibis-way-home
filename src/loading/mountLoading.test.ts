@@ -57,9 +57,9 @@ it("fills the waited file load, whose full hold the startup checks cut short", a
   unmount();
 });
 
-it("holds a full bar through the first visit's precache, which shows once the hold ends", async () => {
+it("holds a full bar through a forced update, which shows once the hold ends", async () => {
   const { bar, loading, unmount } = await mounted();
-  const install = loading.beginPrecache();
+  const install = loading.beginRequiredUpdate();
   bootFiles(loading, [0.5, 1]).finish();
   expect(bar().dataset.state).toBe("complete");
   vi.advanceTimersByTime(FADED_MS - 1);
@@ -71,10 +71,10 @@ it("holds a full bar through the first visit's precache, which shows once the ho
   unmount();
 });
 
-it("shows a waited load's share over the first visit's precache", async () => {
+it("shows a waited load's share over a forced update", async () => {
   const { bar, loading, unmount } = await mounted();
   loading.startupLoading.finish();
-  const install = loading.beginPrecache();
+  const install = loading.beginRequiredUpdate();
   expect(bar().dataset.state).toBe("pending");
   const files = bootFiles(loading, [0.25]);
   expect([bar().dataset.state, bar().getAttribute("aria-valuenow")]).toEqual([
@@ -158,32 +158,6 @@ it("shows zone entry as the pending segment until the zone is ready", async () =
   const stage = loading.beginStageLoading("apartment");
   expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);
   stage.finish();
-  expect(bar().hidden).toBe(true);
-  unmount();
-});
-
-it("never shows an update's install or idle offline activity while the game plays", async () => {
-  const { bar, unmount } = await playing();
-  const { trackOfflineActivity } = await import("./serviceWorker.ts");
-  const offlineActivity = trackOfflineActivity();
-  const states: (string | undefined)[] = [];
-  for (const activity of ["idle", "updating", "idle", "updating"] as const) {
-    offlineActivity(activity);
-    states.push(bar().hidden ? undefined : bar().dataset.state);
-  }
-  expect(states).toEqual([undefined, undefined, undefined, undefined]);
-  unmount();
-});
-
-it("shows the first visit's precache while the zone plays, but no update after it", async () => {
-  const { bar, unmount } = await playing();
-  const { trackOfflineActivity } = await import("./serviceWorker.ts");
-  const offlineActivity = trackOfflineActivity();
-  offlineActivity("precaching");
-  expect([bar().dataset.state, bar().hidden]).toEqual(["pending", false]);
-  offlineActivity("idle");
-  expect(bar().hidden).toBe(true);
-  offlineActivity("updating");
   expect(bar().hidden).toBe(true);
   unmount();
 });

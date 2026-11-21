@@ -17,10 +17,8 @@ vi.mock("../ui/input/frameTurn.ts", () => ({
 }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
-  coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
-  zoneShown: vi.fn(),
 }));
 vi.mock("../ui/settings/touchControls.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../ui/settings/touchControls.ts")>()),

@@ -226,6 +226,9 @@ export const TEXT: GameText = {
     "trixi-outro-2": "Send them to my apartment. I will be there.",
     "trixi-spotted": "Halt! Those are walking feet!",
   },
+  loading: {
+    networkPlay: "Playing online. This device couldn't install the game for offline play.",
+  },
   map: {
     continue: "Continue",
     destinationStates: {

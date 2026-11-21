@@ -66,3 +66,20 @@ it("preserves run statistics across progress restart and completion", async () =
     runSeconds: 0.1,
   });
 });
+
+it("settles the statistics and every pending progress write before Update now switches", async () => {
+  const values = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
+  const save = await import("./save.ts");
+  await save.loadProgress();
+  save.beginZoneVisit(ZONE_MAP.destinations[0]!.id);
+  save.beginStageRun("street");
+  save.recordActiveStageStep("street", 0.1, INITIAL, ACTIVE);
+  save.saveCompleted("street");
+  await save.settleSaves();
+  expect(JSON.parse(values.get("chibis-way-home.save")!)).toMatchObject({ stand: "street" });
+  expect(values.get("chibis-way-home.stats")).toContain("street");
+});

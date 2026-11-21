@@ -13,11 +13,9 @@ vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scen
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { onChange: () => () => {} } }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
-  coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
   updateOffer: { defer: vi.fn() },
-  zoneShown: vi.fn(),
 }));
 vi.mock("../ui/settings/touchControls.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../ui/settings/touchControls.ts")>()),

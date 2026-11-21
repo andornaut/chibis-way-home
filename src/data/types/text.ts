@@ -92,6 +92,9 @@ export interface GameText {
   };
   // What characters say in dialogue, by key.
   readonly lines: Readonly<Record<string, string>>;
+  // The loading notices: networkPlay, shown once on the first screen when the device could not
+  // install the game and it plays from the network.
+  readonly loading: { readonly networkPlay: string };
   // Map destination and stage names, indexed separately by catalogue and stage-node id.
   readonly map: {
     readonly continue: string;

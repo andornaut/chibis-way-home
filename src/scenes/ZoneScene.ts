@@ -92,7 +92,7 @@ import {
   stageExit,
   wholeRunSummary,
 } from "../progress/index.ts";
-import { coverZone, startWakeLock, stopWakeLock } from "../pwa/index.ts";
+import { startWakeLock, stopWakeLock } from "../pwa/index.ts";
 import { deathSupport } from "../rules/death.ts";
 import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams.ts";
 import { currentScreen } from "../rules/perception.ts";
@@ -381,7 +381,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     }
     this.loading = true;
     this.input.enabled = false;
-    coverZone("loading", true);
     const operation = beginStageLoading(this.stageKey());
     const cancel = afterLoadingPaint(() => {
       this.createReady();
@@ -394,7 +393,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.clock = startStepClock;
         this.clearControls();
         this.input.enabled = true;
-        coverZone("loading", false);
         this.openIntroduction();
       };
       this.game.events.once("postrender", ready);
@@ -403,7 +401,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.events.once("shutdown", () => {
       cancel();
       operation.finish();
-      coverZone("loading", false);
     });
   }
 
@@ -422,13 +419,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.scene.stop("zoneDeparture");
       }
       this.dialogueObject = undefined;
-      coverZone("dialogue", false);
       this.deathFraming = false;
       cancelContactFeedback(this.events);
       this.restoreDeathCamera?.();
       this.restoreDeathCamera = undefined;
       this.scene.stop("death");
-      coverZone("death", false);
       if (!this.backdrop && !this.preview) {
         void flushStats();
       }
@@ -556,7 +551,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.clearControls();
     this.input.enabled = false;
     this.showTouchControls(touchSettings());
-    coverZone("dialogue", true);
     const camera = this.cameras.main;
     this.scene.launch("zoneIntroduction", {
       entry: intro.entry,
@@ -587,7 +581,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.clearControls();
     this.input.enabled = true;
     this.showTouchControls(touchSettings());
-    coverZone("dialogue", false);
     this.scene.resume();
   }
 
@@ -1035,7 +1028,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.objects?.pauseAnimations();
     this.bird.anims.stop();
     this.showTouchControls(touchSettings());
-    coverZone("death", true);
     this.drawProgress();
     void flushStats();
     this.restoreDeathCamera = frameDeathCamera(
@@ -1143,7 +1135,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.birdPose = startPose;
     this.clearControls();
     this.input.enabled = true;
-    coverZone("death", false);
     this.drawArea();
     this.drawObjects();
     this.bird.play(animationKey(BIRD_SPRITE, startPose.tag));
@@ -1163,7 +1154,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     cancelContactFeedback(this.events);
     this.restoreDeathCamera?.();
     this.restoreDeathCamera = undefined;
-    coverZone("death", false);
     startWakeLock();
     this.scene.start("start");
   }
@@ -1240,7 +1230,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.clearControls();
     this.input.enabled = false;
     this.showTouchControls(touchSettings());
-    coverZone("dialogue", true);
     this.scene.launch("dialogue", {
       linear: scene === this.story?.intro,
       scene,
@@ -1262,7 +1251,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (this.departure) {
       const target = this.departure;
       this.departure = undefined;
-      coverZone("dialogue", false);
       if (target.kind === "map") {
         this.scene.start("map", { travelTo: target.travelTo });
       } else {
@@ -1293,7 +1281,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.clearControls();
     this.input.enabled = true;
     this.showTouchControls(touchSettings());
-    coverZone("dialogue", false);
     this.scene.resume();
   }
 
@@ -1404,7 +1391,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           zoneStats,
         };
         this.input.enabled = false;
-        coverZone("dialogue", true);
         this.showTouchControls(touchSettings());
         this.scene.launch("dialogue", {
           clearedStage: this.mapNode,

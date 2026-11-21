@@ -34,6 +34,7 @@ import { SPEAKERS } from "../data/dialogues.ts";
 import { TEXT } from "../data/text.ts";
 import type { AchievementId, ControlAction } from "../data/types/index.ts";
 import { ACHIEVEMENT_IDS } from "../progress/index.ts";
+import { networkPlay } from "../pwa/index.ts";
 import { DIALOGUE_SCREEN } from "../ui/index.ts";
 import {
   ACHIEVEMENT_NOTICE,
@@ -286,5 +287,59 @@ describe("the tip", () => {
     expect([panel().hidden, scene.showing()]).toEqual([true, false]);
     scene.events.emit("shutdown");
     vi.restoreAllMocks();
+  });
+});
+
+describe("the network play notice", () => {
+  it("shows its line once on the start screen, before an unlock, and play proceeds", async () => {
+    queue.ids = [ACHIEVEMENT_IDS[0]!];
+    queue.tips = [];
+    const scene = Object.assign(new AchievementNoticeScene(), {
+      cache: { json: { get: () => iconSheet } },
+      events: new EventEmitter(),
+      game: { events: new EventEmitter() },
+      scene: {
+        get: () => ({ idle: () => true, noticeBlocked: () => false }),
+        isActive: (key: string) => key === "start",
+        isPaused: () => false,
+      },
+    });
+    scene.create();
+    const panel = () => document.querySelector<HTMLElement>(".dialogue-panel")!;
+    const frame = () => panel().querySelector<HTMLElement>(".dialogue-portrait-frame")!;
+    const step = async (delta: number) => {
+      scene.update(0, delta);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      scene.update(0, 0);
+    };
+    networkPlay.report();
+    await step(0);
+    expect({
+      frame: frame().hidden,
+      heading: panel().querySelector<HTMLElement>(".dialogue-heading")!.hidden,
+      hidden: panel().hidden,
+      line: panel().querySelector(".dialogue-line")?.textContent,
+      notice: panel().dataset.notice,
+      tab: panel().querySelector<HTMLElement>(".dialogue-name-tab")!.hidden,
+    }).toEqual({
+      frame: true,
+      heading: true,
+      hidden: false,
+      line: TEXT.loading.networkPlay,
+      notice: "networkPlay",
+      tab: true,
+    });
+    // It opens no modal input scope, so the start screen keeps its input.
+    expect(modalInput(scene).accepts()).toBe(true);
+    await step(ACHIEVEMENT_NOTICE_SECONDS * 1000);
+    expect([panel().dataset.notice, frame().hidden]).toEqual(["achievement", false]);
+    await step(ACHIEVEMENT_NOTICE_SECONDS * 1000);
+    expect(scene.showing()).toBe(false);
+    networkPlay.report();
+    await step(0);
+    expect(scene.showing()).toBe(false);
+    scene.events.emit("shutdown");
   });
 });

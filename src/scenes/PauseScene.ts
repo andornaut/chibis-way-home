@@ -2,7 +2,7 @@ import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/a
 import type { HoldActionsBinding } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
-import { Core, Scene } from "phaser";
+import { Scene } from "phaser";
 
 import { EDGE } from "../core/index.ts";
 import { SKILL_GESTURE } from "../data/skills.ts";
@@ -11,14 +11,7 @@ import { TOUCH } from "../data/touch.ts";
 import type { SkillId } from "../data/types/index.ts";
 import { developmentSkillOverrides } from "../dev/mode.ts";
 import { SKILL_IDS, skillEnabled } from "../progress/index.ts";
-import {
-  coverZone,
-  PHONE_EVENTS,
-  startWakeLock,
-  stopWakeLock,
-  updateOffer,
-  zoneShown,
-} from "../pwa/index.ts";
+import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa/index.ts";
 import {
   type CardAction,
   cardBackAction,
@@ -186,7 +179,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       if (this.state === "skill") {
         this.state = "closed";
         this.scene.stop("skillDetail");
-        coverZone("pauseCard", false);
       }
     });
     // Pause owns the last UI layer, including when Room or Death has a later scene index.
@@ -194,8 +186,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       sceneDomUi(this)?.mount(Number.MAX_SAFE_INTEGER, view.root) ?? (() => view.root.remove());
     this.events.once("shutdown", unmount);
     startWakeLock();
-    // The zone's first frame: the game page is now the home screen.
-    this.game.events.once(Core.Events.POST_RENDER, () => zoneShown());
   }
 
   // Cuts each skill's ready glyph, filled with ink as the canvas's fill tint draws it, and its
@@ -316,7 +306,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.heldScenes.forEach((key) => this.scene.pause(key));
     this.scene.bringToTop();
     stopWakeLock();
-    coverZone("pauseCard", true);
     this.showControls();
     if (this.dim === undefined) {
       await this.dimZone(BLOCKING_CARDS.includes(context.scene as (typeof BLOCKING_CARDS)[number]));
@@ -358,7 +347,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.overScene = undefined;
     this.heldScenes = [];
     startWakeLock();
-    coverZone("pauseCard", false);
     this.restoreEntryFocus(returnToEntry);
   }
 
@@ -398,12 +386,12 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   }
 
   private returnHome(): void {
+    updateOffer.defer();
     this.leaveMenu(START);
   }
 
   // Closes the menu, stops every scene it covered and launches key with data.
   private leaveMenu(key: string, data?: object): void {
-    updateOffer.defer();
     this.frames = [];
     this.returnEntryFocus = false;
     this.waitingFor = undefined;
@@ -416,14 +404,12 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     MENU_CONTENT_SCENES.filter(
       (key) => this.scene.isActive(key) || this.scene.isPaused(key),
     ).forEach((key) => this.scene.stop(key));
-    coverZone("room", false);
     if (data === undefined) {
       this.scene.launch(key);
     } else {
       this.scene.launch(key, data);
     }
     startWakeLock();
-    coverZone("pauseCard", false);
   }
 
   // Saves a touch setting and updates the DOM controls under the existing modal dim.
@@ -508,7 +494,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       this.scene.pause(ZONE);
     }
     stopWakeLock();
-    coverZone("pauseCard", true);
     this.scene.launch("skillDetail", {
       onClose: () => {
         if (this.skillVisit === visit) {
@@ -525,7 +510,6 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     }
     this.state = "closed";
     modalInput(this).close();
-    coverZone("pauseCard", false);
     const zone = this.scene.get(ZONE) as ZoneScene;
     zone.resumeSkillPlay();
     if (!this.playCovered() && modalInput(this).accepts()) {

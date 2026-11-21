@@ -1,37 +1,38 @@
-// The game as an installed phone app: offline play and updates, the back gesture, the screen
-// wake lock and persistent storage. setupPhoneApp runs once from main.ts; the scenes listen for
+// The game as an installed phone app: install and updates, the back gesture, the screen wake lock
+// and persistent storage. setupPhoneApp runs once from main.ts; the scenes listen for
 // PHONE_EVENTS on window and call the functions below.
 //
-// A fresh document may apply a complete waiting version before constructing the game or reading
-// saves. During play, newer versions stage separately and switch only through Update now or the
-// newer-save guard. Returning to Start or showing the page never activates them.
-import { appCannotClose, runsInAppWindow } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
+// The kit's launch installs the complete build under the loading bar before the game exists, and
+// a fresh document already runs a complete staged build, which the router promotes silently at
+// the launch navigation. During play, a newer build stages in the background and switches only
+// through Update now or the newer-save guard.
+import { appCannotClose, canExitApp } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
 import {
   backCloseWatcher,
   isFirefoxAndroidApp,
 } from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
+import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import {
   browserCloseWatcher,
   guardBackNavigation,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/backNavigation";
 import { pageRunsAsApp } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 import {
-  browserOfflinePage,
-  type LaunchResult,
-  type OfflinePlay,
-  startOfflinePlay,
-} from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
+  browserLaunchContext,
+  createLaunch,
+  type Launch,
+} from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import {
   createScreenWakeLock,
   type ScreenWakeLock,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/wakeLock";
-import { serviceWorkerUrl } from "@andornaut/game-kit/runtime/web/pwa/serviceWorkerUrl";
 import { requestPersistentStorage } from "@andornaut/game-kit/runtime/web/pwa/storagePersistence";
 
+import { launchLoading } from "../loading/launch.ts";
 import { installationFeedback } from "../loading/required.ts";
-import { trackOfflineLoading } from "../loading/serviceWorker.ts";
+import { CACHE_POLICY, SERVICE_WORKER_URL, SOUND_FORMAT } from "./cachePolicy.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
-import { type HomeCover, type HomeScreen, trackHomeScreen } from "./homeScreen.ts";
+import { createNetworkPlay } from "./networkPlay.ts";
 import { createRequiredUpdate } from "./requiredUpdate.ts";
 import { createUpdateOffer } from "./updateOffer.ts";
 
@@ -39,64 +40,57 @@ export { PHONE_EVENTS } from "./events.ts";
 
 // The history state key of the extra entry that back pops instead of leaving the game.
 const BACK_GUARD_KEY = "birdBackGuard";
-const SERVICE_WORKER_URL = "/sw.js";
-let offlinePlay: OfflinePlay | undefined;
-export const updateOffer = createUpdateOffer(
-  () => offlinePlay?.flow.accept(),
-  () => offlinePlay?.flow.dismissOffer(),
-);
+let launch: Launch | undefined;
+// The staged update's Update now prompt, which UpdateScene shows over whatever the player is in.
+export const updateOffer = createUpdateOffer();
 // The forced update for a save a newer version wrote (requireNewer), as the kit reports it.
 export const requiredUpdate = createRequiredUpdate();
+// A device that could not install the game, which plays from the network and shows a notice.
+export const networkPlay = createNetworkPlay();
 
 // Close eligibility, captured as the page loads, before the back guard can add a history entry.
 let appCloses = false;
 let backLeaves = true;
-let home: HomeScreen | undefined;
 let screenWakeLock: ScreenWakeLock | undefined;
 
-// The production build only: the dev server has no sw.js, and a worker would serve stale
-// modules over hot reloads. A page a version controls registers now, so its update check runs
-// in the background while the game loads; a first visit registers once the zone shows, so the precache does not
-// compete with the game's own downloads (registrationReady). The loading bar shows only the
-// kit's "precaching", that first visit's precache; an update installs in the background with no
-// bar (trackOfflineActivity).
-function setupOfflinePlay(): Promise<LaunchResult> {
-  const page = import.meta.env.PROD ? browserOfflinePage() : undefined;
-  if (page === undefined) {
-    return Promise.resolve("continue");
+// The production build only: the dev server has no sw.js, and a worker would serve stale modules
+// over hot reloads. Where the browser has no service workers or Cache Storage the game plays from
+// the network. A first install's progress and failure belong to the loading bar and Loading
+// failed. A device whose router cannot register, or whose storage is full, plays from the network
+// with a notice (onNetworkPlay), and the next launch tries the install again. A background update
+// reports nothing (onUpdateState), and a failed one retries at the next check.
+function setupLaunch(): Promise<LaunchResult> {
+  const context = import.meta.env.PROD ? browserLaunchContext(CACHE_POLICY) : undefined;
+  if (context === undefined) {
+    return Promise.resolve("play");
   }
-  const firstVisit = page.container.controller === null;
-  const loading = trackOfflineLoading();
-  const play = startOfflinePlay(
-    {
-      onDownloadProgress: loading.progress,
-      onInstallationState: (state) => {
-        if (firstVisit) {
-          installationFeedback.report(state);
-        }
-      },
-      onOfflineActivity: loading.activity,
-      onRequireNewer: requiredUpdate.report,
-      onUpdateShown: updateOffer.setVisible,
-      serviceWorkerUrl: serviceWorkerUrl(SERVICE_WORKER_URL, undefined),
+  launch = createLaunch(context, {
+    onFailure: (failure) => {
+      launchLoading.failed();
+      installationFeedback.fail({
+        ...failure,
+        retry: () => {
+          launchLoading.retried();
+          failure.retry();
+        },
+      });
     },
-    page,
-  );
-  offlinePlay = play;
-  if (firstVisit) {
-    installationFeedback.bind(() => play.retryInstallation());
-  }
-  home = trackHomeScreen(
-    play.flow.setOfferVisible,
-    () => play.registrationReady(),
-    () => play.flow.arriveHome(),
-  );
-  return play.launchReady();
+    onNetworkPlay: networkPlay.report,
+    onProgress: launchLoading.report,
+    onRequireNewer: requiredUpdate.report,
+    onUpdateReady: updateOffer.offer,
+    onUpdateState: () => undefined,
+    serviceWorkerUrl: SERVICE_WORKER_URL,
+    soundFormat: SOUND_FORMAT,
+  });
+  launchLoading.bind(launch.bootProgress);
+  return launch.run();
 }
 
-// The launch result settles before game construction; an unsuccessful switch keeps this build.
+// The launch result settles before game construction or save reads: "play" once this document
+// runs the active build, or "reloading" when the game must not start.
 export function setupPhoneApp(): Promise<LaunchResult> {
-  const launch = setupOfflinePlay();
+  const result = setupLaunch();
   // Asked once per launch of the installed app, never in a browser tab. Not waited for: the game
   // boots whatever the browser answers, or if it never does.
   void requestPersistentStorage(
@@ -104,9 +98,8 @@ export function setupPhoneApp(): Promise<LaunchResult> {
     "storage" in navigator ? navigator.storage : undefined,
   );
   const createCloseWatcher = backCloseWatcher(navigator.userAgent, browserCloseWatcher());
-  const cannotClose = appCannotClose(createCloseWatcher, window);
-  appCloses = runsInAppWindow(window) && !cannotClose;
-  backLeaves = !cannotClose;
+  appCloses = canExitApp(createCloseWatcher, window);
+  backLeaves = !appCannotClose(createCloseWatcher, window);
   // Firefox for Android's installed app keeps its own back.
   // WORKAROUND: https://bugzilla.mozilla.org/show_bug.cgi?id=2079243 (see isFirefoxAndroidApp).
   if (!isFirefoxAndroidApp(navigator.userAgent, (query) => matchMedia(query).matches)) {
@@ -126,7 +119,7 @@ export function setupPhoneApp(): Promise<LaunchResult> {
     document,
     "wakeLock" in navigator ? navigator.wakeLock : undefined,
   );
-  return launch;
+  return result;
 }
 
 // Whether the start screen shows Exit: only in an installed app's window that a script can close.
@@ -147,29 +140,14 @@ export function backLeavesGame(): boolean {
 }
 
 // Updates to a version at least as new as the one that wrote the save, by itself and with no
-// offer, reporting through requiredUpdate. Without offline play (the dev server) none can come,
-// so it reports "unavailable" at once.
+// offer, reporting through requiredUpdate. Without a launch (the dev server) none can come, so it
+// reports "unavailable" at once.
 export function requireNewer(): void {
-  installationFeedback.suppress();
-  if (offlinePlay === undefined) {
+  if (launch === undefined) {
     requiredUpdate.report("unavailable");
   } else {
-    offlinePlay.flow.requireNewer();
+    launch.requireNewer();
   }
-}
-
-// The existing prepared-zone signal controls first-install registration, not update offers.
-export function zoneShown(): void {
-  home?.shown();
-}
-
-export function startScreenShown(shown: boolean): void {
-  home?.startShown(shown);
-}
-
-// A game or Start-owned card suppresses offers without changing their dismissal.
-export function coverZone(what: HomeCover, covering: boolean): void {
-  home?.cover(what, covering);
 }
 
 // Keep the screen on while the game is visible: during play.

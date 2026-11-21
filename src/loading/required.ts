@@ -7,7 +7,7 @@ import {
   type LoadingFailurePresentationView,
   mountLoadingFailure,
 } from "@andornaut/game-kit/runtime/web/progress/dom/loadingFailure";
-import type { InstallationState } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
+import type { LaunchFailure } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
 import { SCREEN } from "../data/screen.ts";
 import { bindFactoryAction } from "../ui/input/actionBinding.ts";
@@ -16,28 +16,35 @@ import { loadingFailurePresentation, loadingUnit } from "./presentation.ts";
 // One page registry shares the kit's required-resource failure and explicit Retry lifecycle.
 export const requiredLoading = createRequiredLoading();
 
-let installationState: InstallationState | undefined;
-let installationRetry: (() => Promise<InstallationState>) | undefined;
-let installationSuppressed = false;
+// The first install's state, apart from the required resources' registry: the kit launch's
+// onFailure reports a failed install, and its Retry resumes the install. Background updates have
+// no state here; they never show Loading failed.
+let installationState: LoadingAttemptState | undefined;
+let installationRetry: (() => void) | undefined;
+let installationAttempts = 0;
 const installationListeners = new Set<() => void>();
 const changedInstallation = () => installationListeners.forEach((listener) => listener());
 
-// Presentation retains the kit's identity even when its initial callback precedes handle binding.
 export const installationFeedback = {
-  bind(retry: () => Promise<InstallationState>): void {
-    installationRetry = retry;
+  // The launch's onFailure, which can come before any view is mounted.
+  fail(failure: LaunchFailure): void {
+    installationState = { attempt: ++installationAttempts, error: failure.reason, kind: "failed" };
+    installationRetry = failure.retry;
     changedInstallation();
   },
-  report(state: InstallationState): void {
-    installationState = state;
+  // Retry: resumes the install once, and Loading failed hides until another failure.
+  retry(): Promise<void> {
+    const retry = installationRetry;
+    installationRetry = undefined;
+    if (installationState?.kind === "failed") {
+      installationState = { attempt: ++installationAttempts, kind: "loading" };
+    }
+    retry?.();
     changedInstallation();
+    return Promise.resolve();
   },
-  get state(): InstallationState | undefined {
+  get state(): LoadingAttemptState | undefined {
     return installationState;
-  },
-  suppress(): void {
-    installationSuppressed = true;
-    changedInstallation();
   },
 };
 
@@ -77,7 +84,7 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
     let flight: Promise<unknown>;
     try {
       pendingOwner = owner;
-      flight = owner === "installation" ? installationRetry!() : requiredLoading.retry();
+      flight = owner === "installation" ? installationFeedback.retry() : requiredLoading.retry();
       pending = flight;
     } catch (error) {
       pendingOwner = undefined;
@@ -123,12 +130,12 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
     view.update(state);
   };
   const render = () => {
+    // The first install runs before the required resources can load or fail, so its failure
+    // shows unless a required failure or Retry is under way.
     const nextOwner =
-      requiredState.kind === "ready" &&
+      requiredState.kind !== "failed" &&
       pendingOwner !== "required" &&
-      !installationSuppressed &&
-      installationState !== undefined &&
-      installationRetry !== undefined
+      (installationState?.kind === "failed" || pendingOwner === "installation")
         ? "installation"
         : "required";
     let restoreFocus = false;

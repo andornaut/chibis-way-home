@@ -2,13 +2,17 @@
 
 The page's first module installs game-kit's crash screen before the loading strip, Phaser or any
 game module runs. A two-pixel loading strip at the top shows only loads the player waits for and
-stays painted and dimmed under modals. Each build writes `/sw.js` with its own cache of `/play/`,
-its resources and atlas pages, so the game plays offline; a failed first offline installation
-shows game-kit's loading failure with Retry on the primary plate. A fresh document applies a
-complete waiting build, a dismissed update offer returns on the next start-screen arrival, and a save
-from a newer version requires the update before any save write. The home page and Settings offer
-Install in every browser until the game is installed, and back is caught with a CloseWatcher or a
-guard history entry.
+stays painted and dimmed under modals. Game-kit's launch installs the complete, verified build under
+that strip before play, with one determinate value, so the game then plays offline through the
+router `/sw.js`; a failed first install shows game-kit's loading failure with Retry on the primary
+plate. A device that cannot install, because service workers cannot register or storage is full,
+plays from the network with a one-line notice on the first screen, and the next launch tries the
+install again. An install keeps only the sound format the device plays; the game has no sound, so
+every listed file installs. A staged update switches silently at the next launch, or through an
+Update now card over any screen that saves first; a dismissed card does not return that session. A
+save from a newer version requires the update before any save write. The home page and Settings
+offer Install in every browser until the game is installed, and back is caught with a CloseWatcher
+or a guard history entry.
 
 Reference: [assets and build](../../src/README.md#assets-and-build),
 [phone](../../src/README.md#phone).

@@ -157,6 +157,10 @@ export function clearStageTime(stage: string): void {
 export function flushStats(): Promise<void> {
   return pageSave.flushStats();
 }
+// Update now's save: the statistics flushed and every pending progress write settled.
+export function settleSaves(): Promise<void> {
+  return pageSave.settleWrites();
+}
 export function wholeRunStats(): WholeRunStatsSummary {
   return pageSave.wholeRunStats();
 }

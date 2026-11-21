@@ -76,9 +76,17 @@ let notices = new CelebrationQueue<AchievementId>();
 // The earned ids, including awards whose write is still queued, so a later call in the same
 // frame does not award or announce them again.
 let earnedIds: readonly AchievementId[] = [];
+// The progress and achievement writes not yet settled, which settleWrites waits for.
+const writesInFlight = new Set<Promise<unknown>>();
 const BOSSES_BY_CHARACTER: ReadonlyMap<string, BossId> = new Map(
   Object.entries(BOSS_CHARACTERS).map(([boss, character]) => [character, boss as BossId]),
 );
+
+function inFlight<T>(write: Promise<T>): Promise<T> {
+  const tracked = write.finally(() => writesInFlight.delete(tracked));
+  writesInFlight.add(tracked);
+  return tracked;
+}
 
 function installStatsLifecycle(): void {
   if (statsLifecycleInstalled || typeof window === "undefined" || typeof document === "undefined") {
@@ -166,7 +174,7 @@ function judgeAchievements(
   if (fresh.length > 0) {
     earnedIds = [...earnedIds, ...fresh];
     notices.push(fresh);
-    void achievements.award(fresh);
+    void inFlight(achievements.award(fresh));
   }
 }
 
@@ -196,7 +204,7 @@ export function nextAchievementNotice(blocked: () => boolean): AchievementId | u
   }
   const id = notices.takeWhen(blocked);
   if (id !== undefined) {
-    void achievements.announced(id);
+    void inFlight(achievements.announced(id));
   }
   return id;
 }
@@ -272,6 +280,18 @@ export function flushStats(): Promise<void> {
   return stats.flush();
 }
 
+// Flushes the statistics and waits until every progress and achievement write has settled, so
+// nothing is lost when the page reloads into another build: Update now's save. A failed write
+// stays failed, as it would without the switch.
+export async function settleWrites(): Promise<void> {
+  await flushStats();
+  while (writesInFlight.size > 0) {
+    // Each pass waits for the writes queued so far; one queued meanwhile is caught by the next.
+    // eslint-disable-next-line no-await-in-loop
+    await Promise.allSettled([...writesInFlight]);
+  }
+}
+
 export function wholeRunStats(): WholeRunStatsSummary {
   return stats.wholeRun();
 }
@@ -340,7 +360,7 @@ export function grantSkill(session: SaveSession, skill: SkillId): boolean {
   if (!held && effects.awarded.length > 0) {
     earnedIds = [...earnedIds, ...effects.awarded];
     notices.push(effects.awarded);
-    void achievements.award(effects.awarded);
+    void inFlight(achievements.award(effects.awarded));
   }
   return true;
 }
@@ -460,7 +480,7 @@ function write(session: SaveSession, next: Progress): void {
 }
 
 function persist(next: Progress): Promise<StoreSaveResult> {
-  return store.save(next);
+  return inFlight(store.save(next));
 }
 
 // Starts holding the save for a cheat session: what changed so far is written, and from now on
@@ -501,7 +521,7 @@ export async function resetSave(): Promise<StoreSaveResult> {
   const earned = saveStore(localSaveStorage(), ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT);
   const [saved, awarded] = await Promise.all([
     persist(BEGINNING),
-    earned.save({ earned: [], unannounced: [] }),
+    inFlight(earned.save({ earned: [], unannounced: [] })),
     stats.reset(),
   ]);
   achievements = achievementsStore(localSaveStorage());

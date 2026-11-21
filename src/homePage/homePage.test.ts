@@ -10,6 +10,7 @@ import palette from "../../public/art/palette.json" with { type: "json" };
 import { CHUNKS } from "../data/chunks.ts";
 import { TEXT } from "../data/text.ts";
 import { RECIPES } from "../data/zones.ts";
+import { SERVICE_WORKER_URL } from "../pwa/cachePolicy.ts";
 import { themesOf } from "../rules/assemble.ts";
 import { escaped } from "./actionHelp.ts";
 import { gameNameHtml, homePageHtml, webManifestJson } from "./html.ts";
@@ -20,6 +21,7 @@ const HOME_PAGE = new URL("../../pages/index.html", import.meta.url);
 const NAV_SCRIPT = new URL("../../public/nav.js", import.meta.url);
 const PLAY_PAGE = new URL("../../pages/play/index.html", import.meta.url);
 const WEB_MANIFEST = new URL("../../public/manifest.webmanifest", import.meta.url);
+const HOME_SCRIPT = new URL("./main.ts", import.meta.url);
 
 const pageText = async () =>
   homePageHtml(TEXT, await readFile(HOME_PAGE, "utf8")).replaceAll(/\s+/gu, " ");
@@ -200,4 +202,10 @@ describe("the home page's install offer", () => {
       "install-steps-chromiumDesktop",
     );
   });
+});
+
+it("registers the same router worker as the game page", async () => {
+  expect(await readFile(HOME_SCRIPT, "utf8")).toContain(
+    `const ROUTER_URL = "${SERVICE_WORKER_URL}";`,
+  );
 });

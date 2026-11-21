@@ -1,7 +1,17 @@
 import { pageRules, pathMatches } from "@andornaut/game-kit/build/securityHeaders";
+import {
+  BUILD_POINTER_URL,
+  buildManifestUrl,
+} from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import { describe, expect, it } from "vitest";
 
-import { BASE_DIRECTIVES, FILE_RULES, PAGE_RULES, pageProblem } from "./securityPolicy.ts";
+import {
+  BASE_DIRECTIVES,
+  COMMON_RULE,
+  FILE_RULES,
+  PAGE_RULES,
+  pageProblem,
+} from "./securityPolicy.ts";
 
 const NAV_SCRIPT = '<script src="/nav.js" defer></script>';
 const NAV_STYLESHEET = '<link rel="stylesheet" href="/nav.css" />';
@@ -49,4 +59,18 @@ it("excludes analytics from the game while retaining website permissions and fun
         .some(([name, value]) => name === "Cache-Control" && value.includes("no-transform")),
     ).toBe(false);
   }
+});
+
+it("never lets a cache keep the build pointer, and keeps each build manifest for good", () => {
+  const cacheControl = (path: string) =>
+    [COMMON_RULE, ...FILE_RULES]
+      .filter((rule) => pathMatches(rule.path, path))
+      .flatMap(({ headers }) => headers)
+      .filter(([name]) => name === "Cache-Control")
+      .map(([, value]) => value);
+  expect(cacheControl(BUILD_POINTER_URL)).toEqual(["no-store"]);
+  expect(cacheControl(buildManifestUrl("0123456789abcdef"))).toEqual([
+    "public, max-age=31536000, immutable",
+  ]);
+  expect(cacheControl("/sw.js")).toEqual([]);
 });

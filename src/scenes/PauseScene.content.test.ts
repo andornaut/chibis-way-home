@@ -8,11 +8,9 @@ vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scen
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { onChange: () => () => {} } }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
-  coverZone: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
   updateOffer: { defer: vi.fn() },
-  zoneShown: vi.fn(),
 }));
 vi.mock("./save.ts", () => ({ activeSkill: () => undefined, savedSkills: () => [] }));
 vi.mock("./modalBackdrop.ts", () => ({
@@ -24,7 +22,6 @@ vi.mock("./domUi.ts", () => ({
 }));
 
 import { TEXT } from "../data/text.ts";
-import { coverZone } from "../pwa/index.ts";
 import { coarsePointer, createUiLayer, type UiLayer } from "../ui/index.ts";
 import { modalInput } from "./modalInput.ts";
 import { createPauseScene, pressKey, settle, tap } from "./pauseFixture.ts";
@@ -190,6 +187,5 @@ it("ends a paused room for the title without resuming its already-paused zone", 
   tap(pause.button(TEXT.pause.home));
   expect(scenes.stop.mock.calls.map(([key]) => key)).toEqual(["room", "zone"]);
   expect(scenes.resume).not.toHaveBeenCalled();
-  expect(coverZone).toHaveBeenCalledWith("room", false);
   expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("start");
 });

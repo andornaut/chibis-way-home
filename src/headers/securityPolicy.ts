@@ -7,13 +7,15 @@ import type {
   HtmlPage,
   PageRule,
 } from "@andornaut/game-kit/build/securityHeaders";
+import { BUILD_POINTER_URL } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
 // Where the build writes its content-hashed files, as a _headers path pattern.
 export const HASHED_ASSET_PATH = "/assets/*";
+// The kit's build manifests (buildContract's buildManifestUrl), as a _headers path pattern.
+const BUILD_MANIFEST_PATH = "/.game-kit/manifest-*";
 
-// On every response. No Cache-Control: every file but FILE_RULES' hashed build output keeps the
-// platform default (max-age=0, must-revalidate), which the service worker relies on to see a new
-// /sw.js on the next launch.
+// On every response. No Cache-Control: every file FILE_RULES does not name keeps the platform
+// default (max-age=0, must-revalidate), so the router worker sees a new /sw.js on the next launch.
 export const COMMON_RULE = {
   comment:
     "Every response. The pages ask for fullscreen to lock landscape, and the game holds a " +
@@ -52,6 +54,18 @@ export const FILE_RULES = [
       "needs revalidating.",
     headers: [["Cache-Control", "public, max-age=31536000, immutable"]] satisfies HeaderList,
     path: HASHED_ASSET_PATH,
+  },
+  {
+    comment:
+      "The deployed build's pointer, which every launch and resume reads, so no CDN or " +
+      "browser cache may keep it.",
+    headers: [["Cache-Control", "no-store"]] satisfies HeaderList,
+    path: BUILD_POINTER_URL,
+  },
+  {
+    comment: "Each build's manifest, named by its version, so its content never changes.",
+    headers: [["Cache-Control", "public, max-age=31536000, immutable"]] satisfies HeaderList,
+    path: BUILD_MANIFEST_PATH,
   },
 ] as const;
 

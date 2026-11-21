@@ -8,21 +8,45 @@ import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
 import type { PauseScene } from "./PauseScene.ts";
+import { settleSaves } from "./save.ts";
 
-// Pausing the world does not change PWA eligibility: closing this offer cannot reopen it.
+// The game has entered play once BootScene launches the persistent pause scene; a prompt staged
+// earlier waits for it, so the card never shows over boot or the newer-save guard.
+const ENTERED = "pause";
+
+// Shows the Update now card over whatever the player is in, pausing every other running scene
+// and letting the screen sleep, and resumes them when the card closes.
 export function installUpdateModalBridge(game: Game): void {
   let paused: string[] = [];
+  let waiting: (() => void) | undefined;
+  const show = () => {
+    paused = game.scene
+      .getScenes(true)
+      .filter((scene) => scene.scene.key !== "update" && scene.scene.key !== ENTERED)
+      .map((scene) => scene.scene.key);
+    for (const key of paused) {
+      game.scene.pause(key);
+    }
+    stopWakeLock();
+    game.scene.start("update");
+  };
   const unsubscribe = updateOffer.subscribe((shown) => {
+    waiting?.();
+    waiting = undefined;
     if (shown) {
-      paused = game.scene
-        .getScenes(true)
-        .filter((scene) => scene.scene.key !== "update" && scene.scene.key !== "pause")
-        .map((scene) => scene.scene.key);
-      for (const key of paused) {
-        game.scene.pause(key);
+      if (game.scene.isActive(ENTERED)) {
+        show();
+        return;
       }
-      stopWakeLock();
-      game.scene.start("update");
+      const entered = () => {
+        if (game.scene.isActive(ENTERED)) {
+          waiting?.();
+          waiting = undefined;
+          show();
+        }
+      };
+      game.events.on("poststep", entered);
+      waiting = () => game.events.off("poststep", entered);
     } else {
       if (game.scene.isActive("update")) {
         game.scene.stop("update");
@@ -38,7 +62,10 @@ export function installUpdateModalBridge(game: Game): void {
       paused = [];
     }
   });
-  game.events.once("destroy", unsubscribe);
+  game.events.once("destroy", () => {
+    waiting?.();
+    unsubscribe();
+  });
 }
 
 // The card's buttons, in the order the keyboard's focus moves through them; the close X follows.
@@ -47,9 +74,10 @@ type ButtonAction = "accept" | "cancel";
 type Action = ButtonAction | "close";
 const BUTTONS: readonly ButtonAction[] = ["accept", "cancel"];
 
-// The card that offers a waiting update, over every other scene: its title, Cancel, Update now in
-// art's primary button, and a close X. Update now accepts the offer; Cancel, the X, back, Escape
-// and a tap outside the card defer it. The card is HTML in the UI layer (src/ui/dom/card.ts),
+// The card that offers a staged update, over every other scene: its title, Cancel, Update now in
+// art's primary button, and a close X. Update now settles the save (settleSaves), then switches to
+// the staged build; Cancel, the X, back, Escape and a tap outside the card dismiss it for this
+// session. The card is HTML in the UI layer (src/ui/dom/card.ts),
 // shown once the dim of the scenes under it is ready, and its buttons act only from then: a
 // button acts when a press lands on it and lifts on it; Tab and the arrows move the keyboard's
 // focus through Update now, Cancel and the X, starting on the card itself, and Enter and Space
@@ -148,7 +176,7 @@ export class UpdateScene extends Scene {
       return;
     }
     if (action === "accept") {
-      updateOffer.accept();
+      updateOffer.accept(settleSaves);
     } else {
       updateOffer.defer();
     }

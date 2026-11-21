@@ -3,7 +3,18 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const offer = vi.hoisted(() => ({ accept: vi.fn(), defer: vi.fn() }));
+const offer = vi.hoisted(() => ({
+  accept: vi.fn(),
+  defer: vi.fn(),
+  listener: undefined as ((visible: boolean) => void) | undefined,
+  subscribe: vi.fn((listener: (visible: boolean) => void) => {
+    offer.listener = listener;
+    listener(false);
+    return () => undefined;
+  }),
+}));
+const wake = vi.hoisted(() => ({ start: vi.fn(), stop: vi.fn() }));
+const saves = vi.hoisted(() => ({ settleSaves: vi.fn(async () => {}) }));
 const gate = vi.hoisted(() => ({
   accepts: vi.fn(() => true),
   capture: vi.fn(),
@@ -14,10 +25,11 @@ const backdrop = vi.hoisted(() => ({ ready: Promise.resolve() }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "test:back" },
-  startWakeLock: vi.fn(),
-  stopWakeLock: vi.fn(),
+  startWakeLock: wake.start,
+  stopWakeLock: wake.stop,
   updateOffer: offer,
 }));
+vi.mock("./save.ts", () => saves);
 vi.mock("./modalInput.ts", async (original) => ({
   ...(await original<typeof import("./modalInput.ts")>()),
   modalInput: () => gate,
@@ -35,7 +47,7 @@ vi.mock("./domUi.ts", () => ({
 import { TEXT } from "../data/text.ts";
 import { createUiLayer, type UiLayer } from "../ui/index.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
-import { UpdateScene } from "./UpdateScene.ts";
+import { installUpdateModalBridge, UpdateScene } from "./UpdateScene.ts";
 
 let layer: UiLayer;
 // Each test's scenes, shut down after it so none keeps a back listener.
@@ -143,7 +155,7 @@ it("presses only the focused control: Update now accepts, Cancel and the X defer
   control(TEXT.update.accept).focus();
   key("Enter");
   key("Enter", { repeat: true });
-  expect(offer.accept).toHaveBeenCalledOnce();
+  expect(offer.accept).toHaveBeenCalledExactlyOnceWith(saves.settleSaves);
   control(TEXT.update.cancel).focus();
   key(" ");
   control(TEXT.update.close).focus();
@@ -235,4 +247,48 @@ it("removes the card and gives back the keys and back when the scene shuts down"
 it("keeps an already dimmed Pause world at one modal strength", async () => {
   await openCard(false, true);
   expect(showModalBackdrop).toHaveBeenCalledWith(expect.anything(), true);
+});
+
+// A game whose running scenes are keys, with pause running once entered.
+function bridgedGame(keys: string[], entered: boolean) {
+  const events = new EventEmitter();
+  const running = new Set([...keys, ...(entered ? ["pause"] : [])]);
+  const paused = new Set<string>();
+  const scene = {
+    getScenes: () => [...running].map((key) => ({ scene: { key } })),
+    isActive: (key: string) => running.has(key) && !paused.has(key),
+    isPaused: (key: string) => paused.has(key),
+    pause: vi.fn((key: string) => paused.add(key)),
+    resume: vi.fn((key: string) => paused.delete(key)),
+    start: vi.fn((key: string) => running.add(key)),
+    stop: vi.fn((key: string) => running.delete(key)),
+  };
+  installUpdateModalBridge({ events, scene } as unknown as Parameters<
+    typeof installUpdateModalBridge
+  >[0]);
+  return { enter: () => running.add("pause"), events, scene };
+}
+
+it("shows the card wherever the player is, pausing play, and resumes it when the card closes", () => {
+  const { scene } = bridgedGame(["zone", "dialogue"], true);
+  offer.listener!(true);
+  expect(scene.pause.mock.calls.map(([key]) => key)).toEqual(["zone", "dialogue"]);
+  expect(scene.start).toHaveBeenCalledExactlyOnceWith("update");
+  expect(wake.stop).toHaveBeenCalledOnce();
+  offer.listener!(false);
+  expect(scene.stop).toHaveBeenCalledWith("update");
+  expect(scene.resume.mock.calls.map(([key]) => key)).toEqual(["zone", "dialogue"]);
+  expect(wake.start).toHaveBeenCalledOnce();
+});
+
+it("holds a prompt staged during boot until the game has entered play", () => {
+  const { enter, events, scene } = bridgedGame(["boot"], false);
+  offer.listener!(true);
+  events.emit("poststep");
+  expect(scene.start).not.toHaveBeenCalled();
+  enter();
+  scene.stop("boot");
+  events.emit("poststep");
+  events.emit("poststep");
+  expect(scene.start).toHaveBeenCalledExactlyOnceWith("update");
 });

@@ -17,13 +17,10 @@ vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
   backLeavesGame: () => true,
   closeApp: exit,
-  coverZone: vi.fn(),
   exitShown: () => true,
-  startScreenShown: vi.fn(),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
   updateOffer: { defer: vi.fn() },
-  zoneShown: vi.fn(),
 }));
 vi.mock("./save.ts", () => ({
   activeSkill: () => undefined,

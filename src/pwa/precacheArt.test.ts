@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ART_PATH, type ArtManifest, BIRD_SHEET_URL } from "../assets/index.ts";
 import { UI_FONT_RESOURCES } from "../ui/index.ts";
-import { artUrls } from "./precacheArt.ts";
+import { artUrls, bootArtUrls } from "./precacheArt.ts";
 
 const EMPTY: ArtManifest = {
   backdrops: [],
@@ -51,8 +51,10 @@ describe("artUrls", () => {
       ["f.png"],
     ],
   ])("lists what a build loads from art's files for %s", (_, manifest, files) => {
+    const boot = files.map((file) => ART_PATH + file);
+    expect(bootArtUrls(manifest)).toEqual(boot);
     expect(artUrls(manifest)).toEqual([
-      ...files.map((file) => ART_PATH + file),
+      ...boot,
       BIRD_SHEET_URL,
       ...UI_FONT_RESOURCES.map(({ url }) => url),
     ]);

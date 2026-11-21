@@ -20,7 +20,7 @@ import { ROOM_LAYOUT } from "../data/layout.ts";
 import { ROOMS } from "../data/rooms.ts";
 import { TEXT } from "../data/text.ts";
 import type { RoomPlan } from "../data/types/index.ts";
-import { coverZone, PHONE_EVENTS } from "../pwa/index.ts";
+import { PHONE_EVENTS } from "../pwa/index.ts";
 import {
   createRoomView,
   DIALOGUE_PORTRAIT_SIZE,
@@ -116,7 +116,6 @@ export class RoomScene extends Scene {
     };
     this.events.on("resume", restartClock);
     this.events.once("shutdown", () => this.events.off("resume", restartClock));
-    coverZone("room", true);
     captureTab(this, true);
 
     modalInput(this).ready(false);
@@ -396,7 +395,6 @@ export class RoomScene extends Scene {
   // Closes the room and resumes the zone, shown again, at the next step.
   private leave(): void {
     this.leaving = true;
-    coverZone("room", false);
     this.scene.setVisible(true, ZONE);
     this.scene.resume(ZONE);
     this.scene.stop();

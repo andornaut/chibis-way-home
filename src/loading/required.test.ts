@@ -1,5 +1,4 @@
 // @vitest-environment happy-dom
-import type { InstallationState } from "@andornaut/game-kit/runtime/web/pwa/dom/offlinePlay";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { LOADING_FAILURE_PRESENTATION } from "../data/layout.ts";
@@ -144,21 +143,38 @@ function failureHost() {
     failure: () => host.querySelector<HTMLElement>(".loading-failure")!,
   };
 }
-const failedInstallation: InstallationState = {
-  attempt: 1,
-  error: new Error("offline file failed"),
-  kind: "failed",
-  operationId: "first-install",
-  stage: "installation",
-  version: "build-one",
-};
 const settle = () =>
   new Promise<void>((resolve) => {
     setImmediate(resolve);
   });
 
-it("retains early first-install failure independently of required attempt counts and Retry busy state", async () => {
+it("shows a first install's failure while boot waits on it, and Retry resumes the install once", async () => {
   const view = failureHost();
+  resources.push(requiredLoading.observe({ retry: vi.fn(), status: () => "loading" }));
+  expect(view.failure()).toBeNull();
+  const retry = vi.fn();
+  loading.installationFeedback.fail({ reason: "network", retry });
+  expect(view.failure().hidden).toBe(false);
+  expect(loading.installationFeedback.state).toMatchObject({ error: "network", kind: "failed" });
+  view.button().click();
+  view.button().click();
+  expect(retry).toHaveBeenCalledOnce();
+  expect(view.failure()?.hidden ?? true).toBe(true);
+  await settle();
+  expect(view.failure()?.hidden ?? true).toBe(true);
+  expect(loading.installationFeedback.state?.kind).toBe("loading");
+  const again = vi.fn();
+  loading.installationFeedback.fail({ reason: "verification", retry: again });
+  expect(view.failure().hidden).toBe(false);
+  view.button().click();
+  expect(again).toHaveBeenCalledOnce();
+  expect(retry).toHaveBeenCalledOnce();
+});
+
+it("prioritizes a required failure over a failed first install", async () => {
+  const view = failureHost();
+  const retryInstallation = vi.fn();
+  loading.installationFeedback.fail({ reason: "verification", retry: retryInstallation });
   let failed = true;
   let finishRequired!: () => void;
   const retryRequired = vi.fn(
@@ -168,94 +184,21 @@ it("retains early first-install failure independently of required attempt counts
       }),
   );
   resources.push(
-    requiredLoading.observe({ retry: retryRequired, status: () => (failed ? "failed" : "ready") }),
+    requiredLoading.observe({
+      retry: retryRequired,
+      status: () => (failed ? "failed" : "ready"),
+    }),
   );
-  failed = false;
-  requiredLoading.invalidate();
-  failed = true;
-  requiredLoading.invalidate();
-  expect(requiredLoading.state.attempt).toBeGreaterThan(failedInstallation.attempt);
-  loading.installationFeedback.report(failedInstallation);
-  let finishInstallation!: (state: InstallationState) => void;
-  const retryInstallation = vi.fn(
-    () =>
-      new Promise<InstallationState>((resolve) => {
-        finishInstallation = resolve;
-      }),
-  );
-  loading.installationFeedback.bind(retryInstallation);
-  expect(loading.installationFeedback.state).toBe(failedInstallation);
-  view.button().click();
   view.button().click();
   expect(retryRequired).toHaveBeenCalledOnce();
   expect(retryInstallation).not.toHaveBeenCalled();
   failed = false;
   requiredLoading.invalidate();
-  expect(view.failure().hidden).toBe(true);
   finishRequired();
   await settle();
   expect(view.failure().hidden).toBe(false);
-  const owner = requiredLoading.state;
-  view.button().click();
   view.button().click();
   expect(retryInstallation).toHaveBeenCalledOnce();
-  expect(view.button().disabled).toBe(true);
-  window.dispatchEvent(new Event("resize"));
-  expect(view.button().disabled).toBe(true);
-  const ready: InstallationState = { ...failedInstallation, kind: "ready", stage: "installed" };
-  loading.installationFeedback.report(ready);
-  finishInstallation(ready);
-  await settle();
-  expect(view.failure().hidden).toBe(true);
-  expect(requiredLoading.state).toBe(owner);
-  expect(loading.installationFeedback.state).toBe(ready);
-});
-
-it("prioritizes required failure over busy installation while preserving focus and idle identity", async () => {
-  const view = failureHost();
-  let finishInstallation!: (state: InstallationState) => void;
-  loading.installationFeedback.report(failedInstallation);
-  expect(view.failure()).toBeNull();
-  const retryInstallation = vi.fn(
-    () =>
-      new Promise<InstallationState>((resolve) => {
-        finishInstallation = resolve;
-      }),
-  );
-  loading.installationFeedback.bind(retryInstallation);
-  view.button().focus();
-  view.button().click();
-  let failed = true;
-  let finishRequired!: () => void;
-  const retryRequired = vi.fn(
-    () =>
-      new Promise<void>((resolve) => {
-        finishRequired = resolve;
-      }),
-  );
-  resources.push(
-    requiredLoading.observe({ retry: retryRequired, status: () => (failed ? "failed" : "ready") }),
-  );
-  expect(view.button().disabled).toBe(false);
-  expect(document.activeElement).toBe(view.button());
-  view.button().click();
-  expect(retryRequired).toHaveBeenCalledOnce();
-  const idle: InstallationState = { ...failedInstallation, kind: "idle", stage: "not-observed" };
-  loading.installationFeedback.report(idle);
-  finishInstallation(idle);
-  await settle();
-  expect(view.button().disabled).toBe(true);
-  expect(requiredLoading.state.kind).toBe("failed");
-  failed = false;
-  requiredLoading.invalidate();
-  finishRequired();
-  await settle();
-  expect(view.failure()?.hidden ?? true).toBe(true);
-  expect(loading.installationFeedback.state).toBe(idle);
-  loading.installationFeedback.report(failedInstallation);
-  expect(view.failure().hidden).toBe(false);
-  loading.installationFeedback.suppress();
-  expect(view.failure()?.hidden ?? true).toBe(true);
 });
 
 it("waits for a measured failure frame without inventing a unit or changing readiness", () => {

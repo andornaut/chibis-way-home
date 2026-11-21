@@ -3,16 +3,13 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, expect, it, vi } from "vitest";
 
-const lifecycle = vi.hoisted(() => ({ cover: vi.fn(), shown: vi.fn() }));
 const native = vi.hoisted(() => ({ cancel: vi.fn(), layer: vi.fn(), reveal: vi.fn() }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "back-pressed" },
   backLeavesGame: () => false,
   closeApp: vi.fn(),
-  coverZone: lifecycle.cover,
   exitShown: () => false,
-  startScreenShown: lifecycle.shown,
 }));
 vi.mock("./save.ts", () => ({
   endCheatSession: () => {},
@@ -35,13 +32,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it("shows Start on each create, not again on resume, and covers it before opening cards", () => {
+it("opens the restart card from Restart and takes focus back when it closes", () => {
   vi.stubGlobal("window", new EventTarget());
   const events = new EventEmitter();
   const launch = vi.fn();
+  const drawFocus = vi.fn();
   const scene = Object.assign(new StartScene(), {
     draw: vi.fn(),
-    drawFocus: vi.fn(),
+    drawFocus,
     events,
     game: {},
     input: { keyboard: new EventEmitter() },
@@ -56,24 +54,12 @@ it("shows Start on each create, not again on resume, and covers it before openin
   };
   scene.create();
   expect(launch).not.toHaveBeenCalled();
-  expect(lifecycle.shown).toHaveBeenCalledExactlyOnceWith(true);
-  events.emit("resume");
-  for (const card of ["restart"] as const) {
-    scene.act(card);
-    expect(lifecycle.cover).toHaveBeenLastCalledWith("startCard", true);
-    expect(lifecycle.cover.mock.invocationCallOrder.at(-1)).toBeLessThan(
-      launch.mock.invocationCallOrder.at(-1)!,
-    );
-    scene.restartClosed();
-    expect(lifecycle.cover).toHaveBeenLastCalledWith("startCard", false);
-  }
-  expect(lifecycle.shown).toHaveBeenCalledOnce();
+  scene.act("restart");
+  expect(launch).toHaveBeenCalledExactlyOnceWith("restart", { opener: "start" });
+  drawFocus.mockClear();
+  scene.restartClosed();
+  expect(drawFocus).toHaveBeenCalledOnce();
   events.emit("shutdown");
-  expect(lifecycle.shown).toHaveBeenLastCalledWith(false);
-  scene.create();
-  expect(lifecycle.shown).toHaveBeenLastCalledWith(true);
-  events.emit("shutdown");
-  expect(lifecycle.shown).toHaveBeenLastCalledWith(false);
 });
 
 it("keeps only the static background on the Start canvas", () => {

@@ -29,21 +29,21 @@ function paintBar(element: HTMLElement, style: ProgressBarStyle): void {
 }
 
 // The bar shows only loads the player waits for, each through its own entry point: boot (the
-// pre-script startupLoading, then BootScene's file load, which its loader watch measures as
-// waited, then beginStartupChecks) and entering a zone (beginStageLoading) in the foreground; the
-// first visit's precache (beginPrecache) and a forced update (beginRequiredUpdate) in the
-// background, which shows while no foreground load runs (the kit's createLayeredProgress).
-// Loads in the background during play, such as an update's install or a loader retry round,
-// have no entry point and never show it.
+// pre-script startupLoading, which a first install's progress drives, then BootScene's file load,
+// which its loader watch measures as waited, then beginStartupChecks; launch.ts joins the first
+// two into one value) and entering a zone (beginStageLoading) in the foreground; a forced update
+// (beginRequiredUpdate) in the background, which shows while no foreground load runs (the kit's
+// createLayeredProgress). Loads in the background during play, such as an update's staging or a
+// loader retry round, have no entry point and never show it.
 export const loadingProgress = createProgressState();
 export const backgroundProgress = createProgressState();
-// The page's own load before Phaser's loader runs: unknown work, which the boot's waited file
-// load replaces as it starts.
+// The page's own load before Phaser's loader runs: unknown work, measured while a first install
+// runs, which the boot's waited file load replaces as it starts.
 export const startupLoading = loadingProgress.begin();
 let refreshStyle: (stage: string) => void = () => undefined;
 
 // The startup load's second phase, after the measured file load: the startup checks (reading the
-// save and preparing the HTML UI, never offline play) are unknown work of their own, which cut
+// save and preparing the HTML UI, never an install) are unknown work of their own, which cut
 // the file load's full hold short.
 export function beginStartupChecks(): ProgressHandle {
   return loadingProgress.begin();
@@ -57,11 +57,6 @@ export function beginStageLoading(stage: string): ProgressHandle {
 // A forced update for a save a newer version wrote: unknown work in the background, shown once
 // the boot's startup checks have ended.
 export function beginRequiredUpdate(): ProgressHandle {
-  return backgroundProgress.begin();
-}
-
-// The first visit's precache: unknown work in the background.
-export function beginPrecache(): ProgressHandle {
   return backgroundProgress.begin();
 }
 

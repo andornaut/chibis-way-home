@@ -3,8 +3,7 @@ import { progressBarPixelProperties } from "@andornaut/game-kit/runtime/web/prog
 import { describe, expect, it, vi } from "vitest";
 
 import { LOADING_CSS, loadingHtml } from "./html.ts";
-import { afterLoadingPaint, backgroundProgress, loadingProgress } from "./progress.ts";
-import { trackOfflineActivity } from "./serviceWorker.ts";
+import { afterLoadingPaint } from "./progress.ts";
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style.ts";
 
 describe("loading lifecycle", () => {
@@ -25,23 +24,6 @@ describe("loading lifecycle", () => {
     cancel();
     frames.shift()!(48);
     expect(work).toHaveBeenCalledOnce();
-  });
-  it("maps only the first visit's precache to pending, without changing foreground loading", () => {
-    const seen: unknown[] = [];
-    const foreground: unknown[] = [];
-    const off = backgroundProgress.subscribe((state) => seen.push(state));
-    const offForeground = loadingProgress.subscribe((state) => foreground.push(state));
-    const current = loadingProgress.begin();
-    current.progress(0.4);
-    const offlineActivity = trackOfflineActivity();
-    for (const activity of ["idle", "precaching", "idle", "updating", "idle"] as const) {
-      offlineActivity(activity);
-      expect(seen.at(-1)).toEqual({ active: activity === "precaching", value: undefined });
-      expect(foreground.at(-1)).toEqual({ active: true, value: 0.4 });
-    }
-    current.finish();
-    off();
-    offForeground();
   });
   it("renders the kit's pending bar before any script, clipped to the track, with the script's timing", () => {
     const html = loadingHtml('<head></head><div id="game">%GAME_LOADING%</div>');

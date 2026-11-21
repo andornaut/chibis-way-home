@@ -7,6 +7,7 @@ import { SPEAKERS } from "../data/dialogues.ts";
 import { TEXT } from "../data/text.ts";
 import type { AchievementId, SkillId } from "../data/types/index.ts";
 import type { QueuedTip } from "../progress/index.ts";
+import { networkPlay } from "../pwa/index.ts";
 import {
   createSkillActionHelp,
   createStatusPanel,
@@ -78,16 +79,24 @@ export function tipParagraph(
   return { glyphs, paragraph: { colour: speaker.colour, name, side: speaker.side, text: nodes } };
 }
 
-// A notice the panel shows: an unlock, or a first-time tip.
+// The network play notice as a paragraph without a name tab or portrait frame: its one line.
+export function networkPlayParagraph(): PanelParagraph {
+  return { name: null, side: ACHIEVEMENT_NOTICE_SIDE, text: TEXT.loading.networkPlay };
+}
+
+// A notice the panel shows: an unlock, a first-time tip, or that the game plays from the network.
 type Notice =
   | { readonly id: AchievementId; readonly kind: "achievement" }
+  | { readonly kind: "networkPlay" }
   | { readonly kind: "tip"; readonly tip: QueuedTip };
 
 // Unlock notices, one at a time in the shared dialogue panel for ACHIEVEMENT_NOTICE_SECONDS, with no
 // buttons and no modal input scope, then each triggered tip for as long, in trigger order, behind
-// every queued unlock. Launched once at boot, it runs above play and below every modal card, and
-// never pauses play. A notice starts only while nothing defers it (noticeBlocked, and for a tip
-// tipBlocked, so it shows only in play); while one shows, barks wait. Something that defers
+// every queued unlock. When the device could not install the game (networkPlay), its one-line
+// notice shows once for as long, before any other, on the first screen that does not defer it,
+// such as the start screen. Launched once at boot, it runs above play and below every modal card,
+// and never pauses play. A notice starts only while nothing defers it (noticeBlocked, and for a
+// tip tipBlocked, so it shows only in play); while one shows, barks wait. Something that defers
 // notices hides the one showing and holds its time until it ends. A fresh tap on the panel
 // dismisses only the notice. A notice shows, and its time starts, once its icons' cuts are ready
 // (or have failed), so it never shows an empty portrait frame or glyph.
@@ -144,6 +153,10 @@ export class AchievementNoticeScene extends Scene {
       }
       this.clear();
     }
+    if (!blocked && networkPlay.take()) {
+      this.show({ kind: "networkPlay" });
+      return;
+    }
     const id = nextAchievementNotice(() => blocked);
     if (id !== undefined) {
       this.show({ id, kind: "achievement" });
@@ -168,9 +181,17 @@ export class AchievementNoticeScene extends Scene {
     const { glyphs, paragraph } =
       notice.kind === "tip"
         ? tipParagraph(document, this.colours(), notice.tip)
-        : { glyphs: [], paragraph: achievementNoticeParagraph(notice.id) };
+        : {
+            glyphs: [],
+            paragraph:
+              notice.kind === "networkPlay"
+                ? networkPlayParagraph()
+                : achievementNoticeParagraph(notice.id),
+          };
     showPanelParagraph(panel, paragraph);
     panel.portrait.hidden = true;
+    // The network play notice has no portrait, so its frame hides too.
+    panel.portrait.parentElement!.hidden = notice.kind === "networkPlay";
     const shows = () => this.notice === notice && this.view === view;
     const portrait = this.portraitUrl(notice).then((url) => {
       if (shows() && url !== undefined) {
@@ -201,8 +222,12 @@ export class AchievementNoticeScene extends Scene {
     });
   }
 
-  // The notice's portrait: the unlocked achievement's icon, or the Tip speaker's portrait.
+  // The notice's portrait: the unlocked achievement's icon, the Tip speaker's portrait, or none
+  // for network play.
   private async portraitUrl(notice: Notice): Promise<string | undefined> {
+    if (notice.kind === "networkPlay") {
+      return undefined;
+    }
     if (notice.kind === "achievement") {
       return artFrameUrl(this, ICON, achievementIconFrame(this, true, notice.id));
     }
