@@ -418,15 +418,32 @@ it("starts the cheat session for a cheat and never for a tool", async () => {
   expect([saves.startCheatSession.mock.calls.length, invulnerabilityEnabled()]).toEqual([1, true]);
 });
 
-it("resets the save only after its confirmation, then returns to the start screen", async () => {
-  const { control, owner } = await openCard("pause");
+it("keeps Cheats painted and inactive under Reset save until Cancel or confirmed reset", async () => {
+  const { control, dialog, key, owner } = await openCard("pause");
   control(DEV_TEXT.openCheats).click();
-  control(DEV_TEXT.resetSave.action).click();
+  expect(dialog.hidden).toBe(true);
+  const reset = control(DEV_TEXT.resetSave.action);
+  const cheats = reset.closest<HTMLElement>("[role=dialog]")!;
+  reset.focus();
+  reset.click();
   const confirm = document.querySelector<HTMLElement>("[role=alertdialog]")!;
+  const cancel = control(DEV_TEXT.resetSave.confirm.cancel);
+  expect(cheats.closest("[hidden]")).toBeNull();
+  expect(cheats.closest("[inert][data-ui-dimmed]")).not.toBeNull();
+  expect(confirm.closest("[inert], [data-ui-dimmed]")).toBeNull();
+  expect(document.activeElement).toBe(cancel);
+  for (const shiftKey of [false, false, true, true]) {
+    key("Tab", { shiftKey });
+    expect(confirm.contains(document.activeElement)).toBe(true);
+  }
+  control(DEV_TEXT.showTipsAgain).click();
+  expect(saves.clearSeenTips).not.toHaveBeenCalled();
   expect([confirm.hidden, saves.resetSave.mock.calls.length]).toEqual([false, 0]);
-  control(DEV_TEXT.resetSave.confirm.cancel).click();
+  cancel.click();
   expect([confirm.hidden, saves.resetSave.mock.calls.length]).toEqual([true, 0]);
-  control(DEV_TEXT.resetSave.action).click();
+  expect(cheats.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();
+  expect(document.activeElement).toBe(reset);
+  reset.click();
   control(DEV_TEXT.resetSave.confirm.accept).click();
   await settle();
   expect({

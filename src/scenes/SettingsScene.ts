@@ -454,8 +454,7 @@ export class SettingsScene extends Scene {
     }
   }
 
-  // Shows which, the Cheats card or its confirmation over the settings card, or neither; each
-  // card shown is a modal on the one under it, and the one it covers is hidden.
+  // Cheats replaces Settings. Its Reset save confirmation opens above the visible Cheats card.
   private showCheatsCard(which: "closed" | "confirm" | "open"): void {
     const card = this.card;
     const cheats = this.cheats;
@@ -486,7 +485,7 @@ export class SettingsScene extends Scene {
       cheats.status.textContent = "";
     }
     card.dialog.hidden = true;
-    cheats.dialog.hidden = which === "confirm";
+    cheats.dialog.hidden = false;
     this.render();
     const modals = sceneDomUi(this)?.modals;
     if (which === "open" && from === "closed") {
