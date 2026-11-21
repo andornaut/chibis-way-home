@@ -113,11 +113,10 @@ export async function buildAtlas(
   const layout = layoutAtlas(
     sources.map(({ image: { height, width }, key }) => ({ height, key, width })),
   );
-  const pages = layout.pages.map(({ height, width }, page) => ({
+  const pages = layout.pages.map(({ height }, page) => ({
     blits: [] as AtlasBlit[],
     height,
     metadata: page,
-    width,
   }));
   const textures = layout.placements.map(({ key, page, x, y }): AtlasTexture => {
     const source = sources.find((candidate) => candidate.key === key);
@@ -143,7 +142,14 @@ export async function buildAtlas(
       extrude: EXTRUDE,
       read: readArt,
     },
-    pages,
+    pages.map((page) => ({
+      ...page,
+      // Keep the rightmost extrusion and omit the unused columns beyond it.
+      width: page.blits.reduce(
+        (right, { at, from }) => Math.max(right, at.x + from.width + EXTRUDE),
+        0,
+      ),
+    })),
   );
   return { pages: built.map(({ bytes, image }) => ({ bytes, image })), textures };
 }

@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { ART_MANIFEST_FILE, ART_PATH, type ArtManifest, BASE_FRAME } from "../../assets/index.ts";
 import { TILE } from "../../data/screen.ts";
 import { buildAtlas } from "./atlasBuild.ts";
+import { EXTRUDE } from "./atlasLayout.ts";
 
 const ART_DIR = join(import.meta.dirname, "../../../public", ART_PATH);
 const readArt = async (path: string) => new Uint8Array(await readFile(join(ART_DIR, path)));
@@ -44,6 +45,16 @@ function pixels(image: RgbaImage, x: number, y: number, width: number, height: n
 }
 
 describe("buildAtlas", () => {
+  it("ends a page immediately after the rightmost extrusion", async () => {
+    const backdrop = ART.backdrops.find(({ key }) => key === "street-city-far")!;
+    const source = decodePng(await readArt(backdrop.png));
+    const { pages } = await buildAtlas(
+      { encode: () => new Uint8Array(), readArt },
+      { ...ART, backdrops: [backdrop], sprites: [], tilesets: [] },
+    );
+    expect(pages.map(({ image }) => image.width)).toEqual([source.width + 2 * EXTRUDE]);
+  });
+
   it("packs each shared-art PNG once without standalone images or dedicated fonts", () => {
     expect(ATLAS.textures.map(({ key }) => key).sort()).toEqual([...PNGS.keys()].sort());
   });
