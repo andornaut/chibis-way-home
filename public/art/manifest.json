@@ -1108,6 +1108,15 @@
       "repeat": "x"
     },
     {
+      "key": "industrial-underwater-window",
+      "png": "backdrops/industrial-underwater-window.png",
+      "width": 48,
+      "height": 240,
+      "anchor": "bottom-left",
+      "y": 600,
+      "repeat": "x"
+    },
+    {
       "key": "neighbourhood-mid",
       "png": "backdrops/neighbourhood-mid.png",
       "width": 720,
