@@ -323,7 +323,7 @@ Apartment continues in this floor order:
 
 ### Industrial outskirts
 
-- **Appearance:** purple industrial scenery uses floor, crate and container art, shared moving platforms and red-edged inanimate hazards
+- **Appearance:** purple industrial scenery uses floor, crate and container art, shared moving platforms and red-edged inanimate hazards. The deep descent passes windows looking into water. The route through the tunnel stays dry and uses ordinary movement
 - **Encounters:** Freight terminal's one Pebble encounter is its designed arena. Pebble uses the shared detection and pursuit rules
 - **Layout:** Warehouse district, Loading yards and Freight terminal each have fixed openings and endings with randomized middle chunks, inside the zone's difficulty band. Connected descent and ascent chunks link surface and underground traversal inside the four-screen vertical capacity. Required climbs, moving ledges and red-edged hazards use shared layouts and primitives, with no required skill. Stage lengths, IDs and doors are defined by their recipes
 - **Progression:** clearing City boundary opens Warehouse district; clearing Warehouse district opens Loading yards, then Freight terminal. Unlocked stages remain replayable

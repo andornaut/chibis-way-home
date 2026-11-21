@@ -145,6 +145,10 @@ const INDUSTRIAL_BINDINGS: Readonly<Record<string, ElementBinding>> = {
     character: "apartment-wall-panel",
     skin: { art: "warehouse-wall", tileset: null },
   },
+  "underwater-tunnel-wall": {
+    character: "apartment-wall-panel",
+    skin: { art: "industrial-underwater-window", tileset: null },
+  },
 };
 
 const COMMON_BACKDROPS: ThemePlan["backdrops"] = CITY_THEME.backdrops;
@@ -1375,7 +1379,10 @@ const INDUSTRIAL_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ),
   "industrial-ascent": industrialStairs([80, 75, 70, 65, 60, 55, 50]),
   "industrial-deep-ascent": industrialStairs([100, 95, 90, 85, 80]),
-  "industrial-deep-descent": industrialStairs([80, 75, 80, 85, 90, 95, 100]),
+  "industrial-deep-descent": {
+    ...industrialStairs([80, 75, 80, 85, 90, 95, 100]),
+    scenery: tunnelWalls().map((band) => ({ ...band, role: "underwater-tunnel-wall" })),
+  },
   "industrial-descent": industrialStairs([50, 45, 50, 55, 60, 65, 70, 75, 80]),
 };
 
