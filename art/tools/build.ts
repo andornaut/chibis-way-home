@@ -59,6 +59,7 @@ const SETS = [
   "homecity",
   "icons",
   "industrial",
+  "industrialUnderwater",
   "largeWildlife",
   "logo",
   "map",
@@ -344,6 +345,7 @@ const OUTPUTS: Readonly<Record<ArtSet, readonly string[]>> = {
     ...sprites("freight-crane-cable", "freight-crane-container"),
     ...tilesets("tiles-industrial"),
   ],
+  industrialUnderwater: [pixel.MANIFEST, ...backdrops("industrial-underwater-window")],
   largeWildlife: [pixel.MANIFEST, ...sprites("background-deer-large")],
   logo: [
     pixel.MANIFEST,
