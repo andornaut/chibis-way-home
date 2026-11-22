@@ -264,7 +264,7 @@ it("keeps Menu covered through Update and retains the existing defer route befor
   await settle();
   tap(f.pause.button(TEXT.pause.home));
   expect(offer.defer).toHaveBeenCalledTimes(2);
-  expect(f.scenes.launch).toHaveBeenCalledWith("start");
+  expect(f.scenes.launch).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
   expect(f.paused.has("update")).toBe(false);
 });
 

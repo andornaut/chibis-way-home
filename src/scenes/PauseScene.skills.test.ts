@@ -484,7 +484,7 @@ it("restores every owned skill button after Back to title and the next zone", as
   await open();
   tap(button(TEXT.pause.home));
   expect(scenes.stop).toHaveBeenCalledWith("zone");
-  expect(scenes.launch).toHaveBeenCalledWith("start");
+  expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
   update();
   expect(SKILL_IDS.map((id) => skill(id).hidden)).toEqual([true, true, true]);
   status.zone = "running";
