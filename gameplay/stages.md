@@ -104,7 +104,7 @@ Apartment continues in this floor order:
 
 ## City boundary
 
-- **Encounter:** City boundary's one Archie encounter is its designed arena
+- **Encounter:** the deep-ascent connector immediately precedes City boundary's one authored Archie arena
 - **Layout:** the third Blue cityscape stage is randomized from a fixed start, seeded middle chunks and a fixed finish. It uses the street backgrounds and sidewalk terrain, with steps, required climbing routes, moving ledges, red ground strips, red-edged gaps and low-ceiling short-jump challenges inside the zone's difficulty band. The finish has sparse facades and an open outward view
 - **Replay:** entering from the map draws a fresh assembly seed; retries keep that layout. Completing Streets unlocks this stage; unlocked stages remain available for replay
 - **Rooms:** one door in the fixed start leads to its assigned skill gift room
