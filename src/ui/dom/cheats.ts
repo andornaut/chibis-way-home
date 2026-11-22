@@ -47,6 +47,7 @@ export interface CheatsCardWords {
 export interface CheatsCardView {
   readonly actions: Readonly<Record<CheatAction, HTMLButtonElement>>;
   readonly close: HTMLButtonElement;
+  readonly closeX: HTMLButtonElement;
   readonly confirm: {
     readonly accept: HTMLButtonElement;
     readonly cancel: HTMLButtonElement;
@@ -81,14 +82,16 @@ export function createCheatsCard(
     created.textContent = value;
     return created;
   };
-  const dialog = element("section", "ui-card ui-frame cheats-card");
+  const dialog = element("section", "ui-card ui-frame ui-card-closeable cheats-card");
   setCardWidth("large", dialog);
   dialog.id = id;
   dialog.hidden = true;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-title`);
+  const header = element("div", "ui-card-header");
   const heading = text("h2", "ui-card-title", words.title);
   heading.id = `${id}-title`;
+  header.append(heading);
   const body = element("div", "cheats-body ui-card-scroll");
   // A row's button named by its label, with its value at its right end.
   const row = (key: string, label: string, value: HTMLElement, into: HTMLElement) => {
@@ -166,7 +169,8 @@ export function createCheatsCard(
   actionRow.dataset.uiAxis = "row";
   const close = createTextButtonElement(document, words.close, true);
   actionRow.append(close);
-  dialog.append(heading, body, status, actionRow);
+  const closeX = closeButton(document, words.close);
+  dialog.append(header, body, status, actionRow, closeX);
 
   const confirm = element("section", "ui-card ui-frame ui-card-closeable cheats-confirm");
   setCardWidth("small", confirm);
@@ -191,6 +195,7 @@ export function createCheatsCard(
   return {
     actions: { load, resetSave, showTipsAgain, unlockAllPowerUps, unlockAllZones },
     close,
+    closeX,
     confirm: { accept, cancel, close: confirmClose, dialog: confirm },
     dialog,
     pickers,

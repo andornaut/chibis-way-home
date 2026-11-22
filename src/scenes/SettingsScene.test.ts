@@ -438,6 +438,9 @@ it("keeps Settings and Cheats visible under nested cards and restores focus on C
   motion.click();
   expect(motion.getAttribute("aria-checked")).toBe(motionState);
   const closeCheats = cheats.querySelector<HTMLButtonElement>(".ui-card-actions button")!;
+  const closeCheatsX = cheats.querySelector<HTMLButtonElement>(".ui-close-button")!;
+  expect([...cheats.querySelectorAll(".ui-card-actions button")]).toEqual([closeCheats]);
+  expect(closeCheatsX.getAttribute("aria-label")).toBe(DEV_TEXT.cheats.close);
   closeCheats.focus();
   expect(document.activeElement).toBe(closeCheats);
   reset.click();
@@ -459,6 +462,10 @@ it("keeps Settings and Cheats visible under nested cards and restores focus on C
   expect(cheats.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();
   expect(document.activeElement).toBe(reset);
   expectCovered(dialog);
+  closeCheatsX.click();
+  expect(cheats.hidden).toBe(true);
+  expect(document.activeElement).toBe(openCheats);
+  openCheats.click();
   expect(layer.modals.back()).toBe(true);
   expect(cheats.hidden).toBe(true);
   expect(dialog.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();

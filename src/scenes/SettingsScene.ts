@@ -285,7 +285,11 @@ export class SettingsScene extends Scene {
               element,
             }),
           ),
-          { activate: () => this.back(), available: cheatsShown, element: cheats.close },
+          ...[cheats.close, cheats.closeX].map((element) => ({
+            activate: () => this.back(),
+            available: cheatsShown,
+            element,
+          })),
           {
             activate: () => this.cheat(() => this.confirmReset()),
             available: () => this.cheatsCard === "confirm" && !this.writing,
