@@ -25,15 +25,13 @@ const { body } = FONT_METRICS;
 const STAT_CAP_TOP = capTop({ lineHeight: CARD_CONTENT.lineHeight, size: body.size });
 const STAT_BELOW_BASELINE =
   CARD_CONTENT.lineHeight - STAT_CAP_TOP - UI_FONT_FACE.capHeight * body.size;
-const continueAt = CUTSCENE_CONTINUE;
 
 // The layout properties stageSummary.css reads, in base px, written on the summary's view with
 // its rows' gaps (stageSummaryGaps).
 export const STAGE_SUMMARY_LAYOUT: LayoutValues = {
   "--run-stats-divider": slice(DEATH_CARD.dividerWidth),
-  "--summary-continue-hit": continueAt.button.x - continueAt.hit.x,
-  "--summary-continue-width": continueAt.button.width,
-  "--summary-continue-y": continueAt.hit.y,
+  "--summary-continue-hit": CUTSCENE_CONTINUE.hit,
+  "--summary-continue-y": CUTSCENE_CONTINUE.y,
   "--summary-heading-line": FONT_METRICS.compactMainHeading.lineHeight,
   "--summary-heading-size": FONT_METRICS.compactMainHeading.size,
   "--summary-padding": CARD_CONTENT.padding,

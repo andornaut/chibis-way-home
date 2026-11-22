@@ -26,7 +26,7 @@ it.each([false, true])(
         .get("start")!
         .querySelector(".ui-text-button-face")!
         .hasAttribute("data-ui-authored-size"),
-    ).toBe(true);
+    ).toBe(false);
     expect([...view.buttons.keys()]).toEqual(["start", ...(saved ? ["restart"] : []), "exit"]);
     expect(view.buttons.get("start")!.textContent).toBe(
       saved ? TEXT.start.continue : TEXT.start.start,
@@ -39,6 +39,12 @@ it.each([false, true])(
     expect(view.root.getAttribute("role")).toBe("region");
     expect(view.root.getAttribute("aria-label")).toBe(TEXT.start.name);
     expect(view.logo.alt).toBe(TEXT.start.logo);
+    const start = view.buttons.get("start")!;
+    expect(start.classList.contains("ui-anchored-action")).toBe(true);
+    expect(Number(start.parentElement!.style.getPropertyValue("--ui-action-y"))).toBe(
+      layout.actionY,
+    );
+    expect(view.buttons.has("restart")).toBe(saved);
     const icon = view.buttons.get("exit")!.querySelector("svg.navigation-disc")!;
     expect(icon.getAttribute("aria-hidden")).toBe("true");
     expect(icon.getAttribute("viewBox")).toBe("0 0 35 35");

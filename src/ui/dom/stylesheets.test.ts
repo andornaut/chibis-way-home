@@ -119,6 +119,15 @@ it("spaces neighbouring buttons by the button and stack gaps", () => {
   );
 });
 
+it("centres each standalone action row and keeps its targets clear of the neighbouring face", () => {
+  const ui = SHEETS.find(([name]) => name === "ui.css")![1];
+  expect(ui).toMatch(/\.ui-action-row \{[^}]*display: flex;[^}]*justify-content: center;/u);
+  expect(ui).toMatch(/\.ui-anchored-action \{[^}]*width: max-content;/u);
+  expect(ui).toContain(
+    ".ui-action-row:has(> .ui-anchored-action:not([hidden]) ~ .ui-anchored-action:not([hidden]))",
+  );
+});
+
 it("keeps Achievements pagination centred with a separate right-aligned return slot", () => {
   const css = SHEETS.find(([name]) => name === "achievements.css")![1];
   expect(css).toContain("grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);");

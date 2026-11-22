@@ -12,7 +12,6 @@ export const OPENING_PROPERTIES: LayoutValues = {
   "--opening-footer-height": TEXT_BUTTON.height + 2 * CARD_CONTENT.padding,
   "--opening-mark-gap": PLAY_MARK.gap,
   "--opening-mark-height": PLAY_MARK.height,
-  "--opening-mark-lead": PLAY_MARK.width + PLAY_MARK.gap,
   "--opening-mark-width": PLAY_MARK.width,
 };
 
@@ -105,7 +104,6 @@ export function createOpeningView(document: Document, words: OpeningWords): Open
                                 button.querySelector(".ui-text-button-label")!.prepend(mark);
                               }
                             },
-                            sizing: "authored",
                           },
                         })),
                       },

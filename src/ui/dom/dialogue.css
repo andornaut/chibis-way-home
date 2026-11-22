@@ -173,13 +173,8 @@
   font-weight: 400;
 }
 
-/* Skip and Continue, equal faces --dialogue-button-height tall and at least --dialogue-button-width
-   wide, the kit's button gap apart, their faces' row the footer's gap below the panel with its
-   right edge on the panel's; each button's box is its press area. */
+/* The content-sized actions keep their row below the panel and aligned to its right edge. */
 .ui-card-actions.dialogue-footer {
-  --button-height: var(--dialogue-button-height);
-  --hit: calc(var(--ui-unit) * var(--dialogue-footer-hit) * 1px);
-
   position: absolute;
   top: calc(var(--ui-unit) * var(--dialogue-footer-top) * 1px - var(--hit));
   right: calc(var(--ui-unit) * var(--dialogue-footer-right) * 1px - var(--hit));
@@ -193,26 +188,12 @@
   bottom: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px - var(--hit));
 }
 
-.dialogue-footer .ui-text-button-face {
-  min-width: calc(var(--ui-unit) * var(--dialogue-button-width) * 1px);
-}
-
-/* Skip on the left and Continue on the right, though Continue leads the focus order: each press
-   area reaches the full margin on its outer side and half the gap on its inner. */
-.dialogue-footer > .ui-text-button {
-  grid-row: 1;
-}
-
-.dialogue-footer > [data-control="skip"] {
-  grid-column: 1;
-  padding-right: var(--half-gap);
-  padding-left: var(--hit);
-}
-
-.dialogue-footer > [data-control="continue"] {
-  grid-column: 2;
-  padding-right: var(--hit);
-  padding-left: var(--half-gap);
+.ui-card-actions.dialogue-footer:not(
+    :has(> .ui-text-button:not([hidden]) ~ .ui-text-button:not([hidden]))
+  ) {
+  right: auto;
+  left: 50%;
+  translate: -50% 0;
 }
 
 /* A bark's or notice's status region, which takes no presses. */

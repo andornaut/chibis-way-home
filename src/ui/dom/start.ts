@@ -55,7 +55,8 @@ export function createStart(
   root.setAttribute("role", "region");
   root.setAttribute("aria-label", words.name);
   const view = document.createElement("div");
-  view.className = "ui-view start-view";
+  view.className = "ui-view start-view ui-action-row";
+  writeLayoutProperties({ "--ui-action-y": layout.actionY }, view);
   const nav = document.createElement("div");
   nav.className = "start-nav ui-frame";
   box(layout.nav, nav);
@@ -76,29 +77,28 @@ export function createStart(
   // DOM order is the established keyboard order, independent of the visual row order.
   const order = ["start", "restart", "exit"] as const;
   for (const control of order) {
-    const at = layout[control];
-    if (at === undefined) {
-      continue;
-    }
-    if ("button" in at) {
+    if (control !== "exit") {
+      if (control === "restart" && !layout.saved) {
+        continue;
+      }
       children.push({
         component: "Button",
         key: control,
         kind: "component",
         props: {
           control,
-          label:
-            control === "start" && layout.restart !== undefined ? words.continue : words[control],
+          label: control === "start" && layout.saved ? words.continue : words[control],
           primary: control === "start",
           ref: (button) => {
-            box(at.hit, button);
-            const face = button.querySelector<HTMLElement>(".ui-text-button-face")!;
-            box({ ...at.button, x: at.button.x - at.hit.x, y: at.button.y - at.hit.y }, face);
+            button.classList.add("ui-anchored-action");
             buttons.set(control, button);
           },
-          sizing: "authored",
         },
       });
+      continue;
+    }
+    const at = layout.exit;
+    if (at === undefined) {
       continue;
     }
     const icon = createNavigationDisc(document, colours, "rest", "exit");

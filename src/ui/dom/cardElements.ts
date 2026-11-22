@@ -4,8 +4,8 @@ import { setTextButtonRole } from "./buttonLayout.ts";
 
 // A modal card in the HTML UI (ui.css .ui-card): a scene's view holding a full-area backdrop
 // that takes outside taps, and the card on the play view, in art's ui-settings-card frame, at its
-// width family's width, with its title, an optional line of text and a row of equal text buttons
-// in art's ui-button (or ui-button-primary), and an optional close X in its top-right corner.
+// width family's width, with its title, optional text and an action row or stack. Its optional
+// close X stays in the top-right corner.
 
 export interface CardWords<Key extends string> {
   // Each button's key and label, in the order the keyboard's focus moves through them, and

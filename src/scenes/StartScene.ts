@@ -231,7 +231,7 @@ export class StartScene extends Scene implements RestartOpener {
   private targets(): Control[] {
     return [
       "start",
-      ...(this.layout.restart === undefined ? [] : ["restart" as const]),
+      ...(this.layout.saved ? ["restart" as const] : []),
       ...(this.layout.exit === undefined ? [] : ["exit" as const]),
     ];
   }

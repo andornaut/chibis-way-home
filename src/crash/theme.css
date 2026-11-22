@@ -60,6 +60,7 @@
 .crash-button {
   font-family: "Chibi crash title", system-ui, sans-serif;
   min-height: 48px;
+  min-width: 0;
   padding: 0 16px 4px;
   border: 2px solid var(--crash-ink);
   color: var(--crash-text);

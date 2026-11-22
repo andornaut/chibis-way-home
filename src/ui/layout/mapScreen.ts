@@ -1,10 +1,8 @@
-import { MAP_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
-import { SCREEN } from "../../data/screen.ts";
+import { MAP_LAYOUT } from "../../data/layout.ts";
 import type { Point, Rect, Size } from "../../data/types/index.ts";
 import type { PathStroke } from "../map/mapPath.ts";
 import { FONT_SCALE } from "./fontRoles.ts";
 import { hitAround } from "./hitAreas.ts";
-import { labelledButton } from "./labelledButton.ts";
 import { PAGE_TITLE } from "./pageTitle.ts";
 
 // Art's paper map (art/README.md, Map), in base pixels (MAP_LAYOUT). Offsets are from a node's
@@ -14,9 +12,6 @@ import { PAGE_TITLE } from "./pageTitle.ts";
 // primary right. Labels use shared placement and press displacement without play marks; each
 // press area grows by hitAreas.ts's rule. A tap on a zone marker lands within nodeHit, the zone
 // marker's frame (ZONE_MARKER square) grown the same way.
-const { action } = MAP_LAYOUT;
-const actionButton = (x: number) =>
-  labelledButton({ height: TEXT_BUTTON.height, width: action.width, x, y: action.y });
 const ZONE_MARKER = MAP_LAYOUT.zoneMarker;
 const NODE_HIT = hitAround({
   height: ZONE_MARKER,
@@ -26,9 +21,8 @@ const NODE_HIT = hitAround({
 });
 
 export const MAP_SCREEN = {
+  actionY: MAP_LAYOUT.actionY,
   bird: MAP_LAYOUT.bird,
-  continue: actionButton(SCREEN.width / 2 + TEXT_BUTTON.gap / 2),
-  home: actionButton(SCREEN.width / 2 - action.width - TEXT_BUTTON.gap / 2),
   icon: MAP_LAYOUT.icon,
   marker: MAP_LAYOUT.marker,
   nodeHit: { height: NODE_HIT.height, width: NODE_HIT.width } satisfies Size,

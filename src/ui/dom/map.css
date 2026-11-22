@@ -1,7 +1,6 @@
 /* Map geometry stays in base pixels on the fitted play view. */
 .map-title,
 .map-label,
-.map-action,
 .map-destination,
 .map-marker {
   position: absolute;
@@ -19,7 +18,6 @@
 }
 
 .map-label,
-.map-action,
 .map-destination,
 .map-marker {
   width: calc(var(--ui-unit) * var(--map-width) * 1px);
@@ -38,7 +36,6 @@
   pointer-events: none;
 }
 
-.map-view .map-action,
 .map-view .map-destination {
   padding: 0;
   border: 0;
@@ -46,13 +43,6 @@
   color: inherit;
   pointer-events: auto;
   touch-action: none;
-}
-
-.map-action .ui-text-button-face {
-  position: absolute;
-  left: calc(var(--ui-unit) * var(--map-face-x) * 1px);
-  top: calc(var(--ui-unit) * var(--map-face-y) * 1px);
-  width: calc(var(--ui-unit) * var(--map-face-width) * 1px);
 }
 
 .map-marker {

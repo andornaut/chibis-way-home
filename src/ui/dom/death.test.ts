@@ -64,7 +64,7 @@ function footerStyles(): HTMLStyleElement {
   return style;
 }
 
-it("lays out the final retry footer as equal horizontal tracks with the primary on the right", () => {
+it("lays out the final retry footer as a wrapping content row with its primary on the right", () => {
   const style = footerStyles();
   const card = createDeathCard(document, {
     actions: [
@@ -84,26 +84,19 @@ it("lays out the final retry footer as equal horizontal tracks with the primary 
     expect(actions.classList.contains("ui-control-group")).toBe(true);
     expect(actions.dataset.uiAxis).toBe("row");
     const group = getComputedStyle(actions);
-    expect(group.display).toBe("inline-grid");
-    expect(group.gridAutoFlow).toBe("column");
-    expect(group.gridAutoColumns).toBe("1fr");
+    expect(group.display).toBe("flex");
+    expect(group.flexWrap).toBe("wrap");
+    expect(group.justifyContent).toBe("center");
     expect([...actions.children]).toEqual([card.buttons.retry, card.buttons.home]);
     expect(card.buttons.retry.classList.contains("ui-text-button-primary")).toBe(true);
     expect(card.buttons.home.classList.contains("ui-text-button-primary")).toBe(false);
-    // Pair the actual primary-first DOM with the shared visual placement declarations.
-    const rules = [...uiCss.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*)\}/g)];
-    const placement = rules.filter(([, selector]) =>
-      selector!.trim().startsWith(".ui-card-actions:not(:where(.ui-button-stack))"),
-    );
-    expect(
-      placement.map(([, , declarations]) => [
-        declarations!.match(/grid-row:\s*(\d+)/)?.[1],
-        declarations!.match(/grid-column:\s*(\d+)/)?.[1],
-      ]),
-    ).toEqual([
-      ["1", "2"],
-      ["1", "1"],
-    ]);
+    expect(getComputedStyle(card.buttons.retry).order).toBe("1");
+    expect(getComputedStyle(card.buttons.home).order).not.toBe("1");
+    expect(getComputedStyle(card.buttons.retry).flex).toBe("0 0 auto");
+    expect(getComputedStyle(card.buttons.home).flex).toBe("0 0 auto");
+    card.buttons.home.hidden = true;
+    expect(getComputedStyle(card.buttons.home).display).toBe("none");
+    expect(getComputedStyle(actions).justifyContent).toBe("center");
     card.buttons.retry.focus();
     expect(document.activeElement).toBe(card.buttons.retry);
   } finally {
@@ -125,8 +118,9 @@ it("keeps dialogue rows and choice stacks on the same native group geometry", ()
   document.body.append(dialogue.root, choice.root);
   try {
     expect(dialogue.footer.dataset.uiAxis).toBe("row");
-    expect(getComputedStyle(dialogue.footer).display).toBe("inline-grid");
-    expect(getComputedStyle(dialogue.footer).gridAutoFlow).toBe("column");
+    expect(getComputedStyle(dialogue.footer).display).toBe("flex");
+    expect(getComputedStyle(dialogue.footer).flexWrap).toBe("wrap");
+    expect(getComputedStyle(dialogue.buttons.continue).order).toBe("1");
     expect([...dialogue.footer.children]).toEqual([
       dialogue.buttons.continue,
       dialogue.buttons.skip,

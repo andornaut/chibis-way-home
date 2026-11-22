@@ -131,7 +131,3 @@
   left: 50%;
   translate: -50% 0;
 }
-
-.stage-summary-footer .ui-text-button-face {
-  width: calc(var(--ui-unit) * var(--summary-continue-width) * 1px);
-}

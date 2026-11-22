@@ -13,7 +13,6 @@ import {
   DIALOGUE_SCREEN,
   dialogueSpeakerLayout,
 } from "../layout/dialogueScreen.ts";
-import { hitMargin } from "../layout/hitAreas.ts";
 import { textButton } from "./card.ts";
 import { mountUiLayout } from "./layoutTree.ts";
 
@@ -49,15 +48,10 @@ export const DIALOGUE_PANEL_LAYOUT: LayoutValues = {
   "--dialogue-y": box.y,
 };
 
-// The layout properties of a conversation's Skip and Continue, in base px: their faces' height
-// and least width, how far each press area reaches past its face, and where the faces' row sits:
-// its gap below the panel and its right edge's distance from the view's, or the departure's
-// inset from the view's bottom-right corner.
+// The action row's position below the panel and its inset on departure. Its controls use
+// the shared height, width and press outset.
 export const DIALOGUE_FOOTER_LAYOUT: LayoutValues = {
-  "--dialogue-button-height": footer.height,
-  "--dialogue-button-width": DIALOGUE_LAYOUT.buttonWidth,
   "--dialogue-departure-inset": DIALOGUE_LAYOUT.departureInset,
-  "--dialogue-footer-hit": hitMargin({ height: footer.height, width: footer.height, x: 0, y: 0 }),
   "--dialogue-footer-right": SCREEN.width - box.x - box.width,
   "--dialogue-footer-top": box.y + box.height + footer.gap,
 };

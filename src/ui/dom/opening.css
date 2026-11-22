@@ -1,4 +1,4 @@
-/* The footer keeps its fixed height and face anchors; loaded native fonts size its content. */
+/* The footer keeps its height and right anchor. Its actions fit their label and mark. */
 .opening-view {
   pointer-events: none;
 }
@@ -33,22 +33,15 @@
   margin: 0 calc(-1 * var(--hit)) 0 0;
 }
 
-.opening-actions .ui-text-button-face {
-  min-width: 0;
-}
-
-/* The mark joins the centred label without changing the intrinsic width of either face. */
+/* The play mark and label count as one content-sized face. */
 .opening-actions .ui-text-button-primary .ui-text-button-label {
-  position: relative;
-  left: calc(var(--ui-unit) * var(--opening-mark-lead) / 2 * 1px);
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--ui-unit) * var(--opening-mark-gap) * 1px);
 }
 
 .opening-actions .ui-text-button-label img {
-  position: absolute;
-  top: 50%;
-  right: calc(100% + var(--ui-unit) * var(--opening-mark-gap) * 1px);
   width: calc(var(--ui-unit) * var(--opening-mark-width) * 1px);
   height: calc(var(--ui-unit) * var(--opening-mark-height) * 1px);
   image-rendering: pixelated;
-  translate: 0 -50%;
 }

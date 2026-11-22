@@ -37,9 +37,6 @@ export const MAP_PROPERTIES = {
   "--map-bird-width": 0,
   "--map-bird-x": 0,
   "--map-bird-y": 0,
-  "--map-face-width": 0,
-  "--map-face-x": 0,
-  "--map-face-y": 0,
   "--map-height": 0,
   "--map-miniature-height": 0,
   "--map-miniature-image": "none",
@@ -78,7 +75,8 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
   writeLayoutProperties(MAP_PROPERTIES, view);
   root.setAttribute("aria-labelledby", "map-title");
   const content = document.createElement("div");
-  content.className = "map-content";
+  content.className = "map-content ui-action-row";
+  writeLayoutProperties({ "--ui-action-y": MAP_SCREEN.actionY }, content);
   const children: UiLayoutNode[] = [
     {
       component: "Text",
@@ -112,20 +110,9 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
         label: words[key],
         primary: key === "continue",
         ref: (button) => {
-          const { button: face, hit } = MAP_SCREEN[key];
-          button.classList.add("map-action");
-          box(hit, button);
-          writeLayoutProperties(
-            {
-              "--map-face-width": face.width,
-              "--map-face-x": face.x - hit.x,
-              "--map-face-y": face.y - hit.y,
-            },
-            button,
-          );
+          button.classList.add("ui-anchored-action");
           controls.set(key, button);
         },
-        sizing: "authored",
       },
     });
   }

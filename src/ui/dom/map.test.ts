@@ -35,7 +35,7 @@ it("names every destination and describes its availability without adding nodes 
     view.buttons.continue
       .querySelector(".ui-text-button-face")!
       .hasAttribute("data-ui-authored-size"),
-  ).toBe(true);
+  ).toBe(false);
   for (const [state, button] of view.destinations) {
     expect(button.getAttribute("aria-label")).toBe(`Zone ${state}`);
     expect(
@@ -77,9 +77,15 @@ it("keeps marker, label and footer press geometry independent", () => {
   const label = view.root.querySelector<HTMLElement>(".map-label")!;
   expect(Number(label.style.getPropertyValue("--map-width"))).toBe(MAP_LAYOUT.label.width);
   expect(label.closest("button")).toBeNull();
-  expect(Number(view.buttons.continue.style.getPropertyValue("--map-x"))).toBe(
-    MAP_SCREEN.continue.hit.x,
-  );
+  for (const button of [view.buttons.continue, view.buttons.home]) {
+    expect(Number(button.parentElement!.style.getPropertyValue("--ui-action-y"))).toBe(
+      MAP_SCREEN.actionY,
+    );
+    expect(button.classList.contains("ui-anchored-action")).toBe(true);
+    expect(
+      button.querySelector(".ui-text-button-face")?.hasAttribute("data-ui-authored-size"),
+    ).toBe(false);
+  }
 });
 
 it("keeps the fitted play view inside the full-layer scene root across refits", () => {

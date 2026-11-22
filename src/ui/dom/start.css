@@ -18,7 +18,7 @@
   --ui-frame-width: var(--ui-nav-bar-border);
 }
 
-.start-view button {
+.start-view .start-icon-button {
   margin: 0;
   padding: 0;
   border: 0;
@@ -30,10 +30,6 @@
 
 .start-view button:focus {
   outline: none;
-}
-
-.start-view .ui-text-button-face {
-  min-width: 0;
 }
 
 .start-icon-face,

@@ -26,7 +26,7 @@ it("keeps each caption as plain text and Continue first without freezing native 
       view.buttons.continue
         .querySelector(".ui-text-button-face")!
         .hasAttribute("data-ui-authored-size"),
-    ).toBe(true);
+    ).toBe(false);
     for (const beat of OPENING) {
       const text = TEXT.lines[beat.text]!;
       showOpeningCaption(text, view);
@@ -53,9 +53,7 @@ it("keeps the fixed footer and play mark geometry while the browser supplies lab
   expect(view.root.style.getPropertyValue("--opening-footer-height")).toBe(
     String(TEXT_BUTTON.height + 2 * CARD_CONTENT.padding),
   );
-  expect(view.root.style.getPropertyValue("--opening-mark-lead")).toBe(
-    String(PLAY_MARK.width + PLAY_MARK.gap),
-  );
+  expect(view.root.style.getPropertyValue("--opening-mark-width")).toBe(String(PLAY_MARK.width));
   expect(view.root.querySelector(".opening-footer")?.contains(view.caption)).toBe(true);
   expect(view.buttons.continue.querySelector(".ui-text-button-label")?.contains(view.mark)).toBe(
     true,

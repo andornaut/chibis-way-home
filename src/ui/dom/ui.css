@@ -123,8 +123,8 @@
   line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
 }
 
-/* Equal buttons side by side, as wide as the widest label needs, the kit's button gap between
-   faces. Each button's box is its press area, which reaches --button-hit past its face, and half
+/* Each row face fits its own label with the standard padding. The button's press area
+   reaches --button-hit past its face, and half
    the gap toward the next button, so adjacent press areas meet midway between the faces. */
 .ui-card-actions {
   --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
@@ -134,6 +134,54 @@
   --ui-control-gap: 0;
 
   margin: calc(-1 * var(--hit));
+}
+
+/* The other children of the scene layer keep their absolute positions. */
+.ui-action-row {
+  --ui-action-y: 0;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.ui-anchored-action {
+  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
+
+  position: relative;
+  top: calc(var(--ui-unit) * var(--ui-action-y) * 1px - var(--hit));
+  flex: none;
+  width: max-content;
+}
+
+.ui-anchored-action.ui-text-button-primary {
+  order: 1;
+}
+
+.ui-action-row:has(> .ui-anchored-action:not([hidden]) ~ .ui-anchored-action:not([hidden]))
+  > .ui-anchored-action.ui-text-button-primary {
+  padding-left: calc(var(--ui-button-gap) / 2);
+}
+
+.ui-action-row:has(> .ui-anchored-action:not([hidden]) ~ .ui-anchored-action:not([hidden]))
+  > .ui-anchored-action:not(.ui-text-button-primary) {
+  padding-right: calc(var(--ui-button-gap) / 2);
+}
+
+/* Rows wrap on small widths and keep a single visible action centred. */
+.ui-card-actions:not(.ui-button-stack) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: calc(100% + 2 * var(--hit));
+}
+
+.ui-card-actions:not(.ui-button-stack) > .ui-text-button {
+  flex: 0 0 auto;
+}
+
+.ui-card-actions:not(.ui-button-stack) > .ui-text-button-primary {
+  order: 1;
 }
 
 .ui-text-button[hidden] {
@@ -153,15 +201,13 @@
   cursor: pointer;
 }
 
-.ui-text-button:where(:not(.ui-button-stack > *)):not([hidden]):not(
-    :nth-child(1 of :not([hidden]))
-  ) {
+:where(.ui-card-actions:not(.ui-button-stack), .achievements-pager, .stage-select-pager)
+  > .ui-text-button:not([hidden]):not(:nth-child(1 of :not([hidden]))) {
   padding-left: var(--half-gap);
 }
 
-.ui-text-button:where(:not(.ui-button-stack > *)):not([hidden]):not(
-    :nth-last-child(1 of :not([hidden]))
-  ) {
+:where(.ui-card-actions:not(.ui-button-stack), .achievements-pager, .stage-select-pager)
+  > .ui-text-button:not([hidden]):not(:nth-last-child(1 of :not([hidden]))) {
   padding-right: var(--half-gap);
 }
 
@@ -176,8 +222,6 @@
   > .ui-text-button-primary:not([hidden]):nth-child(1 of :not([hidden])):nth-last-child(
     2 of :not([hidden])
   ) {
-  grid-row: 1;
-  grid-column: 2;
   padding-right: var(--hit);
   padding-left: var(--half-gap);
 }
@@ -188,8 +232,6 @@
       )
   )
   > .ui-text-button:not([hidden]):nth-child(2 of :not([hidden])) {
-  grid-row: 1;
-  grid-column: 1;
   padding-right: var(--half-gap);
   padding-left: var(--hit);
 }

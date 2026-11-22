@@ -227,12 +227,10 @@ export const CELEBRATION_LAYOUT = {
 // Dialogue
 
 export const DIALOGUE_LAYOUT = {
-  // The least width of Skip and Continue.
-  buttonWidth: 192,
   // The departure footer's buttons' drawn edge in from the view's right and bottom.
   departureInset: 16,
-  // Skip and Continue below the panel: their gap below the panel's bottom and their height.
-  footer: { gap: 4, height: 36 },
+  // The gap between the panel and the action row.
+  footer: { gap: 4 },
   // The speaker's name tab: clearance, which with HUD_EDGE and the disc's side puts its top at y 66,
   // 25.5 below the top row's centred discs (src/ui/layout/dialogueScreen.ts); its drawn edge in
   // from the panel's end opposite the portrait, its height, the name's clearance from its left
@@ -254,8 +252,8 @@ export const DIALOGUE_LAYOUT = {
 // Full screens
 
 export const MAP_LAYOUT = {
-  // Back to title and Continue: their width and top.
-  action: { width: 192, y: 300 },
+  // The top of the Map action row.
+  actionY: 300,
   // art: the bird's top-left from a marker's centre, by node kind.
   bird: {
     fork: { x: -13, y: -36 } satisfies Point,
@@ -307,6 +305,8 @@ export const STAGE_SUMMARY = {
 } as const;
 
 export const START_SCREEN = {
+  // The top of the Start action row.
+  actionY: 268,
   // The Exit button's horizontal centre and established target size.
   exitCentreX: 694,
   exitTarget: 54,
@@ -316,6 +316,4 @@ export const START_SCREEN = {
   logoTopGap: 12,
   // The nav bar's height.
   navHeight: 48,
-  // Start's drawn width, left edge and top.
-  start: { width: 192, x: 264, y: 268 },
 } as const;
