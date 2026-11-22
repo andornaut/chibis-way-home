@@ -16,3 +16,4 @@ Reference: [boss behaviour](../../gameplay/design.md#boss-behaviour), [boss enco
 | cwh-0052 | Hold one designed arena per encounter stage                  | [cwh-0052.md](../work/cwh-0052.md) |
 | cwh-0261 | Document the boss special moves in a catalogue table         | [cwh-0261.md](../work/cwh-0261.md) |
 | cwh-0263 | Gate boss charges by reach and room to move                  | [cwh-0263.md](../work/cwh-0263.md) |
+| cwh-0276 | Refactor boss AI for repeatable decisions and diagnosis      | [cwh-0276.md](../work/cwh-0276.md) |
