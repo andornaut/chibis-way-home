@@ -13,6 +13,7 @@ export const NOTICE_BLOCKING_SCENES: ReadonlySet<string> = new Set([
   "achievements",
   "boot",
   "celebration",
+  "cheats",
   "cutscene",
   "death",
   "dialogue",
