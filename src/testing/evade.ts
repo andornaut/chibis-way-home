@@ -138,7 +138,7 @@ export function observeProjectileFrame(
 export const EVADE_LIMIT_SECONDS = 60;
 // In at least `runs` of an arena's runs, the exit comes `seconds` or more later than the
 // boss-free walk: the same controller from the same start and seed with the boss removed.
-export const EVADE_SLOWED = { runs: 6, seconds: 3 } as const;
+export const EVADE_SLOWED = { runs: 6, seconds: 2 } as const;
 const DECIDE_SECONDS = 0.1;
 const THREAT_TILES = 6;
 // A dodge that has not seen its attack end stops after this long.
