@@ -14,13 +14,18 @@ it("keeps every unlocked stage in a legible look on both Apartment pages, dimmin
   const unlocked = destination.stages.slice(0, 4);
   const view = createStageSelect(
     document,
-    { close: "", locked: TEXT.map.stageLocked, pager: TEXT.map.stagePages, title: "" },
+    {
+      close: TEXT.map.stageClose,
+      locked: TEXT.map.stageLocked,
+      pager: TEXT.map.stagePages,
+      title: TEXT.map.zones[destination.id]!,
+    },
     STAGES_PER_PAGE,
-    destination.stages.map((id) => ({
+    destination.stages.map((id, index) => ({
       id,
       look: !unlocked.includes(id) ? "locked" : id === latest ? "primary" : "normal",
       name: TEXT.map.stages[id]!,
-      number: "",
+      number: TEXT.map.stageNumber.replace("{number}", String(index + 1)),
     })),
   );
   expect(

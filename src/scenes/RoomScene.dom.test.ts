@@ -26,7 +26,7 @@ vi.mock("./modalInput.ts", async (original) => ({
 }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: vi.fn(async (_scene, art, frame) => `blob:${art}:${frame}`),
-  mountSceneView: vi.fn(),
+  mountSceneView: vi.fn((_scene, root: HTMLElement) => document.body.append(root)),
   revealSceneView: vi.fn(),
   sceneDomUi: () => ({ element: document.createElement("div") }),
 }));
@@ -35,7 +35,10 @@ vi.mock("./scenePalette.ts", () => ({ paletteColour: () => 0 }));
 import { artFrameUrl, revealSceneView } from "./domUi.ts";
 import { RoomScene } from "./RoomScene.ts";
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => {
+  document.body.replaceChildren();
+  vi.clearAllMocks();
+});
 
 function fixture() {
   let resolve: (shown: boolean) => void = () => {};
@@ -44,8 +47,7 @@ function fixture() {
   });
   const cancel = vi.fn();
   vi.mocked(revealSceneView).mockImplementation((_scene, root) => {
-    root.hidden = true;
-    root.inert = true;
+    root.setAttribute("data-ui-unready", "");
     return { cancel, revealed };
   });
   const events = new EventEmitter();
@@ -62,7 +64,20 @@ function fixture() {
   });
   const scene = room as unknown as { createDomView(): void; view: RoomView };
   scene.createDomView();
-  return { cancel, controller, events, idle, portrait, resolve, scene };
+  return {
+    cancel,
+    controller,
+    events,
+    idle,
+    portrait,
+    resolve(shown: boolean) {
+      if (shown && !cancel.mock.calls.length) {
+        scene.view.root.removeAttribute("data-ui-unready");
+      }
+      resolve(shown);
+    },
+    scene,
+  };
 }
 
 it("hands off only after all idle frames decode, follows the native portrait frame and leaves once", async () => {
