@@ -23,7 +23,6 @@
   },
   "deploy": { "mode": "wrangler", "skipPattern": "(\\.md$|^art/|^gameplay/)" },
   "reports": {
-    "project": "Chibi",
     "scheduledTicks": true,
     "recipient": "game-coordinator",
     "workerParents": ["game-coordinator"]
