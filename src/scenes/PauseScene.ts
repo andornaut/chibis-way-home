@@ -638,11 +638,7 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
       return;
     }
     this.dim?.setVisible(open);
-    const opening = open && view.card.root.hidden;
     view.card.root.hidden = !open;
-    if (opening) {
-      view.actionsScroll.scrollTop = 0;
-    }
     if (open) {
       showPauseMenu(TEXT, this.mode, this.homeShown, view);
       this.closeModal ??= sceneDomUi(this)?.modals.open(
@@ -819,15 +815,7 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
         }),
       }),
     ];
-    const keep = (event: Event) => {
-      // Keep compatibility mouse suppression on pointerdown while allowing the rows to pan.
-      if (
-        event.type === "pointerdown" ||
-        !(event.target instanceof Node && view.actionsScroll.contains(event.target))
-      ) {
-        event.preventDefault();
-      }
-    };
+    const keep = (event: Event) => event.preventDefault();
     for (const root of [view.root, view.pauseButton]) {
       root.addEventListener("pointerdown", keep, true);
       root.addEventListener("touchstart", keep, { capture: true, passive: false });

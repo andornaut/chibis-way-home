@@ -158,6 +158,7 @@ it("opens the Start Menu with bottom-primary Close and returns focus without cha
   tap(f.pause.pauseButton);
   await settle();
   expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.menu.title);
+  expect(f.pause.dialog.hasAttribute("data-home-shown")).toBe(false);
   const rows = [...f.pause.dialog.querySelectorAll<HTMLButtonElement>(".ui-text-button")].filter(
     (button) => !button.hidden,
   );
@@ -231,8 +232,9 @@ it("opens the same Cheats from Pause and restores its invoker before resuming", 
   await settle();
   const cheats = f.pause.button(DEV_TEXT.openCheats);
   const resume = f.pause.button(TEXT.pause.resume);
-  expect(cheats.closest(".ui-card-scroll")?.parentElement).toBe(f.pause.dialog);
-  expect(resume.closest(".ui-card-scroll")).toBeNull();
+  expect(f.pause.dialog.hasAttribute("data-home-shown")).toBe(true);
+  expect(cheats.parentElement).toBe(resume.parentElement);
+  expect(f.pause.dialog.querySelector(".ui-card-scroll")).toBeNull();
   resume.focus();
   press(cheats, 1, { pointerType: "touch" }).lift();
   expect(f.scenes.launch).toHaveBeenCalledExactlyOnceWith("cheats", { opener: "pause" });

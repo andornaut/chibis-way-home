@@ -80,7 +80,6 @@ export interface SkillButtonView {
 }
 
 export interface PauseView {
-  readonly actionsScroll: HTMLElement;
   // The card in its own wrapper, hidden while the card is closed: the backdrop that takes taps
   // outside the card, and the dialog.
   readonly card: CardView<PauseCardButton> & { readonly close: HTMLButtonElement };
@@ -117,12 +116,6 @@ export function createPauseView(
     width: "medium",
   });
   const close = card.close!;
-  const actionsScroll = card.buttons.resume.parentElement!;
-  actionsScroll.classList.add("ui-card-scroll", "pause-actions-scroll");
-  const footer = element("div", "ui-card-actions ui-control-group ui-button-stack");
-  footer.dataset.uiAxis = "stack";
-  footer.append(card.buttons.resume);
-  actionsScroll.after(footer);
   card.dialog.classList.add("pause-card");
   // The close X wraps after the card actions in keyboard focus.
   card.dialog.prepend(close);
@@ -167,7 +160,6 @@ export function createPauseView(
   view.append(pauseButton, hud);
   root.append(card.root, view);
   return {
-    actionsScroll,
     card: { ...card, close },
     hud,
     pauseButton,
@@ -259,6 +251,7 @@ export function showPauseMenu(
     mode === "pause" ? words.pause.title : words.menu.title;
   view.card.buttons.resume.querySelector(".ui-text-button-label")!.textContent =
     mode === "pause" ? words.pause.resume : words.pause.close;
+  view.card.dialog.toggleAttribute("data-home-shown", homeShown);
   view.card.buttons.home.hidden = !homeShown;
   view.card.buttons.achievements.hidden = false;
 }

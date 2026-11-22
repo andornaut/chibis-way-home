@@ -2,10 +2,23 @@
    --ui-unit, from the layer's layout properties, PAUSE_LAYOUT on the view and each skill button's
    place. */
 
-/* The secondary actions scroll while the primary footer stays visible. Both groups keep
-   the same width when a scroll bar would otherwise reserve space. */
-.pause-actions-scroll {
-  scrollbar-width: none;
+/* The five-action card fits two equal columns above a centred primary. With Back to title
+   hidden, the four visible actions keep the shared single-column stack. */
+.pause-card[data-home-shown] > .ui-card-actions.ui-button-stack {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ui-stack-button-gap) var(--ui-button-gap);
+  margin: 0;
+}
+
+.pause-card[data-home-shown] > .ui-card-actions.ui-button-stack > .ui-text-button:not([hidden]) {
+  padding: 0;
+}
+
+.pause-card[data-home-shown] > .ui-card-actions.ui-button-stack > .ui-text-button-primary {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: max-content;
+  max-width: 100%;
 }
 
 /* The pause button and the skill HUD over the card's backdrop. They take presses only while they
