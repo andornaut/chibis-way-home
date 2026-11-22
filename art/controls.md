@@ -76,11 +76,11 @@ Footer action alignment follows the [shared product-consistency policy](https://
 
 Every ordinary modal takes its width family's width and fits its nine-slice frame's height to its actual content, with 16px clear padding around ordinary body content. A card's width is its family's width, or the view less the 16px screen margin on each side where that is narrower: `min(family, 720 - 32)` in the 720x360 view. The values are `CARD_WIDTH` and `CARD_SCREEN_MARGIN` in [layout data](../src/data/layout.ts). Fonts stay full size; the width is never a reason to shrink text.
 
-| Family | Width | Cards                                                                                                        |
-| ------ | ----- | ------------------------------------------------------------------------------------------------------------ |
-| Large  | 688   | Achievements, death/retry, room gift card, Settings, Skill details, Stage select                             |
-| Medium | 500   | Install steps, Pause and Menu                                                                                |
-| Small  | 400   | Celebration placeholder (centred, fixed 184 tall), connect status, required dialogue choice, Restart, Update |
+| Family | Width | Cards                                                                              |
+| ------ | ----- | ---------------------------------------------------------------------------------- |
+| Large  | 688   | Achievements, death/retry, room gift card, Settings, Skill details, Stage select   |
+| Medium | 500   | Install steps, Pause and Menu                                                      |
+| Small  | 400   | Celebration placeholder, connect status, required dialogue choice, Restart, Update |
 
 Each card is assigned the smallest family whose width fits its measured content and whose height fits the view less the 16px screen margin above and below. Keep height content-fitted, with no minimum height. The close face is a positioning exception: it sits exactly 6px from the panel's top and right edges. Measure visible text ink at its existing font size, plus icons, switches, the full positioned close press target and button faces. Include required gaps in the content layout before adding body padding. Do not reserve a fixed height, absent rows or empty footer space. Measure close-target reservations from the panel edge without adding outer padding twice.
 
