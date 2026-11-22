@@ -10,6 +10,7 @@ import {
   pauseChromeLayers,
   type PauseChromePose,
 } from "../chrome/pauseChrome.ts";
+import { createGameButton } from "../input/actionBinding.ts";
 import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
 import { SKILL_BUTTON } from "../layout/skillHud.ts";
 import { type CardView, type CardWords, createCard } from "./card.ts";
@@ -123,12 +124,14 @@ export function createPauseView(
   card.dialog.prepend(close);
   card.root.hidden = true;
   const view = element("div", "ui-view pause-hud-view");
-  const pauseButton = element("button", "pause-button");
+  const { element: pauseButton } = createGameButton(
+    document,
+    { className: "pause-button" },
+    { kind: "icon", name: words.button },
+  );
   writeLayoutProperties(PAUSE_LAYOUT, pauseButton);
-  pauseButton.type = "button";
   pauseButton.tabIndex = -1;
   pauseButton.hidden = true;
-  pauseButton.setAttribute("aria-label", words.button);
   showPauseDisc(colours, { expanded: false, tag: "rest" }, pauseButton);
   const hud = element("div", "skill-hud");
   hud.toggleAttribute(UI_COVERED, true);
@@ -143,15 +146,16 @@ export function createPauseView(
   }
   const skills = Object.fromEntries(
     SKILL_IDS.map((skill) => {
-      const button = element("button", "skill-button");
-      button.type = "button";
+      const disc = createSkillDisc(document, colours, { ready: false, selected: false }, undefined);
+      const { element: button } = createGameButton(
+        document,
+        { className: "skill-button" },
+        { icon: disc.element, kind: "icon", name: words.skills[skill] },
+      );
       button.tabIndex = -1;
       button.hidden = true;
       button.dataset.skill = skill;
-      button.setAttribute("aria-label", words.skills[skill]);
       button.setAttribute("aria-pressed", "false");
-      const disc = createSkillDisc(document, colours, { ready: false, selected: false }, undefined);
-      button.append(disc.element);
       return [skill, { button, disc }];
     }),
   ) as Record<SkillId, SkillButtonView>;

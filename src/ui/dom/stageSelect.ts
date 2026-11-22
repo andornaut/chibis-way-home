@@ -2,7 +2,25 @@ import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPrese
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { STAGE_SELECT_LAYOUT, STAGE_SELECT_WIDTH } from "../layout/stageSelectCard.ts";
-import { closeButton, setCardWidth, textButton } from "./card.ts";
+import { setTextButtonRole } from "./buttonLayout.ts";
+import { closeButton, setCardWidth } from "./card.ts";
+
+// The two page-bound controls retain their reasonless ARIA-disabled state and pointer refusal.
+function createStagePageButton(document: Document, label: string): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "ui-text-button";
+  const face = document.createElement("span");
+  face.className = "ui-text-button-face ui-frame ui-control-button";
+  const text = document.createElement("span");
+  text.className = "ui-text-button-label ui-control-label";
+  text.dataset.uiRefusalLabel = "";
+  text.textContent = label;
+  face.append(text);
+  button.append(face);
+  setTextButtonRole(false, button);
+  return button;
+}
 
 // The stage picker card in the HTML UI (stageSelect.css): the destination's name, the close X,
 // one row of stage faces per page, of which one shows, and on a paged card Previous, the page
@@ -98,12 +116,10 @@ export function createStageSelect(
     if (words.pager === undefined) {
       throw new Error("A paged stage picker requires pager labels");
     }
-    const pageButton = (label: string) => {
-      const button = textButton(document, label);
-      button.querySelector<HTMLElement>(".ui-text-button-label")!.dataset.uiRefusalLabel = "";
-      return button;
+    pager = {
+      next: createStagePageButton(document, words.pager.next),
+      previous: createStagePageButton(document, words.pager.previous),
     };
-    pager = { next: pageButton(words.pager.next), previous: pageButton(words.pager.previous) };
     count = element("p", "stage-select-count");
     count.setAttribute("aria-live", "polite");
     const row = element("div", "stage-select-pager");

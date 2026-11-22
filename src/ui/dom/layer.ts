@@ -18,6 +18,7 @@ import {
 } from "../../data/layout.ts";
 import type { Point } from "../../data/types/index.ts";
 import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
+import { disposeGameButtons } from "../input/actionBinding.ts";
 import { CARD_CLOSE } from "../layout/cardClose.ts";
 import { cardTitleReserve, cardWidth } from "../layout/contentCard.ts";
 import { FONT_METRICS } from "../layout/fontRoles.ts";
@@ -346,6 +347,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
       stopButtonFrames();
       modals.dispose();
       dim.dispose();
+      disposeGameButtons(element);
       element.remove();
     },
     element,
@@ -367,7 +369,10 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
         throw new Error("The global menu entry is already registered");
       }
       entryView.append(button);
-      return () => button.remove();
+      return () => {
+        disposeGameButtons(button);
+        button.remove();
+      };
     },
     modals,
     mount(order, view) {
@@ -379,6 +384,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
       element.insertBefore(view, after ?? globalEntry);
       refresh();
       return () => {
+        disposeGameButtons(view);
         view.remove();
         refresh();
       };

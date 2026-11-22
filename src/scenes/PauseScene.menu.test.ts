@@ -109,6 +109,7 @@ function menu(initial: string) {
     }),
   };
   const pause = createPauseScene(game, scenes);
+  pause.update();
   stop.push(() => {
     pause.events.emit("shutdown");
     owners.forEach((owner) => owner.events.emit("shutdown"));
@@ -320,6 +321,7 @@ it("refuses an old capture completion after the menu owner restarts into a new p
   tap(f.pause.pauseButton);
   f.pause.events.emit("shutdown");
   f.pause.scene.create();
+  f.pause.update();
   const entry = document.querySelector<HTMLButtonElement>(".pause-button")!;
   tap(entry);
   const card = document.querySelector<HTMLElement>(".pause-scene .ui-card-scene")!;

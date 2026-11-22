@@ -162,7 +162,9 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       this.menuGeneration++;
       unmountEntry?.();
     });
-    this.watchPresses(view);
+    // The delegated guard must see native clicks before the button renderer sees them.
+    const entryRoot = view.pauseButton.parentElement ?? view.pauseButton;
+    this.watchPresses(entryRoot, view);
     modalInput(this).subscribe(() => {
       this.cancelPresses();
       this.releasePauseButton();
@@ -711,7 +713,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.releasePauseButton();
   }
 
-  private watchPresses(view: PauseView): void {
+  private watchPresses(entryRoot: HTMLElement, view: PauseView): void {
     const document = view.root.ownerDocument;
     const input = modalInput(this);
     const entry = globalMenuInput(
@@ -742,7 +744,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       trackMenuActionBinding(
         this,
         bindSceneActions(
-          { preventDefault: true, target: view.pauseButton, view: view.pauseButton },
+          { preventDefault: true, target: view.pauseButton, view: entryRoot },
           input,
           {
             activate: () => {

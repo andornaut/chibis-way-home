@@ -2,7 +2,12 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { TOUCH } from "../../data/touch.ts";
-import { assertGameActions, bindFactoryAction, bindGameActions } from "./actionBinding.ts";
+import {
+  assertGameActions,
+  bindFactoryAction,
+  bindGameActions,
+  createGameButton,
+} from "./actionBinding.ts";
 
 const stops: (() => void)[] = [];
 const gate = { accepts: () => true, capture: () => () => true };
@@ -42,6 +47,51 @@ it("uses the approved default once on hold, consumes release and retains native 
   pointer(button, "pointerup");
   compatibilityClick(button);
   expect(activate).toHaveBeenCalledOnce();
+  button.click();
+  expect(activate).toHaveBeenCalledTimes(2);
+});
+
+it("dispatches the standard button once through the current native and delegated pointer routes", () => {
+  vi.useFakeTimers();
+  const root = document.createElement("section");
+  const { element: button } = createGameButton(document, {}, { kind: "text", label: "Continue" });
+  root.append(button);
+  document.body.append(root);
+  const activate = vi.fn();
+  const hold = vi.fn();
+  const accepts = vi.fn(() => true);
+  const identity = {};
+  let physical = identity;
+  const action = { activate, available: () => true, element: button, hold, identity };
+  const binding = bindGameActions(
+    {
+      guard: { gate: { ...gate, accepts } },
+      resolve: (target) => (target === button ? action : null),
+      resolvePointer: () => ({ ...action, identity: physical }),
+    },
+    root,
+  );
+  stops.push(binding);
+  assertGameActions(root);
+  button.click();
+  pointer(button, "pointerdown");
+  expect(button.hasAttribute("data-ui-pressed")).toBe(true);
+  pointer(button, "pointerup");
+  compatibilityClick(button);
+  expect(activate).toHaveBeenCalledTimes(2);
+  expect(button.hasAttribute("data-ui-pressed")).toBe(false);
+
+  pointer(button, "pointerdown", 2);
+  vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
+  pointer(button, "pointerup", 2);
+  compatibilityClick(button);
+  expect(hold).toHaveBeenCalledOnce();
+  expect(activate).toHaveBeenCalledTimes(2);
+
+  physical = {};
+  pointer(button, "pointerdown", 3);
+  pointer(button, "pointerup", 3);
+  accepts.mockReturnValue(false);
   button.click();
   expect(activate).toHaveBeenCalledTimes(2);
 });

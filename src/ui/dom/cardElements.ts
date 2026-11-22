@@ -1,3 +1,4 @@
+import { createGameButton } from "../input/actionBinding.ts";
 import type { CardWidth } from "../layout/contentCard.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";
 
@@ -42,16 +43,15 @@ export function createTextButtonElement(
   label: string,
   primary = false,
 ): HTMLButtonElement {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = primary ? "ui-text-button ui-text-button-primary" : "ui-text-button";
-  const face = document.createElement("span");
-  face.className = "ui-text-button-face ui-frame ui-control-button";
-  const text = document.createElement("span");
-  text.className = "ui-text-button-label ui-control-label";
-  text.textContent = label;
-  face.append(text);
-  button.append(face);
+  const { element: button } = createGameButton(
+    document,
+    {
+      className: primary ? "ui-text-button ui-text-button-primary" : "ui-text-button",
+      contentClassName: "ui-text-button-label",
+      face: { className: "ui-text-button-face ui-frame ui-control-button" },
+    },
+    { kind: "text", label },
+  );
   setTextButtonRole(primary, button);
   return button;
 }
@@ -64,14 +64,11 @@ export function setCardWidth(family: CardWidth, card: HTMLElement): void {
 // The close X: the button is its press area (ui.css .ui-close-button), and its face is art's
 // ui-close, which the focus ring wraps. Its name is the accessible one; it shows no text.
 export function closeButton(document: Document, name: string): HTMLButtonElement {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "ui-close-button";
-  button.setAttribute("aria-label", name);
-  const face = document.createElement("span");
-  face.className = "ui-close-face";
-  button.append(face);
-  return button;
+  return createGameButton(
+    document,
+    { className: "ui-close-button", face: { className: "ui-close-face" } },
+    { kind: "icon", name },
+  ).element;
 }
 
 // The card for words, its dialog identified by id, which its title's and text's ids extend.

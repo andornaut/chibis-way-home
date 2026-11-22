@@ -5,6 +5,12 @@ import {
   type HoldActionBinding,
   type HoldActionsBinding,
 } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
+import {
+  type ButtonAppearance,
+  type ButtonContent,
+  type ButtonView,
+  createButton,
+} from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { guardClicks, type PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
 import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
@@ -20,7 +26,13 @@ export interface GameActionOptions {
   readonly onPressChange?: (action: HoldAction | null) => void;
 }
 
-const registrations = new WeakMap<HTMLElement, Set<{ resolve: GameActionOptions["resolve"] }>>();
+interface ActionRegistration {
+  readonly resolve: GameActionOptions["resolve"];
+  readonly guard?: PressGuard | undefined;
+}
+
+const registrations = new WeakMap<HTMLElement, Set<ActionRegistration>>();
+const standardButtons = new WeakMap<HTMLElement, ButtonView>();
 const DISCRETE_CONTROLS = [
   "button",
   'input:is([type="button"],[type="submit"],[type="reset"],[type="checkbox"],[type="radio"])',
@@ -31,13 +43,14 @@ function registered(
   resolve: GameActionOptions["resolve"],
   root: HTMLElement,
   binding: HoldActionsBinding,
+  guard?: PressGuard,
 ): HoldActionsBinding {
   let entries = registrations.get(root);
   if (entries === undefined) {
     entries = new Set();
     registrations.set(root, entries);
   }
-  const entry = { resolve };
+  const entry = { guard, resolve };
   entries.add(entry);
   const owned = entries;
   const dispose = () => {
@@ -46,6 +59,66 @@ function registered(
   };
   dispose.cancel = binding.cancel;
   return dispose;
+}
+
+function currentButtonAction(button: HTMLElement): GameAction | null {
+  for (
+    let element: HTMLElement | null = button;
+    element !== null;
+    element = element.parentElement
+  ) {
+    for (const entry of registrations.get(element) ?? []) {
+      const action = entry.resolve(button);
+      if (
+        action?.element === button &&
+        entry.guard?.gate.accepts() !== false &&
+        action.available()
+      ) {
+        return action;
+      }
+    }
+  }
+  return null;
+}
+
+export function createGameButton(
+  document: Document,
+  appearance: ButtonAppearance,
+  content: ButtonContent,
+): ButtonView {
+  const mounted: { element?: HTMLButtonElement } = {};
+  const view = createButton(document, {
+    appearance: { ...appearance, layout: "caller" },
+    content,
+    getAction: () => (mounted.element === undefined ? null : currentButtonAction(mounted.element)),
+    getState: () => {
+      const { element } = mounted;
+      const pressed = element?.getAttribute("aria-pressed");
+      return {
+        availability: {
+          kind: element?.hidden ? "omitted" : element?.disabled ? "disabled" : "available",
+        },
+        ...(pressed === "true" || pressed === "false" ? { toggled: pressed === "true" } : {}),
+      };
+    },
+    rule: {
+      holdMs: TOUCH.actionHoldMilliseconds,
+      get slopPx() {
+        const { element } = mounted;
+        return TOUCH.tapMaxDistance * (element === undefined ? 1 : readUnit(element));
+      },
+    },
+  });
+  mounted.element = view.element;
+  standardButtons.set(view.element, view);
+  return view;
+}
+
+export function disposeGameButtons(root: HTMLElement): void {
+  standardButtons.get(root)?.dispose();
+  for (const button of root.querySelectorAll<HTMLElement>(".ui-standard-button")) {
+    standardButtons.get(button)?.dispose();
+  }
 }
 
 // Registration is structural: disabled, hidden and not-yet-ready controls still have actions.
@@ -86,6 +159,22 @@ export function assertGameActions(root: HTMLElement): void {
 }
 
 function resolved(action: GameAction | null): HoldAction | null {
+  if (action !== null) {
+    const view = standardButtons.get(action.element);
+    if (view !== undefined) {
+      const descriptor = action.available() ? view.holdAction() : null;
+      if (
+        descriptor === null ||
+        !Object.is(
+          descriptor.identity,
+          action.identity === undefined ? action.element : action.identity,
+        )
+      ) {
+        return null;
+      }
+      return action.rule === undefined ? descriptor : { ...descriptor, rule: action.rule };
+    }
+  }
   return action === null
     ? null
     : {
@@ -99,12 +188,18 @@ function resolved(action: GameAction | null): HoldAction | null {
 
 // Pointer taps and holds share the kit's lifecycle; native keyboard activation keeps its guard.
 export function bindGameActions(options: GameActionOptions, root: HTMLElement): HoldActionsBinding {
+  let pressed: ButtonView | undefined;
   const binding = bindHoldActions(
     {
       activation: "pointer-release",
       allowNonPrimaryTouch: true,
       guard: options.guard,
-      onPressChange: options.onPressChange,
+      onPressChange: (action) => {
+        pressed?.setPressed(false);
+        pressed = action === null ? undefined : standardButtons.get(action.element);
+        pressed?.setPressed(true);
+        options.onPressChange?.(action);
+      },
       pointerTarget: options.pointerTarget,
       resolve: (target) => resolved(options.resolve(target)),
       resolvePointer: (event) =>
@@ -122,7 +217,7 @@ export function bindGameActions(options: GameActionOptions, root: HTMLElement): 
       return;
     }
     const action = options.resolve(event.target);
-    if (action?.available()) {
+    if (action !== null && !standardButtons.has(action.element) && action.available()) {
       action.activate();
     }
   };
@@ -133,7 +228,7 @@ export function bindGameActions(options: GameActionOptions, root: HTMLElement): 
     root.removeEventListener("click", click);
   };
   dispose.cancel = binding.cancel;
-  return registered(options.resolve, root, dispose);
+  return registered(options.resolve, root, dispose, options.guard);
 }
 
 // Factories retain their native click ownership and original guarded semantic callback.

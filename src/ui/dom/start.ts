@@ -4,6 +4,7 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import type { Rect } from "../../data/types/index.ts";
+import { createGameButton } from "../input/actionBinding.ts";
 import type { StartScreenLayout } from "../layout/startScreen.ts";
 import { mountUiLayout, type UiLayoutNode } from "./layoutTree.ts";
 
@@ -107,21 +108,20 @@ export function createStart(
       });
       continue;
     }
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.control = control;
-    button.className = "start-icon-button ui-press";
-    button.setAttribute("aria-label", words[control]);
-    box(at.hit, button);
-    const face = document.createElement("span");
-    face.className = "start-icon-face";
-    box({ ...at.art, x: at.art.x - at.hit.x, y: at.art.y - at.hit.y }, face);
     const icon = image(control, {
       height: 0,
       width: 0,
       x: at.icon.x - at.art.x,
       y: at.icon.y - at.art.y,
     });
+    const { element: button, face } = createGameButton(
+      document,
+      { className: "start-icon-button ui-press", face: { className: "start-icon-face" } },
+      { icon, kind: "icon", name: words[control] },
+    );
+    button.dataset.control = control;
+    box(at.hit, button);
+    box({ ...at.art, x: at.art.x - at.hit.x, y: at.art.y - at.hit.y }, face);
     writeLayoutProperties(startIconProperties(at.pressedIcon.y - at.icon.y, at.hit), button);
     buttons.set(control, button);
     children.push({
@@ -129,21 +129,6 @@ export function createStart(
       key: control,
       kind: "component",
       props: { element: button },
-      slots: {
-        content: [
-          {
-            component: "Native",
-            key: "face",
-            kind: "component",
-            props: { element: face },
-            slots: {
-              content: [
-                { component: "Native", key: "icon", kind: "component", props: { element: icon } },
-              ],
-            },
-          },
-        ],
-      },
     });
   }
   mountUiLayout(document, document.createElement("div"), {

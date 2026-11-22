@@ -5,6 +5,7 @@ import {
   mountLayout,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutTree";
 
+import { disposeGameButtons } from "../input/actionBinding.ts";
 import { setTextButtonRole, setTextButtonSizing, type TextButtonSizing } from "./buttonLayout.ts";
 import {
   type CardView,
@@ -81,7 +82,7 @@ export function createUiLayoutPorts(document: Document): LayoutComponentPorts<Ui
           props.ref?.(element);
         };
         update(initial);
-        return { dispose() {}, element, slots: {}, update };
+        return { dispose: () => disposeGameButtons(element), element, slots: {}, update };
       },
       slots: [],
     },
@@ -122,7 +123,12 @@ export function createUiLayoutPorts(document: Document): LayoutComponentPorts<Ui
           props.ref?.(view);
         };
         update(initial);
-        return { dispose() {}, element: view.root, slots: {}, update };
+        return {
+          dispose: () => disposeGameButtons(view.root),
+          element: view.root,
+          slots: {},
+          update,
+        };
       },
       slots: [],
     },
