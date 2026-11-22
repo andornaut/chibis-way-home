@@ -1,7 +1,7 @@
 import { CelebrationQueue } from "@andornaut/game-kit/runtime/achievements";
 import { saveStore, type StoreSaveResult } from "@andornaut/game-kit/runtime/save/saveStore";
 import type { SaveStorage } from "@andornaut/game-kit/runtime/save/storage";
-import { loadSave } from "@andornaut/game-kit/runtime/save/versionedSave";
+import { loadSave, type SaveFormat } from "@andornaut/game-kit/runtime/save/versionedSave";
 import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 
 import { BOSS_CHARACTERS } from "../../data/achievements.ts";
@@ -32,6 +32,7 @@ import {
 } from "./progress.ts";
 import { skillGrantEffects, withGrantedSkill } from "./skillGrant.ts";
 import {
+  hasRecordedStats,
   type RunStatsSummary,
   stageStatsStore,
   STATS_KEYS,
@@ -107,36 +108,55 @@ function installStatsLifecycle(): void {
 // a newer version ("newer").
 export type SaveAge = "current" | "newer";
 
-// This probe does not call SaveStore.load: even a corrupt-save backup is a write.
+// These reads do not call SaveStore.load, so even a corrupt record leaves its backup alone.
+async function readStoredSave<S>(
+  source: Pick<SaveStorage, "read">,
+  format: SaveFormat<S>,
+  key: string,
+) {
+  try {
+    return loadSave(format, await source.read(key));
+  } catch {
+    return { status: "unavailable" } as const;
+  }
+}
+
+async function probeStoredGame(
+  source: Pick<SaveStorage, "read">,
+): Promise<{ readonly age: SaveAge | "unavailable"; readonly canReset: boolean }> {
+  const [player, earned, statistics] = await Promise.all([
+    readStoredSave(source, format, PROGRESS_KEYS.save),
+    readStoredSave(source, ACHIEVEMENTS_FORMAT, ACHIEVEMENT_KEYS.save),
+    readStoredSave(source, statsFormat(STAGES, ZONE_MAP.destinations), STATS_KEYS.save),
+  ]);
+  const statuses = [player.status, earned.status, statistics.status];
+  if (statuses.includes("newer")) {
+    return { age: "newer", canReset: false };
+  }
+  if (statuses.includes("unavailable")) {
+    return { age: "unavailable", canReset: false };
+  }
+  const canReset =
+    (player.status === "loaded" &&
+      (player.save.at === "map" ||
+        player.save.openingSeen ||
+        player.save.skills.length > 0 ||
+        player.save.seenTips.length > 0)) ||
+    (earned.status === "loaded" && earned.save.earned.length > 0) ||
+    (statistics.status === "loaded" && hasRecordedStats(statistics.save));
+  return { age: "current", canReset };
+}
+
 export async function probeSaveAge(
   source: Pick<SaveStorage, "read"> = storage,
 ): Promise<SaveAge | "unavailable"> {
-  const probes = [
-    { key: PROGRESS_KEYS.save, status: (raw: string | null) => loadSave(format, raw).status },
-    {
-      key: ACHIEVEMENT_KEYS.save,
-      status: (raw: string | null) => loadSave(ACHIEVEMENTS_FORMAT, raw).status,
-    },
-    {
-      key: STATS_KEYS.save,
-      status: (raw: string | null) =>
-        loadSave(statsFormat(STAGES, ZONE_MAP.destinations), raw).status,
-    },
-  ];
-  const statuses = await Promise.all(
-    probes.map(async ({ key, status }) => {
-      try {
-        return status(await source.read(key));
-      } catch {
-        return "unavailable";
-      }
-    }),
-  );
-  return statuses.includes("newer")
-    ? "newer"
-    : statuses.includes("unavailable")
-      ? "unavailable"
-      : "current";
+  return (await probeStoredGame(source)).age;
+}
+
+export async function resetSaveAvailable(
+  source: Pick<SaveStorage, "read"> = storage,
+): Promise<boolean> {
+  return (await probeStoredGame(source)).canReset;
 }
 
 // Reads the stored progress into savedProgress. Where a newer version wrote any store, it writes
@@ -512,6 +532,16 @@ export function clearSeenTips(): Promise<StoreSaveResult> {
 // nothing is queued. Settings outside the save stay. The first failed write's result, otherwise
 // saved.
 export async function resetSave(): Promise<StoreSaveResult> {
+  const { age, canReset } = await probeStoredGame(storage);
+  if (age !== "current") {
+    return {
+      reason: age === "newer" ? "a newer version wrote the save" : "the save could not be read",
+      status: "unavailable",
+    };
+  }
+  if (!canReset) {
+    return { reason: "there is no stored game to reset", status: "invalid" };
+  }
   tips = [];
   temporarySelection = undefined;
   progress = BEGINNING;
@@ -519,14 +549,14 @@ export async function resetSave(): Promise<StoreSaveResult> {
   earnedIds = [];
   notices = new CelebrationQueue<AchievementId>();
   const earned = saveStore(localSaveStorage(), ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT);
-  const [saved, awarded] = await Promise.all([
+  const [saved, awarded, statistics] = await Promise.all([
     persist(BEGINNING),
     inFlight(earned.save({ earned: [], unannounced: [] })),
     stats.reset(),
   ]);
   achievements = achievementsStore(localSaveStorage());
   await achievements.load();
-  return [saved, awarded].find((result) => result.status !== "saved") ?? saved;
+  return [saved, awarded, statistics].find((result) => result.status !== "saved") ?? saved;
 }
 
 // Restart: progress goes back to the beginning, with no tip seen, and the map opens on the first

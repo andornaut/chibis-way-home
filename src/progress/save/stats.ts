@@ -1,4 +1,8 @@
-import { saveStore, type StoreLoadResult } from "@andornaut/game-kit/runtime/save/saveStore";
+import {
+  saveStore,
+  type StoreLoadResult,
+  type StoreSaveResult,
+} from "@andornaut/game-kit/runtime/save/saveStore";
 import type { SaveStorage } from "@andornaut/game-kit/runtime/save/storage";
 import type {
   Checked,
@@ -61,6 +65,22 @@ const fresh = (): Stats => ({
   wholeRun: emptyWholeRun(),
   zones: {},
 });
+
+export function hasRecordedStats(stats: Stats): boolean {
+  const { stages, totals, visit, wholeRun, zones } = stats;
+  return (
+    wholeRun.activeSeconds > 0 ||
+    wholeRun.deaths > 0 ||
+    wholeRun.skillUsed === true ||
+    Object.values(stages).some(
+      ({ bestSeconds, run }) => bestSeconds !== undefined || run !== undefined,
+    ) ||
+    Object.keys(zones).length > 0 ||
+    Object.keys(visit?.stages ?? {}).length > 0 ||
+    Object.values(totals?.stages ?? {}).some((seconds) => seconds > 0) ||
+    Object.values(totals?.zones ?? {}).some((seconds) => seconds > 0)
+  );
+}
 
 type Destinations = readonly Pick<MapDestination, "id" | "stages">[];
 const record = (value: unknown): value is Record<string, unknown> =>
@@ -181,7 +201,7 @@ interface StageStatsStore {
   hold(): void;
   release(): void;
   // Replaces the statistics with fresh ones and writes them, held or not.
-  reset(): Promise<void>;
+  reset(): Promise<StoreSaveResult>;
 }
 
 // A separate store keeps unfinished stage clocks independent of progress restarts. Mutations
@@ -193,7 +213,7 @@ export function stageStatsStore(
 ): StageStatsStore {
   const store = saveStore(storage, STATS_KEYS, statsFormat(stages, destinations));
   let stats = fresh();
-  let pending: Promise<unknown> = Promise.resolve();
+  let pending: Promise<StoreSaveResult> = Promise.resolve({ status: "saved" });
   let checkpoint: ReturnType<typeof setTimeout> | undefined;
   let dirty = false;
   let writing = 0;
@@ -213,7 +233,7 @@ export function stageStatsStore(
         writing--;
       });
     }
-    await pending;
+    return pending;
   };
   const changed = () => {
     dirty = true;
@@ -374,7 +394,9 @@ export function stageStatsStore(
         zone: visit.zone,
       };
     },
-    flush,
+    async flush() {
+      await flush();
+    },
     hold() {
       if (held === undefined) {
         void flush();
@@ -420,7 +442,7 @@ export function stageStatsStore(
       if (wasHeld) {
         held = stats;
       }
-      await written;
+      return written;
     },
     // Restart also ends every unfinished stage run, so its next entry starts at one attempt;
     // historical bests stay.

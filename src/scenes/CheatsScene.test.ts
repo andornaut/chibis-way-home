@@ -15,6 +15,7 @@ const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 const saves = vi.hoisted(() => ({
   clearSeenTips: vi.fn(() => Promise.resolve({ status: "saved" })),
   resetSave: vi.fn(() => Promise.resolve({ status: "saved" })),
+  resetSaveAvailable: vi.fn(() => Promise.resolve(true)),
   startCheatSession: vi.fn(),
 }));
 vi.mock("./save.ts", () => saves);
@@ -33,6 +34,7 @@ vi.mock("./domUi.ts", () => ({
 
 import { DEV_TEXT } from "../data/dev.ts";
 import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
 import { allZonesUnlocked, endDevelopmentSession, invulnerabilityEnabled } from "../dev/mode.ts";
 import { createUiLayer, type UiLayer } from "../ui/index.ts";
 import { CheatsScene } from "./CheatsScene.ts";
@@ -52,6 +54,7 @@ afterEach(() => {
   layer.dispose();
   endDevelopmentSession();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 const settle = () =>
@@ -113,14 +116,46 @@ it.each([false, true])("keeps cheat and tool behaviour in app mode %s", async (i
   );
 });
 
+it("shows Reset save disabled without persisted progress and blocks tap, hold and keyboard", async () => {
+  vi.useFakeTimers();
+  saves.resetSaveAvailable.mockResolvedValueOnce(false);
+  const { control } = openCard();
+  const reset = control(DEV_TEXT.resetSave.action);
+  expect(reset.disabled).toBe(true);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(reset.disabled).toBe(true);
+  expect(reset.closest("[hidden]")).toBeNull();
+  const touch = (type: string) =>
+    reset.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+      }),
+    );
+  touch("pointerdown");
+  touch("pointerup");
+  touch("pointerdown");
+  await vi.advanceTimersByTimeAsync(TOUCH.actionHoldMilliseconds);
+  touch("pointerup");
+  reset.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+  reset.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  expect(document.querySelector("[role=alertdialog]")?.hasAttribute("hidden")).toBe(true);
+  expect(saves.resetSave).not.toHaveBeenCalled();
+});
+
 it("keeps the invoking menu and Cheats painted and restores focus after Reset Cancel and Back", async () => {
   const { control, dialog, key, openCheats, owner } = openCard();
+  await settle();
   const expectCovered = (card: HTMLElement) => {
     expect(card.closest("[hidden]")).toBeNull();
     expect(card.closest("[inert][data-ui-dimmed]")).not.toBeNull();
   };
   expectCovered(dialog);
   const reset = control(DEV_TEXT.resetSave.action);
+  expect(reset.disabled).toBe(false);
   const cheats = reset.closest<HTMLElement>("[role=dialog]")!;
   const scrollBody = cheats.querySelector<HTMLElement>(".cheats-body")!;
   expect(document.activeElement).toBe(cheats);
@@ -153,6 +188,10 @@ it("keeps the invoking menu and Cheats painted and restores focus after Reset Ca
   expect([confirm.hidden, saves.resetSave.mock.calls.length]).toEqual([true, 0]);
   expect(cheats.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();
   expect(document.activeElement).toBe(reset);
+  reset.click();
+  confirm.querySelector<HTMLButtonElement>(".ui-close-button")!.click();
+  expect(document.activeElement).toBe(reset);
+  expect(confirm.hidden).toBe(true);
   expect(scrollBody.scrollTop).toBe(100);
   expectCovered(dialog);
   closeCheats.click();
@@ -164,6 +203,7 @@ it("keeps the invoking menu and Cheats painted and restores focus after Reset Ca
 
 it("confirms Reset without starting a cheat session or returning to the menu", async () => {
   const { control, owner } = openCard(true);
+  await settle();
   control(DEV_TEXT.resetSave.action).click();
   control(DEV_TEXT.resetSave.confirm.accept).click();
   await settle();
@@ -175,8 +215,9 @@ it("confirms Reset without starting a cheat session or returning to the menu", a
   }).toEqual({ closed: 0, reset: 1, returned: 1, session: 0 });
 });
 
-it("prevents compatibility mouse focus only for an eligible touch on a Cheats dismissal", () => {
+it("prevents compatibility mouse focus only for an eligible touch on a Cheats dismissal", async () => {
   const { control } = openCard();
+  await settle();
   const reset = control(DEV_TEXT.resetSave.action);
   const cheats = reset.closest<HTMLElement>("[role=dialog]")!;
   const close = cheats.querySelector<HTMLButtonElement>(".ui-card-actions button")!;

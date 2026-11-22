@@ -60,6 +60,10 @@ export function mapFullyOpen(): boolean {
 export function clearSeenTips(): Promise<StoreSaveResult> {
   return pageSave.clearSeenTips();
 }
+export function resetSaveAvailable(): Promise<boolean> {
+  return pageSave.resetSaveAvailable();
+}
+
 export function resetSave(): Promise<StoreSaveResult> {
   return pageSave.resetSave();
 }

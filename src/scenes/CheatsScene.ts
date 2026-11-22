@@ -28,7 +28,7 @@ import {
 import { bindSceneButtons } from "./domTaps.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { modalInput } from "./modalInput.ts";
-import { clearSeenTips, resetSave, startCheatSession } from "./save.ts";
+import { clearSeenTips, resetSave, resetSaveAvailable, startCheatSession } from "./save.ts";
 
 export interface CheatsOpener {
   cheatsClosed(): void;
@@ -110,6 +110,7 @@ export class CheatsScene extends Scene {
   create(): void {
     const cheats = createCheatsCard(document, "cheats-card", CHEATS_WORDS, SKILL_IDS);
     this.cheats = cheats;
+    this.refreshResetAvailability(cheats);
     this.render();
     const input = modalInput(this);
     input.open();
@@ -136,7 +137,7 @@ export class CheatsScene extends Scene {
         ...(Object.entries(cheats.actions) as [CheatAction, HTMLButtonElement][]).map(
           ([action, element]) => ({
             activate: () => this.cheat(() => this.cheatAction(action)),
-            available: cheatsShown,
+            available: () => cheatsShown() && !element.disabled,
             element,
           }),
         ),
@@ -286,7 +287,7 @@ export class CheatsScene extends Scene {
       this.write(clearSeenTips(), () => {
         status.textContent = DEV_TEXT.results.showTipsAgain;
       });
-    } else {
+    } else if (!this.cheats!.actions.resetSave.disabled) {
       this.showConfirmation(true);
     }
   }
@@ -294,7 +295,18 @@ export class CheatsScene extends Scene {
   // Reset save, confirmed: on success the game returns to the start screen; otherwise the Cheats
   // card shows again with the failure.
   private confirmReset(): void {
-    this.write(resetSave(), () => this.leaveThrough(() => this.openerScene().returnToStart()));
+    if (this.confirming && this.cheats?.actions.resetSave.disabled === false) {
+      this.write(resetSave(), () => this.leaveThrough(() => this.openerScene().returnToStart()));
+    }
+  }
+
+  private refreshResetAvailability(cheats: CheatsCardView): void {
+    cheats.actions.resetSave.disabled = true;
+    void resetSaveAvailable().then((available) => {
+      if (this.cheats === cheats && !this.closed) {
+        cheats.actions.resetSave.disabled = !available;
+      }
+    });
   }
 
   // A tool's save write, during which no Cheats action acts; then saved, or the failure on the
@@ -327,6 +339,9 @@ export class CheatsScene extends Scene {
             this.showConfirmation(false);
           }
           status.textContent = WRITE_FAILED[result];
+        }
+        if (!this.closed) {
+          this.refreshResetAvailability(cheats);
         }
         this.render();
       });
