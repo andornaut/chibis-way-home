@@ -82,6 +82,13 @@
     inset 0 -4px 0 var(--crash-button-lip);
 }
 
+@media (forced-colors: active) {
+  .crash-button:focus-visible,
+  .crash-details summary:focus-visible {
+    outline-color: Highlight;
+  }
+}
+
 .crash-details {
   margin-top: 16px;
 }

@@ -384,6 +384,30 @@
   box-shadow: var(--focus-ring);
 }
 
+/* Forced colours suppress shadows. Keep the cue on the same faces with a system colour. */
+@media (forced-colors: active) {
+  #game
+    > .ui-layer
+    :is(
+      .ui-text-button:focus-visible .ui-text-button-face,
+      .ui-close-button:focus-visible .ui-close-face,
+      .pause-button:focus-visible .pause-disc[data-shown],
+      .skill-button:focus-visible .ui-skill-disc,
+      .start-icon-button:focus-visible .start-icon-face,
+      .map-destination:focus-visible .map-marker,
+      .stage-select-stage:focus-visible .stage-select-face,
+      .settings-row:focus-visible
+    ) {
+    outline: var(--focus-band) solid Highlight;
+    outline-offset: var(--focus-ink);
+  }
+
+  /* The miniature mask clips anything outside the marker's frame. */
+  #game > .ui-layer .map-destination:focus-visible .map-marker[data-miniature] {
+    outline-offset: calc(-1 * var(--focus-band));
+  }
+}
+
 /* SVG chrome (chrome.ts) paints each shape in the palette colour it names, so under a modal it
    takes the dimmed skin the layer sets on what the modal covers, as every other colour and frame
    here does. */

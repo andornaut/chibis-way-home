@@ -48,6 +48,10 @@
   height: calc(var(--ui-unit) * var(--pause-disc-size) * 1px);
 }
 
+.pause-button:focus-visible .pause-disc[data-shown] {
+  box-shadow: var(--focus-ring);
+}
+
 /* A skill button's box is its square target, at its place in the HUD row. */
 .skill-button {
   position: absolute;

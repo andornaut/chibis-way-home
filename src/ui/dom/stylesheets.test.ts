@@ -125,3 +125,17 @@ it("keeps Achievements pagination centred with a separate right-aligned return s
   expect(css).toContain(".achievements-footer > .achievements-pager {\n  grid-column: 2;");
   expect(css).toContain(".achievements-return {\n  grid-column: 3;\n  justify-self: end;");
 });
+
+it("draws the keyboard Menu cue and keeps the same focused faces visible in forced colours", () => {
+  const ui = SHEETS.find(([name]) => name === "ui.css")![1];
+  const faces = SHEETS.flatMap(([, css]) =>
+    [
+      ...css.matchAll(/^(\.[^\n{]+:focus-visible[^\n{]*) \{\s+box-shadow: var\(--focus-ring\);/gm),
+    ].map(([, selector]) => selector!),
+  );
+  const forced = ui.split("@media (forced-colors: active) {")[1] ?? "";
+  const rule = /#game\s*>\s*\.ui-layer\s*:is\(([^)]+)\)\s*\{([^}]+)\}/.exec(forced);
+  expect(faces).toContain(".pause-button:focus-visible .pause-disc[data-shown]");
+  expect(rule?.[2]).toContain("outline: var(--focus-band) solid Highlight;");
+  expect(new Set(rule?.[1]?.split(",").map((selector) => selector.trim()))).toEqual(new Set(faces));
+});
