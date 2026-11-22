@@ -257,7 +257,7 @@ const OUTPUTS: Readonly<Record<ArtSet, readonly string[]>> = {
     CONTACT_SILHOUETTES,
     ...sprites("bear-antagonist", "bear-growl-wave", "portrait-bear"),
   ],
-  bird: [pixel.MANIFEST, ...sprites("bird", "portrait-bird")],
+  bird: [pixel.MANIFEST, ...sprites("bird", "portrait-bird"), "public/art/images/crash-bird.png"],
   bossRemoval: [pixel.MANIFEST, ...sprites("boss-removal")],
   cast: [pixel.MANIFEST, ...sprites("dog-pug", "pigeon")],
   contactSilhouettes: [pixel.MANIFEST, CONTACT_SILHOUETTES],

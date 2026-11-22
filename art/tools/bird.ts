@@ -2,7 +2,7 @@
  * Chibi the bird: the protagonist's sprite and his dialogue portrait.
  *
  * Usage, from the repository root:
- *   node art/tools/bird.ts build            write public/art/sprites/<key>.png + .json
+ *   node art/tools/bird.ts build            write sprites and the standalone crash image
  *   node art/tools/bird.ts preview OUT.png  contact sheet of every frame on slate, tan and cream
  *
  * Design: a wide, round cream blob of a bird with a small round head set into the top of his body
@@ -82,6 +82,7 @@ import { crop, frameToRgba, paste, rotateNearest } from "@andornaut/art-kit/buil
 import { blankImage } from "@andornaut/art-kit/build/rgbaImage";
 
 import { run } from "./cli.ts";
+import { frameImage, writeImage } from "./imageArt.ts";
 import * as pixel from "./pixel.ts";
 import { Grid } from "./pixel.ts";
 
@@ -386,6 +387,19 @@ function fallingPose(): pixel.Frame {
   return rotated({ centre: [C, 29], degrees: -20 }, px);
 }
 
+function seatedDeathPose(): pixel.Frame {
+  return draw({
+    bh: 10.5,
+    bw: 17,
+    eye: "dead",
+    feet: "hidden",
+    headSquash: 0.95,
+    lift: -2,
+    seated: true,
+    wing: ["fold", 2],
+  });
+}
+
 function birdTags(): pixel.Tags {
   // feet stay planted while the body rises
   const idle = [
@@ -485,16 +499,7 @@ function birdTags(): pixel.Tags {
           seated: true,
           wing: ["fold", 2],
         }),
-        draw({
-          bh: 10.5,
-          bw: 17,
-          eye: "dead",
-          feet: "hidden",
-          headSquash: 0.95,
-          lift: -2,
-          seated: true,
-          wing: ["fold", 2],
-        }),
+        seatedDeathPose(),
       ],
       [100, 120, 80, 400],
     ],
@@ -550,10 +555,15 @@ export const ONCE = { bird: ["jump", "land", "death", "dash", "double-jump"] };
 
 const OPTIONS: pixel.MainOptions = { once: ONCE, usage: USAGE };
 
-export function build(): Promise<void> {
-  return pixel.build(OPTIONS, [...sprites()]);
+export async function build(): Promise<void> {
+  await pixel.build(OPTIONS, [...sprites()]);
+  writeImage("public/art/images/crash-bird.png", frameImage(seatedDeathPose()));
 }
 
 if (import.meta.main) {
-  run(() => pixel.main(OPTIONS, sprites));
+  run(() =>
+    process.argv.length === 3 && process.argv[2] === "build"
+      ? build()
+      : pixel.main(OPTIONS, sprites),
+  );
 }
