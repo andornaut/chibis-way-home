@@ -202,20 +202,14 @@ export const STAGE_PREVIEW = { height: 84, width: 168 } satisfies Size;
 
 // PLACEHOLDER: the celebration card after the last zone, until art draws one.
 export const CELEBRATION_LAYOUT = {
-  // Restart and Continue's drawn size.
-  button: { height: 44, width: 160 } satisfies Size,
   // Restart and Continue's top below the first row's top.
   buttonsTop: 72,
-  // Continue's left edge.
-  continueX: 368,
   // The first row's top below the card's top.
   firstRowTop: 48,
   // The card's height.
   height: 184,
   // The message's top-left: its x, and its top below the first row's top.
   message: { top: 4, x: 198 },
-  // Restart's left edge.
-  restartX: 192,
   // The message's widest line.
   room: 324,
   // The title slot's top below the card's top.

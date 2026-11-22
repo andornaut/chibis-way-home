@@ -45,9 +45,9 @@ function sceneImages(scene: Scene, document: Document): ImageCache {
 // Each game's cut art frames' blob: URLs, by art key and frame name.
 const frameUrls = new WeakMap<Game, Map<string, Promise<string>>>();
 
-// Each UI frame's nine-slice edges, from art's manifest.
-function frameSlice(art: string): NonNullable<SkinFrame["slice"]> {
-  const slice = MANIFEST.sprites.find(({ key }) => key === art)?.slice;
+// An explicit caller skin slice takes precedence over the general artwork metadata.
+function frameSlice(override: SkinFrame["slice"], art: string): NonNullable<SkinFrame["slice"]> {
+  const slice = override ?? MANIFEST.sprites.find(({ key }) => key === art)?.slice;
   if (slice === undefined) {
     throw new Error(`No 9-slice edges for ${art}`);
   }
@@ -64,11 +64,11 @@ function paletteHex(colours: Readonly<Record<string, string>>, name: string): st
 
 // Mounts game's UI layer in host, the canvas's parent, and returns its removal.
 export function mountDomUi(game: Game, host: HTMLElement): () => void {
-  const edges = UI_FRAMES.flatMap(({ art, whole }) => {
+  const edges = UI_FRAMES.flatMap(({ art, slice, whole }) => {
     if (whole) {
       return [];
     }
-    const { bottom, left, right, top } = frameSlice(art);
+    const { bottom, left, right, top } = frameSlice(slice, art);
     return [bottom, left, right, top];
   });
   const layer = createUiLayer(edges, host.ownerDocument);
@@ -108,7 +108,7 @@ export async function prepareDomUi(
   const document = layer.element.ownerDocument;
   const fonts = required ? requiredUiFonts(document) : undefined;
   const skin = async () => {
-    const frames = UI_FRAMES.map(({ art, name, tag, whole }): SkinFrame => {
+    const frames = UI_FRAMES.map(({ art, name, slice, tag, whole }): SkinFrame => {
       const frameName =
         tag === undefined
           ? undefined
@@ -120,7 +120,7 @@ export async function prepareDomUi(
       return {
         name,
         rect: { height: frame.cutHeight, width: frame.cutWidth, x: frame.cutX, y: frame.cutY },
-        ...(whole === undefined && { slice: frameSlice(art) }),
+        ...(whole === undefined && { slice: frameSlice(slice, art) }),
         source: frame.source.image as CanvasImageSource,
       };
     });

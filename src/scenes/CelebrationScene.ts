@@ -58,21 +58,17 @@ export class CelebrationScene extends Scene implements RestartOpener {
     input.ready(false);
     const view = createCelebrationView(document, words);
     this.view = view;
-    const urls = Promise.all(
-      (["normal", "pressed", "mark"] as const).map(async (key) => {
-        const art = key === "mark" ? "ui-play-mark" : "ui-resume";
-        const tag = key === "mark" ? "rest" : key;
-        const frame = sheetTags(this.cache.json.get(art) as AsepriteSheet).get(tag)?.[0]?.frame;
-        if (frame === undefined) {
-          throw new Error(`No ${tag} frame for ${art}`);
-        }
-        const url = await artFrameUrl(this, art, frame);
-        if (this.generation === generation) {
-          view.images[key].src = url;
-        }
-        return url;
-      }),
-    );
+    const mark = sheetTags(this.cache.json.get("ui-play-mark") as AsepriteSheet).get("rest")?.[0]
+      ?.frame;
+    if (mark === undefined) {
+      throw new Error("No rest frame for ui-play-mark");
+    }
+    const urls = artFrameUrl(this, "ui-play-mark", mark).then((url) => {
+      if (this.generation === generation) {
+        view.mark.style.setProperty("--celebration-mark-image", `url("${url}")`);
+      }
+      return [url];
+    });
     const reveal = revealSceneView(this, view.root, urls);
     mountSceneView(this, view.root);
     void reveal.revealed.then((ready) => {

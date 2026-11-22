@@ -23,9 +23,13 @@ import { refreshTextButtonFrames } from "./buttonLayout.ts";
 export interface UiFrame {
   readonly art: string;
   readonly name: string;
+  readonly slice?: SliceInsets;
   readonly tag?: string;
   readonly whole?: true;
 }
+
+// Keep the ink edge, the two-pixel press offset and the green lip of the existing resume art.
+const RESUME_SLICE = { bottom: 5, left: 1, right: 1, top: 3 } as const;
 
 export const UI_FRAMES: readonly UiFrame[] = [
   { art: "ui-button", name: "ui-button", tag: "normal" },
@@ -42,6 +46,8 @@ export const UI_FRAMES: readonly UiFrame[] = [
   { art: "ui-name-tab", name: "ui-name-tab-tan", tag: "tan" },
   { art: "ui-nav-bar", name: "ui-nav-bar" },
   { art: "ui-portrait-frame", name: "ui-portrait-frame", whole: true },
+  { art: "ui-resume", name: "ui-resume", slice: RESUME_SLICE, tag: "normal" },
+  { art: "ui-resume", name: "ui-resume-pressed", slice: RESUME_SLICE, tag: "pressed" },
   { art: "ui-settings-card", name: "ui-settings-card" },
   { art: "ui-switch", name: "ui-switch-off", tag: "off", whole: true },
   { art: "ui-switch", name: "ui-switch-on", tag: "on", whole: true },

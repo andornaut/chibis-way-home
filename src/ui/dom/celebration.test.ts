@@ -2,10 +2,9 @@
 import { expect, it } from "vitest";
 
 import { TEXT } from "../../data/text.ts";
-import { CELEBRATION } from "../layout/celebrationCard.ts";
 import { createCelebrationView } from "./celebration.ts";
 
-it("retains placeholder words, Continue-first focus order and authored press areas", () => {
+it("keeps the story and Continue-first focus order with standard row actions", () => {
   const view = createCelebrationView(document, TEXT.celebration);
   expect(view.dialog.getAttribute("role")).toBe("region");
   expect(view.dialog.querySelector("h2")?.textContent).toBe(TEXT.celebration.title);
@@ -14,31 +13,30 @@ it("retains placeholder words, Continue-first focus order and authored press are
     view.buttons.continue,
     view.buttons.restart,
   ]);
+  expect(view.buttons.continue.parentElement?.dataset.uiAxis).toBe("row");
+  expect(view.buttons.continue.classList.contains("ui-text-button-primary")).toBe(true);
   for (const key of ["continue", "restart"] as const) {
     expect(
       view.buttons[key]
         .querySelector(".ui-text-button-face")!
         .hasAttribute("data-ui-authored-size"),
-    ).toBe(true);
+    ).toBe(false);
     expect(view.buttons[key].textContent).toBe(TEXT.celebration[key]);
-    expect(view.buttons[key].style.getPropertyValue("--celebration-hit-width")).toBe(
-      String(CELEBRATION[key].hit.width),
-    );
+    expect(
+      view.buttons[key].querySelector(".ui-text-button-face")?.classList.contains("ui-frame"),
+    ).toBe(true);
   }
-  expect(Object.values(view.images).every((image) => image.alt === "")).toBe(true);
   expect(view.close).toBeUndefined();
 });
 
-it("materializes fresh authored chrome slots through the same production card factory", () => {
+it("keeps the decorative play mark inside Continue's measured label and isolates its source", () => {
   const live = createCelebrationView(document, TEXT.celebration);
-  document.body.append(live.root);
-  live.images.normal.src = "blob:runtime-chrome";
-  const authored = createCelebrationView(document, TEXT.celebration);
-  expect(authored.images.normal.getAttribute("src")).toBeNull();
-  expect(authored.buttons.continue).not.toBe(live.buttons.continue);
-  expect(authored.buttons.continue.querySelector(".ui-text-button-label img")).toBe(
-    authored.images.mark,
+  live.mark.style.setProperty("--celebration-mark-image", 'url("blob:runtime-mark")');
+  const fresh = createCelebrationView(document, TEXT.celebration);
+  expect(fresh.mark.style.getPropertyValue("--celebration-mark-image")).toBe("");
+  expect(fresh.buttons.continue.querySelector(".ui-text-button-label")?.firstElementChild).toBe(
+    fresh.mark,
   );
-  expect(authored.dialog.getAttribute("role")).toBe("region");
-  live.root.remove();
+  expect(fresh.buttons.restart.contains(fresh.mark)).toBe(false);
+  expect(fresh.mark.getAttribute("aria-hidden")).toBe("true");
 });
