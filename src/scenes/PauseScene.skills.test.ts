@@ -49,6 +49,7 @@ vi.mock("./domUi.ts", () => ({
 }));
 
 import { BIRD } from "../data/bird.ts";
+import { DEV_TEXT } from "../data/dev.ts";
 import { SKILL_GESTURE } from "../data/skills.ts";
 import { TEXT } from "../data/text.ts";
 import type { SkillId } from "../data/types/index.ts";
@@ -381,7 +382,7 @@ it("keeps selected Speedy painted and dimmed while Pause refuses direct skill ac
   expect(scenes.pause).toHaveBeenCalledExactlyOnceWith("zone");
 });
 
-it("steps the focus through Achievements, Settings, Back to title, Resume and the close X, wrapping", async () => {
+it("wraps keyboard focus through the Pause actions in order", async () => {
   selection.owned = [...SKILL_IDS];
   const { close, dialog, open, update } = play();
   await open();
@@ -390,12 +391,13 @@ it("steps the focus through Achievements, Settings, Back to title, Resume and th
   const name = () =>
     (document.activeElement as HTMLElement).getAttribute("aria-label") ??
     document.activeElement?.textContent;
-  const names = Array.from({ length: 6 }, () => {
+  const names = Array.from({ length: 7 }, () => {
     pressKey([], "Tab");
     return name();
   });
   expect(names).toEqual([
     TEXT.start.achievements,
+    DEV_TEXT.openCheats,
     TEXT.pause.settings,
     TEXT.pause.home,
     TEXT.pause.resume,

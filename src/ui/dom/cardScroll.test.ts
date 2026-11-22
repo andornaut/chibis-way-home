@@ -105,11 +105,10 @@ it("keeps the warning above the two Cheats columns, with FPS and unlocks opposit
   ]);
 });
 
-it("scrolls only the Settings rows between the title and Open Cheats", () => {
+it("scrolls only the Settings rows between the title and Close", () => {
   const colours = { cream: 0, ink: 0, navy: 0, white: 0 };
   const view = createSettingsCard(document, colours, "settings", TEXT.settings, {
     build: "build",
-    cheats: DEV_TEXT.openCheats,
     install: true,
     switches: [...TOUCH_SETTINGS, "reducedMotion"],
   });
@@ -118,11 +117,7 @@ it("scrolls only the Settings rows between the title and Open Cheats", () => {
   const [scroller] = scrollers;
   const rows = [...Object.values(view.switches), view.install!];
   expect(rows.every((row) => scroller?.contains(row))).toBe(true);
-  for (const fixed of [
-    view.dialog.querySelector(".ui-card-title")!,
-    view.openCheats!,
-    view.close,
-  ]) {
+  for (const fixed of [view.dialog.querySelector(".ui-card-title")!, view.close]) {
     expect(scroller?.contains(fixed)).toBe(false);
   }
 });

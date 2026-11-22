@@ -44,6 +44,7 @@ import { AchievementNoticeScene } from "./scenes/AchievementNoticeScene.ts";
 import { AchievementsScene } from "./scenes/AchievementsScene.ts";
 import { BootScene } from "./scenes/BootScene.ts";
 import { CelebrationScene } from "./scenes/CelebrationScene.ts";
+import { CheatsScene } from "./scenes/CheatsScene.ts";
 import { CutsceneScene } from "./scenes/CutsceneScene.ts";
 import { DeathScene } from "./scenes/DeathScene.ts";
 import { DialogueChoiceScene } from "./scenes/DialogueChoiceScene.ts";
@@ -145,6 +146,7 @@ function startGame(attempt: LoadingAttempt): void {
       PauseScene,
       RoomScene,
       SettingsScene,
+      CheatsScene,
       SkillDetailScene,
       RestartScene,
       AchievementsScene,

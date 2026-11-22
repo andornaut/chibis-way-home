@@ -5,6 +5,7 @@ import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 import { Scene } from "phaser";
 
 import { EDGE } from "../core/index.ts";
+import { DEV_TEXT } from "../data/dev.ts";
 import { SKILL_GESTURE } from "../data/skills.ts";
 import { TEXT } from "../data/text.ts";
 import { TOUCH } from "../data/touch.ts";
@@ -32,9 +33,15 @@ import {
 } from "../ui/index.ts";
 import { FRAME_TURN } from "../ui/input/frameTurn.ts";
 import type { AchievementsOpener, AchievementsScene } from "./AchievementsScene.ts";
+import type { CheatsOpener, CheatsScene } from "./CheatsScene.ts";
 import { bindSceneActions, bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, sceneDomUi } from "./domUi.ts";
-import { MENU_CONTENT_SCENES, menuContext, type MenuFrame } from "./menuContext.ts";
+import {
+  MENU_CONTENT_SCENES,
+  menuContext,
+  type MenuFrame,
+  type NestedMenuCard,
+} from "./menuContext.ts";
 import { menuEntryFocus } from "./menuEntryFocus.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import {
@@ -73,6 +80,7 @@ const CONTENT_SCENES = [
 // These required or browsing cards retain their own input guards.
 const BLOCKING_CARDS = [
   "achievements",
+  "cheats",
   "death",
   "restart",
   "settings",
@@ -90,10 +98,10 @@ interface PausableConversation {
 // One persistent entry opens Pause over active pausable content and Menu elsewhere.
 // The entry respects the top modal owner. Each visit retains the underlying scopes,
 // focus and already-paused scenes, and resumes only its own held subset when it closes.
-// Settings and Achievements return to their originating shared card.
+// Settings, Cheats and Achievements return to their originating shared card.
 // The bottom primary action resumes Pause or closes Menu. The skill HUD keeps its existing
 // play and conversation guards; no other control crosses the modal boundary.
-export class PauseScene extends Scene implements AchievementsOpener, SettingsOpener {
+export class PauseScene extends Scene implements AchievementsOpener, CheatsOpener, SettingsOpener {
   private skillVisit = 0;
   private menuGeneration = 0;
   private frames: MenuFrame[] = [];
@@ -107,7 +115,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   private colours!: PauseColours;
   private timeline!: PauseDiscTimeline;
   private dim: ReturnType<typeof showModalBackdrop> | undefined;
-  private state: "achievements" | "closed" | "open" | "opening" | "settings" | "skill" = "closed";
+  private state: NestedMenuCard | "closed" | "open" | "opening" | "skill" = "closed";
   // The conversation scene the card opened over, which it paused in the zone's place.
   private overScene: string | undefined;
   private heldScenes: string[] = [];
@@ -149,7 +157,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     const words = TEXT.pause;
     const view = createPauseView(document, this.colours, "pause-card", {
       button: words.button,
-      card: { ...words, achievements: TEXT.start.achievements },
+      card: { ...words, achievements: TEXT.start.achievements, cheats: DEV_TEXT.openCheats },
       ready: TEXT.skillHud.ready,
       recharging: TEXT.skillHud.recharging,
       skills: Object.fromEntries(
@@ -216,7 +224,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       if (this.blocked()) {
         return;
       }
-      if (this.state === "settings" || this.state === "achievements") {
+      if (this.state === "settings" || this.state === "achievements" || this.state === "cheats") {
         const card = this.nestedCard(this.state);
         if (modalInput(card).accepts(event)) {
           card.back();
@@ -424,7 +432,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   }
 
   // Nested cards keep the held scenes and return focus to their originating action.
-  private openNested(key: "achievements" | "settings", invoker: HTMLButtonElement): void {
+  private openNested(key: NestedMenuCard, invoker: HTMLButtonElement): void {
     if (this.view === undefined) {
       return;
     }
@@ -441,7 +449,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.scene.launch(key, { opener: this.scene.key } satisfies SettingsData);
   }
 
-  // Closing either nested card returns to the same shared menu.
+  // Closing a nested card returns to the same shared menu.
   settingsClosed(): void {
     this.nestedClosed("settings");
   }
@@ -450,7 +458,11 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.nestedClosed("achievements");
   }
 
-  private nestedClosed(key: "achievements" | "settings"): void {
+  cheatsClosed(): void {
+    this.nestedClosed("cheats");
+  }
+
+  private nestedClosed(key: NestedMenuCard): void {
     const view = this.view;
     if (!this.live || this.state !== key || view === undefined) {
       return;
@@ -462,8 +474,8 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     this.nestedFocus = undefined;
   }
 
-  private nestedCard(key: "achievements" | "settings"): AchievementsScene | SettingsScene {
-    return this.scene.get(key) as AchievementsScene | SettingsScene;
+  private nestedCard(key: NestedMenuCard): AchievementsScene | CheatsScene | SettingsScene {
+    return this.scene.get(key) as AchievementsScene | CheatsScene | SettingsScene;
   }
 
   private enabledSkills(): readonly SkillId[] {
@@ -626,7 +638,11 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       return;
     }
     this.dim?.setVisible(open);
+    const opening = open && view.card.root.hidden;
     view.card.root.hidden = !open;
+    if (opening) {
+      view.actionsScroll.scrollTop = 0;
+    }
     if (open) {
       showPauseMenu(TEXT, this.mode, this.homeShown, view);
       this.closeModal ??= sceneDomUi(this)?.modals.open(
@@ -803,7 +819,15 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
         }),
       }),
     ];
-    const keep = (event: Event) => event.preventDefault();
+    const keep = (event: Event) => {
+      // Keep compatibility mouse suppression on pointerdown while allowing the rows to pan.
+      if (
+        event.type === "pointerdown" ||
+        !(event.target instanceof Node && view.actionsScroll.contains(event.target))
+      ) {
+        event.preventDefault();
+      }
+    };
     for (const root of [view.root, view.pauseButton]) {
       root.addEventListener("pointerdown", keep, true);
       root.addEventListener("touchstart", keep, { capture: true, passive: false });
@@ -834,6 +858,8 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       this.openNested("settings", control);
     } else if (control === buttons.achievements && this.state === "open") {
       this.openNested("achievements", control);
+    } else if (control === buttons.cheats && this.state === "open") {
+      this.openNested("cheats", control);
     } else if (control === buttons.home && this.state === "open") {
       this.returnHome({ returnedToTitle: true });
     } else if (skill !== undefined && this.skillHudLive()) {

@@ -1,5 +1,6 @@
 export const MENU_CONTENT_SCENES = [
   "update",
+  "cheats",
   "settings",
   "skillDetail",
   "achievements",
@@ -44,6 +45,8 @@ export function menuContext(
   };
 }
 
+export type NestedMenuCard = "achievements" | "cheats" | "settings";
+
 export interface MenuFrame {
   readonly dimmed: boolean;
   readonly held: string[];
@@ -52,6 +55,6 @@ export interface MenuFrame {
   readonly nestedFocus: HTMLElement | undefined;
   readonly over: string | undefined;
   readonly returnEntryFocus: boolean;
-  readonly state: "achievements" | "open" | "settings" | "skill";
+  readonly state: NestedMenuCard | "open" | "skill";
   readonly waitFor: string | undefined;
 }

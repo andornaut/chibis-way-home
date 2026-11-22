@@ -1,5 +1,3 @@
-import { runsInAppWindow } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
-
 import type { SkillId } from "../data/types/index.ts";
 import type { SkillOverrides } from "../progress/index.ts";
 
@@ -16,11 +14,6 @@ interface CheatState {
 const NONE: CheatState = { invulnerable: false, powerUps: false, skills: {}, zones: false };
 let cheats = NONE;
 let session = false;
-
-// Whether cheats may be used here: in a browser tab, never in an installed app's window.
-export function cheatsAvailable(host: Window): boolean {
-  return !runsInAppWindow(host);
-}
 
 // Whether a cheat session is running: some cheat was used since the page loaded or play last
 // returned to the start screen.

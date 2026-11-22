@@ -2,6 +2,12 @@
    --ui-unit, from the layer's layout properties, PAUSE_LAYOUT on the view and each skill button's
    place. */
 
+/* The secondary actions scroll while the primary footer stays visible. Both groups keep
+   the same width when a scroll bar would otherwise reserve space. */
+.pause-actions-scroll {
+  scrollbar-width: none;
+}
+
 /* The pause button and the skill HUD over the card's backdrop. They take presses only while they
    act: a press on the HUD while it takes none goes on to the canvas under it. */
 .pause-hud-view {

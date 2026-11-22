@@ -9,7 +9,6 @@ import {
 } from "../settings/touchControls.ts";
 import { createActionIcon } from "./actionHelp.ts";
 import { closeButton, setCardWidth } from "./card.ts";
-import { createTextButtonElement } from "./cardElements.ts";
 
 // The settings card in the HTML UI (settings.css, on ui.css's .ui-card): its title, a switch row
 // for each setting, the Install row while the game can be installed, the build label and the close
@@ -21,8 +20,7 @@ import { createTextButtonElement } from "./cardElements.ts";
 // describes the effect under its label. Touch rows draw the controls they show or hide as inline
 // control icons; every other row's icon is art's sprite. The icons are decorative, hidden
 // from assistive technology. The close X comes last, so the keyboard's focus moves through the
-// rows in order, then the close X. In a browser tab Open Cheats follows the build label, in the
-// card's action row; the Cheats card and its confirmation (cheats.ts) join the same view.
+// rows in order, then the close X.
 
 export type SettingsSwitch = "reducedMotion" | TouchSetting;
 
@@ -63,10 +61,6 @@ export interface SettingsCardView {
   readonly icons: Readonly<Partial<Record<SettingsSpriteRow, HTMLImageElement>>>;
   // The Install row, while the card shows one.
   readonly install?: HTMLButtonElement;
-  // Open Cheats, while the card shows it.
-  readonly openCheats?: HTMLButtonElement;
-  // The view the cards show in, for the caller to add the Cheats cards to.
-  readonly view: HTMLElement;
   // The scene's view, which the UI layer mounts.
   readonly root: HTMLElement;
   readonly steps: {
@@ -85,8 +79,8 @@ function isTouchSetting(key: string): key is TouchSetting {
 }
 
 // The card for words, with a switch row for each of switches in that order, then the Install row
-// where install holds, then the build label, then Open Cheats labelled cheats where it is given,
-// its control icons in colours; its dialogs identified by id and `${id}-steps`, which their
+// where install holds, then the build label. Its control icons use colours, and the dialogs'
+// ids are id and `${id}-steps`, which their
 // titles', rows' and text's ids extend.
 export function createSettingsCard(
   document: Document,
@@ -95,7 +89,6 @@ export function createSettingsCard(
   words: SettingsCardWords,
   rows: {
     readonly build: string;
-    readonly cheats?: string;
     readonly install: boolean;
     readonly switches: readonly SettingsSwitch[];
   },
@@ -195,14 +188,6 @@ export function createSettingsCard(
   }
   const close = closeButton(document, words.close);
   dialog.append(list, text("p", "ui-card-text settings-build", rows.build));
-  let openCheats: HTMLButtonElement | undefined;
-  if (rows.cheats !== undefined) {
-    const actions = element("div", "ui-card-actions ui-control-group");
-    actions.dataset.uiAxis = "row";
-    openCheats = createTextButtonElement(document, rows.cheats);
-    actions.append(openCheats);
-    dialog.append(actions);
-  }
   dialog.append(close);
   const steps = dialogFor(`${id}-steps`, "", "settings-steps", "medium");
   steps.dialog.hidden = true;
@@ -223,7 +208,6 @@ export function createSettingsCard(
     dialog,
     icons,
     ...(install && { install }),
-    ...(openCheats && { openCheats }),
     root,
     steps: {
       close: stepsClose,
@@ -233,7 +217,6 @@ export function createSettingsCard(
       title: steps.heading,
     },
     switches,
-    view,
   };
 }
 

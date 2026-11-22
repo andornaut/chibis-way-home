@@ -40,6 +40,7 @@ vi.mock("./domUi.ts", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
+import { DEV_TEXT } from "../data/dev.ts";
 import { TEXT } from "../data/text.ts";
 import { createUiLayer, type UiLayer } from "../ui/index.ts";
 import { modalInput } from "./modalInput.ts";
@@ -61,8 +62,8 @@ afterEach(() => {
 });
 
 // The modal's buttons besides Back to title and the bottom button, alphabetical by label.
-const ALPHABETICAL = [TEXT.start.achievements, TEXT.pause.settings].sort((a, b) =>
-  a.localeCompare(b),
+const ALPHABETICAL = [TEXT.start.achievements, DEV_TEXT.openCheats, TEXT.pause.settings].sort(
+  (a, b) => a.localeCompare(b),
 );
 
 function menu(initial: string) {
@@ -164,18 +165,18 @@ it("opens the Start Menu with bottom-primary Close and returns focus without cha
   expect(rows.map((button) => button.classList.contains("ui-text-button-primary"))).toEqual([
     false,
     false,
+    false,
     true,
   ]);
   expect(document.activeElement).toBe(f.pause.dialog);
-  const names = Array.from({ length: 5 }, () => {
+  const names = Array.from({ length: 6 }, () => {
     pressKey([], "Tab");
     return (
       document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.textContent
     );
   });
   expect(names).toEqual([
-    TEXT.start.achievements,
-    TEXT.pause.settings,
+    ...ALPHABETICAL,
     TEXT.pause.close,
     TEXT.pause.close,
     TEXT.start.achievements,
@@ -221,6 +222,29 @@ it("retains the existing Settings subview across Menu", async () => {
   f.active.delete("settings");
   f.pause.scene.settingsClosed();
   tap(f.pause.button(TEXT.pause.resume));
+  expect(f.active.has("zone")).toBe(true);
+});
+
+it("opens the same Cheats from Pause and restores its invoker before resuming", async () => {
+  const f = menu("zone");
+  tap(f.pause.pauseButton);
+  await settle();
+  const cheats = f.pause.button(DEV_TEXT.openCheats);
+  const resume = f.pause.button(TEXT.pause.resume);
+  expect(cheats.closest(".ui-card-scroll")?.parentElement).toBe(f.pause.dialog);
+  expect(resume.closest(".ui-card-scroll")).toBeNull();
+  resume.focus();
+  press(cheats, 1, { pointerType: "touch" }).lift();
+  expect(f.scenes.launch).toHaveBeenCalledExactlyOnceWith("cheats", { opener: "pause" });
+  const child = f.card("cheats");
+  expect(f.paused.has("zone")).toBe(true);
+  child.close();
+  modalInput(child.owner as never).close();
+  f.active.delete("cheats");
+  f.pause.scene.cheatsClosed();
+  expect(document.activeElement).toBe(cheats);
+  expect(f.paused.has("zone")).toBe(true);
+  tap(resume);
   expect(f.active.has("zone")).toBe(true);
 });
 
@@ -426,6 +450,7 @@ it("opens Achievements above gameplay Pause and returns to its held context befo
     false,
     false,
     false,
+    false,
     true,
   ]);
   const action = f.pause.button(TEXT.start.achievements);
@@ -451,6 +476,7 @@ it("opens Achievements above gameplay Pause and returns to its held context befo
 
 it.each([
   { key: "achievements", label: TEXT.start.achievements },
+  { key: "cheats", label: DEV_TEXT.openCheats },
   { key: "settings", label: TEXT.pause.settings },
 ] as const)(
   "restores focus to the touched $key action even when Close had focus",

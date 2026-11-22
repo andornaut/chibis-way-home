@@ -80,6 +80,7 @@ beforeEach(() => {
     "AchievementsScene",
     "BootScene",
     "CelebrationScene",
+    "CheatsScene",
     "CutsceneScene",
     "DeathScene",
     "DialogueChoiceScene",

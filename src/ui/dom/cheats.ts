@@ -1,9 +1,12 @@
+import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
+
 import type { SkillId } from "../../data/types/index.ts";
+import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
 import { closeButton, setCardWidth } from "./card.ts";
 import { createTextButtonElement } from "./cardElements.ts";
 
 // The Cheats card and its Reset save confirmation (cheats.css, on ui.css's .ui-card and
-// settings.css's rows), shown in the settings card's place in its view. FPS and both unlock actions
+// settings.css's rows), mounted above the invoking Menu or Pause. FPS and both unlock actions
 // are on the left, power-ups and Invulnerability on the right. Stage controls and Tools follow.
 // The saving warning, status and primary Close stay outside the scroll body. The confirmation is
 // an alert dialog with its body text, Cancel and Reset.
@@ -43,6 +46,7 @@ export interface CheatsCardWords {
 
 export interface CheatsCardView {
   readonly actions: Readonly<Record<CheatAction, HTMLButtonElement>>;
+  readonly backdrop: HTMLElement;
   readonly close: HTMLButtonElement;
   readonly closeX: HTMLButtonElement;
   readonly confirm: {
@@ -53,13 +57,14 @@ export interface CheatsCardView {
   };
   readonly dialog: HTMLElement;
   readonly pickers: Readonly<Record<CheatPicker, HTMLButtonElement>>;
+  readonly root: HTMLElement;
   readonly scrollBody: HTMLElement;
   readonly status: HTMLElement;
   readonly switches: Readonly<Record<CheatSwitch, HTMLButtonElement>>;
 }
 
 // The cards for words, a switch for each of skills' enables, identified by id and `${id}-confirm`,
-// which their titles' and rows' ids extend. The caller places both dialogs.
+// which their titles' and rows' ids extend.
 export function createCheatsCard(
   document: Document,
   id: string,
@@ -80,10 +85,13 @@ export function createCheatsCard(
     created.textContent = value;
     return created;
   };
+  const root = element("div", "ui-card-scene");
+  writeLayoutProperties(SETTINGS_LAYOUT, root);
+  const backdrop = element("div", "ui-backdrop");
+  const view = element("div", "ui-view ui-card-view");
   const dialog = element("section", "ui-card ui-frame ui-card-closeable cheats-card");
   setCardWidth("large", dialog);
   dialog.id = id;
-  dialog.hidden = true;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-title`);
   dialog.setAttribute("aria-describedby", `${id}-warning`);
@@ -197,13 +205,17 @@ export function createCheatsCard(
   confirmActions.append(cancel, accept);
   const confirmClose = closeButton(document, words.close);
   confirm.append(confirmHeader, confirmText, confirmActions, confirmClose);
+  view.append(dialog, confirm);
+  root.append(backdrop, view);
   return {
     actions: { load, resetSave, showTipsAgain, unlockAllPowerUps, unlockAllZones },
+    backdrop,
     close,
     closeX,
     confirm: { accept, cancel, close: confirmClose, dialog: confirm },
     dialog,
     pickers,
+    root,
     scrollBody: body,
     status,
     switches: switches as Record<CheatSwitch, HTMLButtonElement>,

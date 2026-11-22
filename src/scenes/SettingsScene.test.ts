@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { EventEmitter } from "node:events";
 
-import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
 import type { InstallState } from "@andornaut/game-kit/runtime/web/pwa/installState";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
@@ -20,12 +19,6 @@ const offer = vi.hoisted(() => ({
   stepsKind: "ios",
 }));
 const backdrop = vi.hoisted(() => vi.fn(() => ({ ready: Promise.resolve() })));
-const saves = vi.hoisted(() => ({
-  clearSeenTips: vi.fn(() => Promise.resolve({ status: "saved" })),
-  resetSave: vi.fn(() => Promise.resolve({ status: "saved" })),
-  startCheatSession: vi.fn(),
-}));
-vi.mock("./save.ts", () => saves);
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/installOffer.ts", () => ({ installOffer: () => offer }));
 vi.mock("./modalInput.ts", async (original) => ({
@@ -52,7 +45,6 @@ vi.mock("./domUi.ts", () => ({
 
 import { DEV_TEXT } from "../data/dev.ts";
 import { TEXT } from "../data/text.ts";
-import { allZonesUnlocked, endDevelopmentSession, invulnerabilityEnabled } from "../dev/mode.ts";
 import {
   createUiLayer,
   reducedMotion,
@@ -78,18 +70,8 @@ beforeEach(() => {
 
 afterEach(() => {
   layer.dispose();
-  endDevelopmentSession();
   vi.restoreAllMocks();
 });
-
-// Makes the page an installed app's window, or a browser tab again.
-const appWindow = (app: boolean) =>
-  vi
-    .spyOn(window, "matchMedia")
-    .mockImplementation(
-      (query: string) =>
-        ({ matches: app && query === INSTALLED_APP_DISPLAY_QUERY }) as MediaQueryList,
-    );
 
 // Lets the card's dim, icons and install flow resolve.
 const settle = () =>
@@ -103,8 +85,6 @@ async function openCard(opener = "start", install = false) {
   offer.state.mockReturnValue(install ? "steps" : "installed");
   const events = new EventEmitter();
   const owner = {
-    loadStage: vi.fn(),
-    returnToStart: vi.fn(),
     setTouchSetting: vi.fn(setTouchSettingShown),
     settingsClosed: vi.fn(),
   };
@@ -221,7 +201,7 @@ it("shows current state text before and after toggling without changing the sett
   }
 });
 
-it("moves the keyboard's focus through the rows, Install, Open Cheats, then the close X, wrapping", async () => {
+it("moves the keyboard's focus through the rows, Install, then the close X, wrapping", async () => {
   const { focused, key } = await openCard("start", true);
   const steps = (values: readonly string[]) =>
     values.map((value) => {
@@ -229,24 +209,8 @@ it("moves the keyboard's focus through the rows, Install, Open Cheats, then the 
       return focused();
     });
   expect(
-    steps([
-      "ArrowDown",
-      "Tab",
-      "ArrowDown",
-      "ArrowDown",
-      "Tab",
-      "ArrowDown",
-      "ArrowDown",
-      "ArrowUp",
-    ]),
-  ).toEqual([
-    ...SWITCHES,
-    WORDS.install,
-    DEV_TEXT.openCheats,
-    WORDS.close,
-    WORDS.moveControls,
-    WORDS.close,
-  ]);
+    steps(["ArrowDown", "Tab", "ArrowDown", "ArrowDown", "Tab", "ArrowDown", "ArrowUp"]),
+  ).toEqual([...SWITCHES, WORDS.install, WORDS.close, WORDS.moveControls, WORDS.close]);
 });
 
 it("toggles and saves Reduced motion on a press, never through the opener", async () => {
@@ -390,134 +354,7 @@ it("ignores back before its scene starts", () => {
   expect(() => scene.back()).not.toThrow();
 });
 
-it("shows Open Cheats only in a browser tab, and refuses every cheat once the page is an app window", async () => {
-  appWindow(true);
-  const app = await openCard("pause");
-  expect(app.dialog.textContent).not.toContain(DEV_TEXT.openCheats);
-  app.events.emit("shutdown");
-  appWindow(false);
-  const { control } = await openCard("pause");
-  control(DEV_TEXT.openCheats).click();
-  expect(control(DEV_TEXT.invulnerable)).toBeDefined();
-  appWindow(true);
-  control(DEV_TEXT.invulnerable).click();
-  expect([saves.startCheatSession.mock.calls.length, invulnerabilityEnabled()]).toEqual([0, false]);
-});
-
-it("starts the cheat session for a cheat and never for a tool", async () => {
-  const { control } = await openCard("pause");
-  control(DEV_TEXT.openCheats).click();
-  control(DEV_TEXT.fps).click();
-  control(DEV_TEXT.showTipsAgain).click();
-  await settle();
-  expect(saves.startCheatSession).not.toHaveBeenCalled();
-  expect(document.querySelector(".cheats-status")?.textContent).toBe(
-    DEV_TEXT.results.showTipsAgain,
-  );
-  control(DEV_TEXT.invulnerable).click();
-  expect([saves.startCheatSession.mock.calls.length, invulnerabilityEnabled()]).toEqual([1, true]);
-  control(DEV_TEXT.unlockAllZones).click();
-  expect([saves.startCheatSession.mock.calls.length, allZonesUnlocked()]).toEqual([2, true]);
-  expect(document.querySelector(".cheats-status")?.textContent).toBe(
-    DEV_TEXT.results.unlockAllZones,
-  );
-});
-
-it("keeps Settings and Cheats visible under nested cards and restores focus on Cancel and Back", async () => {
-  const { control, dialog, key, owner } = await openCard("pause");
-  const openCheats = control(DEV_TEXT.openCheats);
-  const motion = control(WORDS.reducedMotion);
-  const motionState = motion.getAttribute("aria-checked");
-  const expectCovered = (card: HTMLElement) => {
-    expect(card.closest("[hidden]")).toBeNull();
-    expect(card.closest("[inert][data-ui-dimmed]")).not.toBeNull();
-  };
-  openCheats.focus();
-  openCheats.click();
-  expectCovered(dialog);
-  const reset = control(DEV_TEXT.resetSave.action);
-  const cheats = reset.closest<HTMLElement>("[role=dialog]")!;
-  const scrollBody = cheats.querySelector<HTMLElement>(".cheats-body")!;
-  expect(document.activeElement).toBe(cheats);
-  key("Tab");
-  expect(cheats.contains(document.activeElement)).toBe(true);
-  motion.click();
-  expect(motion.getAttribute("aria-checked")).toBe(motionState);
-  const closeCheats = cheats.querySelector<HTMLButtonElement>(".ui-card-actions button")!;
-  const closeCheatsX = cheats.querySelector<HTMLButtonElement>(".ui-close-button")!;
-  expect([...cheats.querySelectorAll(".ui-card-actions button")]).toEqual([closeCheats]);
-  expect(closeCheatsX.getAttribute("aria-label")).toBe(DEV_TEXT.cheats.close);
-  closeCheats.focus();
-  expect(document.activeElement).toBe(closeCheats);
-  scrollBody.scrollTop = 100;
-  reset.click();
-  const confirm = document.querySelector<HTMLElement>("[role=alertdialog]")!;
-  const cancel = control(DEV_TEXT.resetSave.confirm.cancel);
-  expectCovered(dialog);
-  expectCovered(cheats);
-  expect(confirm.closest("[inert], [data-ui-dimmed]")).toBeNull();
-  expect(document.activeElement).toBe(cancel);
-  for (const shiftKey of [false, false, true, true]) {
-    key("Tab", { shiftKey });
-    expect(confirm.contains(document.activeElement)).toBe(true);
-  }
-  control(DEV_TEXT.showTipsAgain).click();
-  expect(saves.clearSeenTips).not.toHaveBeenCalled();
-  expect([confirm.hidden, saves.resetSave.mock.calls.length]).toEqual([false, 0]);
-  cancel.click();
-  expect([confirm.hidden, saves.resetSave.mock.calls.length]).toEqual([true, 0]);
-  expect(cheats.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();
-  expect(document.activeElement).toBe(reset);
-  expect(scrollBody.scrollTop).toBe(100);
-  expectCovered(dialog);
-  closeCheatsX.click();
-  expect(cheats.hidden).toBe(true);
-  expect(document.activeElement).toBe(openCheats);
-  openCheats.click();
-  expect(scrollBody.scrollTop).toBe(0);
-  expect(layer.modals.back()).toBe(true);
-  expect(cheats.hidden).toBe(true);
-  expect(dialog.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();
-  expect(document.activeElement).toBe(openCheats);
-  expect(saves.resetSave).not.toHaveBeenCalled();
-  openCheats.click();
-  reset.click();
-  control(DEV_TEXT.resetSave.confirm.accept).click();
-  await settle();
-  expect({
-    closed: owner.settingsClosed.mock.calls.length,
-    reset: saves.resetSave.mock.calls.length,
-    returned: owner.returnToStart.mock.calls.length,
-    session: saves.startCheatSession.mock.calls.length,
-  }).toEqual({ closed: 0, reset: 1, returned: 1, session: 0 });
-});
-
-it("prevents compatibility mouse focus only for an eligible touch on a Cheats dismissal", async () => {
-  const { control } = await openCard("pause");
-  control(DEV_TEXT.openCheats).click();
-  const reset = control(DEV_TEXT.resetSave.action);
-  const cheats = reset.closest<HTMLElement>("[role=dialog]")!;
-  const close = cheats.querySelector<HTMLButtonElement>(".ui-card-actions button")!;
-  const closeX = cheats.querySelector<HTMLButtonElement>(".ui-close-button")!;
-  const prevented = (element: HTMLElement, overrides: PointerEventInit = {}) => {
-    const options = {
-      bubbles: true,
-      button: 0,
-      cancelable: true,
-      isPrimary: true,
-      pointerId: 1,
-      pointerType: "touch",
-      ...overrides,
-    };
-    const accepted = element.dispatchEvent(new PointerEvent("pointerdown", options));
-    element.dispatchEvent(new PointerEvent("pointercancel", options));
-    return !accepted;
-  };
-  expect(prevented(close)).toBe(true);
-  expect(prevented(closeX)).toBe(true);
-  expect(prevented(closeX, { pointerType: "mouse" })).toBe(false);
-  expect(prevented(closeX, { isPrimary: false })).toBe(false);
-  expect(prevented(reset)).toBe(false);
-  gate.accepts.mockReturnValue(false);
-  expect(prevented(closeX)).toBe(false);
+it("keeps the Cheats entry outside Settings", async () => {
+  const { dialog } = await openCard("pause");
+  expect(dialog.textContent).not.toContain(DEV_TEXT.openCheats);
 });

@@ -1,7 +1,7 @@
 /* The Cheats card and its Reset save confirmation (cheats.ts), on ui.css's .ui-card and
-   settings.css's rows, in the settings card's view: lengths are base px times --ui-unit. */
+   settings.css's rows: lengths are base px times --ui-unit. */
 
-/* Both cards take the settings card's place in its view. */
+/* The Reset save confirmation covers the Cheats card in the same view. */
 .cheats-card,
 .cheats-confirm {
   grid-area: 1 / 1;
