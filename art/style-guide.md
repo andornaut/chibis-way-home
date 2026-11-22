@@ -464,7 +464,7 @@ The loading bar is a 2px strip along the top of the 720px view, with no border: 
 - Layers: boot and entering a zone show over the first visit's precache and the newer-save update, which show only while neither runs. A finished measured load holds and fades before the other layer shows, unless boot or a zone load begins meanwhile.
 - Idle: nothing shows.
 - Under a modal: the bar stays painted over the canvas and inert, with its track and fills taking the same three `palette.darker` steps as the rest of the dimmed background, and keeps its state, full hold and travel.
-- Failure: the published game-kit loading-failure presentation shows the required title, message and Retry. Retry takes the primary button's colours, as Start does: a `dslate` face, `slate` highlight and `navy` lip with a `white` label (9.55:1).
+- Failure: the published game-kit loading-failure presentation shows the required title, message and Retry. The centred Retry fits its width to the label, horizontal padding and border. At rest it uses a `dslate` face, `slate` highlight and `navy` lip with a `white` label (9.55:1).
 
 ## Map
 
