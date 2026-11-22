@@ -1,8 +1,7 @@
 import type { CrashColours } from "@andornaut/game-kit/runtime/web/crash/dom/crashScreen";
 
 import palette from "../../public/art/palette.json" with { type: "json" };
-import bird from "../../public/art/sprites/bird.json" with { type: "json" };
-import { BIRD_SHEET_URL } from "../assets/birdFrame.ts";
+import { BIRD_FRAME, CRASH_BIRD_URL } from "../assets/birdFrame.ts";
 
 const { dslate, ink, lgrey, navy, white, yellow } = palette.colours;
 
@@ -16,15 +15,11 @@ export const CRASH_COLOURS: CrashColours = {
 
 // The HTML fallback uses the same held pose as the game, without needing its renderer.
 export function installCrashTheme(style: Pick<CSSStyleDeclaration, "setProperty">): void {
-  const death = bird.meta.frameTags.find((tag) => tag.name === "death")!;
-  const { frame } = Object.values(bird.frames)[death.to]!;
   const scale = 2;
   for (const [name, value] of Object.entries({
-    "bird-height": `${frame.h * scale}px`,
-    "bird-image": `url("${BIRD_SHEET_URL}")`,
-    "bird-position": `${-frame.x * scale}px ${-frame.y * scale}px`,
-    "bird-sheet-size": `${bird.meta.size.w * scale}px ${bird.meta.size.h * scale}px`,
-    "bird-width": `${frame.w * scale}px`,
+    "bird-height": `${BIRD_FRAME.height * scale}px`,
+    "bird-image": `url("${CRASH_BIRD_URL}")`,
+    "bird-width": `${BIRD_FRAME.width * scale}px`,
     "card-face": lgrey,
     focus: yellow,
   })) {

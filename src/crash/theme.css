@@ -32,16 +32,15 @@
   overflow-wrap: anywhere;
 }
 
-/* A decorative, static crop remains available when the game canvas has failed. */
+/* The decorative seated bird uses its own image when the game canvas has failed. */
 .crash-panel::before {
   display: block;
   width: var(--chibi-crash-bird-width);
   height: var(--chibi-crash-bird-height);
   margin: 0 auto 8px;
   background-image: var(--chibi-crash-bird-image);
-  background-position: var(--chibi-crash-bird-position);
   background-repeat: no-repeat;
-  background-size: var(--chibi-crash-bird-sheet-size);
+  background-size: 100% 100%;
   image-rendering: pixelated;
   content: "";
 }

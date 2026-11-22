@@ -2,8 +2,8 @@ import {
   ART_MANIFEST_FILE,
   ART_PATH,
   type ArtManifest,
-  BIRD_SHEET_URL,
   BUNDLED_ART_DATA,
+  CRASH_BIRD_URL,
 } from "../assets/index.ts";
 import { UI_FONT_RESOURCES } from "../ui/index.ts";
 
@@ -24,5 +24,5 @@ export function bootArtUrls(packedKeys: ReadonlySet<string>, manifest: ArtManife
 // The art files a build emits for caching: the boot's art files, the native crash bird and the
 // UI's two typefaces.
 export function artUrls(bootUrls: readonly string[]): string[] {
-  return [...bootUrls, BIRD_SHEET_URL, ...UI_FONT_RESOURCES.map(({ url }) => url)];
+  return [...bootUrls, CRASH_BIRD_URL, ...UI_FONT_RESOURCES.map(({ url }) => url)];
 }

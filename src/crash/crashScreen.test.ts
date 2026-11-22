@@ -4,8 +4,7 @@ import type { CrashScreenOptions } from "@andornaut/game-kit/runtime/web/crash/d
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import palette from "../../public/art/palette.json" with { type: "json" };
-import bird from "../../public/art/sprites/bird.json" with { type: "json" };
-import { BIRD_SHEET_URL } from "../assets/index.ts";
+import { BIRD_FRAME, CRASH_BIRD_URL } from "../assets/index.ts";
 import { TEXT } from "../data/text.ts";
 
 const { install, screen } = vi.hoisted(() => {
@@ -53,25 +52,14 @@ describe("native crash screen adapter", () => {
       });
       expect(properties.get("--chibi-crash-card-face")).toBe(palette.colours.lgrey);
       expect(properties.get("--chibi-crash-focus")).toBe(palette.colours.yellow);
-      expect(properties.get("--chibi-crash-bird-image")).toBe(`url("${BIRD_SHEET_URL}")`);
-      expect(readFileSync("src/crash/theme.css", "utf8")).toContain(
-        "background-image: var(--chibi-crash-bird-image)",
-      );
-
-      // The fallback crops the seated end of the death tag, without animation or canvas access.
-      const death = bird.meta.frameTags.find((tag) => tag.name === "death")!;
-      const seated = Object.values(bird.frames)[death.to]!;
-      expect(seated.rotated || seated.trimmed).toBe(false);
-      const width = Number.parseInt(properties.get("--chibi-crash-bird-width")!, 10);
-      const scale = width / seated.frame.w;
-      expect(Number.isInteger(scale) && scale >= 1).toBe(true);
-      expect(properties.get("--chibi-crash-bird-height")).toBe(`${seated.frame.h * scale}px`);
-      expect(properties.get("--chibi-crash-bird-position")).toBe(
-        `${-seated.frame.x * scale}px ${-seated.frame.y * scale}px`,
-      );
-      expect(properties.get("--chibi-crash-bird-sheet-size")).toBe(
-        `${bird.meta.size.w * scale}px ${bird.meta.size.h * scale}px`,
-      );
+      expect(properties.get("--chibi-crash-bird-image")).toBe(`url("${CRASH_BIRD_URL}")`);
+      expect(properties.get("--chibi-crash-bird-width")).toBe(`${BIRD_FRAME.width * 2}px`);
+      expect(properties.get("--chibi-crash-bird-height")).toBe(`${BIRD_FRAME.height * 2}px`);
+      const css = readFileSync("src/crash/theme.css", "utf8");
+      expect(css).toContain("background-image: var(--chibi-crash-bird-image)");
+      expect(css).toContain("background-size: 100% 100%");
+      expect(css).not.toContain("--chibi-crash-bird-position");
+      expect(css).not.toContain("--chibi-crash-bird-sheet-size");
     },
   );
 });

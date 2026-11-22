@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ART_PATH, type ArtManifest, BIRD_SHEET_URL } from "../assets/index.ts";
+import { ART_PATH, type ArtManifest, CRASH_BIRD_URL } from "../assets/index.ts";
 import { UI_FONT_RESOURCES } from "../ui/index.ts";
 import { artUrls, bootArtUrls } from "./precacheArt.ts";
 
@@ -55,7 +55,7 @@ describe("artUrls", () => {
     expect(bootArtUrls(new Set(), manifest)).toEqual(boot);
     expect(artUrls(boot)).toEqual([
       ...boot,
-      BIRD_SHEET_URL,
+      CRASH_BIRD_URL,
       ...UI_FONT_RESOURCES.map(({ url }) => url),
     ]);
   });
@@ -77,11 +77,12 @@ it("keeps only the images the atlas does not supply in the standalone boot list"
 it("includes the native crash bird and both UI font files in the fingerprinted art emission list", () => {
   const urls = artUrls(bootArtUrls(new Set(), EMPTY));
   for (const url of [
-    BIRD_SHEET_URL,
+    CRASH_BIRD_URL,
     "/art/fonts/chibi-sans/ChibiSans-Regular.woff2",
     "/art/fonts/chibi-sans/ChibiSans-Bold.woff2",
   ]) {
     expect(urls.filter((entry) => entry === url)).toHaveLength(1);
   }
+  expect(urls).not.toContain("/art/sprites/bird.png");
   expect(urls.some((url) => url.endsWith(".ttf"))).toBe(false);
 });
