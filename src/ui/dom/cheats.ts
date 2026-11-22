@@ -8,7 +8,7 @@ import { createTextButtonElement } from "./cardElements.ts";
 // The Cheats card and its Reset save confirmation (cheats.css, on ui.css's .ui-card and
 // settings.css's rows), mounted above the invoking Menu or Pause. FPS and both unlock actions
 // are on the left, power-ups and Invulnerability on the right. Stage controls and Tools follow.
-// The saving warning, status and primary Close stay outside the scroll body. The confirmation is
+// The saving warning, status and primary Back stay outside the scroll body. The confirmation is
 // an alert dialog with its body text, Cancel and Reset.
 
 export type CheatSwitch = "fps" | "invulnerable" | `powerUp:${SkillId}`;
@@ -19,6 +19,7 @@ export type CheatAction =
 export type CheatPicker = "stage" | "zone";
 
 export interface CheatsCardWords {
+  readonly back: string;
   readonly close: string;
   readonly confirm: {
     readonly accept: string;
@@ -46,8 +47,8 @@ export interface CheatsCardWords {
 
 export interface CheatsCardView {
   readonly actions: Readonly<Record<CheatAction, HTMLButtonElement>>;
+  readonly back: HTMLButtonElement;
   readonly backdrop: HTMLElement;
-  readonly close: HTMLButtonElement;
   readonly closeX: HTMLButtonElement;
   readonly confirm: {
     readonly accept: HTMLButtonElement;
@@ -180,8 +181,8 @@ export function createCheatsCard(
   status.setAttribute("aria-live", "polite");
   const actionRow = element("div", "ui-card-actions ui-control-group");
   actionRow.dataset.uiAxis = "row";
-  const close = createTextButtonElement(document, words.close, true);
-  actionRow.append(close);
+  const back = createTextButtonElement(document, words.back, true);
+  actionRow.append(back);
   const closeX = closeButton(document, words.close);
   dialog.append(header, body, status, actionRow, closeX);
 
@@ -209,8 +210,8 @@ export function createCheatsCard(
   root.append(backdrop, view);
   return {
     actions: { load, resetSave, showTipsAgain, unlockAllPowerUps, unlockAllZones },
+    back,
     backdrop,
-    close,
     closeX,
     confirm: { accept, cancel, close: confirmClose, dialog: confirm },
     dialog,

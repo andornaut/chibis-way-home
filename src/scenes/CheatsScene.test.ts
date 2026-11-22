@@ -32,6 +32,7 @@ vi.mock("./domUi.ts", () => ({
 }));
 
 import { DEV_TEXT } from "../data/dev.ts";
+import { TEXT } from "../data/text.ts";
 import { allZonesUnlocked, endDevelopmentSession, invulnerabilityEnabled } from "../dev/mode.ts";
 import { createUiLayer, type UiLayer } from "../ui/index.ts";
 import { CheatsScene } from "./CheatsScene.ts";
@@ -112,7 +113,7 @@ it.each([false, true])("keeps cheat and tool behaviour in app mode %s", async (i
   );
 });
 
-it("keeps the invoking menu and Cheats painted and restores focus after Reset Cancel and Close", async () => {
+it("keeps the invoking menu and Cheats painted and restores focus after Reset Cancel and Back", async () => {
   const { control, dialog, key, openCheats, owner } = openCard();
   const expectCovered = (card: HTMLElement) => {
     expect(card.closest("[hidden]")).toBeNull();
@@ -128,6 +129,8 @@ it("keeps the invoking menu and Cheats painted and restores focus after Reset Ca
   const closeCheats = cheats.querySelector<HTMLButtonElement>(".ui-card-actions button")!;
   const closeCheatsX = cheats.querySelector<HTMLButtonElement>(".ui-close-button")!;
   expect([...cheats.querySelectorAll(".ui-card-actions button")]).toEqual([closeCheats]);
+  expect(closeCheats.textContent).toBe(TEXT.achievements.back);
+  expect(closeCheats.classList.contains("ui-text-button-primary")).toBe(true);
   expect(closeCheatsX.getAttribute("aria-label")).toBe(DEV_TEXT.cheats.close);
   closeCheats.focus();
   expect(document.activeElement).toBe(closeCheats);
@@ -152,7 +155,7 @@ it("keeps the invoking menu and Cheats painted and restores focus after Reset Ca
   expect(document.activeElement).toBe(reset);
   expect(scrollBody.scrollTop).toBe(100);
   expectCovered(dialog);
-  closeCheatsX.click();
+  closeCheats.click();
   expect(owner.cheatsClosed).toHaveBeenCalledOnce();
   expect(dialog.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();
   expect(document.activeElement).toBe(openCheats);

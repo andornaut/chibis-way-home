@@ -38,6 +38,7 @@ export interface CheatsOpener {
 
 // The Cheats card's words, from DEV_TEXT and the settings card's state words.
 const CHEATS_WORDS: CheatsCardWords = {
+  back: TEXT.achievements.back,
   close: DEV_TEXT.cheats.close,
   confirm: DEV_TEXT.resetSave.confirm,
   fps: DEV_TEXT.fps,
@@ -139,7 +140,7 @@ export class CheatsScene extends Scene {
             element,
           }),
         ),
-        ...[cheats.close, cheats.closeX].map((element) => ({
+        ...[cheats.back, cheats.closeX].map((element) => ({
           activate: () => this.back(),
           available: cheatsShown,
           element,

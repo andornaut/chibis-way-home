@@ -14,6 +14,7 @@ import { UI_LAYOUT } from "./layer.ts";
 import { createSettingsCard } from "./settings.ts";
 
 const WORDS: CheatsCardWords = {
+  back: TEXT.achievements.back,
   close: DEV_TEXT.cheats.close,
   confirm: DEV_TEXT.resetSave.confirm,
   fps: DEV_TEXT.fps,
@@ -58,7 +59,7 @@ it("bounds every card at the view less the screen margin above and below", () =>
   expect(scroll).toContain("overflow-y: auto;");
 });
 
-it("scrolls only the Cheats groups between the title and Close", () => {
+it("scrolls only the Cheats groups between the title and Back", () => {
   const view = createCheatsCard(document, "cheats", WORDS, SKILL_IDS);
   const [title, scroller, status, actions, closeX] = view.dialog.children;
   expect(view.dialog.children).toHaveLength(5);
@@ -66,7 +67,7 @@ it("scrolls only the Cheats groups between the title and Close", () => {
   expect([...view.dialog.querySelectorAll(".ui-card-scroll")]).toEqual([view.scrollBody]);
   expect(scroller).toBe(view.scrollBody);
   expect(status).toBe(view.status);
-  expect(actions?.contains(view.close)).toBe(true);
+  expect(actions?.contains(view.back)).toBe(true);
   expect(closeX).toBe(view.closeX);
   const rows = [
     ...Object.values(view.switches),
@@ -74,7 +75,7 @@ it("scrolls only the Cheats groups between the title and Close", () => {
     ...Object.values(view.actions),
   ];
   expect(rows.every((row) => scroller?.contains(row))).toBe(true);
-  expect(scroller?.contains(view.close)).toBe(false);
+  expect(scroller?.contains(view.back)).toBe(false);
 });
 
 it("keeps the warning above the two Cheats columns, with FPS and unlocks opposite skills", () => {
