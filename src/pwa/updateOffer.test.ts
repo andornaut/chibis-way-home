@@ -1,4 +1,7 @@
-import type { UpdateOffer } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
+import {
+  ObsoleteUpdateOfferError,
+  type UpdateOffer,
+} from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import { describe, expect, it, vi } from "vitest";
 
 import { createUpdateOffer } from "./updateOffer.ts";
@@ -67,20 +70,79 @@ describe("Update now prompt", () => {
     expect(shown.mock.calls).toEqual([[false], [true]]);
   });
 
-  it("hides the prompt and continues play when the switch fails", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("closes an obsolete accepted prompt without accepting a later offer", async () => {
     const prompt = createUpdateOffer();
     const shown = vi.fn();
     prompt.subscribe(shown);
-    const offer = staged(() => Promise.reject(new Error("no longer staged")));
+    const offer = staged();
+    offer.updateNow.mockRejectedValueOnce(new ObsoleteUpdateOfferError(offer.version));
     prompt.offer(offer);
     prompt.accept(async () => {});
-    await vi.waitFor(() => expect(shown).toHaveBeenLastCalledWith(false));
-    expect(warn).toHaveBeenCalledOnce();
-    prompt.offer(staged());
+    await offer.updateNow.mock.results[0]!.value.catch(() => {});
+    expect(shown.mock.calls).toEqual([[false], [true], [false]]);
+
+    const next = { ...staged(), version: "c" };
+    prompt.offer(next);
     expect(shown).toHaveBeenLastCalledWith(true);
-    warn.mockRestore();
+    expect(next.updateNow).not.toHaveBeenCalled();
+    const save = vi.fn(async () => {});
+    prompt.accept(save);
+    expect(next.updateNow).toHaveBeenCalledExactlyOnceWith(save);
   });
+
+  it("keeps the displayed newer offer actionable when a shared switch rejects for the older one", async () => {
+    const prompt = createUpdateOffer();
+    const shown = vi.fn();
+    prompt.subscribe(shown);
+    const older = staged();
+    const newer = { ...staged(), version: "c" };
+    let rejectShared!: (error: Error) => void;
+    const shared = new Promise<void>((_, reject) => {
+      rejectShared = reject;
+    });
+    newer.updateNow.mockReturnValueOnce(shared);
+    prompt.offer(older);
+    prompt.offer(newer);
+    const save = vi.fn(async () => {});
+    prompt.accept(save);
+    const unsolicited = { ...staged(), version: "d" };
+    prompt.offer(unsolicited);
+    prompt.accept(save);
+    expect(newer.updateNow).toHaveBeenCalledOnce();
+    rejectShared(new ObsoleteUpdateOfferError(older.version));
+    await shared.catch(() => {});
+    expect(shown.mock.calls).toEqual([[false], [true]]);
+    expect(save).not.toHaveBeenCalled();
+
+    prompt.accept(save);
+    expect(newer.updateNow).toHaveBeenCalledTimes(2);
+    expect(save).toHaveBeenCalledOnce();
+    expect(unsolicited.updateNow).not.toHaveBeenCalled();
+  });
+
+  it.each(["save", "activation"] as const)(
+    "hides the prompt and continues play on %s failure",
+    async (source) => {
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      const prompt = createUpdateOffer();
+      const shown = vi.fn();
+      prompt.subscribe(shown);
+      const failure = new Error(`${source} failed`);
+      const offer = staged(() =>
+        source === "activation" ? Promise.reject(failure) : Promise.resolve(),
+      );
+      prompt.offer(offer);
+      prompt.accept(() => (source === "save" ? Promise.reject(failure) : Promise.resolve()));
+      await vi.waitFor(() => expect(shown).toHaveBeenLastCalledWith(false));
+      expect(warn).toHaveBeenCalledExactlyOnceWith(
+        "Update now failed; play continues on this version.",
+        failure,
+      );
+      prompt.offer(staged());
+      expect(shown).toHaveBeenLastCalledWith(true);
+      warn.mockRestore();
+    },
+  );
 
   it("disconnects a destroyed modal bridge", () => {
     const prompt = createUpdateOffer();

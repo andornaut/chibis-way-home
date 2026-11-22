@@ -1,10 +1,13 @@
-import type { UpdateOffer } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
+import {
+  ObsoleteUpdateOfferError,
+  type UpdateOffer,
+} from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
 // The Update now prompt's state between the kit launch and UpdateScene. The kit offers each staged
 // version once a session (onUpdateReady); the prompt shows until the player chooses. Update now
 // keeps it shown, so play stays paused, while the save settles and the page reloads into the
-// staged build; a switch that fails hides it and play continues. Dismissing it continues play on
-// the active build, and the next launch switches silently.
+// staged build. The prompt closes if its switch fails or its offer becomes obsolete. Dismissing
+// it continues play on the active build, and the next launch switches silently.
 export function createUpdateOffer() {
   let current: UpdateOffer | undefined;
   let switching = false;
@@ -23,6 +26,14 @@ export function createUpdateOffer() {
       const offer = current;
       switching = true;
       offer.updateNow(save).catch((error: unknown) => {
+        switching = false;
+        if (error instanceof ObsoleteUpdateOfferError) {
+          // The kit can share a pending switch with an offer for a different version.
+          if (error.version === offer.version && current === offer) {
+            hide();
+          }
+          return;
+        }
         console.warn("Update now failed; play continues on this version.", error);
         if (current === offer) {
           hide();
