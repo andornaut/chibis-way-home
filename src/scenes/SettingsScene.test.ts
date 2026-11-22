@@ -482,3 +482,33 @@ it("keeps Settings and Cheats visible under nested cards and restores focus on C
     session: saves.startCheatSession.mock.calls.length,
   }).toEqual({ closed: 0, reset: 1, returned: 1, session: 0 });
 });
+
+it("prevents compatibility mouse focus only for an eligible touch on a Cheats dismissal", async () => {
+  const { control } = await openCard("pause");
+  control(DEV_TEXT.openCheats).click();
+  const reset = control(DEV_TEXT.resetSave.action);
+  const cheats = reset.closest<HTMLElement>("[role=dialog]")!;
+  const close = cheats.querySelector<HTMLButtonElement>(".ui-card-actions button")!;
+  const closeX = cheats.querySelector<HTMLButtonElement>(".ui-close-button")!;
+  const prevented = (element: HTMLElement, overrides: PointerEventInit = {}) => {
+    const options = {
+      bubbles: true,
+      button: 0,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: "touch",
+      ...overrides,
+    };
+    const accepted = element.dispatchEvent(new PointerEvent("pointerdown", options));
+    element.dispatchEvent(new PointerEvent("pointercancel", options));
+    return !accepted;
+  };
+  expect(prevented(close)).toBe(true);
+  expect(prevented(closeX)).toBe(true);
+  expect(prevented(closeX, { pointerType: "mouse" })).toBe(false);
+  expect(prevented(closeX, { isPrimary: false })).toBe(false);
+  expect(prevented(reset)).toBe(false);
+  gate.accepts.mockReturnValue(false);
+  expect(prevented(closeX)).toBe(false);
+});

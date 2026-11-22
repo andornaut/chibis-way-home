@@ -289,6 +289,8 @@ export class SettingsScene extends Scene {
             activate: () => this.back(),
             available: cheatsShown,
             element,
+            // This dismissal can reveal the Settings card before the touch's mouse events.
+            preventTouchMouseDefault: () => cheatsShown() && input.accepts(),
           })),
           {
             activate: () => this.cheat(() => this.confirmReset()),
