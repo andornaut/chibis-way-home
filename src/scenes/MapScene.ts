@@ -47,6 +47,7 @@ import { modalInput } from "./modalInput.ts";
 import { fitPlayCamera } from "./playCamera.ts";
 import { mapFullyOpen, savedMap, saveStand } from "./save.ts";
 import type { StageSelectData, StageSelectOpener, StageSelectScene } from "./StageSelectScene.ts";
+import type { StartData } from "./StartScene.ts";
 import type { ZoneData } from "./ZoneScene.ts";
 
 const PALETTE = "palette";
@@ -497,7 +498,7 @@ export class MapScene extends Scene implements StageSelectOpener {
       this.selectDestination(destinationForStage(ZONE_MAP, this.stand).id);
     } else {
       // Returning to the title changes no completed zones or saved map position.
-      this.scene.start("start");
+      this.scene.start("start", { returnedToTitle: true } satisfies StartData);
     }
   }
 

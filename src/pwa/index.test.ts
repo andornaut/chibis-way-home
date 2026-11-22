@@ -2,7 +2,7 @@ import type {
   LaunchProgress,
   UpdateOffer,
 } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
-import type { Launch, LaunchOptions } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
+import type { createLaunch, LaunchOptions } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { PHASER_BUILD } from "../tools/phaserBuild.ts";
@@ -12,12 +12,13 @@ const kit = vi.hoisted(() => {
   const launch = {
     bootProgress: vi.fn(),
     dispose: vi.fn(),
+    requestUpdateCheck: vi.fn(),
     requireNewer: vi.fn(),
-    run: vi.fn<Launch["run"]>(async () => "play"),
+    run: vi.fn<ReturnType<typeof createLaunch>["run"]>(async () => "play"),
   };
   return {
     context: {} as unknown,
-    create: vi.fn((context: unknown, options: LaunchOptions): Launch => {
+    create: vi.fn((context: unknown, options: LaunchOptions): ReturnType<typeof createLaunch> => {
       void context;
       void options;
       return launch;
@@ -102,6 +103,7 @@ it.each(["play", "reloading"] as const)(
       false,
     ]);
     expect(kit.launch.run).toHaveBeenCalledOnce();
+    expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
     expect(loading.bind).toHaveBeenCalledExactlyOnceWith(kit.launch.bootProgress);
   },
 );
@@ -115,6 +117,8 @@ it.each([
   const pwa = await import("./index.ts");
   expect(await pwa.setupPhoneApp()).toBe("play");
   expect(kit.create).not.toHaveBeenCalled();
+  pwa.requestUpdateCheck();
+  expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
   const states: string[] = [];
   pwa.requiredUpdate.subscribe((state) => states.push(state));
   pwa.requireNewer();
@@ -189,6 +193,14 @@ it("shows a staged update's prompt from the launch", async () => {
   pwa.updateOffer.defer();
   expect(offer.dismiss).toHaveBeenCalledOnce();
   expect(shown).toEqual([false, true, false]);
+});
+
+it("forwards an ordinary update check without taking the forced update path", async () => {
+  const pwa = await import("./index.ts");
+  await pwa.setupPhoneApp();
+  pwa.requestUpdateCheck();
+  expect(kit.launch.requestUpdateCheck).toHaveBeenCalledOnce();
+  expect(kit.launch.requireNewer).not.toHaveBeenCalled();
 });
 
 it("forwards a forced update to the launch and its reports to requiredUpdate", async () => {

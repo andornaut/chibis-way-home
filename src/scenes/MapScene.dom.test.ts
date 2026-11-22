@@ -129,6 +129,17 @@ it("rejects a tap crossing modal ownership and leaves travel input locked", asyn
   expect(route.launch).not.toHaveBeenCalled();
 });
 
+it("marks the Map Back to title action as a return to Start", async () => {
+  const { root, route } = setup();
+  const home = root.querySelector<HTMLButtonElement>('[data-control="home"]')!;
+  tap(home);
+  expect(route.start).not.toHaveBeenCalled();
+  ready.finish!(true);
+  await Promise.resolve();
+  tap(home);
+  expect(route.start).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
+});
+
 it("does not hand off a failed or shutdown reveal", async () => {
   const failed = setup();
   ready.finish!(false);

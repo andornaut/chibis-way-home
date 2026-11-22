@@ -4,7 +4,13 @@ import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
 import { openingDestination } from "../progress/index.ts";
-import { backLeavesGame, closeApp, exitShown, PHONE_EVENTS } from "../pwa/index.ts";
+import {
+  backLeavesGame,
+  closeApp,
+  exitShown,
+  PHONE_EVENTS,
+  requestUpdateCheck,
+} from "../pwa/index.ts";
 import {
   createStart,
   focusKeyAction,
@@ -31,6 +37,10 @@ type Control = "exit" | "restart" | "start";
 // The card over the start screen, if one shows.
 type Card = "restart";
 
+export interface StartData {
+  readonly returnedToTitle?: true;
+}
+
 // The screen the game opens on without saved progress, and that Back to title goes to: the Start
 // button, which opens the map (Continue, with him where he stands, once progress is saved),
 // under a nav bar with Exit at its right end only in an app window a script can close (exitShown).
@@ -45,6 +55,7 @@ export class StartScene extends Scene implements RestartOpener {
   private starting = false;
   private view: StartView | undefined;
   private native = false;
+  private checkedArrival: StartData | undefined;
 
   constructor() {
     super("start");
@@ -54,7 +65,7 @@ export class StartScene extends Scene implements RestartOpener {
     return false;
   }
 
-  create(): void {
+  create(data?: StartData): void {
     // Coming back from play ends any cheat session, so Continue loads the save from before it.
     endCheatSession();
     this.starting = false;
@@ -92,6 +103,11 @@ export class StartScene extends Scene implements RestartOpener {
       window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
       captureTab(this, false);
     });
+    // Phaser keeps the last scene data when restarted without a new payload.
+    if (data?.returnedToTitle && data !== this.checkedArrival) {
+      this.checkedArrival = data;
+      requestUpdateCheck();
+    }
   }
 
   restartClosed(): void {

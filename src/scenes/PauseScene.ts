@@ -49,6 +49,7 @@ import { activeSkill, savedSkills, saveStand, selectActiveSkill } from "./save.t
 import { paletteColour } from "./scenePalette.ts";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene.ts";
 import type { SkillDetailData } from "./SkillDetailScene.ts";
+import type { StartData } from "./StartScene.ts";
 import type { ZoneData, ZoneScene } from "./ZoneScene.ts";
 
 // The scenes that show a conversation over the paused zone, each holding its modal input in turn:
@@ -384,12 +385,12 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
 
   // After Reset save: the menu closes on the start screen, as Back to title does.
   returnToStart(): void {
-    this.returnHome();
+    this.returnHome({});
   }
 
-  private returnHome(): void {
+  private returnHome(data: StartData): void {
     updateOffer.defer();
-    this.leaveMenu(START);
+    this.leaveMenu(START, data);
   }
 
   // Closes the menu, stops every scene it covered and launches key with data.
@@ -834,7 +835,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     } else if (control === buttons.achievements && this.state === "open") {
       this.openNested("achievements", control);
     } else if (control === buttons.home && this.state === "open") {
-      this.returnHome();
+      this.returnHome({ returnedToTitle: true });
     } else if (skill !== undefined && this.skillHudLive()) {
       selectActiveSkill(skill === activeSkill() ? null : skill);
     }

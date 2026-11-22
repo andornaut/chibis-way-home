@@ -17,11 +17,7 @@ import {
   guardBackNavigation,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/backNavigation";
 import { pageRunsAsApp } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
-import {
-  browserLaunchContext,
-  createLaunch,
-  type Launch,
-} from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
+import { browserLaunchContext, createLaunch } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import {
   createScreenWakeLock,
   type ScreenWakeLock,
@@ -40,7 +36,7 @@ export { PHONE_EVENTS } from "./events.ts";
 
 // The history state key of the extra entry that back pops instead of leaving the game.
 const BACK_GUARD_KEY = "birdBackGuard";
-let launch: Launch | undefined;
+let launch: ReturnType<typeof createLaunch> | undefined;
 // The staged update's Update now prompt, which UpdateScene shows over whatever the player is in.
 export const updateOffer = createUpdateOffer();
 // The forced update for a save a newer version wrote (requireNewer), as the kit reports it.
@@ -120,6 +116,11 @@ export function setupPhoneApp(): Promise<LaunchResult> {
     "wakeLock" in navigator ? navigator.wakeLock : undefined,
   );
   return result;
+}
+
+// Ordinary discovery on return to Start. The launch owns eligibility, timing and offers.
+export function requestUpdateCheck(): void {
+  launch?.requestUpdateCheck();
 }
 
 // Whether the start screen shows Exit: only in an installed app's window that a script can close.

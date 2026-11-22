@@ -187,5 +187,11 @@ it("ends a paused room for the title without resuming its already-paused zone", 
   tap(pause.button(TEXT.pause.home));
   expect(scenes.stop.mock.calls.map(([key]) => key)).toEqual(["room", "zone"]);
   expect(scenes.resume).not.toHaveBeenCalled();
-  expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("start");
+  expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
+});
+
+it("returns to Start after Reset save with fresh neutral scene data", () => {
+  const { pause, scenes } = content();
+  pause.scene.returnToStart();
+  expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("start", {});
 });

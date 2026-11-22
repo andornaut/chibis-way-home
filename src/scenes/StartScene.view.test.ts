@@ -4,12 +4,14 @@ import { EventEmitter } from "node:events";
 import { afterEach, expect, it, vi } from "vitest";
 
 const native = vi.hoisted(() => ({ cancel: vi.fn(), layer: vi.fn(), reveal: vi.fn() }));
+const requestUpdateCheck = vi.hoisted(() => vi.fn());
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "back-pressed" },
   backLeavesGame: () => false,
   closeApp: vi.fn(),
   exitShown: () => false,
+  requestUpdateCheck,
 }));
 vi.mock("./save.ts", () => ({
   endCheatSession: () => {},
@@ -25,7 +27,7 @@ vi.mock("./domUi.ts", () => ({
   sceneDomUi: native.layer,
 }));
 
-import { StartScene } from "./StartScene.ts";
+import { type StartData, StartScene } from "./StartScene.ts";
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -60,6 +62,35 @@ it("opens the restart card from Restart and takes focus back when it closes", ()
   scene.restartClosed();
   expect(drawFocus).toHaveBeenCalledOnce();
   events.emit("shutdown");
+});
+
+it("requests discovery once per actual return to Start, excluding boot and save reset", () => {
+  vi.stubGlobal("window", new EventTarget());
+  const events = new EventEmitter();
+  const scene = Object.assign(new StartScene(), {
+    draw: vi.fn(),
+    events,
+    game: {},
+    input: { keyboard: new EventEmitter() },
+    scene: { key: "start" },
+    showPressed: vi.fn(),
+    sys: { isActive: () => true },
+    textures: { getFrame: () => ({ realHeight: 239, realWidth: 558 }) },
+  }) as unknown as Pick<StartScene, "create">;
+  const visit = (data?: StartData) => {
+    scene.create(data);
+    events.emit("shutdown");
+  };
+  visit();
+  expect(requestUpdateCheck).not.toHaveBeenCalled();
+  const returned = { returnedToTitle: true } satisfies StartData;
+  visit(returned);
+  expect(requestUpdateCheck).toHaveBeenCalledOnce();
+  visit(returned);
+  visit({});
+  expect(requestUpdateCheck).toHaveBeenCalledOnce();
+  visit({ returnedToTitle: true });
+  expect(requestUpdateCheck).toHaveBeenCalledTimes(2);
 });
 
 it("keeps only the static background on the Start canvas", () => {

@@ -105,7 +105,11 @@ function fixture(reason: "fall" | "hazard") {
     dying: deathPresentation.DeathPresentation | undefined;
     events: EventEmitter;
     input: { enabled: boolean };
-    scene: { launch: ReturnType<typeof vi.fn>; pause: ReturnType<typeof vi.fn> };
+    scene: {
+      launch: ReturnType<typeof vi.fn>;
+      pause: ReturnType<typeof vi.fn>;
+      start: ReturnType<typeof vi.fn>;
+    };
     zone: unknown;
   };
   const completePan = () => {
@@ -171,6 +175,7 @@ describe("one death presentation per attempt", () => {
       expect(camera.setScroll).toHaveBeenCalledOnce();
       const cancellations = vi.mocked(cancelContactFeedback).mock.calls.length;
       scene.leaveDeath();
+      expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
       expect(cancelContactFeedback).toHaveBeenCalledTimes(cancellations + 1);
       expect(vi.mocked(cancelContactFeedback).mock.invocationCallOrder.at(-1)).toBeLessThan(
         camera.setScroll.mock.invocationCallOrder.at(-1)!,

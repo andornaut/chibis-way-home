@@ -190,6 +190,7 @@ import {
   zoneVisitStats,
 } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
+import type { StartData } from "./StartScene.ts";
 import { bindZoneBarks } from "./zoneBarks.ts";
 import type { ZoneBarkScene } from "./ZoneBarkScene.ts";
 import type { ZoneDepartureData } from "./ZoneDepartureScene.ts";
@@ -1155,7 +1156,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.restoreDeathCamera?.();
     this.restoreDeathCamera = undefined;
     startWakeLock();
-    this.scene.start("start");
+    this.scene.start("start", { returnedToTitle: true } satisfies StartData);
   }
 
   // Whether only dialogue covers play, while the zone is loaded and Chibi alive: a conversation,
