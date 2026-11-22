@@ -200,3 +200,4 @@ Reference: [art](../../art/README.md), [style guide](../../art/style-guide.md), 
 | cwh-0262 | Declare every art build set's outputs so the check catches stale files           | [cwh-0262.md](../work/cwh-0262.md) |
 | cwh-0265 | Recapture every stage preview from the current game                              | [cwh-0265.md](../work/cwh-0265.md) |
 | cwh-0269 | Draw the Industrial underwater window backdrop                                   | [cwh-0269.md](../work/cwh-0269.md) |
+| cwh-0271 | Ship fewer and smaller art files                                                 | [cwh-0271.md](../work/cwh-0271.md) |
