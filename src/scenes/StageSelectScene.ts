@@ -105,7 +105,11 @@ export class StageSelectScene extends Scene {
       STAGES_PER_PAGE,
       {
         available: (step) => this.pageKeys().includes(step === -1 ? "previousPage" : "nextPage"),
-        refuse: (control) => this.refuse(control),
+        refuse: (control) => {
+          if (!this.finished && modalInput(this).accepts()) {
+            this.refuse(control);
+          }
+        },
       },
       this.stages.map((id, index) => this.face(id, index)),
     );

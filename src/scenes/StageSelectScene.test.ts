@@ -346,11 +346,27 @@ describe("refusals", () => {
   });
 
   it("ignores presses and keys while a modal covers it", async () => {
-    const { key, stage, stageSelected, stageSelectionClosed } = await openPicker();
+    const { button, key, stage, stageSelected, stageSelectionClosed } = await openPicker();
+    const next = button(TEXT.map.stagePages.next);
     gate.accepts.mockReturnValue(false);
     stage(residential).click();
     stage(spa).click();
+    const pointerClick = () =>
+      next.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, detail: 1 }));
+    pointerClick();
+
+    // Exercise the button's native fallback outside the scene's capture guard.
+    const pager = next.parentElement!;
+    document.body.append(next);
+    try {
+      pointerClick();
+      expect(next.hasAttribute("data-ui-refusal-shake")).toBe(false);
+    } finally {
+      pager.append(next);
+    }
+
     key("Escape");
+    expect(refuseControl).not.toHaveBeenCalled();
     expect(stage(residential).hasAttribute("data-ui-refusal-shake")).toBe(false);
     expect(stageSelected).not.toHaveBeenCalled();
     expect(stageSelectionClosed).not.toHaveBeenCalled();
