@@ -1,5 +1,11 @@
+import type { ScoreDecision } from "@andornaut/game-kit/runtime/ai/utility";
+
 import type { Point, Rect } from "../data/types/index.ts";
-import type { BehaviourScorerState, BossScorerChoice } from "./behaviourScorer.ts";
+import type {
+  BehaviourScorerState,
+  BossScorerChoice,
+  BossScorerValues,
+} from "./behaviourScorer.ts";
 import type { BehaviourTraversalState } from "./behaviourTraversal.ts";
 
 export type BehaviourFact<Value> =
@@ -62,6 +68,12 @@ export interface BehaviourChoiceObservation extends BehaviourObservationBase {
   readonly action?: string;
   readonly choice: BossScorerChoice["kind"];
   readonly kind: "choice";
+  readonly scoring: {
+    readonly decision: ScoreDecision<string>;
+    readonly sampledHoldSeconds: number;
+    readonly streamKey: string;
+    readonly values: BossScorerValues;
+  };
   readonly state: string;
 }
 
@@ -120,11 +132,23 @@ function copyObservation(observation: BehaviourObservation): BehaviourObservatio
     });
   }
   if (observation.kind === "choice") {
+    const { scoring } = observation;
+    const { decision } = scoring;
     return Object.freeze({
       ...(observation.action !== undefined && { action: observation.action }),
       choice: observation.choice,
       kind: observation.kind,
       ...(metadata && { metadata }),
+      scoring: Object.freeze({
+        decision: Object.freeze({
+          action: decision.action,
+          reason: decision.reason,
+          scores: Object.freeze(decision.scores.map((score) => Object.freeze({ ...score }))),
+        }),
+        sampledHoldSeconds: scoring.sampledHoldSeconds,
+        streamKey: scoring.streamKey,
+        values: Object.freeze({ ...scoring.values }),
+      }),
       state: observation.state,
     });
   }

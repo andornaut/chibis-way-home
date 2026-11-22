@@ -341,12 +341,11 @@ function scorerValues(
   object: ObjectLayout,
   at: Point,
   state: BehaviourState,
+  scorer: BehaviourScorerState,
 ): BossScorerValues {
   const { target: bird, tuning } = perception;
-  const body = horizontalBodyBounds(object, at, state);
   const target = birdBox(tuning, bird);
   const heightDelta = at.y + object.height - (target.y + target.height);
-  const scorer = state.scorer ?? openingScorerState(object.behaviour!.scorer!);
   return {
     distance: Math.hypot(
       target.x + target.width / 2 - (at.x + object.width / 2),
@@ -354,7 +353,7 @@ function scorerValues(
     ),
     heightDelta,
     heightGap: Math.abs(heightDelta),
-    horizontalGap: Math.max(0, body.x - target.x - target.width, target.x - body.x - body.width),
+    horizontalGap: horizontalGap(object, at, state, target),
     lineOfSight: matches(perception, object, at, state, { kind: "line-of-sight" }) ? 1 : 0,
     specialDueSeconds: scorer.specialDueSeconds,
     targetSpeed: Math.abs(bird.vx),
@@ -395,6 +394,16 @@ function horizontalBodyBounds(object: ObjectLayout, at: Point, state: BehaviourS
   };
 }
 
+function horizontalGap(
+  object: ObjectLayout,
+  at: Point,
+  state: BehaviourState,
+  target: Rect,
+): number {
+  const body = horizontalBodyBounds(object, at, state);
+  return Math.max(0, body.x - target.x - target.width, target.x - body.x - body.width);
+}
+
 function matches(
   perception: BehaviourPerception,
   object: ObjectLayout,
@@ -433,9 +442,7 @@ function matches(
     );
   }
   if (condition.kind === "horizontal-gap") {
-    const body = horizontalBodyBounds(object, at, state);
-    const target = birdBox(tuning, bird);
-    const gap = Math.max(0, body.x - target.x - target.width, target.x - body.x - body.width);
+    const gap = horizontalGap(object, at, state, birdBox(tuning, bird));
     return condition.comparison === "at-least"
       ? gap >= condition.distance
       : gap < condition.distance;
@@ -443,16 +450,8 @@ function matches(
   if (condition.kind === "alignment-blocked") {
     return alignmentBlocked(perception, object, at, state);
   }
-  if (condition.kind === "line-of-sight") {
-    return targetVisible(
-      world,
-      object,
-      contactBox(object, at, state.facing, state.axis),
-      birdBox(tuning, bird),
-    );
-  }
-  if (condition.kind === "visible") {
-    if (object.behaviour?.pursuit) {
+  if (condition.kind === "line-of-sight" || condition.kind === "visible") {
+    if (condition.kind === "visible" && object.behaviour?.pursuit) {
       return state.pursuit?.phase === "engaged";
     }
     return targetVisible(
@@ -1259,17 +1258,12 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
         throw new Error("Scored pursuit requires an object-local decision context");
       }
       const prior = next.scorer ?? openingScorerState(scorer);
-      const random = world.decisions(`scorer:${prior.decision}`);
+      const streamKey = `scorer:${prior.decision}`;
+      const random = world.decisions(streamKey);
       const { max, min } = scorer.decisionSeconds;
       const holdSeconds = min + random() * (max - min);
-      const { choice } = decideScored(
-        scorer,
-        random,
-        capture,
-        prior,
-        scorerValues(perception, object, current, next),
-        gated,
-      );
+      const values = scorerValues(perception, object, current, next, prior);
+      const { choice, decision } = decideScored(scorer, random, capture, prior, values, gated);
       const observation = world.observation;
       if (observation) {
         const action =
@@ -1283,6 +1277,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
           choice: choice.kind,
           kind: "choice",
           ...(observation.metadata && { metadata: observation.metadata }),
+          scoring: { decision, sampledHoldSeconds: holdSeconds, streamKey, values },
           state: next.stateKey,
         });
       }

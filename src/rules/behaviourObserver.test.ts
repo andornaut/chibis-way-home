@@ -441,6 +441,25 @@ it("records the actual scorer choice without consuming another decision stream o
       .map(({ to }) => to),
   ];
   expect(actions).toContain(choice?.action);
+  if (!choice) {
+    throw new Error("Expected an observed scorer choice");
+  }
+  const { decision, sampledHoldSeconds, streamKey, values } = choice.scoring;
+  const scorerKey = actual.keys.findLast((key) => key.startsWith("scorer:"));
+  expect(streamKey).toBe(scorerKey);
+  const { max, min } = actor.behaviour!.scorer!.decisionSeconds;
+  const draw = namedStreams(0, "observer-choice")(streamKey)();
+  expect(sampledHoldSeconds).toBe(min + draw * (max - min));
+  expect(values.targetSpeed).toBe(Math.abs(bird.vx));
+  expect(decision.action).toBe(
+    `${choice.choice === "attack" ? "attack" : "move"}:${choice.action}`,
+  );
+  expect(decision.scores).toContainEqual(
+    expect.objectContaining({ action: decision.action, score: expect.any(Number) }),
+  );
+  const replay = createBehaviourObservations();
+  expect(run(replay.observer)).toEqual(actual);
+  expect(replay.report().lastChoice).toEqual(choice);
 });
 
 it.each([true, false])("counts only applied graph transitions (applied=%s)", (applied) => {

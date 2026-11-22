@@ -33,10 +33,39 @@ it("surfaces invalid diagnostic work through the actual report without counting 
 
 it("keeps an actual scorer choice separate from the preceding pursuit snapshot", () => {
   const observations = createBehaviourObservations({ retain: true });
-  const choice = { action: "close", choice: "move", kind: "choice", state: "pursuit" } as const;
+  const choice = {
+    action: "close",
+    choice: "move",
+    kind: "choice",
+    scoring: {
+      decision: {
+        action: "move:close",
+        reason: "best",
+        scores: [{ action: "move:close", score: 1 }],
+      },
+      sampledHoldSeconds: 0.75,
+      streamKey: "scorer:0",
+      values: {
+        distance: 48,
+        heightDelta: 0,
+        heightGap: 0,
+        horizontalGap: 4,
+        lineOfSight: 1,
+        specialDueSeconds: 0,
+        targetSpeed: 0,
+        threatSeconds: 0,
+      },
+    },
+    state: "pursuit",
+  } as const;
   observations.observer.record(choice);
   const report = observations.report();
   expect(report.lastChoice).toEqual(choice);
+  Object.assign(choice.scoring.values, { horizontalGap: 8 });
+  Object.assign(choice.scoring.decision.scores[0], { score: 0 });
+  expect(report.lastChoice?.scoring.values.horizontalGap).toBe(4);
+  expect(report.lastChoice?.scoring.decision.scores[0]?.score).toBe(1);
+  expect(Object.isFrozen(report.lastChoice?.scoring.decision.scores[0])).toBe(true);
   expect(report).not.toHaveProperty("lastPursuit");
   expect(report.work.map_search_calls).toEqual({ status: "not_evaluated" });
 });
