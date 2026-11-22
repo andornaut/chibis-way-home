@@ -15,13 +15,13 @@
 
 /* The rows as wide as the widest, stacked the kit's stack button gap apart, in ui.css's
    .ui-card-scroll. They are their own press areas, so the first starts where the header's text
-   buttons' press areas would; the margin also takes back the scroll body's focus ring room. */
+   buttons' press areas would. */
 .settings-rows {
   display: grid;
   align-self: stretch;
   min-width: 0;
   row-gap: var(--ui-stack-button-gap);
-  margin-top: calc(-1 * var(--ui-unit) * var(--button-hit) * 1px - var(--focus-outset));
+  margin-top: calc(-1 * var(--ui-unit) * var(--button-hit) * 1px);
 }
 
 /* A row: its icons, its name and, at the row's right end, its current state and switch or Install
@@ -48,10 +48,15 @@
   outline: none;
 }
 
-/* Art's ui-focus ring round the focused row. The row is clear but for its icons, name and
-   control, so, as the close X, it takes no ink background. */
-.settings-row:focus-visible {
-  box-shadow: var(--focus-ring);
+.settings-row:not(:disabled, [aria-disabled="true"]):is(:focus-visible, [data-pressed]) {
+  forced-color-adjust: none;
+  background: var(--button-state-fill);
+  color: var(--button-state-ink);
+}
+
+.settings-row:not(:disabled, [aria-disabled="true"]):is(:focus-visible, [data-pressed])
+  .settings-note {
+  color: inherit;
 }
 
 /* The row's icons, centred in the slot every row shares, so every name starts at the same x: a
@@ -105,10 +110,6 @@
 }
 
 .settings-note {
-  color: var(--colour-dslate);
-}
-
-.settings-row[data-pressed] .settings-label {
   color: var(--colour-dslate);
 }
 

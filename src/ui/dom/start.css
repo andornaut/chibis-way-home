@@ -47,10 +47,63 @@
   background-image: var(--ui-icon-button-pressed-image);
 }
 
-.start-icon-button[data-pressed] img {
+.start-icon-glyph {
+  --start-icon-image: none;
+}
+
+.start-icon-glyph img,
+.start-icon-glyph::after {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.start-icon-button[data-pressed] .start-icon-glyph {
   translate: 0 calc(var(--ui-unit) * var(--start-icon-sink) * 1px);
 }
 
-.start-icon-button:focus-visible .start-icon-face {
-  box-shadow: var(--focus-ring);
+/* Paint only the face interior of the existing sprite, leaving its edge and lip in place. */
+.start-icon-face::before {
+  position: absolute;
+  inset: calc(var(--ui-unit) * 2 * 1px) calc(var(--ui-unit) * 1px) calc(var(--ui-unit) * 5 * 1px);
+  background-color: var(--button-state-fill, transparent);
+  content: "";
+}
+
+.start-icon-button[data-pressed] .start-icon-face::before {
+  inset-block: calc(var(--ui-unit) * 3 * 1px);
+}
+
+.start-icon-button:is(:focus-visible, [data-pressed], [data-ui-pressed]) .start-icon-glyph img {
+  visibility: hidden;
+}
+
+.start-icon-button:is(:focus-visible, [data-pressed], [data-ui-pressed]) .start-icon-glyph::after {
+  position: absolute;
+  inset: 0;
+  background: var(--button-state-ink);
+  mask: var(--start-icon-image, none) center / 100% 100% no-repeat;
+  content: "";
+}
+
+@media (forced-colors: active) {
+  .start-icon-button {
+    forced-color-adjust: none;
+  }
+
+  .start-icon-face::before {
+    background-color: var(--button-state-fill, ButtonFace);
+  }
+
+  .start-icon-glyph img {
+    visibility: hidden;
+  }
+
+  .start-icon-glyph::after {
+    position: absolute;
+    inset: 0;
+    background: var(--button-state-ink, ButtonText);
+    mask: var(--start-icon-image, none) center / 100% 100% no-repeat;
+    content: "";
+  }
 }

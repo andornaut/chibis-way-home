@@ -51,12 +51,16 @@ describe("native crash screen adapter", () => {
         text: palette.colours.white,
       });
       expect(properties.get("--chibi-crash-card-face")).toBe(palette.colours.lgrey);
-      expect(properties.get("--chibi-crash-focus")).toBe(palette.colours.yellow);
+      expect(properties.get("--chibi-crash-focus-face")).toBe(palette.colours.yellow);
+      expect(properties.get("--chibi-crash-press-face")).toBe(palette.colours.amber);
       expect(properties.get("--chibi-crash-bird-image")).toBe(`url("${CRASH_BIRD_URL}")`);
       expect(properties.get("--chibi-crash-bird-width")).toBe(`${BIRD_FRAME.width * 2}px`);
       expect(properties.get("--chibi-crash-bird-height")).toBe(`${BIRD_FRAME.height * 2}px`);
       const css = readFileSync("src/crash/theme.css", "utf8");
       expect(css).toContain("background-image: var(--chibi-crash-bird-image)");
+      expect(css).toContain("background: Highlight;");
+      expect(css).toContain("color: HighlightText;");
+      expect(css).toMatch(/\.crash-button:focus-visible \{\s*outline: none;/u);
       expect(css).toContain("background-size: 100% 100%");
       expect(css).not.toContain("--chibi-crash-bird-position");
       expect(css).not.toContain("--chibi-crash-bird-sheet-size");

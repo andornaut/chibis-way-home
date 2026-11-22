@@ -1,8 +1,7 @@
 import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import type { LayoutValues } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import { FOCUS_RING, SETTINGS_CARD } from "../../data/layout.ts";
-import type { Rect } from "../../data/types/index.ts";
+import { SETTINGS_CARD } from "../../data/layout.ts";
 import { ACTION_HELP } from "./actionHelp.ts";
 import { FONT_METRICS } from "./fontRoles.ts";
 
@@ -26,16 +25,3 @@ export const SETTINGS_LAYOUT: LayoutValues = {
   "--settings-switch-height": SETTINGS_CARD.switch.height,
   "--settings-switch-width": SETTINGS_CARD.switch.width,
 };
-
-// Art's keyboard focus ring, a 9-slice drawn this far outside the focused row, button or close X
-// on every side.
-const FOCUS_OUTSET = FOCUS_RING.outset;
-
-export function focusRingAround({ height, width, x, y }: Rect): Rect {
-  return {
-    height: height + 2 * FOCUS_OUTSET,
-    width: width + 2 * FOCUS_OUTSET,
-    x: x - FOCUS_OUTSET,
-    y: y - FOCUS_OUTSET,
-  };
-}

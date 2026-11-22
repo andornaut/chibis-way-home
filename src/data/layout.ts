@@ -93,12 +93,6 @@ export const TEXT_BUTTON = {
 // The play mark drawn before a label such as Resume's: its gap to the label's ink, and its size.
 export const PLAY_MARK = { gap: 6, height: 10, width: 5 } as const;
 
-// Keyboard focus
-
-// art: the ui-focus 9-slice, drawn this far outside the focused row, button or close X: a yellow
-// band between two ink lines inkLine wide.
-export const FOCUS_RING = { inkLine: 1, outset: 4 } as const;
-
 // Modal cards
 
 // Each modal card takes one width family's width, held CARD_SCREEN_MARGIN in from the view's sides

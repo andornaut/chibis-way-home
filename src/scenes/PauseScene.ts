@@ -606,7 +606,9 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       const button = view.skills[skill];
       showSkillButton(this.colours, view.readiness, { ...look, at, tabbable }, button);
       if (glyph !== undefined) {
-        button.disc.glyph.src = look.ready ? glyph.ready : glyph.muted;
+        const src = look.ready ? glyph.ready : glyph.muted;
+        button.disc.glyph.src = src;
+        button.disc.element.style.setProperty("--skill-glyph-image", `url("${src}")`);
       }
     }
   }

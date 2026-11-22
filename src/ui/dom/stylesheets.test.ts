@@ -126,16 +126,38 @@ it("keeps Achievements pagination centred with a separate right-aligned return s
   expect(css).toContain(".achievements-return {\n  grid-column: 3;\n  justify-self: end;");
 });
 
-it("draws the keyboard Menu cue and keeps the same focused faces visible in forced colours", () => {
-  const ui = SHEETS.find(([name]) => name === "ui.css")![1];
-  const faces = SHEETS.flatMap(([, css]) =>
-    [
-      ...css.matchAll(/^(\.[^\n{]+:focus-visible[^\n{]*) \{\s+box-shadow: var\(--focus-ring\);/gm),
-    ].map(([, selector]) => selector!),
+it("colours button faces and icons for keyboard focus and forced colours without adding rings", () => {
+  const sheet = (name: string) => SHEETS.find(([sheetName]) => sheetName === name)![1];
+  const ui = sheet("ui.css");
+  expect(ui).toMatch(/\.ui-standard-button[^{}]+:focus-visible\s*\{\s*outline: none;/u);
+  expect(ui).toContain("background: var(--button-state-fill) padding-box;");
+  expect(ui).toContain("--button-focus-fill: Highlight;");
+  expect(ui).toContain("--button-focus-ink: HighlightText;");
+  expect(ui).toContain("--button-press-fill: ButtonText;");
+  expect(ui).toContain("--button-press-ink: ButtonFace;");
+  expect(ui).toContain("color: GrayText;");
+  const pause = sheet("pause.css");
+  expect(pause).toMatch(
+    /\.pause-button:is\(:focus-visible[^{}]+\{\s*--pause-face: var\(--button-state-fill\);/u,
   );
-  const forced = ui.split("@media (forced-colors: active) {")[1] ?? "";
-  const rule = /#game\s*>\s*\.ui-layer\s*:is\(([^)]+)\)\s*\{([^}]+)\}/.exec(forced);
-  expect(faces).toContain(".pause-button:focus-visible .pause-disc[data-shown]");
-  expect(rule?.[2]).toContain("outline: var(--focus-band) solid Highlight;");
-  expect(new Set(rule?.[1]?.split(",").map((selector) => selector.trim()))).toEqual(new Set(faces));
+  expect(pause).toContain("fill: var(--skill-disc-fill, var(--colour-dslate));");
+  expect(pause).toContain("fill: var(--skill-disc-fill, var(--colour-yellow));");
+  expect(pause).toMatch(
+    /\.skill-button:not\(:disabled\):focus-visible \{\s*--skill-disc-fill: var\(--colour-cream\);/u,
+  );
+  expect(pause).toContain("--skill-disc-ink: GrayText;");
+  expect(sheet("start.css")).toContain("background-color: var(--button-state-fill, ButtonFace);");
+  expect(sheet("stageSelect.css")).toContain("background: var(--button-state-fill) padding-box;");
+  expect(sheet("map.css")).toContain("background: var(--button-focus-fill);");
+  expect(sheet("settings.css")).toContain("background: var(--button-state-fill);");
+  for (const name of [
+    "ui.css",
+    "pause.css",
+    "start.css",
+    "stageSelect.css",
+    "map.css",
+    "settings.css",
+  ]) {
+    expect(sheet(name)).not.toMatch(/box-shadow:|outline:\s*(?!\s|none)[^;]+;/u);
+  }
 });

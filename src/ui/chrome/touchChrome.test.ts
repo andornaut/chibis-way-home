@@ -35,7 +35,10 @@ it.each<TouchChromeKind>(["use", "jump", "move"])(
     expect(sample(kind, "rest", 74, 37.5).alpha).toBeLessThan(255);
     expect(sample(kind, "rest", 72, 37.5)).toEqual({ alpha: 255, colour: colours.cream });
     expect(sample(kind, "rest", 69.5, 37.5)).toEqual({ alpha: 255, colour: colours.ink });
-    expect(sample(kind, "press", 74.5, 37.5, true).alpha).toBe(255);
+    expect(sample(kind, "press", 74.5, 37.5, true).alpha).toBe(kind === "move" ? 255 : 0);
+    if (kind !== "move") {
+      expect(sample(kind, "press", 72, 37.5, true)).toEqual({ alpha: 255, colour: colours.cream });
+    }
   },
 );
 it("centres round Use dots and preserves the white press core", () => {

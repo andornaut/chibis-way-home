@@ -3,7 +3,7 @@ import type { CrashColours } from "@andornaut/game-kit/runtime/web/crash/dom/cra
 import palette from "../../public/art/palette.json" with { type: "json" };
 import { BIRD_FRAME, CRASH_BIRD_URL } from "../assets/birdFrame.ts";
 
-const { dslate, ink, lgrey, navy, white, yellow } = palette.colours;
+const { amber, dslate, ink, lgrey, navy, white, yellow } = palette.colours;
 
 export const CRASH_COLOURS: CrashColours = {
   background: navy,
@@ -21,7 +21,8 @@ export function installCrashTheme(style: Pick<CSSStyleDeclaration, "setProperty"
     "bird-image": `url("${CRASH_BIRD_URL}")`,
     "bird-width": `${BIRD_FRAME.width * scale}px`,
     "card-face": lgrey,
-    focus: yellow,
+    "focus-face": yellow,
+    "press-face": amber,
   })) {
     style.setProperty(`--chibi-crash-${name}`, value);
   }

@@ -209,7 +209,7 @@ export {
   statsTotalRows,
   type StatsTotalsSnapshot,
 } from "./layout/runStats.ts";
-export { focusRingAround, SETTINGS_LAYOUT } from "./layout/settingsCard.ts";
+export { SETTINGS_LAYOUT } from "./layout/settingsCard.ts";
 export { SKILL_ROOM } from "./layout/skillDetails.ts";
 export { SKILL_ART, SKILL_BUTTON, skillButton, skillHud } from "./layout/skillHud.ts";
 export { stageProgressRect } from "./layout/stageProgress.ts";

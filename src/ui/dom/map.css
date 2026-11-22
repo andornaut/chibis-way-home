@@ -64,8 +64,15 @@
   outline: none;
 }
 
-.map-destination:focus-visible .map-marker {
-  box-shadow: var(--focus-ring);
+.map-destination:not([aria-disabled="true"]):is(:focus-visible, [data-pressed]) + .map-label {
+  forced-color-adjust: none;
+  background: var(--button-focus-fill);
+  color: var(--button-focus-ink);
+}
+
+.map-destination:not([aria-disabled="true"])[data-pressed] + .map-label {
+  background: var(--button-press-fill);
+  color: var(--button-press-ink);
 }
 
 .map-destination[aria-disabled="true"] {

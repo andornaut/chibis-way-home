@@ -10,16 +10,14 @@ import { createSkillDisc, paintSkillDisc } from "./skillDisc.ts";
 const colour = (name: keyof typeof palette.colours) =>
   Number.parseInt(palette.colours[name].slice(1), 16);
 const COLOURS = { ink: colour("ink"), navy: colour("navy"), yellow: colour("yellow") };
-const LOOKS = [false, true].flatMap((ready) =>
-  [false, true].map((selected) => ({ ready, selected })),
-);
+const LOOKS = [{ ready: false }, { ready: true }] as const;
 
 // The disc's layers for look: a yellow face while ready, a navy one otherwise.
-const layersFor = ({ ready, selected }: (typeof LOOKS)[number]) =>
-  skillChromeLayers({ face: ready ? COLOURS.yellow : COLOURS.navy, ink: COLOURS.ink }, selected);
+const layersFor = ({ ready }: (typeof LOOKS)[number]) =>
+  skillChromeLayers(ready ? COLOURS.yellow : COLOURS.navy);
 
 it.each(LOOKS)(
-  "draws the skill chrome's layers in the button's target, ready $ready and selected $selected, named as one image",
+  "draws the skill chrome's layers in the button's target, ready $ready, named as one image",
   (look) => {
     const { element, glyph } = createSkillDisc(document, COLOURS, look, "Dash skill");
     const svg = element.querySelector("svg")!;
@@ -35,9 +33,7 @@ it.each(LOOKS)(
       hidden: "true",
       layers: layersFor(look),
       name: ["img", "Dash skill"],
-      paints: look.selected
-        ? ["ink", look.ready ? "yellow" : "navy"]
-        : [look.ready ? "yellow" : "navy"],
+      paints: [look.ready ? "yellow" : "navy"],
       viewBox: `0 0 ${SKILL_BUTTON.target} ${SKILL_BUTTON.target}`,
     });
     expect(element.style.getPropertyValue("--skill-disc-target")).toBe(String(SKILL_BUTTON.target));

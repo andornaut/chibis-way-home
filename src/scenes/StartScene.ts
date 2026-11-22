@@ -173,14 +173,15 @@ export class StartScene extends Scene implements RestartOpener {
       [...view.images].map(async ([name, image]) => {
         const key = art[name as keyof typeof art];
         const frame = this.textures.getFrame(key);
-        if (name !== "logo") {
-          writeLayoutProperties(
-            { "--start-height": frame.realHeight, "--start-width": frame.realWidth },
-            image,
-          );
-        }
         const url = await artFrameUrl(this, key);
         image.setAttribute("src", url);
+        if (name !== "logo" && image.parentElement !== null) {
+          writeLayoutProperties(
+            { "--start-height": frame.realHeight, "--start-width": frame.realWidth },
+            image.parentElement,
+          );
+          image.parentElement.style.setProperty("--start-icon-image", `url("${url}")`);
+        }
         return url;
       }),
     );

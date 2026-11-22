@@ -146,7 +146,7 @@ export function createPauseView(
   }
   const skills = Object.fromEntries(
     SKILL_IDS.map((skill) => {
-      const disc = createSkillDisc(document, colours, { ready: false, selected: false }, undefined);
+      const disc = createSkillDisc(document, colours, { ready: false }, undefined);
       const { element: button } = createGameButton(
         document,
         { className: "skill-button" },
@@ -181,7 +181,7 @@ export function showPauseDisc(
       button.ownerDocument,
       colours,
       { height: PAUSE_CHROME_FRAME, width: PAUSE_CHROME_FRAME },
-      pauseChromeLayers(colours, pose.tag, pose.expanded, mode),
+      pauseChromeLayers(colours, pose.tag, mode),
     );
     shown.classList.add("pause-disc");
     shown.dataset.pose = key;
@@ -201,6 +201,7 @@ export function skillPlace(at: Point): LayoutValues {
 // the keyboard's focus may reach it.
 export interface SkillButtonState extends SkillDiscLook {
   readonly at: Point | undefined;
+  readonly selected: boolean;
   readonly tabbable: boolean;
 }
 

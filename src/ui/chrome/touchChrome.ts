@@ -68,9 +68,15 @@ export function touchChromeLayers(
     disc({ x: 5.5, y: 5.5 }, 4.5, core);
     return layers;
   }
-  const outer = 36.5 + (expanded ? 1 : 0);
+  const outer = 36.5 + (kind === "move" && expanded ? 1 : 0);
   layers.push({ centre: CENTRE, colour: colours.ink, inner: outer - 5, kind: "ring", outer });
-  layers.push({ centre: CENTRE, colour: core, inner: outer - 4, kind: "ring", outer: outer - 1 });
+  layers.push({
+    centre: CENTRE,
+    colour: kind === "move" ? core : colours.cream,
+    inner: outer - 4,
+    kind: "ring",
+    outer: outer - 1,
+  });
   if (kind === "use") {
     // Paint all dot halos before their cores, including the shared halo between adjacent dots.
     for (const x of [28.5, 37.5, 46.5]) {

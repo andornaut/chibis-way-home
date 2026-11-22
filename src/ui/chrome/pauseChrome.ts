@@ -12,17 +12,16 @@ interface PauseChromeColours extends TouchChromeColours {
 export function pauseChromeLayers(
   colours: PauseChromeColours,
   pose: PauseChromePose,
-  expanded: boolean,
   mode: "menu" | "pause" = "pause",
 ): readonly TouchChromeLayer[] {
   const centre = { x: PAUSE_CHROME_FRAME / 2, y: PAUSE_CHROME_FRAME / 2 };
-  const outer = expanded ? PAUSE_DISC.expandedRadius : PAUSE_DISC.restRadius;
+  const outer = PAUSE_DISC.restRadius;
   const core = pose === "rest" ? colours.cream : colours.white;
   const face = pose === "rest" ? colours.navy : colours.dslate;
-  const radius = pose === "rest" || expanded ? 13.5 : 12.5;
+  const radius = outer - 3;
   return [
     { centre, colour: colours.ink, kind: "disc", radius: outer },
-    { centre, colour: core, kind: "disc", radius: outer - 1 },
+    { centre, colour: colours.cream, kind: "disc", radius: outer - 1 },
     { centre, colour: face, kind: "disc", radius },
     ...(mode === "menu" ? MENU_GLYPH : PAUSE_GLYPH).bars.map((rect) => ({
       colour: core,

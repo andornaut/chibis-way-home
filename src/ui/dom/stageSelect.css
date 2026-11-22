@@ -205,12 +205,38 @@
   text-box: trim-both cap alphabetic;
 }
 
-/* Art's ui-focus ring outside the focused face, with an ink background in the frame's cut
-   corners, as on ui.css's text buttons. */
-.stage-select-stage:focus-visible .stage-select-face {
-  box-shadow: var(--focus-ring);
+.stage-select-stage:not([aria-disabled="true"]):is(:focus-visible, [data-pressed])
+  .stage-select-frame {
+  border-image-slice: var(--ui-frame-slice);
+  background: var(--button-state-fill) padding-box;
 }
 
-.stage-select-stage:focus-visible:not([data-pressed]) .stage-select-face {
-  background-color: var(--colour-ink);
+.stage-select-stage:not([aria-disabled="true"]):is(:focus-visible, [data-pressed])
+  [data-ui-refusal-label] {
+  color: var(--button-state-ink);
+}
+
+@media (forced-colors: active) {
+  .stage-select-stage {
+    forced-color-adjust: none;
+  }
+
+  .stage-select-stage .stage-select-frame {
+    border-image: none;
+    border-color: ButtonText;
+    background: ButtonFace padding-box;
+  }
+
+  .stage-select-stage [data-ui-refusal-label],
+  .stage-select-stage[data-look="primary"] [data-ui-refusal-label] {
+    color: ButtonText;
+  }
+
+  .stage-select-stage[aria-disabled="true"] .stage-select-frame {
+    border-color: GrayText;
+  }
+
+  .stage-select-stage[aria-disabled="true"] [data-ui-refusal-label] {
+    color: GrayText;
+  }
 }

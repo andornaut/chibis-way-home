@@ -9,13 +9,7 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 import { createViewUnits, slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
-import {
-  CARD_CONTENT,
-  CARD_SCREEN_MARGIN,
-  DEATH_CARD,
-  FOCUS_RING,
-  TEXT_BUTTON,
-} from "../../data/layout.ts";
+import { CARD_CONTENT, CARD_SCREEN_MARGIN, DEATH_CARD, TEXT_BUTTON } from "../../data/layout.ts";
 import type { Point } from "../../data/types/index.ts";
 import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
 import { disposeGameButtons } from "../input/actionBinding.ts";
@@ -36,16 +30,8 @@ import {
 // read after them), and holds a .ui-view box on the play view. Every length in
 // the UI's CSS is base pixels times --ui-unit, which this layer keeps current.
 
-// The whole CSS px lengths the UI's CSS reads through slice(), besides art's frame edges: the
-// focus ring's bands, a pressed label's sink, the card frame's border and the death card's
-// statistics divider.
-const RING_EDGES = [FOCUS_RING.inkLine, FOCUS_RING.outset - FOCUS_RING.inkLine, FOCUS_RING.outset];
-const WHOLE_LENGTHS = [
-  ...RING_EDGES,
-  TEXT_BUTTON.pressedSink,
-  CARD_CONTENT.frameBorder,
-  DEATH_CARD.dividerWidth,
-];
+// Whole CSS pixel lengths apart from the view art frame edges.
+const WHOLE_LENGTHS = [TEXT_BUTTON.pressedSink, CARD_CONTENT.frameBorder, DEATH_CARD.dividerWidth];
 
 // A card's close X, drawn its inset in from the card's top and right edges, and its press area.
 const { art: CLOSE_ART, hit: CLOSE_HIT } = CARD_CLOSE;
@@ -78,9 +64,6 @@ export const UI_LAYOUT: LayoutValues = {
   // A centred title's clearance from each side of a card with a close X.
   "--close-reserve": cardTitleReserve(true),
   "--close-size": CARD_CONTENT.closeSize,
-  "--focus-band": slice(FOCUS_RING.outset - FOCUS_RING.inkLine),
-  "--focus-ink": slice(FOCUS_RING.inkLine),
-  "--focus-outset": slice(FOCUS_RING.outset),
   "--heading-line": FONT_METRICS.mainHeading.lineHeight,
   "--heading-size": FONT_METRICS.mainHeading.size,
   "--text-line": FONT_METRICS.body.lineHeight,

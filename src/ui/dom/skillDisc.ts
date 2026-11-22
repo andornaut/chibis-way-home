@@ -9,9 +9,8 @@ import { SKILL_BUTTON } from "../layout/skillHud.ts";
 import { createPaletteSvg } from "./chrome.ts";
 
 // A skill's disc in the HTML UI (skillDisc.css): its circle as inline SVG from the skill chrome's
-// layers in the button's square target, a yellow face while ready and a navy one otherwise, the
-// selected skill's inside an ink annulus, with the skill's glyph at its native size centred on
-// it, named as one image.
+// layers in the button's square target, with the skill's glyph at native size centred on it,
+// named as one image.
 
 // The layout properties skillDisc.css reads, in base px.
 export const SKILL_DISC_LAYOUT: LayoutValues = {
@@ -32,19 +31,18 @@ export interface SkillDiscColours {
   readonly yellow: number;
 }
 
-// How a disc shows: its face ready or not, and its skill selected or not.
+// The base disc uses yellow for a ready skill and navy otherwise.
 export interface SkillDiscLook {
   readonly ready: boolean;
-  readonly selected: boolean;
 }
 
 function discSvg(document: Document, colours: SkillDiscColours, look: SkillDiscLook) {
-  const { ink, navy, yellow } = colours;
+  const { navy, yellow } = colours;
   const svg = createPaletteSvg(
     document,
     colours,
     { height: SKILL_BUTTON.target, width: SKILL_BUTTON.target },
-    skillChromeLayers({ face: look.ready ? yellow : navy, ink }, look.selected),
+    skillChromeLayers(look.ready ? yellow : navy),
   );
   svg.classList.add("ui-skill-disc-chrome");
   return svg;

@@ -28,3 +28,35 @@
   width: 100%;
   height: 100%;
 }
+
+@media (forced-colors: active) {
+  .touch-control:is([data-touch-control="jump"], [data-touch-control="use"]) {
+    forced-color-adjust: none;
+  }
+
+  .touch-control:is([data-touch-control="jump"], [data-touch-control="use"])
+    [data-ui-stroke="ink"] {
+    stroke: Canvas;
+  }
+
+  .touch-control:is([data-touch-control="jump"], [data-touch-control="use"]) [data-ui-fill="ink"] {
+    fill: Canvas;
+  }
+
+  .touch-control:is([data-touch-control="jump"], [data-touch-control="use"])
+    [data-ui-stroke="cream"] {
+    stroke: CanvasText;
+  }
+
+  .touch-control[data-touch-control="use"] [data-ui-fill="cream"] {
+    fill: CanvasText;
+  }
+
+  .touch-control[data-touch-control="jump"] [data-ui-stroke="white"] {
+    stroke: Highlight;
+  }
+
+  .touch-control[data-touch-control="use"] [data-ui-fill="white"] {
+    fill: Highlight;
+  }
+}

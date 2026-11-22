@@ -108,16 +108,18 @@ export function createStart(
       });
       continue;
     }
-    const icon = image(control, {
-      height: 0,
-      width: 0,
-      x: at.icon.x - at.art.x,
-      y: at.icon.y - at.art.y,
-    });
+    const icon = document.createElement("img");
+    icon.alt = "";
+    icon.draggable = false;
+    images.set(control, icon);
+    const glyph = document.createElement("span");
+    glyph.className = "start-icon-glyph";
+    box({ height: 0, width: 0, x: at.icon.x - at.art.x, y: at.icon.y - at.art.y }, glyph);
+    glyph.append(icon);
     const { element: button, face } = createGameButton(
       document,
       { className: "start-icon-button ui-press", face: { className: "start-icon-face" } },
-      { icon, kind: "icon", name: words[control] },
+      { icon: glyph, kind: "icon", name: words[control] },
     );
     button.dataset.control = control;
     box(at.hit, button);

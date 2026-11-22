@@ -1,7 +1,7 @@
 /* The HTML UI over the canvas (src/ui/dom/), on the kit's web/ui/dom/ui.css. Every length is base
    pixels times --ui-unit: calc(var(--ui-unit) * <base px> * 1px), with the base px a layout
    property the layer writes (UI_LAYOUT in layer.ts), or a whole-px length the view bridge keeps
-   (--ui-slice-<n>, through the frame and focus properties). Colours and art frames are custom
+   (--ui-slice-<n>, through the frame properties). Colours and art frames are custom
    properties applySkin (skin.ts) sets from the loaded palette and sheets; under a modal the layer
    sets the dimmed skin's on what the modal covers (layer.ts), so it dims through the same palette
    ramp as the canvas's world. */
@@ -19,24 +19,6 @@
   --ui-page-divider-colour: var(--colour-ink);
   font-family: var(--ui-font-family), sans-serif;
   color: var(--colour-ink);
-
-  /* Art's ui-focus ring as box-shadows outside a focused face, in whole CSS px: from the inside
-     out a --focus-ink ink line, a yellow band to --focus-band and an ink line to --focus-outset.
-     Each band is the union of four shadows shifted by its corner cut, which leaves a square notch
-     that size at each corner: the inner line's notch shows the yellow and the yellow's shows the
-     outer line, whose own notch is clear. */
-  --focus-cut: calc(var(--focus-outset) - var(--focus-band));
-  --focus-ring:
-    var(--focus-ink) 0 0 0 var(--colour-ink), calc(-1 * var(--focus-ink)) 0 0 0 var(--colour-ink),
-    0 var(--focus-ink) 0 0 var(--colour-ink), 0 calc(-1 * var(--focus-ink)) 0 0 var(--colour-ink),
-    var(--focus-cut) 0 0 calc(var(--focus-band) - var(--focus-cut)) var(--colour-yellow),
-    calc(-1 * var(--focus-cut)) 0 0 calc(var(--focus-band) - var(--focus-cut)) var(--colour-yellow),
-    0 var(--focus-cut) 0 calc(var(--focus-band) - var(--focus-cut)) var(--colour-yellow),
-    0 calc(-1 * var(--focus-cut)) 0 calc(var(--focus-band) - var(--focus-cut)) var(--colour-yellow),
-    var(--focus-cut) 0 0 var(--focus-band) var(--colour-ink),
-    calc(-1 * var(--focus-cut)) 0 0 var(--focus-band) var(--colour-ink),
-    0 var(--focus-cut) 0 var(--focus-band) var(--colour-ink),
-    0 calc(-1 * var(--focus-cut)) 0 var(--focus-band) var(--colour-ink);
 }
 
 .ui-scene {
@@ -103,15 +85,11 @@
 }
 
 /* A card's body that scrolls once the card reaches its greatest height: it shrinks first, so the
-   card's title and bottom actions stay in view. Rows pan the body as well as press. Its padding,
-   which its margin takes back, leaves room inside the scroll clip for art's focus ring round a row
-   at the body's edges. */
+   card's title and bottom actions stay in view. Rows pan the body as well as press. */
 .ui-card-scroll {
   flex: 1 1 auto;
   align-self: stretch;
   min-height: 0;
-  margin: calc(-1 * var(--focus-outset));
-  padding: var(--focus-outset);
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
@@ -274,17 +252,6 @@
   translate: 0 var(--button-sink);
 }
 
-/* Art's ui-focus ring, outside the focused face. The face is opaque but for its cut corners, so
-   an ink background fills just those and the ring's inner ink line meets the face with no card
-   pixel between them; a pressed face, which sinks clear of its top rows, keeps its own shape. */
-.ui-text-button:focus-visible .ui-text-button-face {
-  box-shadow: var(--focus-ring);
-}
-
-.ui-text-button:focus-visible:not([data-pressed]) .ui-text-button-face {
-  background-color: var(--colour-ink);
-}
-
 /* Art's ui-button-primary face, with a white label. */
 .ui-text-button-primary .ui-text-button-face {
   --ui-frame-image: var(--ui-button-primary-image);
@@ -378,33 +345,82 @@
   background-image: var(--ui-close-pressed-image);
 }
 
-/* Art's ui-focus ring, outside the focused X, as on a text button. The X's face is clear but for
-   its mark, so it takes no ink background. */
-.ui-close-button:focus-visible .ui-close-face {
-  box-shadow: var(--focus-ring);
+/* Focus and press change the face and ink inside the ordinary button frame. */
+#game > .ui-layer :is(.ui-standard-button, .ui-text-button, .settings-row):focus-visible {
+  outline: none;
 }
 
-/* Forced colours suppress shadows. Keep the cue on the same faces with a system colour. */
+#game > .ui-layer {
+  --button-focus-fill: var(--colour-yellow);
+  --button-focus-ink: var(--colour-ink);
+  --button-press-fill: var(--colour-amber);
+  --button-press-ink: var(--colour-ink);
+}
+
+#game > .ui-layer :is(button, .settings-row):is(:focus-visible, [data-pressed], [data-ui-pressed]) {
+  --button-state-fill: var(--button-focus-fill);
+  --button-state-ink: var(--button-focus-ink);
+}
+
+#game > .ui-layer :is(button, .settings-row):is([data-pressed], [data-ui-pressed]) {
+  --button-state-fill: var(--button-press-fill);
+  --button-state-ink: var(--button-press-ink);
+}
+
+.ui-text-button:not(:disabled, [aria-disabled="true"]):is(
+    :focus-visible,
+    [data-pressed],
+    [data-ui-pressed]
+  )
+  .ui-text-button-face {
+  border-image-slice: var(--ui-frame-slice);
+  background: var(--button-state-fill) padding-box;
+  color: var(--button-state-ink);
+}
+
+.ui-close-button:not(:disabled):is(:focus-visible, [data-pressed], [data-ui-pressed])
+  .ui-close-face {
+  position: relative;
+  background: var(--button-state-fill);
+}
+
+.ui-close-button:not(:disabled):is(:focus-visible, [data-pressed], [data-ui-pressed])
+  .ui-close-face::after {
+  position: absolute;
+  inset: 0;
+  background: var(--button-state-ink);
+  mask: var(--ui-close-image) center / 100% 100% no-repeat;
+  content: "";
+}
+
 @media (forced-colors: active) {
-  #game
-    > .ui-layer
-    :is(
-      .ui-text-button:focus-visible .ui-text-button-face,
-      .ui-close-button:focus-visible .ui-close-face,
-      .pause-button:focus-visible .pause-disc[data-shown],
-      .skill-button:focus-visible .ui-skill-disc,
-      .start-icon-button:focus-visible .start-icon-face,
-      .map-destination:focus-visible .map-marker,
-      .stage-select-stage:focus-visible .stage-select-face,
-      .settings-row:focus-visible
-    ) {
-    outline: var(--focus-band) solid Highlight;
-    outline-offset: var(--focus-ink);
+  #game > .ui-layer {
+    --button-focus-fill: Highlight;
+    --button-focus-ink: HighlightText;
+    --button-press-fill: ButtonText;
+    --button-press-ink: ButtonFace;
   }
 
-  /* The miniature mask clips anything outside the marker's frame. */
-  #game > .ui-layer .map-destination:focus-visible .map-marker[data-miniature] {
-    outline-offset: calc(-1 * var(--focus-band));
+  .ui-text-button .ui-text-button-face {
+    forced-color-adjust: none;
+    border-image: none;
+    border-color: ButtonText;
+    background: ButtonFace padding-box;
+    color: ButtonText;
+  }
+
+  .ui-text-button:is(:disabled, [aria-disabled="true"]) .ui-text-button-face {
+    border-color: GrayText;
+    color: GrayText;
+  }
+
+  .ui-close-button .ui-close-face {
+    forced-color-adjust: none;
+  }
+
+  .ui-close-button:not(:focus-visible, [data-pressed], [data-ui-pressed]) .ui-close-face {
+    background: ButtonText;
+    mask: var(--ui-close-image) center / 100% 100% no-repeat;
   }
 }
 

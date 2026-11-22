@@ -116,7 +116,7 @@ export function createRoomView(
     card.setAttribute("aria-labelledby", "room-title");
     card.setAttribute("aria-describedby", "room-description");
     const body = make("div", "room-skill-body");
-    const disc = createSkillDisc(document, colours, { ready: true, selected: false }, gift.disc);
+    const disc = createSkillDisc(document, colours, { ready: true }, gift.disc);
     glyph = disc.glyph;
     const description = make("p", "room-description");
     description.id = "room-description";
