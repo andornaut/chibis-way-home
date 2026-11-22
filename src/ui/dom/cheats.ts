@@ -3,10 +3,10 @@ import { closeButton, setCardWidth } from "./card.ts";
 import { createTextButtonElement } from "./cardElements.ts";
 
 // The Cheats card and its Reset save confirmation (cheats.css, on ui.css's .ui-card and
-// settings.css's rows), shown in the settings card's place in its view. The Cheats group starts with
-// power-up and Invulnerability switches and both unlock actions, followed by the stage controls.
-// Tools follows in the scroll body. Status and the primary Close stay outside it. The confirmation
-// is an alert dialog with its body text, Cancel and Reset.
+// settings.css's rows), shown in the settings card's place in its view. FPS and both unlock actions
+// are on the left, power-ups and Invulnerability on the right. Stage controls and Tools follow.
+// The saving warning, status and primary Close stay outside the scroll body. The confirmation is
+// an alert dialog with its body text, Cancel and Reset.
 
 export type CheatSwitch = "fps" | "invulnerable" | `powerUp:${SkillId}`;
 
@@ -86,10 +86,13 @@ export function createCheatsCard(
   dialog.hidden = true;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-title`);
+  dialog.setAttribute("aria-describedby", `${id}-warning`);
   const header = element("div", "ui-card-header");
   const heading = text("h2", "ui-card-title", words.title);
   heading.id = `${id}-title`;
-  header.append(heading);
+  const warning = text("p", "ui-card-text cheats-warning", words.groupDescription);
+  warning.id = `${id}-warning`;
+  header.append(heading, warning);
   const body = element("div", "cheats-body ui-card-scroll");
   // A row's button named by its label, with its value at its right end.
   const row = (key: string, label: string, value: HTMLElement, into: HTMLElement) => {
@@ -133,23 +136,24 @@ export function createCheatsCard(
   const rows = () => element("div", "settings-rows cheats-rows");
   const cheats = element("section", "cheats-group");
   cheats.setAttribute("aria-label", words.group);
-  const switchGrid = rows();
-  switchGrid.classList.add("cheats-switches");
-  const unlockGrid = rows();
+  const columns = element("div", "cheats-columns");
+  const quickActions = element("div", "settings-rows cheats-column");
+  const skillSwitches = element("div", "settings-rows cheats-column cheats-switches");
+  columns.append(quickActions, skillSwitches);
   const stageGrid = rows();
-  cheats.append(
-    text("p", "ui-card-text cheats-group-text", words.groupDescription),
-    switchGrid,
-    unlockGrid,
-    stageGrid,
-  );
+  cheats.append(columns, stageGrid);
   const switches: Partial<Record<CheatSwitch, HTMLButtonElement>> = {};
+  switches.fps = switchRow("fps", words.fps, quickActions);
+  const unlockAllPowerUps = button(words.unlockAllPowerUps, quickActions);
+  const unlockAllZones = button(words.unlockAllZones, quickActions);
   for (const skill of skills) {
-    switches[`powerUp:${skill}`] = switchRow(`powerUp:${skill}`, words.powerUps[skill], switchGrid);
+    switches[`powerUp:${skill}`] = switchRow(
+      `powerUp:${skill}`,
+      words.powerUps[skill],
+      skillSwitches,
+    );
   }
-  switches.invulnerable = switchRow("invulnerable", words.invulnerable, switchGrid);
-  const unlockAllPowerUps = button(words.unlockAllPowerUps, unlockGrid);
-  const unlockAllZones = button(words.unlockAllZones, unlockGrid);
+  switches.invulnerable = switchRow("invulnerable", words.invulnerable, skillSwitches);
   const zone = pickerRow("zone", words.zone, stageGrid);
   const stage = pickerRow("stage", words.stage, stageGrid);
   const pickers = { stage, zone };
@@ -159,7 +163,6 @@ export function createCheatsCard(
   toolsHeading.id = `${id}-tools`;
   tools.setAttribute("aria-labelledby", toolsHeading.id);
   const toolGrid = rows();
-  switches.fps = switchRow("fps", words.fps, toolGrid);
   const showTipsAgain = button(words.showTipsAgain, toolGrid);
   const resetSave = button(words.resetSave, toolGrid);
   tools.append(toolsHeading, toolGrid);

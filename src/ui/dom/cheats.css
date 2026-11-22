@@ -12,6 +12,16 @@
   display: none;
 }
 
+.cheats-card > .ui-card-header {
+  flex-direction: column;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  padding-block: 0;
+}
+
+.cheats-warning {
+  color: var(--colour-dslate);
+}
+
 /* The groups between the title and the status line and Close, in ui.css's .ui-card-scroll. */
 .cheats-body {
   display: flex;
@@ -33,13 +43,9 @@
   line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
 }
 
-.cheats-group-text {
-  color: var(--colour-dslate);
-  text-align: start;
-}
-
 /* Each track is at least half the medium width when space permits, and at least half the
    available width after the column gap. The grid falls back to one column when space is tight. */
+.cheats-columns,
 .cheats-rows {
   --cheats-column-min: calc(var(--ui-unit) * var(--card-width-medium) / 2 * 1px);
   --cheats-column-half: calc((100% - var(--ui-button-gap)) / 2);
@@ -49,6 +55,16 @@
     minmax(min(100%, max(var(--cheats-column-min), var(--cheats-column-half))), 1fr)
   );
   column-gap: var(--ui-button-gap);
+}
+
+.cheats-columns {
+  display: grid;
+  align-items: start;
+  row-gap: var(--ui-stack-button-gap);
+}
+
+.cheats-column,
+.cheats-rows {
   margin-top: 0;
 }
 
@@ -56,12 +72,12 @@
   row-gap: 0;
 }
 
-.cheats-rows .settings-label,
-.cheats-rows .ui-text-button-face {
+.cheats-group .settings-label,
+.cheats-group .ui-text-button-face {
   overflow-wrap: anywhere;
 }
 
-.cheats-rows .ui-text-button-face {
+.cheats-group .ui-text-button-face {
   height: auto;
   white-space: normal;
 }

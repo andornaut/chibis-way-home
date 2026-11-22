@@ -62,7 +62,7 @@ it("scrolls only the Cheats groups between the title and Close", () => {
   const view = createCheatsCard(document, "cheats", WORDS, SKILL_IDS);
   const [title, scroller, status, actions, closeX] = view.dialog.children;
   expect(view.dialog.children).toHaveLength(5);
-  expect(title?.textContent).toBe(WORDS.title);
+  expect(title?.querySelector("h2")?.textContent).toBe(WORDS.title);
   expect([...view.dialog.querySelectorAll(".ui-card-scroll")]).toEqual([view.scrollBody]);
   expect(scroller).toBe(view.scrollBody);
   expect(status).toBe(view.status);
@@ -77,19 +77,22 @@ it("scrolls only the Cheats groups between the title and Close", () => {
   expect(scroller?.contains(view.close)).toBe(false);
 });
 
-it("keeps the warning and all skill switches and unlock actions at the top of Cheats", () => {
+it("keeps the warning above the two Cheats columns, with FPS and unlocks opposite skills", () => {
   const view = createCheatsCard(document, "cheats", WORDS, SKILL_IDS);
+  const descriptionId = view.dialog.getAttribute("aria-describedby");
+  expect(view.dialog.querySelector(`#${descriptionId}`)?.textContent).toBe(WORDS.groupDescription);
   const [cheats, tools] = view.scrollBody.children;
   expect(cheats?.getAttribute("aria-label")).toBe(WORDS.group);
-  const [warning, switchGrid, unlockGrid, stageGrid] = cheats!.children;
-  expect(warning?.textContent).toBe(WORDS.groupDescription);
-  expect([...switchGrid!.children]).toEqual([
-    ...SKILL_IDS.map((skill) => view.switches[`powerUp:${skill}`]),
-    view.switches.invulnerable,
-  ]);
-  expect([...unlockGrid!.children]).toEqual([
+  const [columns, stageGrid] = cheats!.children;
+  const [left, right] = columns!.children;
+  expect([...left!.children]).toEqual([
+    view.switches.fps,
     view.actions.unlockAllPowerUps,
     view.actions.unlockAllZones,
+  ]);
+  expect([...right!.children]).toEqual([
+    ...SKILL_IDS.map((skill) => view.switches[`powerUp:${skill}`]),
+    view.switches.invulnerable,
   ]);
   expect([...stageGrid!.children]).toEqual([
     view.pickers.zone,
@@ -97,7 +100,6 @@ it("keeps the warning and all skill switches and unlock actions at the top of Ch
     view.actions.load,
   ]);
   expect([...tools!.querySelectorAll("button")]).toEqual([
-    view.switches.fps,
     view.actions.showTipsAgain,
     view.actions.resetSave,
   ]);
