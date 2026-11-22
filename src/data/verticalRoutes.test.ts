@@ -7,7 +7,7 @@ import { assembleZone, zonePlanOf } from "../rules/assemble.ts";
 import { chunkProblems } from "../rules/chunk.ts";
 import { zoneLayout } from "../rules/tiles.ts";
 import { standsOn, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
-import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { CHUNK_LIBRARY, zonePlanFor } from "../rules/zonePlans.ts";
 import { surfaceAt, zoneSurfaces } from "../sim/zoneWalk.ts";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
@@ -188,7 +188,7 @@ it.each([
     if ("sections" in recipe) {
       throw Error(`Expected continuous ${name} stage`);
     }
-    const plan = assembleZone(CHUNK_LIBRARY, 1, assembled, recipe);
+    const plan = zonePlanFor(1, assembled);
     const ids = plan.areas.main!.chunks!.map(({ chunk }) => chunk);
     expect(ids[1]).toBe("outdoor-descent");
     expect(ids.at(-2)).toBe("outdoor-surface-return");
