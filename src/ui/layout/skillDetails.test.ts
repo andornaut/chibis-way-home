@@ -10,7 +10,6 @@ import type { SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
 import { PAUSE_BUTTON } from "./pauseCard.ts";
 import { shifted, viewShift } from "./playView.ts";
-import { ROOM_SCREEN } from "./roomScreen.ts";
 import { SKILL_ROOM } from "./skillDetails.ts";
 import { SKILL_BUTTON, skillButton, skillHud } from "./skillHud.ts";
 import { TOP_BAR_CENTRE_Y } from "./topBar.ts";
@@ -31,7 +30,6 @@ describe("native skill presentation", () => {
     expect(SCREEN.width - footer.x - footer.width).toBe(CARD_CONTENT.padding);
     expect(SCREEN.height - footer.y - footer.height).toBe(CARD_CONTENT.padding);
     expect(SKILL_ROOM.bounds.y + SKILL_ROOM.bounds.height).toBeLessThan(footer.y);
-    expect(ROOM_SCREEN.leave.art).toMatchObject({ height: 28, width: 72, x: 640 });
   });
   it.each([
     { shown: ["doubleJump"] },

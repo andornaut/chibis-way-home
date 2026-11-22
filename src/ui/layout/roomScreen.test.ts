@@ -1,36 +1,21 @@
-import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 import { describe, expect, it } from "vitest";
 
-import buttonSheet from "../../../public/art/sprites/ui-button.json" with { type: "json" };
-import { TEXT_BUTTON } from "../../data/layout.ts";
+import { ROOM_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
-import type { Rect } from "../../data/types/index.ts";
-import { PAUSE_BUTTON } from "./pauseCard.ts";
 import { ROOM_SCREEN } from "./roomScreen.ts";
 import { TOP_BAR_CENTRE_Y } from "./topBar.ts";
-
-const inside = (outer: Rect, inner: Rect) =>
-  inner.x >= outer.x &&
-  inner.y >= outer.y &&
-  inner.x + inner.width <= outer.x + outer.width &&
-  inner.y + inner.height <= outer.y + outer.height;
-const VIEW: Rect = { ...SCREEN, x: 0, y: 0 };
 
 describe("the room screen", () => {
   const { frame, leave } = ROOM_SCREEN;
 
-  it("draws Leave inside the view, at least as large as its 9-slice, clear of the pause button", () => {
-    const { h, w } = Object.values(buttonSheet.frames)[0]?.sourceSize ?? { h: 0, w: 0 };
-    expect({
-      clear: rectsOverlap(leave.hit, PAUSE_BUTTON.hit),
-      inside: inside(VIEW, leave.art),
-      large: leave.art.width >= w && leave.art.height >= h,
-    }).toEqual({ clear: false, inside: true, large: true });
-    expect(leave.art.y + (leave.art.height - TEXT_BUTTON.lipHeight) / 2).toBe(TOP_BAR_CENTRE_Y);
-    expect(leave.hit.y).toBeGreaterThanOrEqual(0);
+  it("centres the standard face above its lip and keeps Leave on the right navigation edge", () => {
+    expect(leave.y).toBeGreaterThanOrEqual(0);
+    expect(leave.y + (TEXT_BUTTON.height - TEXT_BUTTON.lipHeight) / 2).toBe(TOP_BAR_CENTRE_Y);
+    expect(SCREEN.width - leave.rightInset).toBe(712);
   });
 
-  it("keeps the placeholder frame inside the view and below Leave", () => {
-    expect([inside(VIEW, frame), frame.y > leave.art.y + leave.art.height]).toEqual([true, true]);
+  it("clears the entire placeholder stroke without moving the side or bottom edges", () => {
+    expect(frame.y - ROOM_LAYOUT.frameLine / 2).toBeGreaterThan(leave.y + TEXT_BUTTON.height);
+    expect([frame.x, frame.x + frame.width, frame.y + frame.height]).toEqual([24, 696, 336]);
   });
 });

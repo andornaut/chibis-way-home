@@ -51,21 +51,14 @@ export function roomPortraitProperties(size: Pick<Rect, "height" | "width">): La
 }
 
 export function roomProperties(): LayoutValues {
-  const action = ROOM_SCREEN.leave;
   return {
     ...DIALOGUE_PANEL_LAYOUT,
-    "--room-action-height": action.art.height,
-    "--room-action-hit-height": action.hit.height,
-    "--room-action-hit-width": action.hit.width,
-    "--room-action-inset-x": action.art.x - action.hit.x,
-    "--room-action-inset-y": action.art.y - action.hit.y,
-    "--room-action-width": action.art.width,
-    "--room-action-x": action.hit.x,
-    "--room-action-y": action.hit.y,
     "--room-description-width": SKILL_DETAILS.descriptionWidth,
     "--room-footer-width": SKILL_ROOM.footer.width,
     "--room-gift-height": SKILL_ROOM.bounds.height,
     "--room-gift-top": SKILL_ROOM.bounds.y,
+    "--room-leave-right": ROOM_SCREEN.leave.rightInset,
+    "--room-leave-y": ROOM_SCREEN.leave.y,
     "--room-name-x": PAGE_TITLE.x,
     "--room-name-y": PAGE_TITLE.y,
     "--room-title-width": PAGE_TITLE.width,
@@ -180,7 +173,7 @@ export function createRoomView(
         leave = button;
         button.classList.add("room-leave");
       },
-      sizing: "authored",
+      ...(words.gift !== undefined && { sizing: "authored" }),
     },
   });
   mountUiLayout(document, document.createElement("div"), {

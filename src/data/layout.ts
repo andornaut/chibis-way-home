@@ -280,12 +280,11 @@ export const MAP_PATH = {
 } as const;
 
 export const ROOM_LAYOUT = {
-  // PLACEHOLDER: the frame drawn for a room without art, and its line width.
-  frame: { height: 288, width: 672, x: 24, y: 48 } satisfies Rect,
+  // PLACEHOLDER: the side and bottom inset and stroke width of a room without art.
+  frameInset: 24,
   frameLine: 2,
-  // Leave's drawn button at the view's top right, and its label's widest ink.
-  leave: { height: 28, width: 72, x: 640, y: 10 } satisfies Rect,
-  leaveRoom: 56,
+  // Leave's painted right edge is aligned with the navigation at the top of the view.
+  leaveRightInset: 8,
   // The room name's centre.
   nameCentre: { x: 360, y: 192 } satisfies Point,
 } as const;

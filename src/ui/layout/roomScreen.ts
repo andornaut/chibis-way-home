@@ -1,20 +1,20 @@
 import { ROOM_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
-import { topBarButton } from "./topBar.ts";
+import { topBarFaceY } from "./topBar.ts";
 
-// A room, in base pixels in the game's view: Leave at the top right, level with the start
-// screen's nav buttons and ending where they do, clear of the pause button's top-left corner;
-// the room's name centred on nameCentre; and, for a room without art, a PLACEHOLDER frame below
-// Leave (ROOM_LAYOUT). Leave is art's secondary button (ui-button, as Install), its label centred
-// across it at its visible face, in at most room pixels. Its press area, hit, is the button grown
-// by hitAreas.ts's rule.
-const leave = topBarButton(TEXT_BUTTON.lipHeight, ROOM_LAYOUT.leave satisfies Rect);
+const leaveY = topBarFaceY(TEXT_BUTTON.lipHeight, TEXT_BUTTON.height);
+const { frameInset, frameLine, leaveRightInset } = ROOM_LAYOUT;
+// The stroke is centred on the path. A full stroke width below Leave leaves half a stroke clear.
+const frameY = leaveY + TEXT_BUTTON.height + frameLine;
 
 export const ROOM_SCREEN = {
-  frame: ROOM_LAYOUT.frame,
-  leave: {
-    ...leave,
-    room: ROOM_LAYOUT.leaveRoom,
-  },
+  frame: {
+    height: SCREEN.height - frameInset - frameY,
+    width: SCREEN.width - 2 * frameInset,
+    x: frameInset,
+    y: frameY,
+  } satisfies Rect,
+  leave: { rightInset: leaveRightInset, y: leaveY },
   nameCentre: ROOM_LAYOUT.nameCentre,
 } as const;

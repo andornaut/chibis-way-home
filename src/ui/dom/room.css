@@ -47,40 +47,35 @@
 }
 
 .room-leave {
+  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
+
   position: absolute;
-  top: calc(var(--ui-unit) * var(--room-action-y) * 1px);
-  left: calc(var(--ui-unit) * var(--room-action-x) * 1px);
-  width: calc(var(--ui-unit) * var(--room-action-hit-width) * 1px);
-  height: calc(var(--ui-unit) * var(--room-action-hit-height) * 1px);
-  padding: 0;
+  width: max-content;
 }
 
-.room-leave > .ui-text-button-face {
-  position: absolute;
-  top: calc(var(--ui-unit) * var(--room-action-inset-y) * 1px);
-  left: calc(var(--ui-unit) * var(--room-action-inset-x) * 1px);
-  width: calc(var(--ui-unit) * var(--room-action-width) * 1px);
-  height: calc(var(--ui-unit) * var(--room-action-height) * 1px);
+/* Leave's face stays at its navigation anchor while the shared hit outset stops at each edge. */
+.room-scene:not([data-gift]) .room-leave {
+  --leave-top: calc(var(--ui-unit) * var(--room-leave-y) * 1px);
+  --leave-right: calc(var(--ui-unit) * var(--room-leave-right) * 1px);
+  --leave-hit-top: min(var(--hit), var(--leave-top));
+  --leave-hit-right: min(var(--hit), var(--leave-right));
+
+  top: calc(var(--leave-top) - var(--leave-hit-top));
+  right: calc(var(--leave-right) - var(--leave-hit-right));
+  padding: var(--leave-hit-top) var(--leave-hit-right) var(--hit) var(--hit);
 }
 
 /* The sole gift action centres in its footer with its press outset and native text width. */
 .room-scene[data-gift] .room-leave {
-  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
-
-  top: auto;
   bottom: calc(var(--ui-unit) * var(--card-padding) * 1px - var(--hit));
   left: 50%;
-  width: max-content;
   max-width: calc(var(--ui-unit) * var(--room-footer-width) * 1px + 2 * var(--hit));
-  height: auto;
   padding: var(--hit);
   translate: -50% 0;
 }
 
 .room-scene[data-gift] .room-leave > .ui-text-button-face {
   position: relative;
-  top: auto;
-  left: auto;
   width: auto;
   height: calc(var(--ui-unit) * var(--button-height) * 1px);
 }

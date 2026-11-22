@@ -19,7 +19,7 @@ const COLOURS = {
 };
 const WORDS = { actions: TEXT.buttons, icons: TEXT.actionIcons };
 
-it("renders an ordinary room's name and sole secondary Leave control at its existing target", () => {
+it("renders an ordinary room's name and sole secondary Leave with shared intrinsic face sizing", () => {
   const view = createRoomView(document, COLOURS, {
     ...WORDS,
     action: TEXT.room.leave,
@@ -28,16 +28,14 @@ it("renders an ordinary room's name and sole secondary Leave control at its exis
   expect(view.root.querySelector("h1")?.textContent).toBe(TEXT.rooms.test?.name ?? "");
   expect(
     view.leave.querySelector(".ui-text-button-face")!.hasAttribute("data-ui-authored-size"),
-  ).toBe(true);
+  ).toBe(false);
   expect(view.root.querySelectorAll("button")).toHaveLength(1);
   expect(view.leave.textContent).toBe(TEXT.room.leave);
   expect(view.leave.classList.contains("ui-text-button-primary")).toBe(false);
-  expect(view.root.style.getPropertyValue("--room-action-height")).toBe(
-    String(ROOM_SCREEN.leave.art.height),
+  expect(view.root.style.getPropertyValue("--room-leave-right")).toBe(
+    String(ROOM_SCREEN.leave.rightInset),
   );
-  expect(view.root.style.getPropertyValue("--room-action-hit-height")).toBe(
-    String(ROOM_SCREEN.leave.hit.height),
-  );
+  expect(view.root.style.getPropertyValue("--room-leave-y")).toBe(String(ROOM_SCREEN.leave.y));
   expect([view.glyph, view.panel]).toEqual([undefined, undefined]);
   expect(view.root.querySelector("canvas")).toBeNull();
 });
@@ -58,6 +56,9 @@ it("keeps gift text, helper name, animated portrait slot and primary Continue in
   expect(view.leave.textContent).toBe(TEXT.dialogue.continue);
   expect(view.leave.classList.contains("ui-text-button-primary")).toBe(true);
   expect(view.root.hasAttribute("data-gift")).toBe(true);
+  expect(
+    view.leave.querySelector(".ui-text-button-face")!.hasAttribute("data-ui-authored-size"),
+  ).toBe(true);
   expect(view.leave.style.width).toBe("");
   expect(view.leave.querySelector<HTMLElement>(".ui-text-button-face")!.style.width).toBe("");
   expect(view.glyph?.alt).toBe("");
