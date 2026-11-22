@@ -1,10 +1,16 @@
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { expect, it } from "vitest";
 
+import { traceRecorder } from "../ai/trace.ts";
 import { BIRD } from "../data/bird.ts";
 import type { ArenaApproachPolicy, ZoneRecipe } from "../data/types/index.ts";
 import { prepareStage, type RunResult } from "../sim/simulate.ts";
 import {
   arenaApproachCertificateProblems,
+  canonicalApproachTrace,
   coldEncounterConfig,
   coldEncounterFacts,
   firstArenaEncounter,
@@ -105,6 +111,14 @@ it("rejects stale input headers or a different materialized plan without interpr
     arenaApproachCertificateProblems({ inputs, stages: [stage] }, [
       {
         ...relation,
+        evidence: { ...relation.evidence, trace: "1111111111111111:2" },
+      },
+    ]),
+  ).toContain("city-boundary: arena approach context is stale");
+  expect(
+    arenaApproachCertificateProblems({ inputs, stages: [stage] }, [
+      {
+        ...relation,
         evidence: { ...relation.evidence, seed: 3 },
       },
     ]),
@@ -138,4 +152,18 @@ it("rejects changed canonical budgets, seed and tuning rather than accepting eas
       tuning: { ...BIRD, width: BIRD.width + 1 },
     }),
   ).toThrow("matching canonical cold-encounter evidence");
+});
+
+it("imports each canonical recorder line once and rejects a trace shorter than actual physical work", async () => {
+  const file = join(mkdtempSync(join(tmpdir(), "approach-trace-")), "canonical.trace");
+  const lines = ['{"actual":1}', '{"prediction":2}'];
+  writeFileSync(file, `${lines.join("\n")}\n`);
+  const expected = traceRecorder({ retain: false });
+  for (const line of lines) {
+    expected.record(line);
+  }
+  await expect(canonicalApproachTrace({ steps: 1 }, file)).resolves.toBe(
+    `${expected.hash()}:${expected.ticks()}`,
+  );
+  await expect(canonicalApproachTrace({ steps: 3 }, file)).rejects.toThrow("does not cover");
 });

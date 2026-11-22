@@ -7,6 +7,8 @@ import { ZONE_FRAMES } from "../data/zoneFrames.ts";
 import { recipeChunkPool } from "../rules/assemble.ts";
 import { certifiedChunks } from "../rules/modules.ts";
 import { CHUNK_LIBRARY, STAGE_RECIPES, zoneOfTheme } from "../rules/zonePlans.ts";
+import { stageLoader } from "../sim/catalogue.ts";
+import { firstArenaEncounter } from "./arenaApproaches.ts";
 import { FIXTURE_MODULES } from "./modules.ts";
 import {
   distinctLayouts,
@@ -14,6 +16,7 @@ import {
   ORDINARY_PROOF_PROFILE,
   POOL_TARGET,
   poolTargets,
+  prepareArenaApproachCandidate,
   verifyStructure,
   zoneRecipes,
   ZONES,
@@ -46,6 +49,26 @@ describe("certified lists", () => {
     for (const { id, proof } of blue.entries) {
       expect(proof, id).toEqual(ORDINARY_PROOF_PROFILE);
     }
+  });
+
+  it("reconstructs the exact City node-art context from an explicit pending certificate", () => {
+    const { approaches, ...pending } = listOf("blue");
+    expect(approaches).toHaveLength(1);
+    const candidate = prepareArenaApproachCandidate({ stage: "city-boundary" }, pending);
+    expect(candidate.status).toBe("unqualified");
+    expect(candidate.prepared).toEqual(stageLoader("city-boundary")(2));
+    const encounter = firstArenaEncounter(candidate.prepared);
+    const ids = candidate.prepared.source!.chunkIds![encounter.area]!;
+    expect(ids[encounter.arenaIndex - 1]).toBe(candidate.relation.predecessors[0]);
+    expect(() =>
+      prepareArenaApproachCandidate(
+        { stage: "city-boundary" },
+        {
+          ...pending,
+          inputs: { ...pending.inputs, proofs: "stale" },
+        },
+      ),
+    ).toThrow("proofs hash is stale");
   });
 
   it("reports a stale data hash and a changed layout", () => {

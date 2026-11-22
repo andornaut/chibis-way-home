@@ -15,6 +15,7 @@ import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules/index.ts";
 import { TILE } from "../data/screen.ts";
 import { SEAM_ROWS } from "../data/seams.ts";
 import type {
+  ArenaApproach,
   BirdTuning,
   CertifiedChunks,
   CertifiedEntry,
@@ -39,14 +40,19 @@ import { chunkProblems } from "../rules/chunk.ts";
 import { composePair, ENCOUNTER_ROLES, moduleProblems, pairProblems } from "../rules/modules.ts";
 import { withRoomBuildings } from "../rules/roomBuildings.ts";
 import { zoneLayout } from "../rules/tiles.ts";
-import { CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans.ts";
+import { arenaChunks, CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans.ts";
+import { nodeArt, preparedPlan } from "../sim/catalogue.ts";
 import { NO_DISABLED_EDGES, pathOut, pathOutEncounter } from "../sim/pathOut.ts";
+import type { RunResult } from "../sim/simulate.ts";
 import { zoneTraceLine } from "../sim/zoneTrace.ts";
 import { crosses, surfaceAt, walkRequiredRoutes, type WalkRouteTarget } from "../sim/zoneWalk.ts";
 import {
   arenaApproachCertificateProblems,
   arenaApproachContext,
+  COLD_ENCOUNTER_CASE,
+  coldEncounterBaselineTrace,
   firstArenaEncounter,
+  qualifyArenaApproach,
 } from "./arenaApproaches.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 import { chunkThemePlan, planPhysics } from "./chunkWalkCases.ts";
@@ -504,15 +510,35 @@ export function feasibilityProblems(
       .map(({ chunk, id }) => [id, chunk]),
   );
   const library = { ...CHUNK_LIBRARY, chunks: { ...CHUNK_LIBRARY.chunks, ...pairs } };
+  return assemblyProblems(
+    library,
+    zoneRecipes(zone).map(
+      ([stage, recipe]) =>
+        [
+          stage,
+          {
+            ...recipe,
+            chunks: [
+              ...recipeChunkPool(CHUNK_LIBRARY, recipe).filter((id) =>
+                frame.connectors.includes(id),
+              ),
+              ...entries.map(({ id }) => id),
+            ],
+          },
+        ] as const,
+    ),
+  );
+}
+
+function assemblyProblems(
+  library: ChunkLibrary,
+  recipes: readonly (readonly [string, ZoneRecipe])[],
+): string[] {
   const problems: string[] = [];
-  for (const [key, recipe] of zoneRecipes(zone)) {
-    const connectors = recipeChunkPool(CHUNK_LIBRARY, recipe).filter((id) =>
-      frame.connectors.includes(id),
-    );
-    const certified = { ...recipe, chunks: [...connectors, ...entries.map(({ id }) => id)] };
+  for (const [key, recipe] of recipes) {
     for (let seed = 0; seed < FEASIBILITY_SEEDS; seed++) {
       try {
-        assembleZone(library, seed, key, certified);
+        assembleZone(library, seed, key, recipe);
       } catch (error) {
         problems.push(
           `${key} seed ${seed}: ${error instanceof Error ? error.message : String(error)}`,
@@ -521,6 +547,18 @@ export function feasibilityProblems(
     }
   }
   return problems;
+}
+
+// Full-certificate tools use the supplied positive relations, never a resident global list.
+export function certificateFeasibilityProblems(
+  context: CertifyContext,
+  list: CertifiedChunks,
+): string[] {
+  const { library, stages } = certifiedWorld(zoneCandidates(context, list.zone).candidates, list);
+  return assemblyProblems(
+    library,
+    stages.map(({ recipe, stage }) => [stage, recipe] as const),
+  );
 }
 
 // Why a certified list is stale or malformed, if it is: its zone, version and input hashes, and
@@ -556,6 +594,9 @@ export function verifyEntryStructure(context: CertifyContext, list: CertifiedChu
 // Full admission also requires the opted-in approach relation and matching measured context.
 export function verifyStructure(context: CertifyContext, list: CertifiedChunks): string[] {
   const { candidates, data, problems, proofs } = entryStructure(context, list);
+  if (problems.length > 0) {
+    return problems;
+  }
   const recipes = zoneRecipes(list.zone);
   if (
     (list.approaches?.length ?? 0) === 0 &&
@@ -563,6 +604,38 @@ export function verifyStructure(context: CertifyContext, list: CertifiedChunks):
   ) {
     return problems;
   }
+  const { library, stages } = certifiedWorld(candidates, list);
+  problems.push(
+    ...arenaApproachCertificateProblems(
+      {
+        inputs: { data, proofs },
+        stages: stages.map(({ recipe, stage }) => ({
+          arena: library.arenas?.[stage],
+          eligible: eligibleChunks(library, recipe, recipeChunkPool(library, recipe)),
+          expected: (seed: number) => {
+            const prepared = preparedPlan(
+              { ...nodeArt(), seed },
+              assembleZone(library, seed, stage, recipe),
+            );
+            const encounter = firstArenaEncounter(prepared);
+            return {
+              ...arenaApproachContext({ encounter, hash: hashOf }, prepared),
+              trace: coldEncounterBaselineTrace(),
+            };
+          },
+          recipe,
+          stage,
+        })),
+      },
+      list.approaches ?? [],
+    ),
+  );
+  return problems;
+}
+
+// A supplied certificate controls the whole effective pool; old runtime entries are never fallback choices.
+function certifiedWorld(candidates: readonly Candidate[], list: CertifiedChunks) {
+  const recipes = zoneRecipes(list.zone);
   const pairs = Object.fromEntries(
     candidates
       .filter(
@@ -571,60 +644,112 @@ export function verifyStructure(context: CertifyContext, list: CertifiedChunks):
       )
       .map(({ chunk, id }) => [id, chunk]),
   );
+  const admitted = arenaChunks(
+    ARENAS.filter(({ id }) => list.arenas.some((arena) => arena.id === id)),
+  );
   const library: ChunkLibrary = {
     ...CHUNK_LIBRARY,
     approaches: Object.fromEntries(
       (list.approaches ?? []).map((relation) => [relation.stage, relation]),
     ),
-    chunks: { ...CHUNK_LIBRARY.chunks, ...pairs },
+    arenas: {
+      ...Object.fromEntries(
+        Object.entries(CHUNK_LIBRARY.arenas ?? {}).filter(
+          ([stage]) => !recipes.some(([key]) => key === stage),
+        ),
+      ),
+      ...admitted.stages,
+    },
+    chunks: { ...CHUNK_LIBRARY.chunks, ...pairs, ...admitted.chunks },
   };
-  problems.push(
-    ...arenaApproachCertificateProblems(
-      {
-        inputs: { data, proofs },
-        stages: recipes.map(([stage, recipe]) => {
-          const connectors = recipeChunkPool(CHUNK_LIBRARY, recipe).filter((id) =>
+  return {
+    library,
+    stages: recipes.map(([stage, recipe]) => ({
+      recipe: {
+        ...recipe,
+        chunks: [
+          ...recipeChunkPool(CHUNK_LIBRARY, recipe).filter((id) =>
             ZONE_FRAMES[list.zone].connectors.includes(id),
-          );
-          const effective = {
-            ...recipe,
-            chunks: [...connectors, ...list.entries.map(({ id }) => id)],
-          };
-          return {
-            arena: library.arenas?.[stage],
-            eligible: eligibleChunks(library, effective, effective.chunks),
-            expected: (seed: number) => {
-              const plan = assembleZone(library, seed, stage, effective);
-              const layout = zoneLayout(
-                TILE,
-                BIRD_FRAME,
-                CATALOGUE,
-                HITBOXES,
-                TILESETS,
-                new Set(),
-                plan,
-              );
-              const chunks = Object.fromEntries(
-                Object.entries(plan.areas).map(([area, value]) => [
-                  area,
-                  value.chunks?.map(({ chunk }) => chunk) ?? [],
-                ]),
-              );
-              const encounter = firstArenaEncounter({ layout, source: { chunkIds: chunks } });
-              return arenaApproachContext(
-                { encounter, hash: hashOf },
-                { layout, source: { chunkIds: chunks } },
-              );
-            },
-            recipe,
-            stage,
-          };
-        }),
+          ),
+          ...list.entries.map(({ id }) => id),
+        ],
       },
-      list.approaches ?? [],
-    ),
+      stage,
+    })),
+  };
+}
+
+// Explicit qualification bootstrap only. This never writes or marks a certificate admitted.
+export function prepareArenaApproachCandidate(
+  context: { readonly stage: string },
+  list: CertifiedChunks,
+) {
+  const checked = entryStructure(GAME_CONTEXT, list);
+  if (checked.problems.length > 0) {
+    throw new Error(checked.problems.join("; "));
+  }
+  const { library, stages } = certifiedWorld(checked.candidates, list);
+  const found = stages.find(({ stage }) => stage === context.stage);
+  const arena = library.arenas?.[context.stage];
+  if (
+    context.stage !== "city-boundary" ||
+    found?.recipe.arenaApproach === undefined ||
+    arena === undefined
+  ) {
+    throw new Error("No declared canonical cold-encounter-v1 candidate");
+  }
+  const relation: ArenaApproach = {
+    arena,
+    ...found.recipe.arenaApproach,
+    stage: context.stage,
+  };
+  const candidateLibrary = {
+    ...library,
+    approaches: { ...library.approaches, [context.stage]: relation },
+  };
+  const plan = assembleZone(
+    candidateLibrary,
+    COLD_ENCOUNTER_CASE.seed,
+    context.stage,
+    found.recipe,
   );
-  return problems;
+  return {
+    prepared: preparedPlan({ ...nodeArt(), seed: COLD_ENCOUNTER_CASE.seed }, plan),
+    relation,
+    status: "unqualified" as const,
+  };
+}
+
+// Record an already-run canonical result; there is no simulation or fixture update here.
+export function completeArenaApproachQualification(
+  context: { readonly stage: string; readonly trace: string },
+  list: CertifiedChunks,
+  result: RunResult,
+): CertifiedChunks {
+  const candidate = prepareArenaApproachCandidate(context, list);
+  const relation = qualifyArenaApproach(
+    {
+      hash: hashOf,
+      inputs: list.inputs,
+      policy: candidate.relation,
+      stage: context.stage,
+      trace: context.trace,
+    },
+    candidate.prepared,
+    result,
+  );
+  const next: CertifiedChunks = {
+    ...list,
+    approaches: [
+      ...(list.approaches ?? []).filter(({ stage }) => stage !== context.stage),
+      relation,
+    ].sort((a, b) => a.stage.localeCompare(b.stage)),
+  };
+  const problems = verifyStructure(GAME_CONTEXT, next);
+  if (problems.length > 0) {
+    throw new Error(problems.join("; "));
+  }
+  return next;
 }
 
 // Validate recorded entry facts independently of proof provenance freshness.

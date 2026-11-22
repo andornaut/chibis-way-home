@@ -1,3 +1,7 @@
+import { createReadStream, readFileSync } from "node:fs";
+import { createInterface } from "node:readline";
+
+import { traceRecorder } from "../ai/trace.ts";
 import { BIRD } from "../data/bird.ts";
 import type {
   ArenaApproachPolicy,
@@ -54,7 +58,7 @@ export function firstArenaEncounter(
   };
 }
 
-const COLD_ENCOUNTER_CASE = { maxRetries: 2, maxSteps: 3600, seed: 2 } as const;
+export const COLD_ENCOUNTER_CASE = { maxRetries: 2, maxSteps: 3600, seed: 2 } as const;
 
 // The unchanged canonical City case uses this same config for its test and evidence validator.
 export function coldEncounterConfig(encounter: ColdEncounter): SimulationConfig {
@@ -172,7 +176,7 @@ export function arenaApproachCertificateProblems(
       readonly stage: string;
       readonly expected: (
         seed: number,
-      ) => Pick<CertifiedArenaApproach["evidence"], "plan" | "arenaIndex" | "bossIndex">;
+      ) => Pick<CertifiedArenaApproach["evidence"], "plan" | "arenaIndex" | "bossIndex" | "trace">;
     }[];
   },
   records: readonly CertifiedArenaApproach[],
@@ -219,7 +223,8 @@ export function arenaApproachCertificateProblems(
         if (
           evidence.plan !== expected.plan ||
           evidence.arenaIndex !== expected.arenaIndex ||
-          evidence.bossIndex !== expected.bossIndex
+          evidence.bossIndex !== expected.bossIndex ||
+          evidence.trace !== expected.trace
         ) {
           problems.push(`${record.stage}: arena approach context is stale`);
         }
@@ -234,4 +239,35 @@ export function arenaApproachCertificateProblems(
     }
   }
   return problems;
+}
+
+// Read the canonical recorder output, including speculative steps; never replay the result.
+export async function canonicalApproachTrace(
+  context: Pick<RunResult, "steps">,
+  subject: string,
+): Promise<string> {
+  const recorder = traceRecorder({ retain: false });
+  const lines = createInterface({ crlfDelay: Infinity, input: createReadStream(subject) });
+  for await (const line of lines) {
+    recorder.record(line);
+  }
+  if (
+    !Number.isSafeInteger(context.steps) ||
+    context.steps < 1 ||
+    recorder.ticks() < context.steps
+  ) {
+    throw new Error("Canonical raw trace does not cover the returned physical steps");
+  }
+  return `${recorder.hash()}:${recorder.ticks()}`;
+}
+
+export function coldEncounterBaselineTrace(): string {
+  const traces = JSON.parse(
+    readFileSync(new URL("../sim/fixtures/behaviourTraces/stages.json", import.meta.url), "utf8"),
+  ) as Readonly<Record<string, string>>;
+  const trace = traces["stage city-boundary seed 2 planned"];
+  if (trace === undefined) {
+    throw new Error("Missing canonical City cold-encounter baseline");
+  }
+  return trace;
 }

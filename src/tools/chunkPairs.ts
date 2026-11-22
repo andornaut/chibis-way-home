@@ -28,6 +28,8 @@ import type {
   OrdinaryProofProfile,
   ZoneKey,
 } from "../data/types/index.ts";
+import type { RunResult } from "../sim/simulate.ts";
+import { canonicalApproachTrace } from "../testing/arenaApproaches.ts";
 import {
   ARENA_COST,
   certifiedArena,
@@ -43,6 +45,8 @@ import {
 } from "../testing/currentListCertification.ts";
 import {
   type Candidate,
+  certificateFeasibilityProblems,
+  completeArenaApproachQualification,
   dataHash,
   distinctLayouts,
   entryOf,
@@ -82,6 +86,10 @@ const USAGE = `Usage:
   npm run pairs -- propose --zone ZONE --id ID... --profile ordinary --out SCRATCH_PATH
       prove only new selected pairs with ordinary tuning and write a scratch proposal;
       existing entries and arenas stay unchanged; no arena or assembly-feasibility proofs
+  npm run pairs -- qualify-approach --zone ZONE --stage STAGE --input PENDING_CERTIFICATE
+      --result CANONICAL_RESULT --trace CANONICAL_RAW_TRACE --out SCRATCH_PATH
+      record existing canonical cold-encounter evidence against the explicit pending certificate;
+      validate the complete result and write exclusively; never simulate or overwrite fixtures
   npm run pairs -- propose-current --out SCRATCH_PATH
       reprove only the six current lists and their recorded profiles and arenas;
       write scratch evidence, blocking any missing, failed or changed proof
@@ -612,10 +620,14 @@ async function main(args: readonly string[]): Promise<number> {
         "changed-since": { type: "string" },
         help: { short: "h", type: "boolean" },
         id: { multiple: true, type: "string" },
+        input: { type: "string" },
         out: { type: "string" },
         profile: { type: "string" },
+        result: { type: "string" },
         "sample-ms": { type: "string" },
         seed: { type: "string" },
+        stage: { type: "string" },
+        trace: { type: "string" },
         zone: { multiple: true, type: "string" },
       },
       strict: true,
@@ -640,7 +652,58 @@ async function main(args: readonly string[]): Promise<number> {
     console.error(`Unknown zone or argument: ${[...unknown, ...rest].join(", ")}\n${USAGE}`);
     return 2;
   }
+  if (
+    command !== "qualify-approach" &&
+    [values.input, values.result, values.stage, values.trace].some((value) => value !== undefined)
+  ) {
+    console.error(`Approach evidence flags require qualify-approach\n${USAGE}`);
+    return 2;
+  }
   switch (command) {
+    case "qualify-approach": {
+      const allowed = new Set(["input", "out", "result", "stage", "trace", "zone"]);
+      if (
+        values.zone?.length !== 1 ||
+        values.input === undefined ||
+        values.out === undefined ||
+        values.result === undefined ||
+        values.stage === undefined ||
+        values.trace === undefined ||
+        Object.keys(values).some((key) => !allowed.has(key))
+      ) {
+        console.error(`qualify-approach needs explicit evidence and a scratch output\n${USAGE}`);
+        return 2;
+      }
+      try {
+        const out = scratchOutput(values.out);
+        const list = JSON.parse(readFileSync(values.input, "utf8")) as CertifiedChunks;
+        if (list.zone !== zones[0]) {
+          throw new Error("Pending certificate zone does not match --zone");
+        }
+        const result = JSON.parse(readFileSync(values.result, "utf8")) as RunResult;
+        const trace = await canonicalApproachTrace(result, values.trace);
+        const next = completeArenaApproachQualification(
+          {
+            stage: values.stage,
+            trace,
+          },
+          list,
+          result,
+        );
+        const problems = [
+          ...verifyArenas(next),
+          ...certificateFeasibilityProblems(GAME_CONTEXT, next),
+        ];
+        if (problems.length > 0) {
+          throw new Error(problems.join("; "));
+        }
+        writeFileSync(out, `${JSON.stringify(next, null, 2)}\n`, { flag: "wx" });
+        return 0;
+      } catch (error) {
+        console.error(error instanceof Error ? error.message : String(error));
+        return 2;
+      }
+    }
     case "propose-current":
       if (values.out === undefined || Object.keys(values).some((key) => key !== "out")) {
         console.error(`propose-current accepts only a scratch --out path\n${USAGE}`);

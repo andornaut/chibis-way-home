@@ -15,7 +15,7 @@ import { BIRD } from "../data/bird.ts";
 import { CHARACTERS } from "../data/characters.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { TILE } from "../data/screen.ts";
-import type { SpriteSilhouettes } from "../data/types/index.ts";
+import type { SpriteSilhouettes, ZonePlan } from "../data/types/index.ts";
 import { zoneLayout } from "../rules/tiles.ts";
 import { zonePlanFor } from "../rules/zonePlans.ts";
 import type { Tileset } from "../stage/index.ts";
@@ -54,41 +54,50 @@ export function nodeArt(artRoot = new URL("../../public/art/", import.meta.url))
   return { birdFrame, hitboxes, tilesets };
 }
 
+// The node-art layout and provenance path shared by ordinary loading and certificate tools.
+export function preparedPlan(
+  context: ReturnType<typeof nodeArt> & { readonly seed: number },
+  plan: ZonePlan,
+): PreparedStage {
+  const { birdFrame, hitboxes, seed, tilesets } = context;
+  const catalogue = { archetypes: ARCHETYPES, characters: CHARACTERS };
+  const layout = zoneLayout(TILE, birdFrame, catalogue, hitboxes, tilesets, new Set(), plan);
+  return {
+    ...prepareStage(layout),
+    source: {
+      chunkIds: Object.fromEntries(
+        Object.entries(plan.areas).map(([area, value]) => [
+          area,
+          value.chunks?.map(({ chunk }) => chunk) ?? [],
+        ]),
+      ),
+      layoutSeed: seed,
+      provenance: {
+        data: `sha256:${createHash("sha256")
+          .update(JSON.stringify({ layout, plan, tuning: BIRD }))
+          .digest("hex")}`,
+      },
+    },
+  };
+}
+
 export function stageLoader(
   stage: string,
   artRoot = new URL("../../public/art/", import.meta.url),
 ) {
-  const { birdFrame, hitboxes, tilesets } = nodeArt(artRoot);
+  const art = nodeArt(artRoot);
   const node = ZONE_MAP.nodes.find(({ id }) => id === stage);
   const key = node?.kind === "zone" ? node.zone : stage;
   if (!key) {
     throw new Error(`Stage ${stage} is not implemented`);
   }
-  const catalogue = { archetypes: ARCHETYPES, characters: CHARACTERS };
   let previous: { seed: number; stage: PreparedStage } | undefined;
   return (seed: number): PreparedStage => {
     if (previous?.seed === seed) {
       return previous.stage;
     }
     const plan = zonePlanFor(seed, key);
-    const layout = zoneLayout(TILE, birdFrame, catalogue, hitboxes, tilesets, new Set(), plan);
-    const stage = {
-      ...prepareStage(layout),
-      source: {
-        chunkIds: Object.fromEntries(
-          Object.entries(plan.areas).map(([area, value]) => [
-            area,
-            value.chunks?.map(({ chunk }) => chunk) ?? [],
-          ]),
-        ),
-        layoutSeed: seed,
-        provenance: {
-          data: `sha256:${createHash("sha256")
-            .update(JSON.stringify({ layout, plan, tuning: BIRD }))
-            .digest("hex")}`,
-        },
-      },
-    };
+    const stage = preparedPlan({ ...art, seed }, plan);
     previous = { seed, stage };
     return stage;
   };
