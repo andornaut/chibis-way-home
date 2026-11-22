@@ -7,8 +7,12 @@ import { createCelebrationView } from "./celebration.ts";
 it("keeps the story and Continue-first focus order with standard row actions", () => {
   const view = createCelebrationView(document, TEXT.celebration);
   expect(view.dialog.getAttribute("role")).toBe("region");
+  expect(view.dialog.dataset.cardWidth).toBe("small");
+  expect(view.dialog.parentElement?.classList.contains("ui-card-view")).toBe(true);
   expect(view.dialog.querySelector("h2")?.textContent).toBe(TEXT.celebration.title);
-  expect(view.dialog.querySelector("p")?.textContent).toBe(TEXT.celebration.message);
+  const message = view.dialog.querySelector("p")!;
+  expect(message.textContent).toBe(TEXT.celebration.message);
+  expect(message.nextElementSibling).toBe(view.buttons.continue.parentElement);
   expect([...view.dialog.querySelectorAll("button")]).toEqual([
     view.buttons.continue,
     view.buttons.restart,

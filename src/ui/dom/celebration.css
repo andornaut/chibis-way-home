@@ -1,39 +1,6 @@
-/* Fixed placeholder geometry, in logical pixels supplied by celebration.ts, at the small width
-   family's width (ui.css). */
-.celebration-card {
-  position: absolute;
-  top: calc(var(--ui-unit) * var(--celebration-card-y) * 1px);
-  left: calc(var(--ui-unit) * var(--celebration-card-x) * 1px);
-  height: calc(var(--ui-unit) * var(--celebration-card-height) * 1px);
-  padding: 0;
-}
-
-.celebration-card > .ui-card-title {
-  position: absolute;
-  top: calc(var(--ui-unit) * (var(--celebration-title-y) - var(--ui-settings-card-top)) * 1px);
-  left: calc(var(--ui-unit) * var(--ui-settings-card-left) * -1px);
-  width: calc(var(--ui-unit) * var(--celebration-card-width) * 1px);
-  font-size: calc(var(--ui-unit) * var(--celebration-title-size) * 1px);
-  line-height: calc(var(--ui-unit) * var(--celebration-title-line) * 1px);
-  text-box: normal;
-}
-
 .celebration-card > .ui-card-text {
-  position: absolute;
-  top: calc(var(--ui-unit) * (var(--celebration-message-y) - var(--ui-settings-card-top)) * 1px);
-  left: calc(var(--ui-unit) * (var(--celebration-message-x) - var(--ui-settings-card-left)) * 1px);
-  width: calc(var(--ui-unit) * var(--celebration-message-width) * 1px);
-  text-align: left;
-  text-box: normal;
-}
-
-.celebration-card > .ui-card-actions {
-  position: absolute;
-  inset-inline: 0;
-  top: calc(
-    var(--ui-unit) * (var(--celebration-actions-y) - var(--ui-settings-card-top)) * 1px - var(--hit)
-  );
-  margin: 0;
+  align-self: stretch;
+  text-align: start;
 }
 
 .celebration-card .ui-text-button-primary .ui-text-button-face {
