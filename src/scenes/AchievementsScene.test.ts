@@ -249,6 +249,62 @@ it("closes on a tap outside the card, never on one that lands on it or travels",
   expect(achievementsClosed).toHaveBeenCalledOnce();
 });
 
+it("prevents compatibility mouse defaults only on eligible primary touch dismissals", async () => {
+  const { achievementsClosed, button, shown } = await openCard();
+  const back = button(WORDS.back);
+  const close = button(WORDS.close);
+  const next = button(WORDS.pages.next);
+  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const pointer = (type: string, options: PointerEventInit, target: HTMLElement) =>
+    target.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        cancelable: true,
+        clientX: 5,
+        clientY: 5,
+        isPrimary: true,
+        pointerId: 1,
+        pointerType: "touch",
+        ...options,
+      }),
+    );
+  const prevented = (options: PointerEventInit, target: HTMLElement) => {
+    const accepted = pointer("pointerdown", options, target);
+    pointer("pointercancel", options, target);
+    return !accepted;
+  };
+  gate.accepts.mockReturnValue(false);
+  expect(prevented({}, back)).toBe(false);
+  gate.accepts.mockReturnValue(true);
+  expect({
+    back: prevented({}, back),
+    backdrop: prevented({}, backdrop),
+    close: prevented({}, close),
+    mouse: prevented({ pointerType: "mouse" }, back),
+    next: prevented({}, next),
+    nonPrimary: prevented({ isPrimary: false }, back),
+    secondaryButton: prevented({ button: 2 }, back),
+  }).toEqual({
+    back: true,
+    backdrop: true,
+    close: true,
+    mouse: false,
+    next: false,
+    nonPrimary: false,
+    secondaryButton: false,
+  });
+  pointer("pointerdown", {}, next);
+  pointer("pointerup", {}, next);
+  expect(shown()).toEqual(titles(1));
+  pointer("pointerdown", {}, back);
+  pointer("pointerup", { clientX: 200 }, back);
+  expect(achievementsClosed).not.toHaveBeenCalled();
+  pointer("pointerdown", {}, back);
+  pointer("pointerup", {}, back);
+  expect(achievementsClosed).toHaveBeenCalledOnce();
+});
+
 it("never shows a disabled pager button pressed", async () => {
   const { button } = await openCard();
   const press = (target: HTMLElement) =>

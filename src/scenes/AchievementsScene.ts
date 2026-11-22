@@ -94,6 +94,8 @@ export class AchievementsScene extends Scene {
     const input = modalInput(this);
     const backdrop = showModalBackdrop(this);
     const guard = { gate: input };
+    // A touch dismissal can expose the invoking card before the compatibility mouse events.
+    const dismiss = { preventTouchMouseDefault: () => this.acceptsActions() };
     const stops = [
       bindSceneButtons(
         input,
@@ -102,8 +104,9 @@ export class AchievementsScene extends Scene {
           ...TARGETS.map((target) => ({
             activate: () => this.act(target),
             element: card.buttons[target],
+            ...((target === "back" || target === "close") && dismiss),
           })),
-          { activate: () => this.back(), element: card.backdrop },
+          { activate: () => this.back(), element: card.backdrop, ...dismiss },
         ],
         card.root,
       ),
@@ -127,9 +130,13 @@ export class AchievementsScene extends Scene {
     });
   }
 
+  private acceptsActions(): boolean {
+    return !this.closed && this.sys.isActive() && modalInput(this).accepts();
+  }
+
   // Back, Escape, P, the close X and a tap outside the card close it.
   back(): void {
-    if (this.closed || !this.sys.isActive() || !modalInput(this).accepts()) {
+    if (!this.acceptsActions()) {
       return;
     }
     this.closed = true;
@@ -140,7 +147,7 @@ export class AchievementsScene extends Scene {
   }
 
   private act(target: Target): void {
-    if (this.closed || !this.sys.isActive() || !modalInput(this).accepts()) {
+    if (!this.acceptsActions()) {
       return;
     }
     if (target === "back" || target === "close") {

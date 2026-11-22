@@ -15,6 +15,7 @@ export interface ActionRoute<Control> {
   readonly identity?: (control: Control) => unknown;
   readonly ownAriaDisabled?: (control: Control) => GameAction["ownAriaDisabled"];
   readonly land?: (control: Control) => void;
+  readonly preventPointerDefault?: (control: Control, event: PointerEvent) => boolean;
   readonly show?: (control: Control | undefined) => void;
   readonly rule?: (control: Control) => HoldRule | undefined;
   readonly hold?: (control: Control) => void;
@@ -59,10 +60,11 @@ export function bindSceneActions<Control>(
   };
   // These existing root policies keep UI focus and implicit capture separate from canvas input.
   const down = (event: PointerEvent) => {
-    if (route.controlAt(event) === null) {
+    const control = route.controlAt(event);
+    if (control === null) {
       return;
     }
-    if (at.preventDefault) {
+    if (at.preventDefault || route.preventPointerDefault?.(control, event)) {
       event.preventDefault();
     }
     if (event.target instanceof Element && event.target.hasPointerCapture(event.pointerId)) {
@@ -108,6 +110,7 @@ export function bindSceneActions<Control>(
 
 export type SceneButtonAction = Omit<GameAction, "available"> & {
   readonly available?: () => boolean;
+  readonly preventTouchMouseDefault?: () => boolean;
 };
 
 export function bindSceneButtons(
@@ -136,6 +139,15 @@ export function bindSceneButtons(
     hold: (action) => (action.hold ?? action.activate)(),
     identity: (action) => (action.identity === undefined ? action.element : action.identity),
     ownAriaDisabled: (action) => action.ownAriaDisabled,
+    preventPointerDefault: (action, event) =>
+      action.preventTouchMouseDefault !== undefined &&
+      event.pointerType === "touch" &&
+      event.isPrimary &&
+      event.button === 0 &&
+      !root.ownerDocument.hidden &&
+      action.element.isConnected &&
+      action.element.closest(":disabled, [hidden], [inert], [aria-disabled='true' i]") === null &&
+      action.preventTouchMouseDefault(),
     rule: (action) => action.rule,
     show: (pressed) => {
       for (const action of actions) {
