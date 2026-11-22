@@ -5,7 +5,7 @@ The [shared saves and cheats policy](https://github.com/andornaut/game-coordinat
 ## Entry and modal
 
 - **Entry:** in a browser tab only, Settings shows Open Cheats in an action row at the bottom of its card. Availability is checked with the shared app-window check when Cheats opens and again before every action; an installed app window shows no entry and refuses every action. There is no other entry.
-- **Modal:** the Cheats card uses the Large width family. Its body scrolls rather than pages, and Close is its bottom primary action. It holds two groups: Cheats, then Tools.
+- **Modal:** the Cheats card uses the Large width family. Its scrollable body contains Cheats, then Tools. The top-right header X and the sole centred Close button in the footer both dismiss Cheats and return focus to Open Cheats in Settings.
 
 ## Cheat session
 
