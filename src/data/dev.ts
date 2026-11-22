@@ -13,7 +13,7 @@ export const DEV_TEXT = {
   },
   invulnerable: "Invulnerability (contact hazards only)",
   load: "Load stage",
-  openCheats: "Open Cheats",
+  openCheats: "Cheats",
   powerUpEnable: "Enable {skill}",
   resetSave: {
     action: "Reset save",

@@ -4,8 +4,8 @@ The [shared saves and cheats policy](https://github.com/andornaut/game-coordinat
 
 ## Entry and modal
 
-- **Entry:** Open Cheats in Menu or Pause is the sole entry in browser tabs and installed apps. Cheats actions require the active foreground card and remain blocked during a pending save write.
-- **Modal:** the Cheats card uses the Large width family. Its scrollable body contains Cheats, then Tools. The top-right X and the sole centred Close button in the footer dismiss only Cheats. Both return to the invoking Menu or Pause with focus on Open Cheats, preserving the held scenes.
+- **Entry:** The Cheats button in Menu or Pause is the sole entry in browser tabs and installed apps. Cheats actions require the active foreground card and remain blocked during a pending save write.
+- **Modal:** the Cheats card uses the Large width family. Its scrollable body contains Cheats, then Tools. The top-right X and the sole centred Close button in the footer dismiss only Cheats. Both return to the invoking Menu or Pause with focus on the Cheats button, preserving the held scenes.
 
 ## Cheat session
 
