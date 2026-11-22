@@ -258,7 +258,7 @@ export async function canonicalApproachTrace(
   ) {
     throw new Error("Canonical raw trace does not cover the returned physical steps");
   }
-  return `${recorder.hash()}:${recorder.ticks()}`;
+  return recorder.hash();
 }
 
 export function coldEncounterBaselineTrace(): string {

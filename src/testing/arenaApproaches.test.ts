@@ -162,8 +162,7 @@ it("imports each canonical recorder line once and rejects a trace shorter than a
   for (const line of lines) {
     expected.record(line);
   }
-  await expect(canonicalApproachTrace({ steps: 1 }, file)).resolves.toBe(
-    `${expected.hash()}:${expected.ticks()}`,
-  );
+  await expect(canonicalApproachTrace({ steps: 1 }, file)).resolves.toBe(expected.hash());
+  await expect(canonicalApproachTrace({ steps: 1 }, file)).resolves.toMatch(/^[a-f0-9]{16}:2$/u);
   await expect(canonicalApproachTrace({ steps: 3 }, file)).rejects.toThrow("does not cover");
 });
