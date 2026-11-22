@@ -38,9 +38,15 @@
   text-align: start;
 }
 
-/* The rows sit under the group's heading rather than under a card header's press areas. */
+/* Text rows meet at their press areas. Framed actions keep the standard stack gap. */
 .cheats-rows {
+  row-gap: 0;
   margin-top: 0;
+}
+
+.cheats-rows > :not(.settings-row) + *,
+.cheats-rows > * + :not(.settings-row) {
+  margin-block-start: var(--ui-stack-button-gap);
 }
 
 .cheats-choice {
