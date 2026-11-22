@@ -36,8 +36,6 @@ export const UI_FRAMES: readonly UiFrame[] = [
   { art: "ui-close", name: "ui-close", tag: "normal", whole: true },
   { art: "ui-close", name: "ui-close-pressed", tag: "pressed", whole: true },
   { art: "ui-dialogue-box", name: "ui-dialogue-box", whole: true },
-  { art: "ui-icon-button", name: "ui-icon-button", tag: "normal", whole: true },
-  { art: "ui-icon-button", name: "ui-icon-button-pressed", tag: "pressed", whole: true },
   { art: "ui-name-tab", name: "ui-name-tab-amber", tag: "amber" },
   { art: "ui-name-tab", name: "ui-name-tab-green", tag: "green" },
   { art: "ui-name-tab", name: "ui-name-tab-pink", tag: "pink" },

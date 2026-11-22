@@ -21,7 +21,7 @@ import { SKILL_DISC_LAYOUT } from "./skillDisc.ts";
 import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
 import { STAGE_PROGRESS_PROPERTIES } from "./stageProgress.ts";
 import { STAGE_SUMMARY_LAYOUT, stageSummaryGaps } from "./stageSummary.ts";
-import { startIconProperties } from "./start.ts";
+import { startBoxProperties } from "./start.ts";
 import { TOUCH_CONTROLS_PROPERTIES } from "./touchControls.ts";
 
 // Vitest blanks CSS imports, so the stylesheets are read from disk.
@@ -54,7 +54,7 @@ const WRITTEN = new Set(
     roomProperties(),
     OPENING_PROPERTIES,
     roomPortraitProperties({ height: 0, width: 0 }),
-    startIconProperties(0, { height: 0, width: 0, x: 0, y: 0 }),
+    startBoxProperties({ height: 0, width: 0, x: 0, y: 0 }),
     SETTINGS_LAYOUT,
     STAGE_SELECT_LAYOUT,
     DEATH_LAYOUT,
@@ -137,8 +137,12 @@ it("colours button faces and icons for keyboard focus and forced colours without
   expect(ui).toContain("--button-press-ink: ButtonFace;");
   expect(ui).toContain("color: GrayText;");
   const pause = sheet("pause.css");
-  expect(pause).toMatch(
-    /\.pause-button:is\(:focus-visible[^{}]+\{\s*--pause-face: var\(--button-state-fill\);/u,
+  expect(pause).toContain(
+    [
+      ":is(.pause-button, .start-icon-button):is(:focus-visible, [data-pressed], [data-ui-pressed])",
+      "  .navigation-disc {",
+      "  --navigation-face: var(--button-state-fill);",
+    ].join("\n"),
   );
   expect(pause).toContain("fill: var(--skill-disc-fill, var(--colour-dslate));");
   expect(pause).toContain("fill: var(--skill-disc-fill, var(--colour-yellow));");
@@ -146,7 +150,7 @@ it("colours button faces and icons for keyboard focus and forced colours without
     /\.skill-button:not\(:disabled\):focus-visible \{\s*--skill-disc-fill: var\(--colour-cream\);/u,
   );
   expect(pause).toContain("--skill-disc-ink: GrayText;");
-  expect(sheet("start.css")).toContain("background-color: var(--button-state-fill, ButtonFace);");
+  expect(sheet("start.css")).toContain(".start-icon-face .navigation-disc");
   expect(sheet("stageSelect.css")).toContain("background: var(--button-state-fill) padding-box;");
   expect(sheet("map.css")).toContain("background: var(--button-focus-fill);");
   expect(sheet("settings.css")).toContain("background: var(--button-state-fill);");

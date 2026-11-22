@@ -1,6 +1,5 @@
 import { browserExitPage, exitApp } from "@andornaut/game-kit/runtime/web/pwa/dom/exitApp";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
-import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
@@ -111,7 +110,18 @@ export class StartScene extends Scene implements RestartOpener {
     if (layer === undefined) {
       return;
     }
-    const view = createStart(layer.element.ownerDocument, TEXT.start, this.layout);
+    const view = createStart(
+      layer.element.ownerDocument,
+      {
+        cream: this.colour("cream"),
+        dslate: this.colour("dslate"),
+        ink: this.colour("ink"),
+        navy: this.colour("navy"),
+        white: this.colour("white"),
+      },
+      TEXT.start,
+      this.layout,
+    );
     this.view = view;
     const input = modalInput(this);
     const live = () => this.native && !this.starting && this.card === undefined;
@@ -165,27 +175,11 @@ export class StartScene extends Scene implements RestartOpener {
     view.root.addEventListener("focusin", focus);
     view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
     view.root.addEventListener("touchend", keep, { capture: true, passive: false });
-    const art = {
-      exit: "ui-quit",
-      logo: LOGO,
-    };
-    const urls = Promise.all(
-      [...view.images].map(async ([name, image]) => {
-        const key = art[name as keyof typeof art];
-        const frame = this.textures.getFrame(key);
-        const url = await artFrameUrl(this, key);
-        image.setAttribute("src", url);
-        if (name !== "logo" && image.parentElement !== null) {
-          writeLayoutProperties(
-            { "--start-height": frame.realHeight, "--start-width": frame.realWidth },
-            image.parentElement,
-          );
-          image.parentElement.style.setProperty("--start-icon-image", `url("${url}")`);
-        }
-        return url;
-      }),
-    );
-    const reveal = revealSceneView(this, view.root, urls);
+    const logo = artFrameUrl(this, LOGO).then((url) => {
+      view.logo.src = url;
+      return [url];
+    });
+    const reveal = revealSceneView(this, view.root, logo);
     mountSceneView(this, view.root);
     let active = true;
     this.events.once("shutdown", () => {

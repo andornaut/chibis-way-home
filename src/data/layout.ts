@@ -3,7 +3,7 @@
 // are fixed by the art drawn at that size; change them only with the art.
 
 import { MODAL_CONTENT } from "@andornaut/game-kit/runtime/modalLayout";
-import { BUTTON_GAP, SMALL_BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
+import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 
 import type { MapNode, Point, Rect, Size } from "./types/index.ts";
 
@@ -307,20 +307,15 @@ export const STAGE_SUMMARY = {
 } as const;
 
 export const START_SCREEN = {
-  // art: an icon button's side, its icon's top-left within it, and its top.
-  iconButton: { icon: { x: 8, y: 6 } satisfies Point, size: 36, y: 6 },
-  // The gap between adjacent icon buttons, whose faces are smaller than a text button's.
-  iconGap: SMALL_BUTTON_GAP,
+  // The Exit button's horizontal centre and established target size.
+  exitCentreX: 694,
+  exitTarget: 54,
   // The gap from the logo's bottom to the action row's top.
   logoActionGap: 15,
   // The gap from the nav bar's bottom to the logo's top.
   logoTopGap: 12,
   // The nav bar's height.
   navHeight: 48,
-  // How far a pressed icon sinks.
-  pressedSink: 2,
-  // The last icon button's left edge.
-  rightIconX: 676,
   // Start's drawn width, left edge and top.
   start: { width: 192, x: 264, y: 268 },
 } as const;

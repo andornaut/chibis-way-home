@@ -4,9 +4,11 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import type { Rect } from "../../data/types/index.ts";
+import type { PauseChromeColours } from "../chrome/pauseChrome.ts";
 import { createGameButton } from "../input/actionBinding.ts";
 import type { StartScreenLayout } from "../layout/startScreen.ts";
 import { mountUiLayout, type UiLayoutNode } from "./layoutTree.ts";
+import { createNavigationDisc } from "./navigationDisc.ts";
 
 export type StartControl = "exit" | "restart" | "start";
 
@@ -23,7 +25,7 @@ export interface StartWords {
 
 export interface StartView {
   readonly buttons: ReadonlyMap<StartControl, HTMLButtonElement>;
-  readonly images: ReadonlyMap<string, HTMLImageElement>;
+  readonly logo: HTMLImageElement;
   readonly root: HTMLElement;
 }
 
@@ -37,10 +39,6 @@ export function startBoxProperties(rect: Rect): LayoutValues {
   };
 }
 
-export function startIconProperties(sink: number, rect: Rect): LayoutValues {
-  return { ...startBoxProperties(rect), "--start-icon-sink": sink };
-}
-
 function box(rect: Rect, element: HTMLElement): void {
   writeLayoutProperties(startBoxProperties(rect), element);
   element.classList.add("start-box");
@@ -48,6 +46,7 @@ function box(rect: Rect, element: HTMLElement): void {
 
 export function createStart(
   document: Document,
+  colours: PauseChromeColours,
   words: StartWords,
   layout: StartScreenLayout,
 ): StartView {
@@ -60,23 +59,17 @@ export function createStart(
   const nav = document.createElement("div");
   nav.className = "start-nav ui-frame";
   box(layout.nav, nav);
-  const images = new Map<string, HTMLImageElement>();
-  // Icon images are decorative: their buttons carry the names.
-  const image = (key: string, rect: Rect, alt = "") => {
-    const img = document.createElement("img");
-    img.alt = alt;
-    img.draggable = false;
-    box(rect, img);
-    images.set(key, img);
-    return img;
-  };
+  const logo = document.createElement("img");
+  logo.alt = words.logo;
+  logo.draggable = false;
+  box(layout.logo, logo);
   const children: UiLayoutNode[] = [
     { component: "Native", key: "nav", kind: "component", props: { element: nav } },
     {
       component: "Native",
       key: "logo",
       kind: "component",
-      props: { element: image("logo", layout.logo, words.logo) },
+      props: { element: logo },
     },
   ];
   const buttons = new Map<StartControl, HTMLButtonElement>();
@@ -108,23 +101,15 @@ export function createStart(
       });
       continue;
     }
-    const icon = document.createElement("img");
-    icon.alt = "";
-    icon.draggable = false;
-    images.set(control, icon);
-    const glyph = document.createElement("span");
-    glyph.className = "start-icon-glyph";
-    box({ height: 0, width: 0, x: at.icon.x - at.art.x, y: at.icon.y - at.art.y }, glyph);
-    glyph.append(icon);
+    const icon = createNavigationDisc(document, colours, "rest", "exit");
     const { element: button, face } = createGameButton(
       document,
       { className: "start-icon-button ui-press", face: { className: "start-icon-face" } },
-      { icon: glyph, kind: "icon", name: words[control] },
+      { icon, kind: "icon", name: words[control] },
     );
     button.dataset.control = control;
     box(at.hit, button);
     box({ ...at.art, x: at.art.x - at.hit.x, y: at.art.y - at.hit.y }, face);
-    writeLayoutProperties(startIconProperties(at.pressedIcon.y - at.icon.y, at.hit), button);
     buttons.set(control, button);
     children.push({
       component: "Native",
@@ -157,5 +142,5 @@ export function createStart(
       orderedButtons.set(control, button);
     }
   }
-  return { buttons: orderedButtons, images, root };
+  return { buttons: orderedButtons, logo, root };
 }

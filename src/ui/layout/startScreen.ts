@@ -1,22 +1,11 @@
 import { START_SCREEN, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
-import type { Point, Rect, Size } from "../../data/types/index.ts";
+import type { Rect, Size } from "../../data/types/index.ts";
+import { PAUSE_DISC } from "./controlChrome.ts";
 import { type LabelledButton, labelledButton } from "./labelledButton.ts";
-import { topBarButton } from "./topBar.ts";
+import { TOP_BAR_CENTRE_Y } from "./topBar.ts";
 
-// Art's start screen (art/README.md, Start screen), in base pixels (START_SCREEN): the nav bar
-// across the top, with square icon buttons at its right end, each with its icon inset (sunk while
-// pressed), and the logo with Start under it. With saved progress, Restart and Continue
-// share Start's row instead, gap apart and centred under the logo. A button's label origin is 13
-// below its top, 2 lower while pressed. Each button's press area, hit, is its drawn button grown
-// by hitAreas.ts's rule.
-
-const ICON_BUTTON = START_SCREEN.iconButton;
-// A pressed button's icon or label sinks this far.
-const PRESSED_SINK = START_SCREEN.pressedSink;
-// The last icon button's x at the nav's right end; each one before it is a slot further left.
-const RIGHT_BUTTON_X = START_SCREEN.rightIconX;
-const BUTTON_SLOT = ICON_BUTTON.size + START_SCREEN.iconGap;
+// Start uses the shared navigation disc and keeps Exit's established press area.
 const START = { ...TEXT_BUTTON, ...START_SCREEN.start } as const;
 // Continue and Restart's gap, side by side in Start's row.
 const ROW_GAP = TEXT_BUTTON.gap;
@@ -26,10 +15,7 @@ const LOGO_ACTION_GAP = START_SCREEN.logoActionGap;
 
 export interface IconButtonLayout {
   readonly art: Rect;
-  readonly at: Point;
   readonly hit: Rect;
-  readonly icon: Point;
-  readonly pressedIcon: Point;
 }
 
 export interface StartScreenLayout {
@@ -43,17 +29,12 @@ export interface StartScreenLayout {
   readonly start: LabelledButton;
 }
 
-// The icon button in slot from the nav's right end, 0 the last.
-function iconButton(slot: number): IconButtonLayout {
-  const { icon, size, y } = ICON_BUTTON;
-  const x = RIGHT_BUTTON_X - slot * BUTTON_SLOT;
-  const { art, hit } = topBarButton(TEXT_BUTTON.lipHeight, { height: size, width: size, x, y });
+function exitButton(): IconButtonLayout {
+  const { exitCentreX: x, exitTarget: target } = START_SCREEN;
+  const size = PAUSE_DISC.frame;
   return {
-    art,
-    at: { x, y: art.y },
-    hit,
-    icon: { x: x + icon.x, y: art.y + icon.y },
-    pressedIcon: { x: x + icon.x, y: art.y + icon.y + PRESSED_SINK },
+    art: { height: size, width: size, x: x - size / 2, y: TOP_BAR_CENTRE_Y - size / 2 },
+    hit: { height: target, width: target, x: x - target / 2, y: 0 },
   };
 }
 
@@ -76,7 +57,7 @@ export function startScreenLayout(
   );
   const logoWidth = logoSize.width * scale;
   return {
-    ...(exitShown ? { exit: iconButton(0) } : {}),
+    ...(exitShown ? { exit: exitButton() } : {}),
     logo: {
       height: logoSize.height * scale,
       width: logoWidth,

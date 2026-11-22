@@ -2,7 +2,7 @@ import { containsPoint } from "@andornaut/game-kit/runtime/rect";
 import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 import { describe, expect, it } from "vitest";
 
-import { START_SCREEN, TEXT_BUTTON } from "../../data/layout.ts";
+import { TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
 import { hitAround, type PressArea, pressedArea } from "./hitAreas.ts";
@@ -50,10 +50,10 @@ describe.each([
     expect(PAUSE_BUTTON.hit.width).toBe(hitAround(PAUSE_BUTTON.art).width);
     if (layout.exit !== undefined) {
       const { art, hit } = layout.exit;
-      expect(art.y + (art.height - TEXT_BUTTON.lipHeight) / 2).toBe(centre);
-      expect(hit.y).toBeGreaterThanOrEqual(0);
-      expect(hit.height).toBe(hitAround(art).height);
-      expect(art.x).toBe(START_SCREEN.rightIconX);
+      expect(art.y + art.height / 2).toBe(centre);
+      expect(art.x + art.width / 2).toBe(694);
+      expect([art.width, art.height]).toEqual([PAUSE_BUTTON.art.width, PAUSE_BUTTON.art.height]);
+      expect(hit).toEqual({ height: 54, width: 54, x: 667, y: 0 });
     }
   });
 

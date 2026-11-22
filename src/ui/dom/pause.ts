@@ -5,17 +5,13 @@ import {
 
 import type { GameText, Point, SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
-import {
-  PAUSE_CHROME_FRAME,
-  pauseChromeLayers,
-  type PauseChromePose,
-} from "../chrome/pauseChrome.ts";
+import { PAUSE_CHROME_FRAME, type PauseChromePose } from "../chrome/pauseChrome.ts";
 import { createGameButton } from "../input/actionBinding.ts";
 import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
 import { SKILL_BUTTON } from "../layout/skillHud.ts";
 import { type CardView, type CardWords, createCard } from "./card.ts";
-import { createPaletteSvg } from "./chrome.ts";
 import { UI_COVERED } from "./layer.ts";
+import { createNavigationDisc } from "./navigationDisc.ts";
 import {
   createSkillDisc,
   paintSkillDisc,
@@ -177,12 +173,7 @@ export function showPauseDisc(
   const poses = [...button.querySelectorAll<SVGSVGElement>(".pause-disc")];
   let shown = poses.find((svg) => svg.dataset.pose === key);
   if (shown === undefined) {
-    shown = createPaletteSvg(
-      button.ownerDocument,
-      colours,
-      { height: PAUSE_CHROME_FRAME, width: PAUSE_CHROME_FRAME },
-      pauseChromeLayers(colours, pose.tag, mode),
-    );
+    shown = createNavigationDisc(button.ownerDocument, colours, pose.tag, mode);
     shown.classList.add("pause-disc");
     shown.dataset.pose = key;
     button.append(shown);

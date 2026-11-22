@@ -45,6 +45,7 @@ vi.mock("./domUi.ts", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
+import palette from "../../public/art/palette.json" with { type: "json" };
 import { TEXT } from "../data/text.ts";
 import { createUiLayer, type UiLayer } from "../ui/index.ts";
 import { modalInput } from "./modalInput.ts";
@@ -69,7 +70,7 @@ async function startMenu() {
     keyboard = new EventEmitter();
   const start = Object.assign(new StartScene(), {
     add: { image: () => ({ setOrigin: vi.fn() }) },
-    cache: { json: { get: () => ({ colours: { ink: "#000000" } }) } },
+    cache: { json: { get: () => palette } },
     cameras: { main: { setBackgroundColor: vi.fn() } },
     events,
     game,
@@ -225,12 +226,19 @@ it("cannot activate or route Tab to Menu underneath an ordinary modal", async ()
   close();
 });
 
-it("closes the app window from Exit without navigating", async () => {
-  const f = await startMenu();
-  f.key("Tab");
-  f.key("Tab");
-  expect(document.activeElement?.getAttribute("aria-label")).toBe(TEXT.start.exit);
-  f.key("Enter");
-  expect(exit).toHaveBeenCalledOnce();
-  expect(leave).not.toHaveBeenCalled();
-});
+it.each(["keyboard", "glyph tap"])(
+  "closes the app window from Exit by %s without navigating",
+  async (input) => {
+    const f = await startMenu();
+    if (input === "keyboard") {
+      f.key("Tab");
+      f.key("Tab");
+      expect(document.activeElement?.getAttribute("aria-label")).toBe(TEXT.start.exit);
+      f.key("Enter");
+    } else {
+      tap(f.layer.element.querySelector('[data-control="exit"] svg path')!);
+    }
+    expect(exit).toHaveBeenCalledOnce();
+    expect(leave).not.toHaveBeenCalled();
+  },
+);

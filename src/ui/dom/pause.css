@@ -34,7 +34,7 @@
   display: none;
 }
 
-/* The art of the pose the button shows (data-shown), one SVG per pose. */
+/* Each Menu/Pause pose has its own disc. Exit uses the same disc with its own glyph. */
 .pause-disc:not([data-shown]) {
   display: none;
 }
@@ -48,25 +48,26 @@
   height: calc(var(--ui-unit) * var(--pause-disc-size) * 1px);
 }
 
-.pause-button:is(:focus-visible, [data-ui-pressed]) .pause-disc[data-shown] {
-  --pause-face: var(--button-state-fill);
-  --pause-glyph: var(--button-state-ink);
+:is(.pause-button, .start-icon-button):is(:focus-visible, [data-pressed], [data-ui-pressed])
+  .navigation-disc {
+  --navigation-face: var(--button-state-fill);
+  --navigation-glyph: var(--button-state-ink);
 }
 
-.pause-disc circle:nth-child(3) {
-  fill: var(--pause-face, var(--colour-navy));
+.navigation-disc circle:nth-child(3) {
+  fill: var(--navigation-face, var(--colour-navy));
 }
 
-.pause-disc:not([data-pose$="-rest"]) {
-  --pause-face: var(--colour-dslate);
+.navigation-disc[data-pose]:not([data-pose$="-rest"]) {
+  --navigation-face: var(--colour-dslate);
 }
 
-.pause-disc rect {
-  fill: var(--pause-glyph, var(--colour-cream));
+.navigation-disc :is(rect, path) {
+  fill: var(--navigation-glyph, var(--colour-cream));
 }
 
-.pause-disc:not([data-pose$="-rest"]) rect {
-  fill: var(--pause-glyph, var(--colour-white));
+.navigation-disc[data-pose]:not([data-pose$="-rest"]) :is(rect, path) {
+  fill: var(--navigation-glyph, var(--colour-white));
 }
 
 /* A skill button's box is its square target, at its place in the HUD row. */
@@ -126,27 +127,27 @@
 }
 
 @media (forced-colors: active) {
-  .pause-disc,
+  .navigation-disc,
   .skill-button {
     forced-color-adjust: none;
   }
 
-  .pause-disc {
-    --pause-face: ButtonFace;
-    --pause-glyph: ButtonText;
+  .navigation-disc {
+    --navigation-face: ButtonFace;
+    --navigation-glyph: ButtonText;
   }
 
-  .pause-disc circle:first-child {
+  .navigation-disc circle:first-child {
     fill: ButtonText;
   }
 
-  .pause-disc circle:nth-child(2) {
+  .navigation-disc circle:nth-child(2) {
     fill: ButtonFace;
   }
 
-  .pause-disc:not([data-pose$="-rest"]) {
-    --pause-face: var(--button-press-fill);
-    --pause-glyph: var(--button-press-ink);
+  .navigation-disc[data-pose]:not([data-pose$="-rest"]) {
+    --navigation-face: var(--button-press-fill);
+    --navigation-glyph: var(--button-press-ink);
   }
 
   .skill-button {
