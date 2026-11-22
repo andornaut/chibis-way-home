@@ -48,3 +48,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0256 | Adopt the shared Pause and Menu navigation                              | [cwh-0256.md](../work/cwh-0256.md) |
 | cwh-0264 | Move developer controls into a Settings Cheats modal                    | [cwh-0264.md](../work/cwh-0264.md) |
 | cwh-0272 | Verify Back, Close and Resume navigation                                | [cwh-0272.md](../work/cwh-0272.md) |
+| cwh-0273 | Use game-styled keyboard focus on every control                         | [cwh-0273.md](../work/cwh-0273.md) |
