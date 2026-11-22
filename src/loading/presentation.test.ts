@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 
 import palette from "../../public/art/palette.json" with { type: "json" };
-import { LOADING_FAILURE_PRESENTATION } from "../data/layout.ts";
+import { LOADING_FAILURE_PRESENTATION, TEXT_BUTTON } from "../data/layout.ts";
 import { loadingFailurePresentation, loadingUnit } from "./presentation.ts";
 
 it("shares the existing landscape CSS fit before a game UI layer exists", () => {
@@ -22,7 +22,7 @@ it("keeps approved CSS panel and text metrics while scaling only the logical act
     heightPx: 24,
     highlightHeightPx: 0.5,
     paddingBottomPx: 2,
-    paddingXPx: 6,
+    paddingXPx: TEXT_BUTTON.inset / 2,
     shadeHeightPx: 2,
     widthPx: "content",
   });
@@ -31,7 +31,7 @@ it("keeps approved CSS panel and text metrics while scaling only the logical act
     heightPx: 96,
     highlightHeightPx: 2,
     paddingBottomPx: 8,
-    paddingXPx: 24,
+    paddingXPx: TEXT_BUTTON.inset * 2,
     shadeHeightPx: 8,
     widthPx: "content",
   });

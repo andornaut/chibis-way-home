@@ -153,7 +153,7 @@ export const LOADING_FAILURE_PRESENTATION = {
     height: TEXT_BUTTON.height,
     highlightHeight: 1,
     paddingBottom: TEXT_BUTTON.lipHeight,
-    paddingX: 12,
+    paddingX: TEXT_BUTTON.inset,
     shadeHeight: TEXT_BUTTON.lipHeight,
   },
   panel: {
