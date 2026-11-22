@@ -52,8 +52,8 @@ describe("artUrls", () => {
     ],
   ])("lists what a build loads from art's files for %s", (_, manifest, files) => {
     const boot = files.map((file) => ART_PATH + file);
-    expect(bootArtUrls(manifest)).toEqual(boot);
-    expect(artUrls(manifest)).toEqual([
+    expect(bootArtUrls(new Set(), manifest)).toEqual(boot);
+    expect(artUrls(boot)).toEqual([
       ...boot,
       BIRD_SHEET_URL,
       ...UI_FONT_RESOURCES.map(({ url }) => url),
@@ -61,8 +61,21 @@ describe("artUrls", () => {
   });
 });
 
+it("keeps only the images the atlas does not supply in the standalone boot list", () => {
+  const manifest: ArtManifest = {
+    ...EMPTY,
+    images: [
+      { height: 84, key: "preview", png: "images/preview.png", width: 168 },
+      { height: 360, key: "start-background", png: "images/start-background.png", width: 720 },
+    ],
+  };
+  const boot = bootArtUrls(new Set(["preview"]), manifest);
+  expect(boot).toEqual(["/art/images/start-background.png"]);
+  expect(artUrls(boot)).not.toContain("/art/images/preview.png");
+});
+
 it("includes the native crash bird and both UI font files in the fingerprinted art emission list", () => {
-  const urls = artUrls(EMPTY);
+  const urls = artUrls(bootArtUrls(new Set(), EMPTY));
   for (const url of [
     BIRD_SHEET_URL,
     "/art/fonts/chibi-sans/ChibiSans-Regular.woff2",

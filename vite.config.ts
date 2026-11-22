@@ -55,7 +55,7 @@ export default gameViteConfig<typeof ConfigModules>({
       hashedIconsPlugin({ icons: ICONS }),
       webManifestPlugin(),
       publicFilesPlugin(UNNAMED_PUBLIC_FILES),
-      precachePlugin("play/index.html", repoPath("src/pwa/serviceWorker.ts"), atlas.api.pageUrls),
+      precachePlugin("play/index.html", repoPath("src/pwa/serviceWorker.ts"), atlas.api),
       securityHeadersPlugin(),
     ];
   },

@@ -16,7 +16,7 @@ export interface AtlasFrame {
 }
 
 // One key of art's manifest, drawn from one atlas page: a sprite's frames in export order with
-// its sheet tags, a tileset's tiles by index, or a font's or backdrop's one frame.
+// its sheet tags, a tileset's tiles by index, or a backdrop's or image's one frame.
 export interface AtlasTexture {
   readonly frames: readonly AtlasFrame[];
   readonly key: string;

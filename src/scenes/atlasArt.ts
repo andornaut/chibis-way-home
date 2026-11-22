@@ -41,7 +41,7 @@ function addAtlasTexture(scene: Scene, atlased: AtlasTexture): void {
   }
 }
 
-// Adds sprite, tile and backdrop aliases without changing their shared source filtering.
+// Adds packed texture aliases without changing their shared source filtering.
 export function addAtlasArt(scene: Scene, { textures }: AtlasManifest): void {
   for (const texture of textures) {
     addAtlasTexture(scene, texture);

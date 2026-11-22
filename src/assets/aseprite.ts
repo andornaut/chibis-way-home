@@ -18,8 +18,8 @@ interface ArtBackdrop {
   readonly y: number;
 }
 
-// A plain image the site's HTML pages show, such as the logo, at its size in pixels. It ships as
-// its own file under /art/, never on the game's atlas pages.
+// A plain image at its native size. Stage previews ship on their own atlas page in production.
+// The start background and site logos ship under /art/.
 interface ArtImage {
   readonly height: number;
   readonly key: string;

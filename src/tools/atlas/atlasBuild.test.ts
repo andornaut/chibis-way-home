@@ -14,7 +14,7 @@ import { EXTRUDE } from "./atlasLayout.ts";
 const ART_DIR = join(import.meta.dirname, "../../../public", ART_PATH);
 const readArt = async (path: string) => new Uint8Array(await readFile(join(ART_DIR, path)));
 const ART = JSON.parse(new TextDecoder().decode(await readArt(ART_MANIFEST_FILE))) as ArtManifest;
-const ATLAS = await buildAtlas({ encode: () => new Uint8Array(), readArt }, ART);
+const ATLAS = await buildAtlas({ encode: () => new Uint8Array(), readArt }, { ...ART, images: [] });
 
 // Shared nearest-filtered art excludes standalone images and dedicated font textures.
 const PNGS: ReadonlyMap<string, string> = new Map(
@@ -50,7 +50,7 @@ describe("buildAtlas", () => {
     const source = decodePng(await readArt(backdrop.png));
     const { pages } = await buildAtlas(
       { encode: () => new Uint8Array(), readArt },
-      { ...ART, backdrops: [backdrop], sprites: [], tilesets: [] },
+      { backdrops: [backdrop], images: [], sprites: [], tilesets: [] },
     );
     expect(pages.map(({ image }) => image.width)).toEqual([source.width + 2 * EXTRUDE]);
   });

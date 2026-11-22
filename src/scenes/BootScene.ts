@@ -103,9 +103,11 @@ export class BootScene extends Scene {
     for (const { json, key } of MANIFEST.tilesets) {
       this.load.json(key, json);
     }
-    // Standalone images are excluded from the atlas and loaded in both rendering modes.
+    const packedKeys = new Set(ATLAS?.textures.map(({ key }) => key));
     for (const { key, png } of MANIFEST.images) {
-      this.load.image(key, png);
+      if (!packedKeys.has(key)) {
+        this.load.image(key, png);
+      }
     }
     if (ATLAS !== null) {
       return;

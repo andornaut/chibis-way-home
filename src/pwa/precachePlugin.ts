@@ -11,13 +11,16 @@ import { ART_MANIFEST_URL, artUrls, bootArtUrls } from "./precacheArt.ts";
 // pageHtmlFile and what it loads, with its pointer /.game-kit/build.json. BootScene loads the art
 // at runtime rather than linking it, and the kit lists only build output beyond the page's links,
 // so a first plugin emits every file it loads from public/art/ into the build output at its own
-// path, for the kit's to name with the atlas pages atlasPageUrls gives. The boot files, which the
+// path, asking the atlas which keys and pages the build packs. The boot files, which the
 // launch counts into the first install's one progress value, are the atlas pages and the art
 // BootScene's file load reads.
 export function precachePlugin(
   pageHtmlFile: string,
   serviceWorkerSource: string,
-  atlasPageUrls: () => readonly string[],
+  atlas: {
+    pageUrls(): readonly string[];
+    textureKeys(): readonly string[];
+  },
 ): Plugin[] {
   let urls: string[] = [];
   let boot: string[] = [];
@@ -29,8 +32,8 @@ export function precachePlugin(
       const manifest = JSON.parse(
         new TextDecoder().decode(await read(ART_MANIFEST_URL)),
       ) as ArtManifest;
-      urls = artUrls(manifest);
-      boot = bootArtUrls(manifest);
+      boot = bootArtUrls(new Set(atlas.textureKeys()), manifest);
+      urls = artUrls(boot);
       const files = await mapBounded(
         FILE_READ_CONCURRENCY,
         async (url) => [url, await read(url)] as const,
@@ -45,8 +48,8 @@ export function precachePlugin(
   return [
     emitArt,
     kitPrecachePlugin({
-      boot: () => [...boot, ...atlasPageUrls()],
-      hashedFiles: () => ({ sounds: SOUNDS, urls: [...urls, ...atlasPageUrls()] }),
+      boot: () => [...boot, ...atlas.pageUrls()],
+      hashedFiles: () => ({ sounds: SOUNDS, urls: [...urls, ...atlas.pageUrls()] }),
       pageHtmlFile,
       policy: CACHE_POLICY,
       serviceWorkerSource,

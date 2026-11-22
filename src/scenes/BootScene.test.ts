@@ -95,8 +95,12 @@ beforeEach(() => {
   vi.stubGlobal("window", { clearTimeout, location: { search: "" }, setTimeout });
 });
 
-it("loads standalone manifest images in development and atlas mode", () => {
-  for (const atlas of [null, {}]) {
+it("loads an image separately unless the atlas provides its texture key", () => {
+  for (const [atlas, loadsImage] of [
+    [null, true],
+    [{ textures: [] }, true],
+    [{ textures: [{ key: "standalone-image" }] }, false],
+  ] as const) {
     art.atlas = atlas;
     const scene = bootScene();
     // The loader watch wraps the multi-file methods it retries.
@@ -105,10 +109,14 @@ it("loads standalone manifest images in development and atlas mode", () => {
     expect(scene.load.json).not.toHaveBeenCalledWith("manifest", expect.anything());
     expect(scene.cache.json.add).toHaveBeenCalledExactlyOnceWith("manifest", manifest);
     expect(bitmapFont).not.toHaveBeenCalled();
-    expect(scene.load.image).toHaveBeenCalledExactlyOnceWith(
-      "standalone-image",
-      "images/standalone.png",
-    );
+    if (loadsImage) {
+      expect(scene.load.image).toHaveBeenCalledExactlyOnceWith(
+        "standalone-image",
+        "images/standalone.png",
+      );
+    } else {
+      expect(scene.load.image).not.toHaveBeenCalled();
+    }
   }
 });
 

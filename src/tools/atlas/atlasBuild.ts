@@ -69,6 +69,8 @@ function spriteFrames({ frames }: AsepriteExport): AtlasFrame[] {
   }));
 }
 
+type AtlasSources = Pick<ArtManifest, "backdrops" | "images" | "sprites" | "tilesets">;
+
 interface AtlasBuildDependencies {
   readonly encode: (image: RgbaImage) => Uint8Array | Promise<Uint8Array>;
   readonly readArt: (path: string) => Promise<Uint8Array>;
@@ -80,11 +82,10 @@ interface AtlasBuild {
   readonly textures: readonly AtlasTexture[];
 }
 
-// Packs sprites, tilesets and backdrops whole into nearest-filtered atlas pages. Fonts
-// retain dedicated PNG/FNT sources; standalone site images also stay outside the atlas.
+// Packs the selected sources whole into nearest-filtered atlas pages.
 export async function buildAtlas(
   { encode, readArt }: AtlasBuildDependencies,
-  manifest: ArtManifest,
+  manifest: AtlasSources,
 ): Promise<AtlasBuild> {
   const readJson = async (path: string): Promise<unknown> =>
     JSON.parse(new TextDecoder().decode(await readArt(path)));
@@ -104,7 +105,7 @@ export async function buildAtlas(
       const image = await readPng(png);
       return { frames: tileFrames(image), image, key, png };
     }),
-    ...manifest.backdrops.map(({ key, png }) => async () => {
+    ...[...manifest.backdrops, ...manifest.images].map(({ key, png }) => async () => {
       const image = await readPng(png);
       return { frames: [wholeFrame(image)], image, key, png };
     }),

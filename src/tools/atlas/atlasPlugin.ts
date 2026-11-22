@@ -7,6 +7,7 @@ import {
   type ArtManifest,
   type AtlasManifest,
 } from "../../assets/index.ts";
+import { STAGE_PREVIEWS } from "../../data/stagePreviews.ts";
 import { buildAtlas } from "./atlasBuild.ts";
 import { atlasPageFileName } from "./hashedArt.ts";
 
@@ -18,16 +19,20 @@ const RESOLVED_ATLAS_MODULE = `\0${ATLAS_MODULE}`;
 interface AtlasPluginApi {
   // The URLs of the build's atlas pages, once buildStart has run.
   pageUrls(): readonly string[];
+  // The keys supplied by the loaded pages instead of standalone game files.
+  textureKeys(): readonly string[];
 }
 
-// In a build, packs every PNG art's manifest lists into atlas pages, writes each to the build
-// output as a lossless WebP (every target browser decodes WebP) under a content-hashed name,
-// and makes ATLAS_MODULE the atlas manifest that maps each art key and frame to its page and
-// rect. The dev server loads each file under public/art/ on its own instead.
+// Writes the shared art and the stage previews to separate groups of lossless WebP pages.
+// The atlas module maps every packed key and frame to its page and rect. The dev server
+// loads each file under public/art/ on its own.
 export function atlasPlugin(): Plugin & { api: AtlasPluginApi } {
   let manifest: AtlasManifest | null = null;
   return {
-    api: { pageUrls: () => manifest?.pages.map(({ url }) => url) ?? [] },
+    api: {
+      pageUrls: () => manifest?.pages.map(({ url }) => url) ?? [],
+      textureKeys: () => manifest?.textures.map(({ key }) => key) ?? [],
+    },
     async buildStart() {
       const { config, logger } = this.environment;
       if (config.command !== "build") {
@@ -38,15 +43,29 @@ export function atlasPlugin(): Plugin & { api: AtlasPluginApi } {
       const art = JSON.parse(
         new TextDecoder().decode(await readArt(ART_MANIFEST_FILE)),
       ) as ArtManifest;
-      const { pages, textures } = await buildAtlas({ encode: encodeLosslessWebp, readArt }, art);
+      const dependencies = { encode: encodeLosslessWebp, readArt };
+      const shared = await buildAtlas(dependencies, { ...art, images: [] });
+      const previewKeys = new Set(Object.values(STAGE_PREVIEWS));
+      const previews = await buildAtlas(dependencies, {
+        backdrops: [],
+        images: art.images.filter(({ key }) => previewKeys.has(key)),
+        sprites: [],
+        tilesets: [],
+      });
       manifest = {
-        pages: pages.map(({ bytes: source, image }, page) => {
+        pages: [...shared.pages, ...previews.pages].map(({ bytes: source, image }, page) => {
           const fileName = atlasPageFileName(page, "webp", source);
           this.emitFile({ fileName, source, type: "asset" });
           logger.info(`atlas: ${fileName} ${image.width}x${image.height}, ${source.length} B`);
           return { height: image.height, url: `/${fileName}`, width: image.width };
         }),
-        textures,
+        textures: [
+          ...shared.textures,
+          ...previews.textures.map((texture) => ({
+            ...texture,
+            page: texture.page + shared.pages.length,
+          })),
+        ],
       };
     },
     load(id) {
