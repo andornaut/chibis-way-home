@@ -2,6 +2,7 @@ import {
   type InstallStepsKind,
   offersInstall,
 } from "@andornaut/game-kit/runtime/web/pwa/installState";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
@@ -493,15 +494,19 @@ export class SettingsScene extends Scene {
       );
     } else if (which === "confirm") {
       cheats.confirm.dialog.hidden = false;
-      this.closeConfirmModal = modals?.open(
-        {
-          backdrop: card.backdrop,
-          close: () => this.back(),
-          focus: cheats.confirm.cancel,
-          isolation: "dialog",
-        },
-        cheats.confirm.dialog,
-      );
+      if (modals !== undefined) {
+        // A touch action can open the confirmation before its invoker receives browser focus.
+        focusTarget(cheats.actions.resetSave);
+        this.closeConfirmModal = modals.open(
+          {
+            backdrop: card.backdrop,
+            close: () => this.back(),
+            focus: cheats.confirm.cancel,
+            isolation: "dialog",
+          },
+          cheats.confirm.dialog,
+        );
+      }
     }
   }
 

@@ -437,7 +437,9 @@ it("keeps Settings and Cheats visible under nested cards and restores focus on C
   expect(cheats.contains(document.activeElement)).toBe(true);
   motion.click();
   expect(motion.getAttribute("aria-checked")).toBe(motionState);
-  reset.focus();
+  const closeCheats = cheats.querySelector<HTMLButtonElement>(".ui-card-actions button")!;
+  closeCheats.focus();
+  expect(document.activeElement).toBe(closeCheats);
   reset.click();
   const confirm = document.querySelector<HTMLElement>("[role=alertdialog]")!;
   const cancel = control(DEV_TEXT.resetSave.confirm.cancel);
