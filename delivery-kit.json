@@ -7,7 +7,7 @@
   },
   "schedule": { "departures": ["20"], "timezone": "America/Toronto" },
   "gate": {
-    "image": "sha256:3ea6784b600d97020a920b94c5dc7cb05cdcc88e666628bebab4e916dbd933b2",
+    "image": "sha256:d723627dc455084b287dcf684f3009027b583e476cd32f8c4aa745434f83fdfa",
     "install": "npm ci",
     "steps": [
       { "name": "lint", "run": "tests/container/check lint" },
@@ -15,7 +15,7 @@
       { "name": "build", "run": "tests/container/check build" }
     ]
   },
-  "resources": { "cpus": 4, "loadLimit": 30, "memoryMiB": 8192 },
+  "resources": { "cpus": 4, "loadLimit": 30, "memoryMiB": 4096 },
   "ci": {
     "requiredNames": ["AI attributions", "Changes", "Lint", "Test"],
     "pollSeconds": 60,

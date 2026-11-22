@@ -58,7 +58,7 @@ tar --create --file "${TMPDIR:-/tmp}/chibi-gate-context.tar" \
   --mode='u+rwX,go+rX' --files-from tests/container/context
 tests/container/admit build-image
 docker build --resource cpu-period=100000 --resource cpu-quota=400000 \
-  --resource memory=8g --build-arg NODE_VERSION="$(sed 's/^v//' .nvmrc)" \
+  --resource memory=4g --build-arg NODE_VERSION="$(sed 's/^v//' .nvmrc)" \
   --target toolchain --tag chibi-check:node24.22.2-shellcheck0.11.0-toolchain \
   --file tests/container/Dockerfile - < "${TMPDIR:-/tmp}/chibi-gate-context.tar"
 docker image inspect --format '{{.Id}}' chibi-check:node24.22.2-shellcheck0.11.0-toolchain
