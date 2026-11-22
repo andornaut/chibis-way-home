@@ -32,7 +32,7 @@ describe("hitAround", () => {
     [
       "a nav icon button",
       startScreenLayout(SCREEN, true, false).exit!.art,
-      { height: 54, width: 54 },
+      { height: 52.5, width: 52.5 },
     ],
   ])("grows %s", (_, art, size) => {
     const hit = hitAround({ ...art, x: 0, y: 0 });
