@@ -24,7 +24,7 @@ it("keeps approved CSS panel and text metrics while scaling only the logical act
     paddingBottomPx: 2,
     paddingXPx: 6,
     shadeHeightPx: 2,
-    widthPx: 64,
+    widthPx: "content",
   });
   expect(large.action).toEqual({
     borderWidthPx: 2,
@@ -33,7 +33,7 @@ it("keeps approved CSS panel and text metrics while scaling only the logical act
     paddingBottomPx: 8,
     paddingXPx: 24,
     shadeHeightPx: 8,
-    widthPx: 256,
+    widthPx: "content",
   });
   expect(small.palette).toEqual({
     action: palette.colours.dslate,

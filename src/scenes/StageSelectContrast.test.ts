@@ -21,6 +21,7 @@ it("keeps every unlocked stage in a legible look on both Apartment pages, dimmin
       title: TEXT.map.zones[destination.id]!,
     },
     STAGES_PER_PAGE,
+    { available: () => true, refuse: () => undefined },
     destination.stages.map((id, index) => ({
       id,
       look: !unlocked.includes(id) ? "locked" : id === latest ? "primary" : "normal",

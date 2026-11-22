@@ -8,6 +8,7 @@ import {
 import {
   type ButtonAppearance,
   type ButtonContent,
+  type ButtonOptions,
   type ButtonView,
   createButton,
 } from "@andornaut/game-kit/runtime/web/ui/dom/button";
@@ -85,6 +86,7 @@ export function createGameButton(
   document: Document,
   appearance: ButtonAppearance,
   content: ButtonContent,
+  state?: Pick<ButtonOptions, "getState" | "onPointerRefusal">,
 ): ButtonView {
   const mounted: { element?: HTMLButtonElement } = {};
   const view = createButton(document, {
@@ -101,6 +103,7 @@ export function createGameButton(
         ...(pressed === "true" || pressed === "false" ? { toggled: pressed === "true" } : {}),
       };
     },
+    ...state,
     rule: {
       holdMs: TOUCH.actionHoldMilliseconds,
       get slopPx() {

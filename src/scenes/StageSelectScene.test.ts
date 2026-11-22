@@ -299,11 +299,50 @@ describe("refusals", () => {
     }).toEqual({ red: true, shake: false });
   });
 
-  it("refuses a press on the page button that has no page to turn to", async () => {
+  it("refuses each unavailable page by pointer only and restores the available page's Tab stop", async () => {
+    vi.useFakeTimers();
     const { at, button } = await openPicker();
-    button(TEXT.map.stagePages.next).click();
-    expect(button(TEXT.map.stagePages.next).hasAttribute("data-ui-refusal-shake")).toBe(true);
+    const next = button(TEXT.map.stagePages.next);
+    const previous = button(TEXT.map.stagePages.previous);
+    const pointer = (type: string, control: HTMLButtonElement) =>
+      control.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          pointerId: 1,
+          pointerType: "touch",
+        }),
+      );
+    const release = (control: HTMLButtonElement) => {
+      pointer("pointerup", control);
+      control.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+    };
+    expect(next.disabled).toBe(false);
+    expect(next.tabIndex).toBe(-1);
+    expect(next.getAttribute("aria-disabled")).toBe("true");
+    expect(next.getAttribute("aria-description")).toBeNull();
+    expect(next.getAttribute("aria-describedby")).toBeNull();
+    next.click();
+    expect(refuseControl).not.toHaveBeenCalled();
+    pointer("pointerdown", next);
+    vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
+    expect(refuseControl).toHaveBeenCalledExactlyOnceWith(false, next);
+    release(next);
+    expect(refuseControl).toHaveBeenCalledOnce();
     expect(at().page).toEqual(APARTMENT.stages.slice(3));
+
+    pointer("pointerdown", previous);
+    release(previous);
+    expect(at().page).toEqual(APARTMENT.stages.slice(0, 3));
+    expect(next.getAttribute("aria-disabled")).toBeNull();
+    expect(next.tabIndex).toBe(0);
+    expect(previous.tabIndex).toBe(-1);
+    pointer("pointerdown", previous);
+    release(previous);
+    expect(refuseControl).toHaveBeenCalledTimes(2);
+    expect(refuseControl).toHaveBeenLastCalledWith(false, previous);
+    expect(at().page).toEqual(APARTMENT.stages.slice(0, 3));
   });
 
   it("ignores presses and keys while a modal covers it", async () => {

@@ -10,11 +10,7 @@ const COMPOUND_CONSTRUCTORS: Readonly<Record<string, readonly string[]>> = {
   "ui/dom/cheats.ts": ['element("button", "settings-row ui-press")'],
   "ui/dom/map.ts": ['document.createElement("button")'],
   "ui/dom/settings.ts": ['element("button", "settings-row ui-press")'],
-  // Stage-preview cards and the two reasonless ARIA-disabled page-bound controls.
-  "ui/dom/stageSelect.ts": [
-    'document.createElement("button")',
-    'element("button", "stage-select-stage ui-press")',
-  ],
+  "ui/dom/stageSelect.ts": ['element("button", "stage-select-stage ui-press")'],
 };
 
 function sourceFiles(directory: string): string[] {

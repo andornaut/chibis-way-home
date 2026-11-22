@@ -11,7 +11,7 @@ export function loadingUnit(frame: Pick<HTMLElement, "offsetHeight" | "offsetWid
 
 // Text and panel spacing are CSS pixels; only the logical action and its decoration scale. The
 // Retry uses the primary button plate and white label, as Start does.
-export function loadingFailurePresentation(unit: number): LoadingFailurePresentation {
+export function loadingFailurePresentation(unit: number): LoadingFailurePresentation<"content"> {
   const { action, panel, text } = LOADING_FAILURE_PRESENTATION;
   const { cream, dslate, ink, navy, plum, slate, white } = palette.colours;
   return {
@@ -22,7 +22,7 @@ export function loadingFailurePresentation(unit: number): LoadingFailurePresenta
       paddingBottomPx: action.paddingBottom * unit,
       paddingXPx: action.paddingX * unit,
       shadeHeightPx: action.shadeHeight * unit,
-      widthPx: action.width * unit,
+      widthPx: "content",
     },
     palette: {
       action: dslate,

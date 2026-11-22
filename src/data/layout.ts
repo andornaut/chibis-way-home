@@ -155,7 +155,6 @@ export const LOADING_FAILURE_PRESENTATION = {
     paddingBottom: TEXT_BUTTON.lipHeight,
     paddingX: 12,
     shadeHeight: TEXT_BUTTON.lipHeight,
-    width: 128,
   },
   panel: {
     bodyActionGapPx: 24,

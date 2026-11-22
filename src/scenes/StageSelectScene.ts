@@ -103,6 +103,10 @@ export class StageSelectScene extends Scene {
         title,
       },
       STAGES_PER_PAGE,
+      {
+        available: (step) => this.pageKeys().includes(step === -1 ? "previousPage" : "nextPage"),
+        refuse: (control) => this.refuse(control),
+      },
       this.stages.map((id, index) => this.face(id, index)),
     );
     this.view = view;
@@ -138,13 +142,11 @@ export class StageSelectScene extends Scene {
             : [
                 {
                   activate: () => this.activate({ kind: "page", step: -1 }),
-                  element: view.pager.previous,
-                  ownAriaDisabled: "refusal-feedback" as const,
+                  element: view.pager.previous.element,
                 },
                 {
                   activate: () => this.activate({ kind: "page", step: 1 }),
-                  element: view.pager.next,
-                  ownAriaDisabled: "refusal-feedback" as const,
+                  element: view.pager.next.element,
                 },
               ]),
           { activate: () => this.back(), element: view.backdrop },
@@ -210,23 +212,8 @@ export class StageSelectScene extends Scene {
     view.pages.forEach((page, index) => {
       page.hidden = index !== this.page;
     });
-    const enabled = this.pageKeys();
-    for (const [key, button] of [
-      ["previousPage", view.pager?.previous],
-      ["nextPage", view.pager?.next],
-    ] as const) {
-      if (button === undefined) {
-        continue;
-      }
-      if (enabled.includes(key)) {
-        button.removeAttribute("aria-disabled");
-        button.removeAttribute("tabindex");
-      } else {
-        // A page button with no page to turn to refuses a press, but the keys skip it.
-        button.setAttribute("aria-disabled", "true");
-        button.tabIndex = -1;
-      }
-    }
+    view.pager?.previous.refresh();
+    view.pager?.next.refresh();
     if (view.count) {
       view.count.textContent = TEXT.map.stagePages.page
         .replace("{page}", String(this.page + 1))
@@ -241,9 +228,9 @@ export class StageSelectScene extends Scene {
         : this.focus === "close"
           ? view.close
           : this.focus === "previousPage"
-            ? view.pager?.previous
+            ? view.pager?.previous.element
             : this.focus === "nextPage"
-              ? view.pager?.next
+              ? view.pager?.next.element
               : view.stages.get(this.focus);
     if (focused !== undefined && document.activeElement !== focused) {
       focusTarget(focused);
@@ -340,11 +327,7 @@ export class StageSelectScene extends Scene {
   }
 
   private changePage(page: number): void {
-    if (page === this.page || !modalInput(this).accepts()) {
-      return;
-    }
-    if (page < 0 || page >= this.pages) {
-      this.refuse(page < 0 ? this.view?.pager?.previous : this.view?.pager?.next);
+    if (page === this.page || page < 0 || page >= this.pages || !modalInput(this).accepts()) {
       return;
     }
     this.stopRefusals();

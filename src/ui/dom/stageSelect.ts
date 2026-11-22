@@ -1,24 +1,40 @@
 import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import type { ButtonView } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
+import { createGameButton } from "../input/actionBinding.ts";
 import { STAGE_SELECT_LAYOUT, STAGE_SELECT_WIDTH } from "../layout/stageSelectCard.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";
 import { closeButton, setCardWidth } from "./card.ts";
 
-// The two page-bound controls retain their reasonless ARIA-disabled state and pointer refusal.
-function createStagePageButton(document: Document, label: string): HTMLButtonElement {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "ui-text-button";
-  const face = document.createElement("span");
-  face.className = "ui-text-button-face ui-frame ui-control-button";
-  const text = document.createElement("span");
-  text.className = "ui-text-button-label ui-control-label";
-  text.dataset.uiRefusalLabel = "";
-  text.textContent = label;
-  face.append(text);
-  button.append(face);
-  setTextButtonRole(false, button);
+interface StagePagerActions {
+  readonly available: (step: -1 | 1) => boolean;
+  readonly refuse: (control: HTMLButtonElement) => void;
+}
+
+function createStagePageButton(
+  document: Document,
+  actions: StagePagerActions,
+  step: -1 | 1,
+  label: string,
+): ButtonView {
+  const button = createGameButton(
+    document,
+    {
+      className: "ui-text-button",
+      contentClassName: "ui-text-button-label",
+      face: { className: "ui-text-button-face ui-frame ui-control-button" },
+    },
+    { kind: "text", label },
+    {
+      getState: () => ({
+        availability: { kind: actions.available(step) ? "available" : "pointer-refusal" },
+      }),
+      onPointerRefusal: () => actions.refuse(button.element),
+    },
+  );
+  button.face.querySelector<HTMLElement>(".ui-text-button-label")!.dataset.uiRefusalLabel = "";
+  setTextButtonRole(false, button.element);
   return button;
 }
 
@@ -55,8 +71,7 @@ export interface StageSelectView {
   // The page count, a polite live region, on a paged card.
   readonly count: HTMLElement | undefined;
   readonly dialog: HTMLElement;
-  readonly pager:
-    { readonly next: HTMLButtonElement; readonly previous: HTMLButtonElement } | undefined;
+  readonly pager: { readonly next: ButtonView; readonly previous: ButtonView } | undefined;
   // Each page's row of faces.
   readonly pages: readonly HTMLElement[];
   readonly root: HTMLElement;
@@ -70,6 +85,7 @@ export function createStageSelect(
   document: Document,
   words: StageSelectWords,
   perPage: number,
+  pagerActions: StagePagerActions,
   stages: readonly StageFace[],
 ): StageSelectView {
   const element = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
@@ -117,13 +133,13 @@ export function createStageSelect(
       throw new Error("A paged stage picker requires pager labels");
     }
     pager = {
-      next: createStagePageButton(document, words.pager.next),
-      previous: createStagePageButton(document, words.pager.previous),
+      next: createStagePageButton(document, pagerActions, 1, words.pager.next),
+      previous: createStagePageButton(document, pagerActions, -1, words.pager.previous),
     };
     count = element("p", "stage-select-count");
     count.setAttribute("aria-live", "polite");
     const row = element("div", "stage-select-pager");
-    row.append(pager.previous, count, pager.next);
+    row.append(pager.previous.element, count, pager.next.element);
     dialog.append(row);
   }
   view.append(dialog);

@@ -54,7 +54,8 @@ it("refits only the native presentation while preserving resource ownership and 
   expect(first.style.alignItems).toBe("center");
   expect(firstButton.style.alignSelf).toBe("");
   expect(firstButton.style.height).toBe("72px");
-  expect(firstButton.style.width).toBe("192px");
+  expect(firstButton.style.width).toBe("max-content");
+  expect(firstButton.style.maxWidth).toBe("100%");
   expect(firstButton.style.minHeight).toBe("0");
   expect(firstButton.style.fontSize).toBe("18px");
   expect(first.style.padding).toBe("24px 16px 16px");
@@ -73,6 +74,7 @@ it("refits only the native presentation while preserving resource ownership and 
   expect(secondButton).toBe(firstButton);
   expect(first.isConnected).toBe(true);
   expect(secondButton.style.height).toBe("96px");
+  expect(secondButton.style.width).toBe("max-content");
   expect(document.activeElement).toBe(secondButton);
   expect(requiredLoading.state).toBe(state);
   expect(retry).not.toHaveBeenCalled();
