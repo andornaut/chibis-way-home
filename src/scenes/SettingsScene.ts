@@ -487,10 +487,11 @@ export class SettingsScene extends Scene {
       close?.();
       return;
     }
+    cheats.dialog.hidden = false;
     if (from === "closed") {
       cheats.status.textContent = "";
+      cheats.scrollBody.scrollTop = 0;
     }
-    cheats.dialog.hidden = false;
     this.render();
     const modals = sceneDomUi(this)?.modals;
     if (which === "open" && from === "closed") {

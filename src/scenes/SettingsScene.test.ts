@@ -52,7 +52,7 @@ vi.mock("./domUi.ts", () => ({
 
 import { DEV_TEXT } from "../data/dev.ts";
 import { TEXT } from "../data/text.ts";
-import { endDevelopmentSession, invulnerabilityEnabled } from "../dev/mode.ts";
+import { allZonesUnlocked, endDevelopmentSession, invulnerabilityEnabled } from "../dev/mode.ts";
 import {
   createUiLayer,
   reducedMotion,
@@ -416,6 +416,11 @@ it("starts the cheat session for a cheat and never for a tool", async () => {
   );
   control(DEV_TEXT.invulnerable).click();
   expect([saves.startCheatSession.mock.calls.length, invulnerabilityEnabled()]).toEqual([1, true]);
+  control(DEV_TEXT.unlockAllZones).click();
+  expect([saves.startCheatSession.mock.calls.length, allZonesUnlocked()]).toEqual([2, true]);
+  expect(document.querySelector(".cheats-status")?.textContent).toBe(
+    DEV_TEXT.results.unlockAllZones,
+  );
 });
 
 it("keeps Settings and Cheats visible under nested cards and restores focus on Cancel and Back", async () => {
@@ -432,6 +437,7 @@ it("keeps Settings and Cheats visible under nested cards and restores focus on C
   expectCovered(dialog);
   const reset = control(DEV_TEXT.resetSave.action);
   const cheats = reset.closest<HTMLElement>("[role=dialog]")!;
+  const scrollBody = cheats.querySelector<HTMLElement>(".cheats-body")!;
   expect(document.activeElement).toBe(cheats);
   key("Tab");
   expect(cheats.contains(document.activeElement)).toBe(true);
@@ -443,6 +449,7 @@ it("keeps Settings and Cheats visible under nested cards and restores focus on C
   expect(closeCheatsX.getAttribute("aria-label")).toBe(DEV_TEXT.cheats.close);
   closeCheats.focus();
   expect(document.activeElement).toBe(closeCheats);
+  scrollBody.scrollTop = 100;
   reset.click();
   const confirm = document.querySelector<HTMLElement>("[role=alertdialog]")!;
   const cancel = control(DEV_TEXT.resetSave.confirm.cancel);
@@ -461,11 +468,13 @@ it("keeps Settings and Cheats visible under nested cards and restores focus on C
   expect([confirm.hidden, saves.resetSave.mock.calls.length]).toEqual([true, 0]);
   expect(cheats.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();
   expect(document.activeElement).toBe(reset);
+  expect(scrollBody.scrollTop).toBe(100);
   expectCovered(dialog);
   closeCheatsX.click();
   expect(cheats.hidden).toBe(true);
   expect(document.activeElement).toBe(openCheats);
   openCheats.click();
+  expect(scrollBody.scrollTop).toBe(0);
   expect(layer.modals.back()).toBe(true);
   expect(cheats.hidden).toBe(true);
   expect(dialog.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();

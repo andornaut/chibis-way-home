@@ -38,20 +38,45 @@
   text-align: start;
 }
 
-/* Text rows meet at their press areas. Framed actions keep the standard stack gap. */
+/* Each track is at least half the medium width when space permits, and at least half the
+   available width after the column gap. The grid falls back to one column when space is tight. */
 .cheats-rows {
-  row-gap: 0;
+  --cheats-column-min: calc(var(--ui-unit) * var(--card-width-medium) / 2 * 1px);
+  --cheats-column-half: calc((100% - var(--ui-button-gap)) / 2);
+
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, max(var(--cheats-column-min), var(--cheats-column-half))), 1fr)
+  );
+  column-gap: var(--ui-button-gap);
   margin-top: 0;
 }
 
-.cheats-rows > :not(.settings-row) + *,
-.cheats-rows > * + :not(.settings-row) {
-  margin-block-start: var(--ui-stack-button-gap);
+.cheats-switches {
+  row-gap: 0;
+}
+
+.cheats-rows .settings-label,
+.cheats-rows .ui-text-button-face {
+  overflow-wrap: anywhere;
+}
+
+.cheats-rows .ui-text-button-face {
+  height: auto;
+  white-space: normal;
+}
+
+.cheats-picker .settings-name {
+  flex: 1 0 auto;
 }
 
 .cheats-choice {
+  display: block;
+  flex: 0 1 auto;
+  min-width: 0;
   font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
   line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+  overflow-wrap: anywhere;
   text-align: end;
 }
 

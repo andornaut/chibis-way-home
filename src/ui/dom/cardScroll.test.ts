@@ -60,12 +60,14 @@ it("bounds every card at the view less the screen margin above and below", () =>
 
 it("scrolls only the Cheats groups between the title and Close", () => {
   const view = createCheatsCard(document, "cheats", WORDS, SKILL_IDS);
-  const [title, scroller, status, actions] = view.dialog.children;
-  expect(view.dialog.children).toHaveLength(4);
+  const [title, scroller, status, actions, closeX] = view.dialog.children;
+  expect(view.dialog.children).toHaveLength(5);
   expect(title?.textContent).toBe(WORDS.title);
-  expect([...view.dialog.querySelectorAll(".ui-card-scroll")]).toEqual([scroller]);
+  expect([...view.dialog.querySelectorAll(".ui-card-scroll")]).toEqual([view.scrollBody]);
+  expect(scroller).toBe(view.scrollBody);
   expect(status).toBe(view.status);
   expect(actions?.contains(view.close)).toBe(true);
+  expect(closeX).toBe(view.closeX);
   const rows = [
     ...Object.values(view.switches),
     ...Object.values(view.pickers),
@@ -73,6 +75,32 @@ it("scrolls only the Cheats groups between the title and Close", () => {
   ];
   expect(rows.every((row) => scroller?.contains(row))).toBe(true);
   expect(scroller?.contains(view.close)).toBe(false);
+});
+
+it("keeps the warning and all skill switches and unlock actions at the top of Cheats", () => {
+  const view = createCheatsCard(document, "cheats", WORDS, SKILL_IDS);
+  const [cheats, tools] = view.scrollBody.children;
+  expect(cheats?.getAttribute("aria-label")).toBe(WORDS.group);
+  const [warning, switchGrid, unlockGrid, stageGrid] = cheats!.children;
+  expect(warning?.textContent).toBe(WORDS.groupDescription);
+  expect([...switchGrid!.children]).toEqual([
+    ...SKILL_IDS.map((skill) => view.switches[`powerUp:${skill}`]),
+    view.switches.invulnerable,
+  ]);
+  expect([...unlockGrid!.children]).toEqual([
+    view.actions.unlockAllPowerUps,
+    view.actions.unlockAllZones,
+  ]);
+  expect([...stageGrid!.children]).toEqual([
+    view.pickers.zone,
+    view.pickers.stage,
+    view.actions.load,
+  ]);
+  expect([...tools!.querySelectorAll("button")]).toEqual([
+    view.switches.fps,
+    view.actions.showTipsAgain,
+    view.actions.resetSave,
+  ]);
 });
 
 it("scrolls only the Settings rows between the title and Open Cheats", () => {

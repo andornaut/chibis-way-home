@@ -3,12 +3,9 @@ import { closeButton, setCardWidth } from "./card.ts";
 import { createTextButtonElement } from "./cardElements.ts";
 
 // The Cheats card and its Reset save confirmation (cheats.css, on ui.css's .ui-card and
-// settings.css's rows), shown in the settings card's place in its view. The Cheats card's title,
-// then a body that scrolls: the Cheats group (Invulnerability and each power-up's enable as switch
-// rows, the Zone and Stage pickers, Load stage, Unlock all power-ups and Unlock all zones), then the
-// Tools group (the FPS counter switch, Show tips again and, last, Reset save), then the status line
-// each action's result shows in, and Close, the bottom primary button. A picker row shows its
-// choice beside its label and steps to the next choice, wrapping, when pressed. The confirmation
+// settings.css's rows), shown in the settings card's place in its view. The Cheats group starts with
+// power-up and Invulnerability switches and both unlock actions, followed by the stage controls.
+// Tools follows in the scroll body. Status and the primary Close stay outside it. The confirmation
 // is an alert dialog with its body text, Cancel and Reset.
 
 export type CheatSwitch = "fps" | "invulnerable" | `powerUp:${SkillId}`;
@@ -56,6 +53,7 @@ export interface CheatsCardView {
   };
   readonly dialog: HTMLElement;
   readonly pickers: Readonly<Record<CheatPicker, HTMLButtonElement>>;
+  readonly scrollBody: HTMLElement;
   readonly status: HTMLElement;
   readonly switches: Readonly<Record<CheatSwitch, HTMLButtonElement>>;
 }
@@ -132,36 +130,40 @@ export function createCheatsCard(
     into.append(created);
     return created;
   };
-  const group = (key: string, title: string, description?: string) => {
-    const section = element("section", "cheats-group");
-    const groupHeading = text("h3", "cheats-group-title", title);
-    groupHeading.id = `${id}-${key}`;
-    section.setAttribute("aria-labelledby", groupHeading.id);
-    section.append(groupHeading);
-    if (description !== undefined) {
-      section.append(text("p", "ui-card-text cheats-group-text", description));
-    }
-    const rows = element("div", "settings-rows cheats-rows");
-    section.append(rows);
-    body.append(section);
-    return rows;
-  };
-  const cheats = group("cheats", words.group, words.groupDescription);
+  const rows = () => element("div", "settings-rows cheats-rows");
+  const cheats = element("section", "cheats-group");
+  cheats.setAttribute("aria-label", words.group);
+  const switchGrid = rows();
+  switchGrid.classList.add("cheats-switches");
+  const unlockGrid = rows();
+  const stageGrid = rows();
+  cheats.append(
+    text("p", "ui-card-text cheats-group-text", words.groupDescription),
+    switchGrid,
+    unlockGrid,
+    stageGrid,
+  );
   const switches: Partial<Record<CheatSwitch, HTMLButtonElement>> = {};
-  switches.invulnerable = switchRow("invulnerable", words.invulnerable, cheats);
   for (const skill of skills) {
-    switches[`powerUp:${skill}`] = switchRow(`powerUp:${skill}`, words.powerUps[skill], cheats);
+    switches[`powerUp:${skill}`] = switchRow(`powerUp:${skill}`, words.powerUps[skill], switchGrid);
   }
-  const zone = pickerRow("zone", words.zone, cheats);
-  const stage = pickerRow("stage", words.stage, cheats);
+  switches.invulnerable = switchRow("invulnerable", words.invulnerable, switchGrid);
+  const unlockAllPowerUps = button(words.unlockAllPowerUps, unlockGrid);
+  const unlockAllZones = button(words.unlockAllZones, unlockGrid);
+  const zone = pickerRow("zone", words.zone, stageGrid);
+  const stage = pickerRow("stage", words.stage, stageGrid);
   const pickers = { stage, zone };
-  const load = button(words.load, cheats);
-  const unlockAllPowerUps = button(words.unlockAllPowerUps, cheats);
-  const unlockAllZones = button(words.unlockAllZones, cheats);
-  const tools = group("tools", words.tools);
-  switches.fps = switchRow("fps", words.fps, tools);
-  const showTipsAgain = button(words.showTipsAgain, tools);
-  const resetSave = button(words.resetSave, tools);
+  const load = button(words.load, stageGrid);
+  const tools = element("section", "cheats-group");
+  const toolsHeading = text("h3", "cheats-group-title", words.tools);
+  toolsHeading.id = `${id}-tools`;
+  tools.setAttribute("aria-labelledby", toolsHeading.id);
+  const toolGrid = rows();
+  switches.fps = switchRow("fps", words.fps, toolGrid);
+  const showTipsAgain = button(words.showTipsAgain, toolGrid);
+  const resetSave = button(words.resetSave, toolGrid);
+  tools.append(toolsHeading, toolGrid);
+  body.append(cheats, tools);
   const status = element("p", "ui-card-text cheats-status");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
@@ -199,6 +201,7 @@ export function createCheatsCard(
     confirm: { accept, cancel, close: confirmClose, dialog: confirm },
     dialog,
     pickers,
+    scrollBody: body,
     status,
     switches: switches as Record<CheatSwitch, HTMLButtonElement>,
   };
