@@ -1,11 +1,11 @@
 # Cheats
 
-The [shared saves and cheats policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#saves-and-cheats) applies. Approved by the user on 2026-11-18.
+The [shared saves and cheats policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#saves-and-cheats) applies.
 
 ## Entry and modal
 
-- **Entry:** in a browser tab only, Settings shows Open Cheats in an action row at the bottom of its card. Availability is checked with the shared app-window check when Cheats opens and again before every action; an installed app window shows no entry and refuses every action. There is no other entry.
-- **Modal:** the Cheats card uses the Large width family. Its scrollable body contains Cheats, then Tools. The top-right header X and the sole centred Close button in the footer both dismiss Cheats and return focus to Open Cheats in Settings.
+- **Entry:** Open Cheats in Menu or Pause is the sole entry in browser tabs and installed apps. Cheats actions require the active foreground card and remain blocked during a pending save write.
+- **Modal:** the Cheats card uses the Large width family. Its scrollable body contains Cheats, then Tools. The top-right X and the sole centred Close button in the footer dismiss only Cheats. Both return to the invoking Menu or Pause with focus on Open Cheats, preserving the held scenes.
 
 ## Cheat session
 
@@ -25,4 +25,4 @@ Tools are not cheats and start no cheat session.
 
 - **Show tips again:** clears the saved seen-tips record, so every first-time tip, including each power-up's, can show again.
 - **FPS counter:** Off by default. On shows the frames per second as a number in the bottom-right corner of the device viewport, inset from the safe area and drawn above everything, letterbox bars included. It is a device setting, not part of the save.
-- **Reset save:** last, after a confirmation card. It resets the save entirely (progress, statistics, achievements and seen tips), then returns to the start screen. Device settings outside the save stay.
+- **Reset save:** the last tool opens a confirmation card. Cancel or the confirmation’s close X dismisses only the confirmation and returns focus to Reset save in Cheats. A successful reset clears the save entirely (progress, statistics, achievements and seen tips), then returns to the start screen. Device settings outside the save stay.

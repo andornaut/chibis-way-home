@@ -16,7 +16,7 @@ A landscape platformer about a lost bird travelling home across six zones.
 | [Player copy](player-copy.md)            | Voice, dialogue, barks, tips and exact string sources |
 | [Tuning and playtesting](playtesting.md) | Qualification, targets and observations               |
 
-[Ideas](ideas.md) records unresolved proposals and decisions. [Later scope](next.md) records agreed work outside the current build. [Narrative notes](narrative/README.md) hold connective story beats. [Cheats](cheats.md) covers browser-tab cheat sessions.
+[Ideas](ideas.md) records unresolved proposals and decisions. [Later scope](next.md) records agreed work outside the current build. [Narrative notes](narrative/README.md) hold connective story beats. [Cheats](cheats.md) covers entry, sessions and tools.
 
 Gameplay owns the rules, authored values and player text. Tech owns implementation, data shapes and integration. Art owns presentation and production assets. The [design work index](../docs/design/README.md) connects design topics to their open work. The shared [game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md) govern cross-game behaviour and [handling ideas](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#ideas).
 
