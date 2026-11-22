@@ -1,20 +1,11 @@
 # Loading and offline
 
-The page's first module installs game-kit's crash screen before the loading strip, Phaser or any
-game module runs. A two-pixel loading strip at the top shows only loads the player waits for and
-stays painted and dimmed under modals. Game-kit's launch installs the complete, verified build under
-that strip before play, with one determinate value, so the game then plays offline through the
-router `/sw.js`; a failed first install shows game-kit's loading failure with Retry on the primary
-plate. A device that cannot install, because service workers cannot register or storage is full,
-plays from the network with a one-line notice on the first screen, and the next launch tries the
-install again. An install keeps only the sound format the device plays; the game has no sound, so
-every listed file installs. A staged update switches silently at the next launch, or through an
-Update now card over any screen that saves first; a dismissed card does not return that session. A
-save from a newer version requires the update before any save write. The home page and Settings
-offer Install in every browser until the game is installed, and back is caught with a CloseWatcher
-or a guard history entry.
+The shared loader installs and verifies a full build before offline play. Devices that cannot
+install can play over the network. A staged build switches silently at launch or through Update
+now after play starts and pending saves settle. Dismissing an offer defers it for the session.
+A newer save keeps gameplay and writes fenced until a compatible build loads.
 
-Reference: [assets and build](../../src/README.md#assets-and-build),
+Reference: [startup and update rules](../../gameplay/design.md#start-screen), [assets and build](../../src/README.md#assets-and-build),
 [phone](../../src/README.md#phone).
 
 ## Work items

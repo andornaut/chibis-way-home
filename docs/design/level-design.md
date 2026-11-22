@@ -1,19 +1,10 @@
 # Level design
 
-Every stage is assembled from a fixed start chunk, a seeded run of one-screen middle chunks inside
-the zone's difficulty band and a fixed finish chunk; a successful ordinary clear targets about 60
-seconds, or 90 on Apartment floors ([stages](../../gameplay/design.md#stages),
-[chunks](../../gameplay/design.md#chunks)). The route runs through Blue cityscape, opening at the
-Parcel depot, then Industrial outskirts, Countryside, Woodland and Home city, three stages each, and
-six Apartment floors ([V1 route](../../gameplay/design.md#v1-route), [Apartment
-building](../../gameplay/design.md#apartment-building)). Lethal surfaces are solid red edges, every
-valley has a red lethal floor, and no ordinary required route needs a skill
-([stages](../../gameplay/design.md#stages)). Challenges vary by required action under the stage
-design principles, and each zone has a signature obstacle with an observation position and an
-ordinary no-skill crossing ([stage design
-principles](../../gameplay/design.md#stage-design-principles),
-[objects](../../gameplay/design.md#objects)). Certified forced-transit rides defer Pebble's targeted
-attacks until the first safe exit ([forced transit](../../gameplay/design.md#forced-transit)).
+The [V1 route](../../gameplay/design.md#v1-route) has six zones and twenty-one stages. Fixed caps
+frame a seeded middle. Ordinary routes need no skill and vary the required action, with visible
+hazards and safe approaches, landings and recovery. See the [stage design
+principles](../../gameplay/design.md#stage-design-principles) and [forced
+transit](../../gameplay/design.md#forced-transit) rules.
 
 Reference: [stages](../../gameplay/design.md#stages), [chunks](../../gameplay/design.md#chunks), [targets](../../gameplay/README.md#targets).
 

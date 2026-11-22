@@ -1,15 +1,8 @@
 # Tooling
 
-Make runs the check recipes in `tests/container/check` inside the custom dependency image CI also
-uses, and the npm check scripts call the same recipes in the current environment. Containers start
-only while the one-minute load is below 20 and are capped at four CPUs and 8 GiB. The `Test`
-workflow runs `Test` and `Lint` jobs through Make; `AI attributions` is a separate required check.
-Vite builds `pages/` and `public/` with a reduced WebGL-only Phaser bundle, content-hashed lossless
-WebP atlas pages and per-page security headers into `dist/`, the only directory Wrangler deploys;
-`docs/` is never served or packaged. delivery-kit ships local `main` hourly at :20
-America/Toronto: it gates the exact HEAD in an isolated container, pushes it, waits for CI and
-deploys. game-kit, art-kit and delivery-kit are pinned releases. Browser developer controls are
-temporary and run-only.
+Make and CI use the isolated recipes in `tests/container/check`. Local checks start below
+one-minute load 20, with at most four CPUs and 4 GiB. Vite builds into `dist/`. The scheduled
+Delivery Kit runner gates, pushes and deploys reviewed main. Shared kits are pinned releases.
 
 Reference: [developing](../../README.md#developing), [deploying](../../README.md#deploying),
 [assets and build](../../src/README.md#assets-and-build), [dev tools](../../src/README.md#dev-tools).

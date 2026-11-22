@@ -1,19 +1,8 @@
 # Story and cast
 
-After a fight, Fert, a ferret, mails his sleeping former best friend Chibi far from the apartment
-they shared, and Chibi travels home zone by zone through a modern world where animals talk, there
-are no humans and there is no combat ([pitch](../../gameplay/design.md#pitch),
-[setting](../../gameplay/design.md#setting)). Each zone has one antagonist with a distinct voice,
-Fert's friends and finally Fert himself, and the cause of the fight and the outcome of the
-friendship stay undecided ([cast](../../gameplay/design.md#cast),
-[voice](../../gameplay/design.md#voice)). Conversations show one paragraph of at most two lines at a
-time in a fixed top box with name tabs and portraits, advance only on Continue and can be skipped
-([dialogue](../../gameplay/design.md#dialogue)). Each zone introduces its antagonist once in a
-cinematic exchange and closes with an outgoing exchange, while spotting, escape and Fert's journey
-barks show as nonmodal messages ([quips](../../gameplay/design.md#quips),
-[Fert](../../gameplay/design.md#fert)). A Tip speaker with a light-bulb portrait gives timed first-time tips
-about controls, doors, red hazards, bosses and power-ups ([dialogue](../../gameplay/design.md#dialogue)). New games and confirmed Restart open with four manually
-advanced still shots ([opening story](../../gameplay/design.md#opening-story)).
+Fert mails Chibi far from their shared apartment after an argument. Chibi travels home through
+six zones, each with its own antagonist and voice. The opening uses four manually advanced
+stills. Conversations advance manually and can be skipped. Barks and tips appear during play.
 
 Reference: [cast](../../gameplay/design.md#cast), [dialogue](../../gameplay/design.md#dialogue), [narrative](../../gameplay/narrative/README.md).
 

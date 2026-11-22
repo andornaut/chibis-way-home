@@ -1,18 +1,9 @@
 # Controls and interface
 
-The game plays in landscape at 720 by 360, phone browser first: a drag from where a touch lands off
-any button moves Chibi, Use and Jump sit under the right thumb, and keyboard keys and mouse holds
-cover desktop ([screen and controls](../../gameplay/design.md#screen-and-controls)).
-Every discrete tap or click action also fires once on a 500 ms hold, action rows place the primary
-action last, and every control has a screen-reader name and keyboard focus rules
-([interface](../../gameplay/design.md#interface)). The start screen offers Start or Continue,
-Restart behind a confirmation card, Exit where it works, and a waiting update on every start-screen
-arrival ([start screen](../../gameplay/design.md#start-screen)). One shared entry opens Pause over
-pausable content and Menu elsewhere, with Settings and Achievements nested inside
-([settings](../../gameplay/design.md#settings)). Every modal card takes the smallest of the Large,
-Medium and Small width families that fits, centres in the view and dims its background; only the top
-modal takes input, and covered controls stay painted, dimmed and inactive
-([settings](../../gameplay/design.md#settings)).
+Chibi plays in landscape with touch Move, Jump and Use, plus keyboard and mouse controls.
+Discrete pointer actions share a 500 ms hold by default. Pause and Menu share one entry and
+contain Settings and Achievements. Back restores the invoking view, Close dismisses the top
+dialog, and Resume returns to play. Modal input and keyboard focus stay in the top card.
 
 Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 [interface](../../gameplay/design.md#interface), [screens and UI](../../src/README.md#screens-and-ui),
