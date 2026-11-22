@@ -26,3 +26,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0260 | Strip verification hashes from the runtime layouts and ship the palette and art manifest once | [cwh-0260.md](../work/cwh-0260.md) |
 | cwh-0280 | Pin Chibi to Delivery Kit 8.1.0                                                               | [cwh-0280.md](../work/cwh-0280.md) |
 | cwh-0281 | Adopt Art Kit 0.33.0 in Chibi                                                                 | [cwh-0281.md](../work/cwh-0281.md) |
+| cwh-0283 | Adopt Game Kit 0.64.0 in Chibi                                                                | [cwh-0283.md](../work/cwh-0283.md) |
