@@ -418,18 +418,31 @@ it("starts the cheat session for a cheat and never for a tool", async () => {
   expect([saves.startCheatSession.mock.calls.length, invulnerabilityEnabled()]).toEqual([1, true]);
 });
 
-it("keeps Cheats painted and inactive under Reset save until Cancel or confirmed reset", async () => {
+it("keeps Settings and Cheats visible under nested cards and restores focus on Cancel and Back", async () => {
   const { control, dialog, key, owner } = await openCard("pause");
-  control(DEV_TEXT.openCheats).click();
-  expect(dialog.hidden).toBe(true);
+  const openCheats = control(DEV_TEXT.openCheats);
+  const motion = control(WORDS.reducedMotion);
+  const motionState = motion.getAttribute("aria-checked");
+  const expectCovered = (card: HTMLElement) => {
+    expect(card.closest("[hidden]")).toBeNull();
+    expect(card.closest("[inert][data-ui-dimmed]")).not.toBeNull();
+  };
+  openCheats.focus();
+  openCheats.click();
+  expectCovered(dialog);
   const reset = control(DEV_TEXT.resetSave.action);
   const cheats = reset.closest<HTMLElement>("[role=dialog]")!;
+  expect(document.activeElement).toBe(cheats);
+  key("Tab");
+  expect(cheats.contains(document.activeElement)).toBe(true);
+  motion.click();
+  expect(motion.getAttribute("aria-checked")).toBe(motionState);
   reset.focus();
   reset.click();
   const confirm = document.querySelector<HTMLElement>("[role=alertdialog]")!;
   const cancel = control(DEV_TEXT.resetSave.confirm.cancel);
-  expect(cheats.closest("[hidden]")).toBeNull();
-  expect(cheats.closest("[inert][data-ui-dimmed]")).not.toBeNull();
+  expectCovered(dialog);
+  expectCovered(cheats);
   expect(confirm.closest("[inert], [data-ui-dimmed]")).toBeNull();
   expect(document.activeElement).toBe(cancel);
   for (const shiftKey of [false, false, true, true]) {
@@ -443,6 +456,13 @@ it("keeps Cheats painted and inactive under Reset save until Cancel or confirmed
   expect([confirm.hidden, saves.resetSave.mock.calls.length]).toEqual([true, 0]);
   expect(cheats.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();
   expect(document.activeElement).toBe(reset);
+  expectCovered(dialog);
+  expect(layer.modals.back()).toBe(true);
+  expect(cheats.hidden).toBe(true);
+  expect(dialog.closest("[hidden], [inert], [data-ui-dimmed]")).toBeNull();
+  expect(document.activeElement).toBe(openCheats);
+  expect(saves.resetSave).not.toHaveBeenCalled();
+  openCheats.click();
   reset.click();
   control(DEV_TEXT.resetSave.confirm.accept).click();
   await settle();
