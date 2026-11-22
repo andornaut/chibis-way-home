@@ -5,7 +5,7 @@ Agreed later scope, outside the current build. Nothing here is scheduled or orde
 ## Routes and encounters
 
 - Branching routes within zones and on the map
-- Dedicated boss arenas and fights, outside V1's noncombat chase-and-escape encounters
+- Boss encounters remain noncombat in later versions
 
 ## Progression
 
