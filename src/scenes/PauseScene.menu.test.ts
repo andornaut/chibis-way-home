@@ -447,31 +447,31 @@ it("opens Achievements above gameplay Pause and returns to its held context befo
   expect(f.scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
 });
 
-it("preserves originating action focus when returning from Achievements and then Settings", async () => {
-  const f = menu("start");
-  tap(f.pause.pauseButton);
-  await settle();
-  const achievementsAction = f.pause.button(TEXT.start.achievements);
-  achievementsAction.focus();
-  tap(achievementsAction);
-  const achievements = f.card("achievements");
-  tap(f.pause.pauseButton);
-  await settle();
-  expect(document.activeElement).toBe(achievements.button);
-  achievements.close();
-  modalInput(achievements.owner as never).close();
-  f.active.delete("achievements");
-  f.pause.scene.achievementsClosed();
-  expect(document.activeElement).toBe(achievementsAction);
-  const settingsAction = f.pause.button(TEXT.pause.settings);
-  settingsAction.focus();
-  tap(settingsAction);
-  const settings = f.card("settings");
-  settings.close();
-  modalInput(settings.owner as never).close();
-  f.active.delete("settings");
-  f.pause.scene.settingsClosed();
-  expect(document.activeElement).toBe(settingsAction);
-  tap(f.pause.button(TEXT.pause.close));
-  expect(f.active.has("start")).toBe(true);
-});
+it.each([
+  { key: "achievements", label: TEXT.start.achievements },
+  { key: "settings", label: TEXT.pause.settings },
+] as const)(
+  "restores focus to the touched $key action even when Close had focus",
+  async ({ key, label }) => {
+    const f = menu("start");
+    tap(f.pause.pauseButton);
+    await settle();
+    const action = f.pause.button(label);
+    const close = f.pause.button(TEXT.pause.close);
+    close.focus();
+    expect(document.activeElement).toBe(close);
+    press(action, 1, { pointerType: "touch" }).lift();
+    expect(f.scenes.launch).toHaveBeenCalledExactlyOnceWith(key, { opener: "pause" });
+    const child = f.card(key);
+    tap(f.pause.pauseButton);
+    await settle();
+    expect(document.activeElement).toBe(child.button);
+    child.close();
+    modalInput(child.owner as never).close();
+    f.active.delete(key);
+    f.pause.scene[`${key}Closed`]();
+    expect(document.activeElement).toBe(action);
+    tap(close);
+    expect(f.active.has("start")).toBe(true);
+  },
+);

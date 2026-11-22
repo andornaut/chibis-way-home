@@ -421,9 +421,8 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
   }
 
   // Nested cards keep the held scenes and return focus to their originating action.
-  private openNested(key: "achievements" | "settings"): void {
-    const view = this.view;
-    if (view === undefined) {
+  private openNested(key: "achievements" | "settings", invoker: HTMLButtonElement): void {
+    if (this.view === undefined) {
       return;
     }
     if (this.scene.isActive(key) || this.scene.isPaused(key)) {
@@ -435,9 +434,7 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
       return;
     }
     this.state = key;
-    const focused = document.activeElement;
-    this.nestedFocus =
-      focused instanceof HTMLElement && view.card.dialog.contains(focused) ? focused : undefined;
+    this.nestedFocus = invoker;
     this.scene.launch(key, { opener: this.scene.key } satisfies SettingsData);
   }
 
@@ -829,9 +826,9 @@ export class PauseScene extends Scene implements AchievementsOpener, SettingsOpe
     } else if (control === close || control === buttons.resume) {
       this.close();
     } else if (control === buttons.settings && this.state === "open") {
-      this.openNested("settings");
+      this.openNested("settings", control);
     } else if (control === buttons.achievements && this.state === "open") {
-      this.openNested("achievements");
+      this.openNested("achievements", control);
     } else if (control === buttons.home && this.state === "open") {
       this.returnHome();
     } else if (skill !== undefined && this.skillHudLive()) {
