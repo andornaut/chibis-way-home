@@ -27,16 +27,18 @@ Every zone and stage on the [V1 route](stages.md#v1-route) is built. The ruleboo
 Targets are assessed per stage and player skill. Bands other than the successful-clear time target remain to be agreed with the user. The kinds of target:
 
 - **Encounter distribution:** satisfy the rulebook's encounter quotas across each zone’s catalogued stages, with distinct encounter sections, ordinary platforming between them and varied layout. Encounter spacing is flexible; it is not a time-based encounter rate
-- **Layout variety:** target at least 16 distinct certified physics layouts per zone, excluding cosmetic aliases, seeds and boss arenas. Only layouts with matching ordinary no-powerup required-route proofs count toward these targets; legacy certification preserves the eligible pool but earns no credit toward the ordinary target
+- **Layout variety:** target at least 16 distinct certified physics layouts per zone, excluding cosmetic aliases, seeds and boss arenas. Only layouts with matching ordinary no-powerup required-route proofs count toward these targets. Legacy certificates keep existing pool eligibility until a pool change is admitted
 - **Stage length:** the rulebook's [Stages](stages.md#stages) length rule sets the targets. Calibrate with no skill selected or an ordinary test profile. Active-time calibration remains limited. A target is not a direct conversion to tile length. Track this generated run's total active time including retries separately from the historically fastest successful-attempt time, using the rulebook's active-time exclusions
 - **Reaches:** Chibi makes every jump at a reach in the rulebook's Grid, and never one tile beyond it. A pass or fail check, not a band
 - **Restarts:** a failed attempt is one that ends in death (a fall, hazard or crush), followed by the retry choice. Restarts per stage, by skill: some attempts fail, and the band says how often
 - **Route spread:** every route a choice opens lands within a narrow window of the stage's median clear time and restart rate, so no route is a lot easier or harder
 - **Session length:** the time to finish the game, by skill
 
+The approved Blue cityscape pool change retires all 274 legacy-profile entries. The replacement pool uses only the 35 existing ordinary-qualified layout IDs, comprising three recorded entries and 32 from the checked proposal. Admission is pending final-tree proof provenance and City boundary assembly, encounter and fixed gift placement checks.
+
 ## Boss playtest criteria
 
-For each placement, record the source, seed, starting support, active skills and whether entry is natural or staged. Check ordinary no-powerup forward passage, boss traversal and escape routes, visible tells, actual effects and contact, supported recovery and the next attack boundary. Include neighbouring terrain, cover and exits rather than checking an isolated animation alone.
+Apply the [arena qualification rule](bosses.md#boss-encounter-principles). For each placement, record the source, seed, starting support, active skills and whether entry is natural or staged. Check ordinary no-powerup forward passage, boss traversal and escape routes, visible tells, actual effects and contact, supported recovery and the next attack boundary. Include neighbouring terrain, cover and exits rather than checking an isolated animation alone.
 
 Report observed outcomes separately from unobserved specials, incomplete recovery, controller limitations and exhausted work. A cooldown is not a contact grace period. Record any declared reaction delay and whether the cue was actually visible; automated success does not establish human fairness or enjoyment. Compare distinct physical encounter layouts rather than counting cosmetic aliases as variety.
 
