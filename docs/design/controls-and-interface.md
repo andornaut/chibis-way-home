@@ -41,3 +41,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0272 | Verify Back, Close and Resume navigation                                | [cwh-0272.md](../work/cwh-0272.md) |
 | cwh-0273 | Use game-styled keyboard focus on every control                         | [cwh-0273.md](../work/cwh-0273.md) |
 | cwh-0274 | Use Game Kit standard game buttons                                      | [cwh-0274.md](../work/cwh-0274.md) |
+| cwh-0275 | Open Cheats directly from Menu and Pause                                | [cwh-0275.md](../work/cwh-0275.md) |
