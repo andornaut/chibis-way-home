@@ -4,18 +4,31 @@ import { CERTIFIED_LISTS } from "../data/certified/index.ts";
 import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules/index.ts";
 import { ZONE_FRAMES } from "../data/zoneFrames.ts";
 import { certifiedChunks } from "../rules/modules.ts";
+import { STAGE_RECIPES } from "../rules/zonePlans.ts";
 import { certifiedPool, certifiedPoolsPlugin } from "./certifiedPools.ts";
 
-it("keeps only the ids, kinds, modules and zone, which compose the same chunks and pools", () => {
+it("keeps runtime pool fields and declared approaches while preserving composition", () => {
   const pools = CERTIFIED_LISTS.map(certifiedPool);
   const keys = new Set(
     pools.flatMap((pool) => [
       ...Object.keys(pool),
+      ...(pool.approaches ?? []).flatMap((approach) =>
+        Object.keys(approach).map((key) => `approaches.${key}`),
+      ),
       ...pool.arenas.flatMap((arena) => Object.keys(arena).map((key) => `arenas.${key}`)),
       ...pool.entries.flatMap((entry) => Object.keys(entry).map((key) => `entries.${key}`)),
     ]),
   );
   expect([...keys].sort()).toEqual([
+    ...(CERTIFIED_LISTS.some((list) => list.approaches !== undefined)
+      ? [
+          "approaches",
+          "approaches.arena",
+          "approaches.predecessors",
+          "approaches.profile",
+          "approaches.stage",
+        ]
+      : []),
     "arenas",
     "arenas.id",
     "entries",
@@ -24,6 +37,18 @@ it("keeps only the ids, kinds, modules and zone, which compose the same chunks a
     "entries.modules",
     "zone",
   ]);
+  for (const [index, pool] of pools.entries()) {
+    expect(Object.hasOwn(pool, "approaches")).toBe(
+      CERTIFIED_LISTS[index]!.approaches !== undefined,
+    );
+    for (const approach of pool.approaches ?? []) {
+      const recipe = STAGE_RECIPES[approach.stage];
+      expect(recipe && !("sections" in recipe) ? recipe.arenaApproach : undefined).toEqual({
+        predecessors: approach.predecessors,
+        profile: approach.profile,
+      });
+    }
+  }
   const context = {
     frames: ZONE_FRAMES,
     grades: PAIR_GRADES,
