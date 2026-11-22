@@ -28,7 +28,13 @@ import type {
 } from "../data/types/index.ts";
 import { ZONE_FRAMES } from "../data/zoneFrames.ts";
 import { RECIPES } from "../data/zones.ts";
-import { assembleZone, type ChunkLibrary, recipeChunkPool, themesOf } from "../rules/assemble.ts";
+import {
+  assembleZone,
+  type ChunkLibrary,
+  eligibleChunks,
+  recipeChunkPool,
+  themesOf,
+} from "../rules/assemble.ts";
 import { chunkProblems } from "../rules/chunk.ts";
 import { composePair, ENCOUNTER_ROLES, moduleProblems, pairProblems } from "../rules/modules.ts";
 import { withRoomBuildings } from "../rules/roomBuildings.ts";
@@ -37,6 +43,11 @@ import { CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans.ts";
 import { NO_DISABLED_EDGES, pathOut, pathOutEncounter } from "../sim/pathOut.ts";
 import { zoneTraceLine } from "../sim/zoneTrace.ts";
 import { crosses, surfaceAt, walkRequiredRoutes, type WalkRouteTarget } from "../sim/zoneWalk.ts";
+import {
+  arenaApproachCertificateProblems,
+  arenaApproachContext,
+  firstArenaEncounter,
+} from "./arenaApproaches.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 import { chunkThemePlan, planPhysics } from "./chunkWalkCases.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
@@ -515,19 +526,105 @@ export function feasibilityProblems(
 // Why a certified list is stale or malformed, if it is: its zone, version and input hashes, and
 // for every entry, that it is a current candidate passing steps 1 to 3 with the recorded layout,
 // route, grade, encounters and slots; entries sorted by id and unique.
-export function verifyStructure(context: CertifyContext, list: CertifiedChunks): string[] {
+function entryStructure(context: CertifyContext, list: CertifiedChunks) {
   const problems: string[] = [];
   const { candidates } = zoneCandidates(context, list.zone);
+  const data = dataHash(context, list.zone, candidates);
+  const proofs = proofsHash();
   if (list.version !== 1) {
     problems.push(`version ${String(list.version)} is not 1`);
   }
-  if (list.inputs.data !== dataHash(context, list.zone, candidates)) {
+  if (list.inputs.data !== data) {
     problems.push(`${list.zone}: data hash is stale; rerun certify`);
   }
-  if (list.inputs.proofs !== proofsHash()) {
+  if (list.inputs.proofs !== proofs) {
     problems.push(`${list.zone}: proofs hash is stale; rerun certify --all`);
   }
-  return [...problems, ...verifyEntryFacts(candidates, list)];
+  return {
+    candidates,
+    data,
+    problems: [...problems, ...verifyEntryFacts(candidates, list)],
+    proofs,
+  };
+}
+
+// A proposal is not yet admitted; approach qualification is checked by verifyStructure.
+export function verifyEntryStructure(context: CertifyContext, list: CertifiedChunks): string[] {
+  return entryStructure(context, list).problems;
+}
+
+// Full admission also requires the opted-in approach relation and matching measured context.
+export function verifyStructure(context: CertifyContext, list: CertifiedChunks): string[] {
+  const { candidates, data, problems, proofs } = entryStructure(context, list);
+  const recipes = zoneRecipes(list.zone);
+  if (
+    (list.approaches?.length ?? 0) === 0 &&
+    recipes.every(([, recipe]) => recipe.arenaApproach === undefined)
+  ) {
+    return problems;
+  }
+  const pairs = Object.fromEntries(
+    candidates
+      .filter(
+        (candidate) =>
+          candidate.kind === "pair" && list.entries.some(({ id }) => id === candidate.id),
+      )
+      .map(({ chunk, id }) => [id, chunk]),
+  );
+  const library: ChunkLibrary = {
+    ...CHUNK_LIBRARY,
+    approaches: Object.fromEntries(
+      (list.approaches ?? []).map((relation) => [relation.stage, relation]),
+    ),
+    chunks: { ...CHUNK_LIBRARY.chunks, ...pairs },
+  };
+  problems.push(
+    ...arenaApproachCertificateProblems(
+      {
+        inputs: { data, proofs },
+        stages: recipes.map(([stage, recipe]) => {
+          const connectors = recipeChunkPool(CHUNK_LIBRARY, recipe).filter((id) =>
+            ZONE_FRAMES[list.zone].connectors.includes(id),
+          );
+          const effective = {
+            ...recipe,
+            chunks: [...connectors, ...list.entries.map(({ id }) => id)],
+          };
+          return {
+            arena: library.arenas?.[stage],
+            eligible: eligibleChunks(library, effective, effective.chunks),
+            expected: (seed: number) => {
+              const plan = assembleZone(library, seed, stage, effective);
+              const layout = zoneLayout(
+                TILE,
+                BIRD_FRAME,
+                CATALOGUE,
+                HITBOXES,
+                TILESETS,
+                new Set(),
+                plan,
+              );
+              const chunks = Object.fromEntries(
+                Object.entries(plan.areas).map(([area, value]) => [
+                  area,
+                  value.chunks?.map(({ chunk }) => chunk) ?? [],
+                ]),
+              );
+              const encounter = firstArenaEncounter({ layout, source: { chunkIds: chunks } });
+              return arenaApproachContext(
+                { encounter, hash: hashOf },
+                { layout, source: { chunkIds: chunks } },
+              );
+            },
+            recipe,
+            stage,
+          };
+        }),
+      },
+      list.approaches ?? [],
+    ),
+  );
+  return problems;
 }
 
 // Validate recorded entry facts independently of proof provenance freshness.

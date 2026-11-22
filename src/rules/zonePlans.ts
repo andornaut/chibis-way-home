@@ -16,6 +16,7 @@ import type {
 } from "../data/types/index.ts";
 import { ZONE_FRAMES } from "../data/zoneFrames.ts";
 import { RECIPES } from "../data/zones.ts";
+import { arenaApproachRelations } from "./arenaApproaches.ts";
 import { arenaChunk } from "./arenas.ts";
 import { assembleZoneAvoiding, type ChunkLibrary } from "./assemble.ts";
 import { certifiedChunks } from "./modules.ts";
@@ -68,6 +69,7 @@ const ADMITTED = arenaChunks(
 
 // The game's chunks, certified pairs and admitted arenas included, and themes.
 export const CHUNK_LIBRARY: ChunkLibrary = {
+  approaches: arenaApproachRelations(POOLS),
   arenas: ADMITTED.stages,
   backgrounds: BACKGROUND_SECTIONS,
   characters: CHARACTERS,

@@ -1,5 +1,4 @@
 import {
-  BLUE_CHALLENGES,
   BLUE_CONNECTORS,
   blueVerticalId,
   COUNTRYSIDE_CHALLENGES,
@@ -43,7 +42,8 @@ const STAGE_ENCOUNTERS = { first: 0, second: 0, third: 1 } as const;
 const STAGE_LENGTH = { max: 16 * CHUNK_COLS, min: 14 * CHUNK_COLS } as const;
 
 const STAGE_CHUNK_POOLS = {
-  blue: BLUE_CHALLENGES,
+  // Blue middle chunks come only from the generated certified pair pool.
+  blue: [],
   countryside: COUNTRYSIDE_CHALLENGES,
   home: HOME_CHALLENGES,
   industrial: INDUSTRIAL_CHALLENGES,
@@ -145,6 +145,7 @@ export const RECIPES: Readonly<Record<string, StageRecipe>> = {
   "back-streets": outdoorRecipe("home", "second", "back-streets"),
   "city-boundary": {
     ...outdoorRecipe("blue", "third", "city-boundary"),
+    arenaApproach: { predecessors: ["outdoor-deep-ascent"], profile: "cold-encounter-v1" },
     startDoors: [STAGE_GIFTS.third],
   },
   "city-outskirts": outdoorRecipe("home", "first", "city-outskirts"),

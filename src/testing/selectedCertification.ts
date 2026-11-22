@@ -1,4 +1,4 @@
-import type { CertifiedChunks, ZoneKey } from "../data/types/index.ts";
+import type { CertifiedChunks, OrdinaryProofProfile, ZoneKey } from "../data/types/index.ts";
 import {
   type Candidate,
   dataHash,
@@ -10,7 +10,7 @@ import {
   proofProfileProblems,
   proofsHash,
   structuralProblems,
-  verifyStructure,
+  verifyEntryStructure,
   zoneCandidates,
 } from "./pairCertify.ts";
 
@@ -38,7 +38,7 @@ export function preparePairProposal(
   }
   const { candidates } = zoneCandidates(GAME_CONTEXT, zone);
   const data = dataHash(GAME_CONTEXT, zone, candidates);
-  const existing = verifyStructure(GAME_CONTEXT, {
+  const existing = verifyEntryStructure(GAME_CONTEXT, {
     ...current,
     inputs: { ...current.inputs, data },
   });
@@ -92,7 +92,7 @@ export function completePairProposal(
     ),
     inputs: { ...plan.current.inputs, data: plan.data },
   };
-  const problems = verifyStructure(GAME_CONTEXT, proposal);
+  const problems = verifyEntryStructure(GAME_CONTEXT, proposal);
   if (problems.length > 0) {
     throw new Error(problems.join("; "));
   }
@@ -100,8 +100,24 @@ export function completePairProposal(
 }
 
 // Reuse must reject unknown profiles before retaining an existing native trace.
-export function existingProofProfileProblems(current: Pick<CertifiedChunks, "entries">): string[] {
+function existingProofProfileProblems(current: Pick<CertifiedChunks, "entries">): string[] {
   return current.entries.flatMap((entry) =>
     proofProfileProblems(entry.proof).map((problem) => `${entry.id}: ${problem}`),
   );
+}
+
+// A fully ordinary maintained list never gives newly considered entries a skill-capable proof.
+export function newEntryProofProfile(
+  current: Pick<CertifiedChunks, "entries"> | undefined,
+): OrdinaryProofProfile | undefined {
+  if (current === undefined) {
+    return undefined;
+  }
+  const problems = existingProofProfileProblems(current);
+  if (problems.length > 0) {
+    throw new Error(problems.join("; "));
+  }
+  return current.entries.length > 0 && current.entries.every(({ proof }) => proof !== undefined)
+    ? ORDINARY_PROOF_PROFILE
+    : undefined;
 }

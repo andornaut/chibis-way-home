@@ -288,6 +288,54 @@ const MODULE_LIST: readonly ChunkModule[] = [
     },
     solids: [floor(0, 6, 80), floor(24, 6, 80)],
   }),
+  // Leap a red pit onto a red-faced raised bank, then step down to the exit.
+  half(3, "city-red-bank-gap", {
+    entry: 80,
+    exit: 80,
+    objects: [redFace(17, 77, 3), ...red(7, 11, 90)],
+    route: { profile: "primary", targets: [{ at: { col: 20.5, row: 77 } }] },
+    solids: [floor(0, 7, 80), floor(18, 5, 77), floor(23, 7, 80)],
+  }),
+  // A short press across a narrow red pit under a low red ceiling; a full jump meets the ceiling.
+  half(3, "city-tap-gap", {
+    entry: 80,
+    exit: 80,
+    objects: [...redCeiling(8, 14, 72), ...red(13, 4, 90)],
+    route: { profile: "primary", targets: [{ at: { col: 19, row: 80 } }] },
+    solids: [floor(0, 13, 80), floor(17, 13, 80)],
+  }),
+  // A short press onto a crate-high block under a low red ceiling, then a walk off its far side.
+  half(3, "city-tap-step", {
+    entry: 80,
+    exit: 80,
+    objects: [...redCeiling(9, 12, 72)],
+    route: { profile: "primary", targets: [{ at: { col: 15, row: 77 } }] },
+    solids: [floor(0, 30, 80), { col: 12, cols: 6, look: "raised", row: 77, rows: 3 }],
+  }),
+  // Drop onto a low post in a red pit, then jump up and across to the far bank.
+  half(3, "city-sunken-post", {
+    entry: 80,
+    exit: 80,
+    objects: [...red(7, 4, 92), ...red(16, 9, 92)],
+    route: { profile: "primary", targets: [{ at: { col: 13.5, row: 84 } }] },
+    solids: [floor(0, 7, 80), floor(11, 5, 84), floor(25, 5, 80)],
+  }),
+  // Leap a red pit onto a pillar, then climb to the terrace; its riser stops an overshoot.
+  half(3, "city-pillar-climb", {
+    entry: 80,
+    exit: 70,
+    objects: red(7, 4, 90),
+    route: { profile: "primary", targets: [{ at: { col: 13.5, row: 75 } }] },
+    solids: [floor(0, 7, 80), floor(11, 5, 75), floor(16, 14, 70)],
+  }),
+  // A measured jump down a long red pit; walking off falls short, a full jump overflies.
+  half(3, "city-long-drop-gap", {
+    entry: 70,
+    exit: 80,
+    objects: red(8, 13, 90),
+    route: { profile: "primary", targets: [{ at: { col: 24, row: 80 } }] },
+    solids: [floor(0, 8, 70), floor(21, 9, 80)],
+  }),
   // Grade 4: timed supports, warned vents and moving hazards on the required path.
   half(4, "crosswalk", crosswalk(80)),
   half(4, "city-vent-deck", ventDeck(80)),
@@ -348,6 +396,22 @@ const MODULE_LIST: readonly ChunkModule[] = [
     exit: 80,
     objects: [crumbling(13, 6, 76), ...red(6, 20, 90)],
     solids: [floor(0, 6, 70), floor(26, 4, 80)],
+  }),
+  // Climb onto a crumbling perch over a red pit and hop down to the far bank before it goes.
+  half(4, "city-crumbling-perch", {
+    entry: 80,
+    exit: 80,
+    objects: [crumbling(12, 5, 76), ...red(5, 18, 92)],
+    route: { profile: "primary", targets: [{ at: { col: 14.5, row: 76 } }] },
+    solids: [floor(0, 5, 80), floor(23, 7, 80)],
+  }),
+  // Drop onto a sunken crumbling support and jump up to the far bank before it goes.
+  half(4, "city-crumbling-dip", {
+    entry: 80,
+    exit: 80,
+    objects: [crumbling(10, 5, 84), ...red(6, 18, 92)],
+    route: { profile: "primary", targets: [{ at: { col: 12.5, row: 84 } }] },
+    solids: [floor(0, 6, 80), floor(24, 6, 80)],
   }),
 ];
 

@@ -6,6 +6,7 @@ import type {
   TileRect,
 } from "../data/types/index.ts";
 import { sceneryParallax, worldScenery } from "../stage/index.ts";
+import { arenaApproachPolicyProblems } from "./arenaApproaches.ts";
 import {
   type ChunkLibrary,
   chunkPoolProblems,
@@ -382,7 +383,8 @@ export function recipeProblems(library: ChunkLibrary, recipe: StageRecipe): stri
   if ("sections" in recipe) {
     return orderedRecipeProblems(library, recipe);
   }
-  const problems: string[] = [];
+  const problems: string[] =
+    recipe.arenaApproach === undefined ? [] : arenaApproachPolicyProblems(recipe.arenaApproach);
   const rows = recipe.rows ?? library.rows;
   if (!validRows(rows)) {
     problems.push(`invalid recipe height ${rows}`);

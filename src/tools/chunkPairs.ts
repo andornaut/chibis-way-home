@@ -62,7 +62,7 @@ import {
 } from "../testing/pairCertify.ts";
 import {
   completePairProposal,
-  existingProofProfileProblems,
+  newEntryProofProfile,
   preparePairProposal,
 } from "../testing/selectedCertification.ts";
 
@@ -231,10 +231,7 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
       console.log(`${zone} module ${id} rejected: ${problems.join("; ")}`);
     }
     const previous = readList(zone);
-    const profileProblems = previous === undefined ? [] : existingProofProfileProblems(previous);
-    if (profileProblems.length > 0) {
-      throw new Error(profileProblems.join("; "));
-    }
+    const newProfile = newEntryProofProfile(previous);
     const reuse = !all && previous?.inputs.proofs === proofs;
     const before = new Map((previous?.entries ?? []).map((entry) => [entry.id, entry]));
     const entries: CertifiedEntry[] = [];
@@ -253,12 +250,13 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
         entries.push(entryOf(candidate, layout, old));
         continue;
       }
+      const proof = old?.proof ?? newProfile;
       pending.push({
         candidate,
         cost: costOf(candidate, old),
         job: {
           id: candidate.id,
-          ...(old?.proof !== undefined && { proof: old.proof }),
+          ...(proof !== undefined && { proof }),
           themes,
           zone,
         },
@@ -267,7 +265,7 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
     }
     console.error(`${zone}: ${entries.length} reused, ${pending.length} to prove`);
     const arenas = zoneArenas(ARENAS, zone);
-    return { arenas, candidates, entries, failed, pending, zone };
+    return { arenas, candidates, entries, failed, pending, previous, zone };
   });
   const queued = plans.flatMap(({ pending }) => pending);
   const arenaJobs = plans.flatMap(({ arenas, zone }) =>
@@ -281,47 +279,54 @@ async function certify(zones: readonly ZoneKey[], all: boolean): Promise<number>
   const arenaProofs = new Map(
     arenaJobs.map(({ found }, index) => [found, results[queued.length + index] as ArenaResult]),
   );
-  const lists = plans.flatMap(({ arenas, candidates, entries, failed, pending, zone }) => {
-    let singleFailed = failed;
-    for (const item of pending) {
-      const proof = proven.get(item)!;
-      if (proof.problems.length > 0) {
-        console.log(`${zone} ${item.candidate.id} rejected: ${proof.problems.join("; ")}`);
-        singleFailed ||= item.candidate.kind === "single";
-      } else {
-        entries.push(entryOf(item.candidate, item.layout, proof));
+  const lists = plans.flatMap(
+    ({ arenas, candidates, entries, failed, pending, previous, zone }) => {
+      let singleFailed = failed;
+      for (const item of pending) {
+        const proof = proven.get(item)!;
+        if (proof.problems.length > 0) {
+          console.log(`${zone} ${item.candidate.id} rejected: ${proof.problems.join("; ")}`);
+          singleFailed ||= item.candidate.kind === "single";
+        } else {
+          entries.push(entryOf(item.candidate, item.layout, proof));
+        }
       }
-    }
-    entries.sort((a, b) => (a.id < b.id ? -1 : 1));
-    const feasibility = feasibilityProblems(GAME_CONTEXT, zone, entries);
-    for (const problem of feasibility) {
-      console.log(`${zone} assembly: ${problem}`);
-    }
-    if (singleFailed || feasibility.length > 0) {
-      console.log(`${zone}: not written; a single failed or a recipe cannot assemble`);
-      return [undefined];
-    }
-    const admitted: CertifiedArena[] = [];
-    for (const found of arenas) {
-      const proof = arenaProofs.get(found)!;
-      console.error(JSON.stringify({ arena: found.arena.id, evidence: proof.evidence }));
-      if (proof.problems.length > 0) {
-        console.log(`${zone} ${found.arena.id} rejected: ${proof.problems.join("; ")}`);
-      } else {
-        admitted.push(certifiedArena(found, proof));
+      entries.sort((a, b) => (a.id < b.id ? -1 : 1));
+      const feasibility = feasibilityProblems(GAME_CONTEXT, zone, entries);
+      for (const problem of feasibility) {
+        console.log(`${zone} assembly: ${problem}`);
       }
-    }
-    console.log(`${zone}: ${entries.length} certified, ${admitted.length} arenas`);
-    return [
-      {
+      if (singleFailed || feasibility.length > 0) {
+        console.log(`${zone}: not written; a single failed or a recipe cannot assemble`);
+        return [undefined];
+      }
+      const admitted: CertifiedArena[] = [];
+      for (const found of arenas) {
+        const proof = arenaProofs.get(found)!;
+        console.error(JSON.stringify({ arena: found.arena.id, evidence: proof.evidence }));
+        if (proof.problems.length > 0) {
+          console.log(`${zone} ${found.arena.id} rejected: ${proof.problems.join("; ")}`);
+        } else {
+          admitted.push(certifiedArena(found, proof));
+        }
+      }
+      console.log(`${zone}: ${entries.length} certified, ${admitted.length} arenas`);
+      const next: CertifiedChunks = {
+        ...(previous?.approaches === undefined ? {} : { approaches: previous.approaches }),
         arenas: admitted,
         entries,
         inputs: { data: dataHash(GAME_CONTEXT, zone, candidates), proofs },
-        version: 1 as const,
+        version: 1,
         zone,
-      },
-    ];
-  });
+      };
+      const problems = verifyStructure(GAME_CONTEXT, next);
+      if (problems.length > 0) {
+        console.log(`${zone}: not written; ${problems.join("; ")}`);
+        return [undefined];
+      }
+      return [next];
+    },
+  );
   await Promise.all(lists.flatMap((list) => (list ? [writeList(list)] : [])));
   return lists.includes(undefined) ? 1 : 0;
 }

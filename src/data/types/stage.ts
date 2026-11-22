@@ -352,7 +352,13 @@ export type ChunkPool = readonly string[];
 // inclusive band for every middle chunk, independent of position. Safe start and finish chunks
 // are exempt. spawnCol: his centre column within the opening chunk. events and doors: what the
 // seed places in the chunks' slots, count of each.
+export interface ArenaApproachPolicy {
+  readonly profile: "cold-encounter-v1";
+  readonly predecessors: readonly string[];
+}
+
 export interface ZoneRecipe {
+  readonly arenaApproach?: ArenaApproachPolicy;
   readonly rows?: number;
   // Spawn inside the authored opening cap, independently of its horizontal seam.
   readonly spawnRow?: number;

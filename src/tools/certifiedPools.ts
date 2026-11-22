@@ -6,6 +6,16 @@ import type { CertifiedChunks, CertifiedPool } from "../data/types/index.ts";
 // id and the zone. The hashes and counts the lists record for verification stay in the files.
 export function certifiedPool(list: CertifiedChunks): CertifiedPool {
   return {
+    ...(list.approaches === undefined
+      ? {}
+      : {
+          approaches: list.approaches.map(({ arena, predecessors, profile, stage }) => ({
+            arena,
+            predecessors,
+            profile,
+            stage,
+          })),
+        }),
     arenas: list.arenas.map(({ id }) => ({ id })),
     entries: list.entries.map(({ id, kind, modules }) =>
       modules === undefined ? { id, kind } : { id, kind, modules },

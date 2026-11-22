@@ -2,7 +2,11 @@ import { expect, it } from "vitest";
 
 import { CERTIFIED_LISTS } from "../data/certified/index.ts";
 import { ORDINARY_PROOF_PROFILE, type Proof } from "./pairCertify.ts";
-import { completePairProposal, preparePairProposal } from "./selectedCertification.ts";
+import {
+  completePairProposal,
+  newEntryProofProfile,
+  preparePairProposal,
+} from "./selectedCertification.ts";
 
 const IDS = [
   "industrial-crane-lookout--industrial-low-roof-strip",
@@ -57,4 +61,24 @@ it("refuses incomplete, legacy, mismatched-count and failed native proofs", () =
       "incomplete or invalid",
     );
   }
+});
+
+it("keeps a fully ordinary maintained pool ordinary for newly considered entries", () => {
+  const entries = industrial.entries.filter(({ proof }) => proof !== undefined);
+  expect(entries.length).toBeGreaterThan(0);
+  expect(newEntryProofProfile({ entries })).toBe(ORDINARY_PROOF_PROFILE);
+});
+
+it("retains the existing default for mixed, empty and uninitialised lists", () => {
+  expect(newEntryProofProfile(industrial)).toBeUndefined();
+  expect(newEntryProofProfile({ entries: [] })).toBeUndefined();
+  expect(newEntryProofProfile(undefined)).toBeUndefined();
+});
+
+it("rejects unknown existing profiles before selecting a new-entry default", () => {
+  const entry = industrial.entries.find(({ proof }) => proof !== undefined)!;
+  const invalid = { ...entry, proof: { ...ORDINARY_PROOF_PROFILE, tuning: "unknown" } };
+  expect(() => newEntryProofProfile({ entries: [invalid] })).toThrow(
+    "Unknown ordinary proof profile",
+  );
 });

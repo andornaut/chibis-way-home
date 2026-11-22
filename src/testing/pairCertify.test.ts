@@ -11,6 +11,7 @@ import { FIXTURE_MODULES } from "./modules.ts";
 import {
   distinctLayouts,
   GAME_CONTEXT,
+  ORDINARY_PROOF_PROFILE,
   POOL_TARGET,
   poolTargets,
   verifyStructure,
@@ -38,6 +39,14 @@ describe("certified lists", () => {
     },
     60_000,
   );
+
+  it("keeps Blue's replacement pool entirely ordinary and physically distinct", () => {
+    const blue = listOf("blue");
+    expect(distinctLayouts(blue).total).toBe(blue.entries.length);
+    for (const { id, proof } of blue.entries) {
+      expect(proof, id).toEqual(ORDINARY_PROOF_PROFILE);
+    }
+  });
 
   it("reports a stale data hash and a changed layout", () => {
     const list = listOf("blue");
@@ -129,7 +138,7 @@ const FLOORS: Readonly<
   >
 > = {
   apartment: { grades: { 4: 10, 5: 5 }, total: 15 },
-  blue: "target",
+  blue: { grades: { 3: 15, 4: 20 }, total: 35 },
   countryside: { grades: { 3: 10, 4: 14, 5: 3 }, total: 27 },
   home: { grades: { 4: 14, 5: 4 }, total: 18 },
   industrial: { grades: { 3: 11, 4: 13, 5: 5 }, total: 29 },

@@ -48,3 +48,25 @@ it("loads each list in its directory as its pool, and nothing else", async () =>
     undefined,
   ]);
 });
+
+it("ships only approach eligibility and keeps measured context and audit headers out of the bundle", () => {
+  const list = CERTIFIED_LISTS[0]!;
+  const relation = {
+    arena: "arena",
+    evidence: {
+      arenaIndex: 1,
+      bossIndex: 2,
+      plan: "0123456789abcdef",
+      retries: 1,
+      seed: 2,
+      trace: "0123456789abcdef:1",
+    },
+    inputs: { data: "data", proofs: "proofs" },
+    predecessors: ["qualified"],
+    profile: "cold-encounter-v1" as const,
+    stage: "stage",
+  };
+  expect(certifiedPool({ ...list, approaches: [relation] }).approaches).toEqual([
+    { arena: "arena", predecessors: ["qualified"], profile: "cold-encounter-v1", stage: "stage" },
+  ]);
+});

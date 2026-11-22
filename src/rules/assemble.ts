@@ -1,6 +1,7 @@
 import { type Random, randomInt, randomStream, shuffled } from "@andornaut/game-kit/runtime/random";
 
 import type {
+  ArenaApproach,
   BackgroundSection,
   Character,
   ChunkPlan,
@@ -18,6 +19,7 @@ import type {
   ZonePlan,
   ZoneRecipe,
 } from "../data/types/index.ts";
+import { arenaApproachProblems } from "./arenaApproaches.ts";
 import { withBackgroundSections } from "./backgroundSections.ts";
 import { bindElement } from "./elementBinding.ts";
 import { namespaceForcedTransit } from "./forcedTransitLayout.ts";
@@ -29,6 +31,7 @@ import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry.ts";
 // a zone's height in rows, and the characters by key, for the size of each theme's door.
 // arenas: the chunk id of each stage's arena, by stage key.
 export interface ChunkLibrary {
+  readonly approaches?: Readonly<Record<string, ArenaApproach>>;
   readonly arenas?: Readonly<Record<string, string>>;
   readonly backgrounds?: Readonly<Record<string, BackgroundSection>>;
   readonly characters: Readonly<Record<string, Pick<Character, "cols" | "rows">>>;
@@ -108,7 +111,7 @@ export function chunkPoolProblems(
   return problems;
 }
 
-function eligibleChunks(
+export function eligibleChunks(
   library: ChunkLibrary,
   recipe: Pick<ZoneRecipe, "difficulty" | "difficultyWeights" | "rows">,
   pool: ChunkPool,
@@ -291,6 +294,7 @@ const EXCEEDED = "exceeded";
 
 // A chunk a run must hold at one middle index.
 interface Pinned {
+  readonly predecessors?: ReadonlySet<string>;
   readonly at: number;
   readonly chunk: string;
 }
@@ -361,7 +365,9 @@ function searchRun(
       id === recipe.finish || id === pinned?.chunk
         ? `${id === pinned?.chunk ? "pinned" : "finish"}:${id}`
         : `${facts.cols}|${facts.doors}|${facts.encounters}|${facts.entryRow}|` +
-          `${facts.events}|${facts.exitRow}|${facts.maxPerZone}`;
+          `${facts.events}|${facts.exitRow}|${facts.maxPerZone}${
+            pinned?.predecessors === undefined ? "" : `|approach:${pinned.predecessors.has(id)}`
+          }`;
     let classId = classIds.get(signature);
     if (classId === undefined) {
       classId = classCaps.length;
@@ -596,6 +602,10 @@ function searchRun(
       if (
         index !== last &&
         (pinned === undefined || (chunk.id === pinned.chunk) === (ids.length === pinned.at)) &&
+        (pinned?.predecessors === undefined ||
+          ((ids.length !== pinned.at - 1 || pinned.predecessors.has(chunk.id)) &&
+            (ids.length !== pinned.at ||
+              (prev !== undefined && pinned.predecessors.has(prev.id))))) &&
         (remaining === undefined ||
           (chunk.encounters <= remaining && (chunk.encounters === 0 || prevEncounters === 0))) &&
         (chunk.encounters === 0 || quietChunks >= minimumGap) &&
@@ -692,6 +702,7 @@ function arenaRun(
   seed: number,
   key: string,
   arenaId: string,
+  predecessors: ReadonlySet<string> | undefined,
   recipe: ZoneRecipe,
 ): readonly string[] | undefined {
   const arena = chunkOf(library, arenaId);
@@ -719,7 +730,13 @@ function arenaRun(
   const first = randomInt(randomStream(seed, `arena:${key}`), 0, span);
   for (let offset = 0; offset < span; offset++) {
     const at = low + ((first + offset) % span);
-    const run = seededRun(library, seed, key, { at, chunk: arenaId }, quiet);
+    const run = seededRun(
+      library,
+      seed,
+      key,
+      { at, chunk: arenaId, ...(predecessors === undefined ? {} : { predecessors }) },
+      quiet,
+    );
     if (run) {
       return run;
     }
@@ -1316,10 +1333,26 @@ export function assembleZone(
     throw new Error("Recipe height must match its authored caps");
   }
   const arenaId = library.arenas?.[key];
+  let predecessors: ReadonlySet<string> | undefined;
+  if (recipe.arenaApproach !== undefined) {
+    const problems = arenaApproachProblems(
+      {
+        arena: arenaId,
+        eligible: eligibleChunks(library, recipe, recipeChunkPool(library, recipe)),
+        stage: key,
+      },
+      recipe.arenaApproach,
+      library.approaches?.[key],
+    );
+    if (problems.length > 0) {
+      throw new Error(`${key}: ${problems.join("; ")}`);
+    }
+    predecessors = new Set(recipe.arenaApproach.predecessors);
+  }
   const run =
     arenaId === undefined
       ? seededRun(library, seed, key, undefined, recipe)
-      : arenaRun(library, seed, key, arenaId, recipe);
+      : arenaRun(library, seed, key, arenaId, predecessors, recipe);
   if (!run) {
     throw new Error(
       `No assembly of zone ${key} fits its recipe: its theme's chunks never join from ` +
@@ -1356,7 +1389,7 @@ export function assembleZone(
   );
 }
 
-// assembleZone, first with the avoided chunk ids left out of every middle pool, then, when no
+// assembleZone, first with avoided optional chunks left out of every middle pool, then, when no
 // assembly fits without them, with every pool whole. Deterministic in (seed, avoid). Recency
 // across stages passes the ids of the zone's recent stages; an empty list assembles as
 // assembleZone.
@@ -1369,7 +1402,9 @@ export function assembleZoneAvoiding(
 ): ZonePlan {
   if (avoid.length > 0) {
     const avoided = new Set(avoid);
-    const keep = (pool: ChunkPool) => pool.filter((id) => !avoided.has(id));
+    const required = "sections" in recipe ? undefined : recipe.arenaApproach?.predecessors;
+    const keep = (pool: ChunkPool) =>
+      pool.filter((id) => !avoided.has(id) || required?.includes(id));
     const narrowed: StageRecipe =
       "sections" in recipe
         ? {
