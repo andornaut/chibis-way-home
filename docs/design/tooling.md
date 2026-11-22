@@ -24,3 +24,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0254 | Release landed and superseded Tech worktrees and branches                                     | [cwh-0254.md](../work/cwh-0254.md) |
 | cwh-0259 | Keep non-player copies out of the deployed build                                              | [cwh-0259.md](../work/cwh-0259.md) |
 | cwh-0260 | Strip verification hashes from the runtime layouts and ship the palette and art manifest once | [cwh-0260.md](../work/cwh-0260.md) |
+| cwh-0280 | Pin Chibi to Delivery Kit 8.1.0                                                               | [cwh-0280.md](../work/cwh-0280.md) |
