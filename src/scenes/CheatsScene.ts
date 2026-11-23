@@ -21,8 +21,6 @@ import {
   type CheatsCardWords,
   type CheatSwitch,
   createCheatsCard,
-  fpsCounterShown,
-  setFpsCounterShown,
   showCheats,
 } from "../ui/index.ts";
 import { bindSceneButtons } from "./domTaps.ts";
@@ -41,7 +39,6 @@ const CHEATS_WORDS: CheatsCardWords = {
   back: TEXT.achievements.back,
   close: DEV_TEXT.cheats.close,
   confirm: DEV_TEXT.resetSave.confirm,
-  fps: DEV_TEXT.fps,
   group: DEV_TEXT.cheats.group,
   groupDescription: DEV_TEXT.cheats.groupDescription,
   invulnerable: DEV_TEXT.invulnerable,
@@ -69,12 +66,7 @@ const WRITE_FAILED: Readonly<Record<"invalid" | "unavailable", string>> = {
   unavailable: DEV_TEXT.grantResults.unavailable,
 };
 
-// Whether each Cheats switch is on: a cheat while the session has it, the FPS counter while its
-// device setting is on.
 function cheatOn(setting: CheatSwitch): boolean {
-  if (setting === "fps") {
-    return fpsCounterShown();
-  }
   if (setting === "invulnerable") {
     return invulnerabilityEnabled();
   }
@@ -240,13 +232,9 @@ export class CheatsScene extends Scene {
     );
   }
 
-  // A cheat switch starts the cheat session; the FPS counter is a tool and starts none.
+  // A cheat switch starts the cheat session.
   private toggleCheat(setting: CheatSwitch): void {
     const on = !cheatOn(setting);
-    if (setting === "fps") {
-      setFpsCounterShown(on);
-      return;
-    }
     startCheatSession();
     if (setting === "invulnerable") {
       setInvulnerability(on);

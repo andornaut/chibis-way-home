@@ -4,7 +4,7 @@ import { fpsCounterShown, watchFpsCounter } from "../settings/fpsCounter.ts";
 const REFRESH_MS = 500;
 
 // The FPS counter: a page-level element on <body>, outside the game's view, which main.css fixes
-// in the device viewport's bottom-right corner inside the safe area, above everything including
+// in the device viewport's top-right corner inside the safe area, above everything including
 // the letterbox bars. It shows fps(), rounded, while the FPS counter setting is on, named by
 // label. Returns its removal.
 export function mountFpsCounter(document: Document, fps: () => number, label: string): () => void {

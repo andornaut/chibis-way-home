@@ -17,7 +17,6 @@ const WORDS: CheatsCardWords = {
   back: TEXT.achievements.back,
   close: DEV_TEXT.cheats.close,
   confirm: DEV_TEXT.resetSave.confirm,
-  fps: DEV_TEXT.fps,
   group: DEV_TEXT.cheats.group,
   groupDescription: DEV_TEXT.cheats.groupDescription,
   invulnerable: DEV_TEXT.invulnerable,
@@ -78,7 +77,7 @@ it("scrolls only the Cheats groups between the title and Back", () => {
   expect(scroller?.contains(view.back)).toBe(false);
 });
 
-it("keeps the warning above the two Cheats columns, with FPS and unlocks opposite skills", () => {
+it("keeps the warning above the two Cheats columns, with unlocks opposite skills", () => {
   const view = createCheatsCard(document, "cheats", WORDS, SKILL_IDS);
   const descriptionId = view.dialog.getAttribute("aria-describedby");
   expect(view.dialog.querySelector(`#${descriptionId}`)?.textContent).toBe(WORDS.groupDescription);
@@ -87,7 +86,6 @@ it("keeps the warning above the two Cheats columns, with FPS and unlocks opposit
   const [columns, stageGrid] = cheats!.children;
   const [left, right] = columns!.children;
   expect([...left!.children]).toEqual([
-    view.switches.fps,
     view.actions.unlockAllPowerUps,
     view.actions.unlockAllZones,
   ]);
@@ -111,7 +109,7 @@ it("scrolls only the Settings rows between the title and Close", () => {
   const view = createSettingsCard(document, colours, "settings", TEXT.settings, {
     build: "build",
     install: true,
-    switches: [...TOUCH_SETTINGS, "reducedMotion"],
+    switches: [...TOUCH_SETTINGS, "reducedMotion", "fps"],
   });
   const scrollers = view.dialog.querySelectorAll(".ui-card-scroll");
   expect(scrollers).toHaveLength(1);

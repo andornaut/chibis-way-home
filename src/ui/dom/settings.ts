@@ -17,14 +17,14 @@ import { closeButton, setCardWidth } from "./card.ts";
 // button and its whole press area: a switch row (role switch, aria-checked, named by its label)
 // holds its icons, label and art's ui-switch; the Install row (named by its label) holds its icon,
 // label and art's ui-button face. A switch row shows its current state beside the switch and
-// describes the effect under its label. Touch rows draw the controls they show or hide as inline
-// control icons; every other row's icon is art's sprite. The icons are decorative, hidden
+// can describe its effect under its label. Touch rows draw the controls they show or hide as inline
+// control icons; Install and Reduced motion use art sprites. The icons are decorative, hidden
 // from assistive technology. The close X comes last, so the keyboard's focus moves through the
 // rows in order, then the close X.
 
-export type SettingsSwitch = "reducedMotion" | TouchSetting;
+export type SettingsSwitch = "fps" | "reducedMotion" | TouchSetting;
 
-// The rows whose icon is art's sprite: every row but the touch settings'.
+// The rows with an art sprite.
 export type SettingsSpriteRow = "install" | "reducedMotion";
 
 // The palette colours the touch rows' control icons are drawn in, as 0xrrggbb.
@@ -38,7 +38,8 @@ export interface SettingsCardColours {
 export interface SettingsCardWords {
   readonly actionButtons: string;
   readonly close: string;
-  readonly descriptions: Readonly<Record<SettingsSwitch, string>>;
+  readonly descriptions: Readonly<Record<Exclude<SettingsSwitch, "fps">, string>>;
+  readonly fps: string;
   readonly install: string;
   readonly installButton: string;
   readonly moveControls: string;
@@ -142,7 +143,7 @@ export function createSettingsCard(
           createActionIcon(document, colours, undefined, action),
         ),
       );
-    } else {
+    } else if (key !== "fps") {
       const icon = element("img", "settings-icon");
       icon.alt = "";
       icons[key] = icon;
@@ -153,7 +154,7 @@ export function createSettingsCard(
     label.id = `${id}-${key}`;
     button.setAttribute("aria-labelledby", label.id);
     name.append(label);
-    if (key !== "install") {
+    if (key !== "install" && key !== "fps") {
       const note = text("span", "settings-note", words.descriptions[key]);
       note.id = `${id}-${key}-note`;
       button.setAttribute("aria-describedby", note.id);

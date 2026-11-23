@@ -181,10 +181,8 @@ export interface GameText {
     readonly settings: string;
     readonly start: string;
   };
-  // The settings card: its title, the Move controls, Action buttons and Reduced motion rows and
-  // the touch rows' note, the Install row and its button, and the install steps for each kind of browser, shown on the
-  // settings card's steps card and in the home page's steps dialog where the browser holds no
-  // install prompt.
+  // Settings and its Install row. Where the browser holds no prompt, both the card and the home
+  // page show the browser-specific install steps.
   readonly settings: {
     readonly actionButtons: string;
     // The close X's accessible name, on the settings card and the install steps card.
@@ -192,6 +190,7 @@ export interface GameText {
     readonly descriptions: Readonly<
       Record<"actionButtons" | "moveControls" | "reducedMotion", string>
     >;
+    readonly fps: string;
     readonly install: string;
     readonly installButton: string;
     readonly installSteps: Readonly<Record<InstallStepsKind, InstallSteps>>;

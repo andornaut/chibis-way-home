@@ -6,12 +6,12 @@ import { closeButton, setCardWidth } from "./card.ts";
 import { createTextButtonElement } from "./cardElements.ts";
 
 // The Cheats card and its Reset save confirmation (cheats.css, on ui.css's .ui-card and
-// settings.css's rows), mounted above the invoking Menu or Pause. FPS and both unlock actions
-// are on the left, power-ups and Invulnerability on the right. Stage controls and Tools follow.
+// settings.css's rows), mounted above the invoking Menu or Pause. Both unlock actions are on the
+// left, power-ups and Invulnerability on the right. Stage controls and Tools follow.
 // The saving warning, status and primary Back stay outside the scroll body. The confirmation is
 // an alert dialog with its body text, Cancel and Reset.
 
-export type CheatSwitch = "fps" | "invulnerable" | `powerUp:${SkillId}`;
+export type CheatSwitch = "invulnerable" | `powerUp:${SkillId}`;
 
 export type CheatAction =
   "load" | "resetSave" | "showTipsAgain" | "unlockAllPowerUps" | "unlockAllZones";
@@ -27,7 +27,6 @@ export interface CheatsCardWords {
     readonly cancel: string;
     readonly title: string;
   };
-  readonly fps: string;
   readonly group: string;
   readonly groupDescription: string;
   readonly invulnerable: string;
@@ -152,7 +151,6 @@ export function createCheatsCard(
   const stageGrid = rows();
   cheats.append(columns, stageGrid);
   const switches: Partial<Record<CheatSwitch, HTMLButtonElement>> = {};
-  switches.fps = switchRow("fps", words.fps, quickActions);
   const unlockAllPowerUps = button(words.unlockAllPowerUps, quickActions);
   const unlockAllZones = button(words.unlockAllZones, quickActions);
   for (const skill of skills) {

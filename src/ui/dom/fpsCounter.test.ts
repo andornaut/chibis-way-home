@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 
 import { afterEach, expect, it } from "vitest";
 
-import { DEV_TEXT } from "../../data/dev.ts";
+import { TEXT } from "../../data/text.ts";
 import { fpsCounterShown, setFpsCounterShown } from "../settings/fpsCounter.ts";
 import { mountFpsCounter } from "./fpsCounter.ts";
 
@@ -16,12 +16,12 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-// On, it sits on the page outside the game, in the device viewport's bottom-right corner.
+// On, it sits on the page outside the game, in the device viewport's top-right corner.
 it("is off by default, then shows the frame rate in the viewport corner above everything", () => {
   const game = document.createElement("div");
   game.id = "game";
   document.body.append(game);
-  const unmount = mountFpsCounter(document, () => 59.6, DEV_TEXT.fps);
+  const unmount = mountFpsCounter(document, () => 59.6, TEXT.settings.fps);
   const counter = document.querySelector<HTMLElement>(".fps-counter")!;
   expect([fpsCounterShown(), counter.hidden]).toEqual([false, true]);
   setFpsCounterShown(true);
@@ -33,11 +33,14 @@ it("is off by default, then shows the frame rate in the viewport corner above ev
     rule: [
       "position: fixed;",
       "z-index: 2147483647;",
-      "var(--inset-right)",
-      "var(--inset-bottom)",
+      "--fps-inset: 8px;",
+      "right: calc(var(--inset-right) + var(--fps-inset));",
+      "top: calc(var(--inset-top) + var(--fps-inset));",
+      "pointer-events: none;",
     ].filter((declaration) => !rule.includes(declaration)),
     text: counter.textContent,
-  }).toEqual({ hidden: false, label: DEV_TEXT.fps, onPage: true, rule: [], text: "60" });
+  }).toEqual({ hidden: false, label: TEXT.settings.fps, onPage: true, rule: [], text: "60" });
+  expect(rule).not.toContain("bottom:");
   unmount();
   expect(document.querySelector(".fps-counter")).toBeNull();
 });

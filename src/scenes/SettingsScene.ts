@@ -9,7 +9,9 @@ import { TEXT } from "../data/text.ts";
 import { installOffer } from "../pwa/installOffer.ts";
 import {
   createSettingsCard,
+  fpsCounterShown,
   reducedMotion,
+  setFpsCounterShown,
   setReducedMotion,
   type SettingsCardView,
   type SettingsSpriteRow,
@@ -36,8 +38,8 @@ export interface SettingsData {
   readonly opener: string;
 }
 
-// The settings with a switch row, in the card's order: the touch settings, then Reduced motion.
-const SWITCH_SETTINGS: readonly SettingsSwitch[] = [...TOUCH_SETTINGS, "reducedMotion"];
+// Keep the touch switches together, followed by the two display preferences.
+const SWITCH_SETTINGS: readonly SettingsSwitch[] = [...TOUCH_SETTINGS, "reducedMotion", "fps"];
 
 // The sprite icon on each row but the touch settings', which draw their controls, shown once
 // Art's texture is loaded.
@@ -59,14 +61,19 @@ const STEPS_GLYPHS: Readonly<Record<InstallStepsKind, string | undefined>> = {
   samsungInternet: "icon-browser-menu",
 };
 
-// Whether a switch row's setting is on: a touch setting while shown, Reduced motion while motion
-// is reduced.
 function settingOn(setting: SettingsSwitch): boolean {
-  return setting === "reducedMotion" ? reducedMotion(window) : touchSettingShown(setting);
+  switch (setting) {
+    case "fps":
+      return fpsCounterShown();
+    case "reducedMotion":
+      return reducedMotion(window);
+    default:
+      return touchSettingShown(setting);
+  }
 }
 
 // The settings card, which the pause card opens in its place over the same dim, or the start
-// screen over itself: the Move controls, Action buttons and Reduced motion rows, the Install row
+// screen over itself: the touch and display switches, the Install row
 // until the game is installed, and the build label. A switch row toggles its setting, saving it
 // at once; a touch setting shows in the opener's dim as it changes. The close X, back, Escape, P
 // and a tap outside close the card, back to the scene that opened it. Install shows the browser's
@@ -219,11 +226,15 @@ export class SettingsScene extends Scene {
       this.back();
     } else if (target === "install") {
       this.install();
-    } else if (target === "reducedMotion") {
-      setReducedMotion(window, !reducedMotion(window));
-      this.render();
     } else {
-      this.openerScene().setTouchSetting(target, !touchSettingShown(target));
+      const on = !settingOn(target);
+      if (target === "fps") {
+        setFpsCounterShown(on);
+      } else if (target === "reducedMotion") {
+        setReducedMotion(window, on);
+      } else {
+        this.openerScene().setTouchSetting(target, on);
+      }
       this.render();
     }
   }

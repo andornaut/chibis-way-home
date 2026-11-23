@@ -36,8 +36,8 @@ import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/fol
 import { Core, Game, Scale, WEBGL } from "phaser";
 
 import { CRASH_SCREEN } from "./crash/crashScreen.ts";
-import { DEV_TEXT } from "./data/dev.ts";
 import { SCREEN } from "./data/screen.ts";
+import { TEXT } from "./data/text.ts";
 import { setupPhoneApp } from "./pwa/index.ts";
 import { installOffer } from "./pwa/installOffer.ts";
 import { AchievementNoticeScene } from "./scenes/AchievementNoticeScene.ts";
@@ -164,10 +164,10 @@ function startGame(attempt: LoadingAttempt): void {
   if (gameHost) {
     game.events.once("destroy", mountDomUi(game, gameHost));
   }
-  // The FPS counter tool, on the page outside the game's view.
+  // The FPS counter, on the page outside the game's view.
   game.events.once(
     "destroy",
-    mountFpsCounter(document, () => game.loop.actualFps, DEV_TEXT.fps),
+    mountFpsCounter(document, () => game.loop.actualFps, TEXT.settings.fps),
   );
   // Phaser fits the canvas to #game and measures and maps pointers through the frame's turn, and
   // the page is kept to the visible area with the fit refreshed whenever it or the turn may have

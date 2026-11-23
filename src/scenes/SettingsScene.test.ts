@@ -45,9 +45,18 @@ vi.mock("./domUi.ts", () => ({
 
 import { DEV_TEXT } from "../data/dev.ts";
 import { TEXT } from "../data/text.ts";
+import { TOUCH } from "../data/touch.ts";
+import {
+  beginDevelopmentSession,
+  endDevelopmentSession,
+  isDevelopmentSession,
+} from "../dev/mode.ts";
 import {
   createUiLayer,
+  fpsCounterShown,
+  mountFpsCounter,
   reducedMotion,
+  setFpsCounterShown,
   setTouchSettingShown,
   touchSettingShown,
   type UiLayer,
@@ -55,7 +64,7 @@ import {
 import { SettingsScene } from "./SettingsScene.ts";
 
 const WORDS = TEXT.settings;
-const SWITCHES = [WORDS.moveControls, WORDS.actionButtons, WORDS.reducedMotion];
+const SWITCHES = [WORDS.moveControls, WORDS.actionButtons, WORDS.reducedMotion, WORDS.fps];
 let layer: UiLayer;
 
 beforeEach(() => {
@@ -134,6 +143,7 @@ it("shows a switch for each setting named from TEXT, then the build label, focus
       touchSettingShown("moveControls"),
       touchSettingShown("actionButtons"),
       reducedMotion(window),
+      fpsCounterShown(),
     ].map(String),
     focused: true,
     icons: ["blob:icon-reduced-motion"],
@@ -144,7 +154,7 @@ it("shows a switch for each setting named from TEXT, then the build label, focus
 });
 
 // Each setting's name and effect stay separate, with decorative inline touch icons where needed.
-it("describes every switch's effect separately from its setting name", async () => {
+it("keeps switch descriptions separate from their accessible setting names", async () => {
   const { control } = await openCard();
   const row = (label: string) => {
     const button = control(label);
@@ -159,7 +169,7 @@ it("describes every switch's effect separately from its setting name", async () 
       note: note && button.contains(note) ? note.textContent : null,
     };
   };
-  expect([WORDS.moveControls, WORDS.actionButtons, WORDS.reducedMotion].map(row)).toEqual([
+  expect(SWITCHES.map(row)).toEqual([
     {
       decorative: true,
       icons: ["move"],
@@ -178,6 +188,7 @@ it("describes every switch's effect separately from its setting name", async () 
       name: [WORDS.reducedMotion, WORDS.descriptions.reducedMotion],
       note: WORDS.descriptions.reducedMotion,
     },
+    { decorative: true, icons: [], name: [WORDS.fps], note: null },
   ]);
 });
 
@@ -209,7 +220,16 @@ it("moves the keyboard's focus through the rows, Install, then the close X, wrap
       return focused();
     });
   expect(
-    steps(["ArrowDown", "Tab", "ArrowDown", "ArrowDown", "Tab", "ArrowDown", "ArrowUp"]),
+    steps([
+      "ArrowDown",
+      "Tab",
+      "ArrowDown",
+      "ArrowDown",
+      "Tab",
+      "ArrowDown",
+      "ArrowDown",
+      "ArrowUp",
+    ]),
   ).toEqual([...SWITCHES, WORDS.install, WORDS.close, WORDS.moveControls, WORDS.close]);
 });
 
@@ -223,6 +243,73 @@ it("toggles and saves Reduced motion on a press, never through the opener", asyn
     saved: localStorage.getItem("chibis-way-home.reduced-motion"),
     touch: owner.setTouchSetting.mock.calls.length,
   }).toEqual({ checked: String(!motion), motion: !motion, saved: motion ? "off" : "on", touch: 0 });
+});
+
+it("changes only the FPS device preference and overlay from Settings", async () => {
+  const deviceKey = "chibis-way-home.fps-counter";
+  const saved = new Map([
+    ["chibis-way-home.save", "retained-save"],
+    ["chibis-way-home.save-backup", "retained-backup"],
+  ]);
+  for (const [key, value] of saved) {
+    localStorage.setItem(key, value);
+  }
+  const unmount = mountFpsCounter(document, () => 59.6, WORDS.fps);
+  try {
+    const { control, key, owner } = await openCard("pause");
+    const button = control(WORDS.fps);
+    const overlay = document.querySelector<HTMLElement>(".fps-counter")!;
+    expect([
+      button.getAttribute("aria-checked"),
+      overlay.hidden,
+      localStorage.getItem(deviceKey),
+    ]).toEqual(["false", true, null]);
+
+    vi.useFakeTimers();
+    button.focus();
+    key("Enter");
+    key("Enter", { repeat: true });
+    expect([
+      button.getAttribute("aria-checked"),
+      overlay.hidden,
+      localStorage.getItem(deviceKey),
+    ]).toEqual(["true", false, "on"]);
+    expect(isDevelopmentSession()).toBe(false);
+
+    beginDevelopmentSession();
+    const touch = (type: string) =>
+      button.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          pointerId: 1,
+          pointerType: "touch",
+        }),
+      );
+    touch("pointerdown");
+    await vi.advanceTimersByTimeAsync(TOUCH.actionHoldMilliseconds);
+    expect(button.getAttribute("aria-checked")).toBe("false");
+    touch("pointerup");
+    expect([
+      button.getAttribute("aria-checked"),
+      overlay.hidden,
+      localStorage.getItem(deviceKey),
+    ]).toEqual(["false", true, null]);
+    expect(isDevelopmentSession()).toBe(true);
+    expect(owner.setTouchSetting).not.toHaveBeenCalled();
+    for (const [storageKey, value] of saved) {
+      expect(localStorage.getItem(storageKey)).toBe(value);
+    }
+  } finally {
+    unmount();
+    setFpsCounterShown(false);
+    vi.useRealTimers();
+    endDevelopmentSession();
+    for (const storageKey of saved.keys()) {
+      localStorage.removeItem(storageKey);
+    }
+  }
 });
 
 it("takes its own scope over the pause card, and passes each touch setting's change to it", async () => {

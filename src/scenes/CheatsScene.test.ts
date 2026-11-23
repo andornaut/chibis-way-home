@@ -100,7 +100,7 @@ function openCard(installed = false) {
 
 it.each([false, true])("keeps cheat and tool behaviour in app mode %s", async (installed) => {
   const { control } = openCard(installed);
-  control(DEV_TEXT.fps).click();
+  expect(control(TEXT.settings.fps)).toBeUndefined();
   control(DEV_TEXT.showTipsAgain).click();
   await settle();
   expect(saves.startCheatSession).not.toHaveBeenCalled();
