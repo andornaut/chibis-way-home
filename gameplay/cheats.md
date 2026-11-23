@@ -24,5 +24,4 @@ Cheats never touch the save. Using any cheat starts a cheat session: from then o
 Tools are not cheats and start no cheat session.
 
 - **Show tips again:** clears the saved seen-tips record, so every first-time tip, including each power-up's, can show again.
-- **FPS counter:** Off by default. On shows the frames per second as a number in the bottom-right corner of the device viewport, inset from the safe area and drawn above everything, letterbox bars included. It is a device setting, not part of the save.
 - **Reset save:** the last tool opens a confirmation card. Cancel or the confirmation’s close X dismisses only the confirmation and returns focus to Reset save in Cheats. A successful reset clears the save entirely (progress, statistics, achievements and seen tips), then returns to the start screen. Device settings outside the save stay.

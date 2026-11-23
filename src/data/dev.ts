@@ -6,7 +6,6 @@ export const DEV_TEXT = {
     title: "Cheats",
     tools: "Tools",
   },
-  fps: "FPS counter",
   grantResults: {
     invalid: "Saved progress could not be updated safely. Nothing was changed.",
     unavailable: "Saving is unavailable. Try again.",

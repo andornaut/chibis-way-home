@@ -309,6 +309,7 @@ export const TEXT: GameText = {
       moveControls: "The movement guide is shown or hidden. Touch movement remains available.",
       reducedMotion: "Screen shake, flashing and feedback motion are reduced.",
     },
+    fps: "FPS counter",
     install: "Install",
     installButton: "Install",
     installSteps: {
