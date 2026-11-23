@@ -191,3 +191,8 @@
 .settings-steps[data-glyph] .settings-steps-text {
   max-width: calc(var(--ui-unit) * var(--settings-steps-width) * 1px);
 }
+
+/* Back stays centred below the fixed build label while the rows scroll. */
+.settings-footer {
+  flex: none;
+}

@@ -167,6 +167,12 @@ export class SettingsScene extends Scene {
           {
             activate: () => this.act("close"),
             available: settingsShown,
+            element: card.back,
+            preventTouchMouseDefault: () => settingsShown() && acceptsDismissal(),
+          },
+          {
+            activate: () => this.act("close"),
+            available: settingsShown,
             element: card.close,
             preventTouchMouseDefault: () => settingsShown() && acceptsDismissal(),
           },

@@ -185,6 +185,7 @@ export interface GameText {
   // page show the browser-specific install steps.
   readonly settings: {
     readonly actionButtons: string;
+    readonly back: string;
     // The close X's accessible name, on the settings card and the install steps card.
     readonly close: string;
     readonly descriptions: Readonly<

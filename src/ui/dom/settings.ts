@@ -9,9 +9,10 @@ import {
 } from "../settings/touchControls.ts";
 import { createActionIcon } from "./actionHelp.ts";
 import { closeButton, setCardWidth } from "./card.ts";
+import { createTextButtonElement } from "./cardElements.ts";
 
 // The settings card in the HTML UI (settings.css, on ui.css's .ui-card): its title, a switch row
-// for each setting, the Install row while the game can be installed, the build label and the close
+// for each setting, the Install row while the game can be installed, the build label, a fixed Back action and the close
 // X; and in the same view, hidden until Install needs it, the install steps card in its place,
 // with its title, the browser's steps beside their glyph and its own close X. Each row is one
 // button and its whole press area: a switch row (role switch, aria-checked, named by its label)
@@ -20,7 +21,7 @@ import { closeButton, setCardWidth } from "./card.ts";
 // can describe its effect under its label. Touch rows draw the controls they show or hide as inline
 // control icons; Install and Reduced motion use art sprites. The icons are decorative, hidden
 // from assistive technology. The close X comes last, so the keyboard's focus moves through the
-// rows in order, then the close X.
+// rows in order, then Back and the close X.
 
 export type SettingsSwitch = "fps" | "reducedMotion" | TouchSetting;
 
@@ -37,6 +38,7 @@ export interface SettingsCardColours {
 
 export interface SettingsCardWords {
   readonly actionButtons: string;
+  readonly back: string;
   readonly close: string;
   readonly descriptions: Readonly<Record<Exclude<SettingsSwitch, "fps">, string>>;
   readonly fps: string;
@@ -54,6 +56,7 @@ export interface SettingsCardWords {
 }
 
 export interface SettingsCardView {
+  readonly back: HTMLButtonElement;
   readonly backdrop: HTMLElement;
   // The settings card itself: role dialog, named by its title.
   readonly dialog: HTMLElement;
@@ -188,9 +191,11 @@ export function createSettingsCard(
     face.append(text("span", "ui-text-button-label", words.installButton));
     install.append(face);
   }
+  const back = createTextButtonElement(document, words.back, true);
+  const footer = element("div", "ui-card-actions settings-footer");
+  footer.append(back);
   const close = closeButton(document, words.close);
-  dialog.append(list, text("p", "ui-card-text settings-build", rows.build));
-  dialog.append(close);
+  dialog.append(list, text("p", "ui-card-text settings-build", rows.build), footer, close);
   const steps = dialogFor(`${id}-steps`, "", "settings-steps", "medium");
   steps.dialog.hidden = true;
   steps.dialog.setAttribute("aria-describedby", `${id}-steps-text`);
@@ -205,6 +210,7 @@ export function createSettingsCard(
   view.append(dialog, steps.dialog);
   root.append(backdrop, view);
   return {
+    back,
     backdrop,
     close,
     dialog,

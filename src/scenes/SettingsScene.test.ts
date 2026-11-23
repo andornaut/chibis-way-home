@@ -212,7 +212,7 @@ it("shows current state text before and after toggling without changing the sett
   }
 });
 
-it("moves the keyboard's focus through the rows, Install, then the close X, wrapping", async () => {
+it("moves the keyboard's focus through the rows, Install, Back and the close X, wrapping", async () => {
   const { control, dialog, focused, key } = await openCard("start", true);
   const [left, right] = dialog.querySelectorAll(".settings-column");
   expect([...left!.children]).toEqual(SWITCHES.slice(0, -1).map(control));
@@ -231,9 +231,10 @@ it("moves the keyboard's focus through the rows, Install, then the close X, wrap
       "Tab",
       "ArrowDown",
       "ArrowDown",
+      "Tab",
       "ArrowUp",
     ]),
-  ).toEqual([...SWITCHES, WORDS.install, WORDS.close, WORDS.moveControls, WORDS.close]);
+  ).toEqual([...SWITCHES, WORDS.install, WORDS.back, WORDS.close, WORDS.moveControls, WORDS.close]);
 });
 
 it("toggles and saves Reduced motion on a press, never through the opener", async () => {
@@ -335,6 +336,7 @@ it("keeps the gate's refusals: no toggle or close while the gate refuses", async
   gate.accepts.mockReturnValue(false);
   control(WORDS.reducedMotion).click();
   control(WORDS.close).click();
+  control(WORDS.back).click();
   key("Escape");
   expect({ closed: owner.settingsClosed.mock.calls.length, motion: reducedMotion(window) }).toEqual(
     { closed: 0, motion },
@@ -468,6 +470,7 @@ it("prevents compatibility mouse defaults only for an eligible current Settings 
     return event.defaultPrevented;
   };
   expect(prevented(close)).toBe(true);
+  expect(prevented(control(WORDS.back))).toBe(true);
   expect(prevented(backdrop)).toBe(true);
   expect(prevented(control(WORDS.install))).toBe(false);
   expect(prevented(control(WORDS.reducedMotion))).toBe(false);
@@ -490,6 +493,7 @@ it("prevents compatibility mouse defaults only for an eligible current Settings 
 it("restores Install after a touch-opened steps card and protects its X and backdrop dismissals", async () => {
   const { control, dialog, owner, steps } = await openCard("pause", true);
   const install = control(WORDS.install);
+  const back = control(WORDS.back);
   const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
   const close = steps.querySelector<HTMLButtonElement>(".ui-close-button")!;
   const tap = (element: HTMLElement) => {
@@ -512,6 +516,10 @@ it("restores Install after a touch-opened steps card and protects its X and back
   await settle();
   expect(steps.hidden).toBe(false);
   expect(document.activeElement).toBe(close);
+  back.click();
+  tap(back);
+  expect(steps.hidden).toBe(false);
+  expect(owner.settingsClosed).not.toHaveBeenCalled();
   expect(tap(close)).toBe(true);
   expect(steps.hidden).toBe(true);
   expect(document.activeElement).toBe(install);
@@ -524,3 +532,41 @@ it("restores Install after a touch-opened steps card and protects its X and back
   expect(document.activeElement).toBe(install);
   expect(owner.settingsClosed).not.toHaveBeenCalled();
 });
+
+it.each(["tap", "hold", "keyboard"] as const)(
+  "returns through the primary Back action once for %s",
+  async (action) => {
+    const { control, key, owner } = await openCard("pause");
+    const back = control(WORDS.back);
+    const pointer = (type: string) =>
+      back.dispatchEvent(
+        new PointerEvent(type, {
+          bubbles: true,
+          button: 0,
+          cancelable: true,
+          isPrimary: true,
+          pointerId: 51,
+          pointerType: "touch",
+        }),
+      );
+    vi.useFakeTimers();
+    try {
+      if (action === "keyboard") {
+        back.focus();
+        key("Enter");
+        key("Enter", { repeat: true });
+      } else {
+        expect(pointer("pointerdown")).toBe(false);
+        if (action === "hold") {
+          await vi.advanceTimersByTimeAsync(TOUCH.actionHoldMilliseconds);
+        }
+        pointer("pointerup");
+        back.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+      }
+      expect(owner.settingsClosed).toHaveBeenCalledOnce();
+      expect(owner.setTouchSetting).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  },
+);

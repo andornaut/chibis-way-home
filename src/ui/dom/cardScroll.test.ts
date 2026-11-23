@@ -104,7 +104,7 @@ it("keeps the warning above the two Cheats columns, with unlocks opposite skills
   ]);
 });
 
-it("scrolls only the Settings rows between the title and Close", () => {
+it("keeps the Settings title, Back and close X outside its scrolling rows", () => {
   const colours = { cream: 0, ink: 0, navy: 0, white: 0 };
   const view = createSettingsCard(document, colours, "settings", TEXT.settings, {
     build: "build",
@@ -113,10 +113,14 @@ it("scrolls only the Settings rows between the title and Close", () => {
   });
   const scrollers = view.dialog.querySelectorAll(".ui-card-scroll");
   expect(scrollers).toHaveLength(1);
+  expect(view.back).toBeInstanceOf(HTMLButtonElement);
+  expect(view.back.closest(".ui-card-actions.settings-footer")?.parentElement).toBe(view.dialog);
+  expect(view.back.classList.contains("ui-text-button-primary")).toBe(true);
+  expect(view.back.textContent).toBe(TEXT.settings.back);
   const [scroller] = scrollers;
   const rows = [...Object.values(view.switches), view.install!];
   expect(rows.every((row) => scroller?.contains(row))).toBe(true);
-  for (const fixed of [view.dialog.querySelector(".ui-card-title")!, view.close]) {
+  for (const fixed of [view.dialog.querySelector(".ui-card-title")!, view.back, view.close]) {
     expect(scroller?.contains(fixed)).toBe(false);
   }
 });
