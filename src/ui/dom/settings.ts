@@ -79,10 +79,8 @@ function isTouchSetting(key: string): key is TouchSetting {
   return (TOUCH_SETTINGS as readonly string[]).includes(key);
 }
 
-// The card for words, with a switch row for each of switches in that order, then the Install row
-// where install holds, then the build label. Its control icons use colours, and the dialogs'
-// ids are id and `${id}-steps`, which their
-// titles', rows' and text's ids extend.
+// Place the existing settings in the left column, with FPS atop the right column and Install
+// below it where available. The two columns share the card's scroll body.
 export function createSettingsCard(
   document: Document,
   colours: SettingsCardColours,
@@ -129,6 +127,9 @@ export function createSettingsCard(
   // margins. The install steps card over it stays medium.
   const { dialog } = dialogFor(id, words.title, "settings-card", "large");
   const list = element("div", "settings-rows ui-card-scroll");
+  const left = element("div", "settings-column");
+  const right = element("div", "settings-column");
+  list.append(left, right);
   const icons: Partial<Record<SettingsSpriteRow, HTMLImageElement>> = {};
   // A row's button with its icons and its label, which names it. Each switch's note describes
   // its effect; aria-checked exposes the current state without repeating the visible state text.
@@ -161,7 +162,7 @@ export function createSettingsCard(
       name.append(note);
     }
     button.append(slot, name);
-    list.append(button);
+    (key === "fps" || key === "install" ? right : left).append(button);
     return button;
   };
   const switches = Object.fromEntries(

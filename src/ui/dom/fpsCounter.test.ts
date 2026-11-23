@@ -16,7 +16,7 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-// On, it sits on the page outside the game, in the device viewport's top-right corner.
+// On, it sits on the page outside the game, in the original bottom-right corner.
 it("is off by default, then shows the frame rate in the viewport corner above everything", () => {
   const game = document.createElement("div");
   game.id = "game";
@@ -33,14 +33,14 @@ it("is off by default, then shows the frame rate in the viewport corner above ev
     rule: [
       "position: fixed;",
       "z-index: 2147483647;",
-      "--fps-inset: 8px;",
-      "right: calc(var(--inset-right) + var(--fps-inset));",
-      "top: calc(var(--inset-top) + var(--fps-inset));",
+      "right: calc(var(--inset-right) + 8px);",
+      "bottom: calc(var(--inset-bottom) + 8px);",
       "pointer-events: none;",
     ].filter((declaration) => !rule.includes(declaration)),
     text: counter.textContent,
   }).toEqual({ hidden: false, label: TEXT.settings.fps, onPage: true, rule: [], text: "60" });
-  expect(rule).not.toContain("bottom:");
+  expect(rule).not.toContain("top:");
+  expect(PAGE_CSS.match(/\.fps-counter\s*\{/gu)).toHaveLength(1);
   unmount();
   expect(document.querySelector(".fps-counter")).toBeNull();
 });

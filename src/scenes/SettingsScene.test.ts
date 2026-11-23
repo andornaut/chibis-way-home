@@ -213,7 +213,10 @@ it("shows current state text before and after toggling without changing the sett
 });
 
 it("moves the keyboard's focus through the rows, Install, then the close X, wrapping", async () => {
-  const { focused, key } = await openCard("start", true);
+  const { control, dialog, focused, key } = await openCard("start", true);
+  const [left, right] = dialog.querySelectorAll(".settings-column");
+  expect([...left!.children]).toEqual(SWITCHES.slice(0, -1).map(control));
+  expect([...right!.children]).toEqual([control(WORDS.fps), control(WORDS.install)]);
   const steps = (values: readonly string[]) =>
     values.map((value) => {
       key(value);

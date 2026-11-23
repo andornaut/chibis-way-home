@@ -24,6 +24,24 @@
   margin-top: calc(-1 * var(--ui-unit) * var(--button-hit) * 1px);
 }
 
+.settings-card .settings-rows {
+  --settings-column-min: calc(var(--ui-unit) * var(--card-width-medium) / 2 * 1px);
+  --settings-column-half: calc((100% - var(--ui-button-gap)) / 2);
+
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, max(var(--settings-column-min), var(--settings-column-half))), 1fr)
+  );
+  align-items: start;
+  column-gap: var(--ui-button-gap);
+}
+
+.settings-column {
+  display: grid;
+  min-width: 0;
+  row-gap: var(--ui-stack-button-gap);
+}
+
 /* A row: its icons, its name and, at the row's right end, its current state and switch or Install
    button. Rows grow for wrapped help without shrinking their press targets or fonts. */
 .settings-row {

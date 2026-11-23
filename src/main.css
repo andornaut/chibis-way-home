@@ -66,41 +66,19 @@ html > body {
   display: block;
 }
 
-/* The FPS counter (src/ui/dom/fpsCounter.ts) sits on <body>, outside the game's view: in the
-   top-right corner of the device viewport, inset from the safe area on the frame's own edges
+/* The FPS counter tool (src/ui/dom/fpsCounter.ts) sits on <body>, outside the game's view: in the
+   bottom-right corner of the device viewport, inset from the safe area on the frame's own edges
    (the kit's --inset-*), and above every layer, the letterbox bars included. */
 .fps-counter {
-  --fps-inset: 8px;
-
   position: fixed;
   z-index: 2147483647;
-  right: calc(var(--inset-right) + var(--fps-inset));
-  top: calc(var(--inset-top) + var(--fps-inset));
+  right: calc(var(--inset-right) + 8px);
+  bottom: calc(var(--inset-bottom) + 8px);
   padding: 2px 6px;
   color: #eee6d4;
   background: rgb(24 20 37 / 80%);
   font: 14px/1 monospace;
   pointer-events: none;
-}
-
-/* The turned body also turns fixed descendants. Use the edges which meet at the device's
-   upper right and counter-rotate the reading so it stays upright in the device viewport. */
-@media (orientation: portrait) and (pointer: coarse) {
-  .fps-counter {
-    right: auto;
-    left: calc(var(--inset-left) + var(--fps-inset));
-    transform: rotate(-90deg) translateX(-100%);
-    transform-origin: top left;
-  }
-
-  html[data-frame-turn="-90"] .fps-counter {
-    top: auto;
-    right: calc(var(--inset-right) + var(--fps-inset));
-    bottom: calc(var(--inset-bottom) + var(--fps-inset));
-    left: auto;
-    transform: rotate(90deg) translateY(100%);
-    transform-origin: bottom right;
-  }
 }
 
 .fps-counter[hidden] {
