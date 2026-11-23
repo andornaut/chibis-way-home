@@ -45,13 +45,13 @@ export interface DialogueChoiceOpener {
 const CONTROLS: readonly DialogueControl[] = ["continue", "skip"];
 
 // Where a press lands in the view: on Skip or Continue, or anywhere else ("panel"), which
-// advances as Continue does.
+// advances as Continue does inside the fitted game frame. Letterbox bars take no action.
 type DialogueTarget = DialogueControl | "panel";
 
 // ZoneScene owns the frozen world and per-attempt trigger. This scene owns one paragraph at a
 // time, consuming input until the conversation and its optional required terminal choice finish.
 // The conversation is HTML in the UI layer (src/ui/dom/dialogue.ts), opened in its modal layer
-// with the top card owning input: a fresh tap advances, anywhere but on Skip, which skips; Tab
+// with the top card owning input: a fresh tap inside the game advances, except Skip, which skips; Tab
 // and the arrows move the keyboard's focus through Continue then Skip, wrapping, starting on
 // neither; Enter and Space press the focused one, and every other key but P and Escape advances.
 export class DialogueScene extends Scene implements DialogueChoiceOpener {
@@ -249,15 +249,38 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private watchPresses(view: DialogueView): () => void {
     const input = modalInput(this);
     const live = () => !this.finished && !this.choosing;
+    const frame = view.dialog.parentElement!;
+    const inside = ({ clientX, clientY }: MouseEvent) => {
+      const rect = frame.getBoundingClientRect();
+      return (
+        clientX >= rect.left && clientX < rect.right && clientY >= rect.top && clientY < rect.bottom
+      );
+    };
+    // Capture before the delegated binding. A bar gesture cannot begin an advance or replay a
+    // compatibility click into the page; detail-zero keyboard/assistive activation stays native.
+    const barEvents = ["pointerdown", "pointerup", "mousedown", "mouseup", "click"] as const;
+    const keepBars = (event: MouseEvent) => {
+      if (
+        live() &&
+        input.accepts() &&
+        !document.hidden &&
+        (event.type === "pointerdown" || event.type === "pointerup" || event.detail !== 0) &&
+        !inside(event)
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      }
+    };
+    barEvents.forEach((type) => view.root.addEventListener(type, keepBars, true));
     const stopTaps = bindSceneActions<DialogueTarget>(
       { preventDefault: true, target: view.root, view: view.root },
       input,
       {
         accepts: live,
         activate: (control) => this.act(control === "skip" ? "skip" : "advance"),
-        controlAt: ({ target }) =>
-          target instanceof Element && view.root.contains(target)
-            ? ((target.closest<HTMLElement>("[data-control]")?.dataset.control as
+        controlAt: (event) =>
+          event.target instanceof Element && view.root.contains(event.target) && inside(event)
+            ? ((event.target.closest<HTMLElement>("[data-control]")?.dataset.control as
                 DialogueControl | undefined) ?? "panel")
             : null,
         controls: [...CONTROLS, "panel"],
@@ -275,6 +298,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     view.root.addEventListener("touchend", keep, { capture: true, passive: false });
     return () => {
       stopTaps();
+      barEvents.forEach((type) => view.root.removeEventListener(type, keepBars, true));
       view.root.removeEventListener("touchstart", keep, true);
       view.root.removeEventListener("touchend", keep, true);
     };

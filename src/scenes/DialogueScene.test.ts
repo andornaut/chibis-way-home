@@ -39,6 +39,8 @@ beforeEach(() => {
 
 afterEach(() => {
   layer.dispose();
+  vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 function conversation() {
@@ -56,6 +58,8 @@ function conversation() {
   scene.create();
   modalInput(scene).open();
   const root = document.querySelector<HTMLElement>(".dialogue-scene")!;
+  const frame = root.querySelector<HTMLElement>(".ui-view")!;
+  vi.spyOn(frame, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 720, 360));
   const line = () => root.querySelector(".dialogue-line")!.textContent;
   const button = (control: string) =>
     root.querySelector<HTMLButtonElement>(`[data-control=${control}]`)!;
@@ -233,3 +237,84 @@ it("asks a required choice as an alert dialog with no answer focused, selecting 
   expect(opener.choiceSelected).toHaveBeenCalledExactlyOnceWith("second");
   scene.events.emit("shutdown");
 });
+
+it.each([
+  {
+    bars: [
+      [100, 250],
+      [1300, 250],
+    ],
+    name: "wide side bars",
+    rect: new DOMRect(200, 0, 1000, 500),
+  },
+  { bars: [[500, 650]], name: "tall bottom bar", rect: new DOMRect(0, 0, 1000, 500) },
+  {
+    bars: [
+      [250, 100],
+      [250, 1300],
+    ],
+    name: "turned frame bars",
+    rect: new DOMRect(0, 200, 500, 1000),
+  },
+] as const)(
+  "consumes $name without advancing or replaying a release into the conversation",
+  ({ bars, rect }) => {
+    const { button, events, line, opener, root } = conversation();
+    const frame = root.querySelector<HTMLElement>(".ui-view")!;
+    vi.mocked(frame.getBoundingClientRect).mockReturnValue(rect);
+    const backdrop = root.querySelector<HTMLElement>(".ui-backdrop")!;
+    const underlying = vi.fn();
+    document.addEventListener("click", underlying);
+    const pointer = (target: HTMLElement, type: string, point: readonly [number, number]) => {
+      const event = new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        cancelable: true,
+        clientX: point[0],
+        clientY: point[1],
+        isPrimary: true,
+        pointerId: 71,
+        pointerType: "touch",
+      });
+      target.dispatchEvent(event);
+      return event;
+    };
+    vi.useFakeTimers();
+    for (const point of bars) {
+      expect(pointer(backdrop, "pointerdown", point).defaultPrevented).toBe(true);
+      vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
+      expect(pointer(backdrop, "pointerup", point).defaultPrevented).toBe(true);
+      for (const type of ["mousedown", "mouseup", "click"]) {
+        const event = new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          clientX: point[0],
+          clientY: point[1],
+          detail: 1,
+        });
+        backdrop.dispatchEvent(event);
+        expect(event.defaultPrevented).toBe(true);
+      }
+      expect(line()).toBe(PARAGRAPHS[0]!.text);
+    }
+    expect(underlying).not.toHaveBeenCalled();
+    document.removeEventListener("click", underlying);
+    const inside = [rect.x + 5, rect.y + 5] as const;
+    pointer(backdrop, "pointerdown", bars[0]!);
+    pointer(button("continue"), "pointerup", inside);
+    button("continue").dispatchEvent(
+      new MouseEvent("click", { bubbles: true, clientX: inside[0], clientY: inside[1], detail: 1 }),
+    );
+    expect(line()).toBe(PARAGRAPHS[0]!.text);
+    pointer(button("continue"), "pointerdown", inside);
+    pointer(backdrop, "pointerup", bars[0]!);
+    expect(line()).toBe(PARAGRAPHS[0]!.text);
+    expect(opener.dialogueClosed).not.toHaveBeenCalled();
+    pointer(backdrop, "pointerdown", inside);
+    pointer(backdrop, "pointerup", inside);
+    expect(line()).toBe(PARAGRAPHS[1]!.text);
+    button("continue").click();
+    expect(line()).toBe(PARAGRAPHS[2]!.text);
+    events.emit("shutdown");
+  },
+);
