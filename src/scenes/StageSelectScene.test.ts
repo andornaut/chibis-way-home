@@ -385,7 +385,19 @@ it.each(["Escape", "close"])("closes on %s but not on P", async (how) => {
   key("p");
   expect(stageSelectionClosed).not.toHaveBeenCalled();
   if (how === "close") {
-    dialog.querySelector<HTMLButtonElement>(".ui-close-button")!.click();
+    const close = dialog.querySelector<HTMLButtonElement>(".ui-close-button")!;
+    const press = {
+      bubbles: true,
+      button: 0,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 1,
+      pointerType: "touch",
+    };
+    const down = new PointerEvent("pointerdown", press);
+    close.dispatchEvent(down);
+    expect(down.defaultPrevented).toBe(true);
+    close.dispatchEvent(new PointerEvent("pointerup", press));
   } else {
     key("Escape");
     key("Escape", { repeat: true });

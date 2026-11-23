@@ -59,8 +59,16 @@ const LOOK_ORDER: readonly PathLook[] = ["unbuilt", "built", "open"];
 type Control = { readonly kind: MapAction } | { readonly kind: "node"; readonly id: string };
 
 interface MapData {
+  readonly restoreContinueFocus?: boolean;
   // A stage-node id, consumed once. Progress stays at the completed stage until arrival.
   readonly travelTo?: string;
+}
+
+function canFocus(button: HTMLButtonElement): boolean {
+  return (
+    button.isConnected &&
+    button.closest(":disabled, [hidden], [inert], [aria-disabled='true' i]") === null
+  );
 }
 
 // The overview renders each themed destination once, with its stage nodes retained in the
@@ -75,6 +83,7 @@ export class MapScene extends Scene implements StageSelectOpener {
   private colours: Readonly<Record<string, string>> = {};
   private completed: ReadonlySet<string> = new Set();
   private focus: MapAction | undefined;
+  private restoreContinueFocus = false;
   private open!: OpenMap;
   private stand = ZONE_MAP.start;
   private selectionOpen = false;
@@ -112,6 +121,7 @@ export class MapScene extends Scene implements StageSelectOpener {
     this.domReady = false;
     this.generation += 1;
     this.focus = undefined;
+    this.restoreContinueFocus = data.restoreContinueFocus === true;
     this.selectionOpen = false;
     this.travelling = false;
     this.journey = undefined;
@@ -123,7 +133,7 @@ export class MapScene extends Scene implements StageSelectOpener {
         this.travelRequested = data.travelTo;
       }
     }
-    // Phaser otherwise retains init data across restarts. Automatic travel is a one-shot request.
+    // Phaser otherwise retains init data across restarts. Travel and focus return are one-shot.
     this.sys.settings.data = {};
   }
 
@@ -433,6 +443,19 @@ export class MapScene extends Scene implements StageSelectOpener {
       if (this.travelling) {
         view.root.inert = true;
       }
+      const restore = this.restoreContinueFocus;
+      this.restoreContinueFocus = false;
+      const next = view.buttons.continue;
+      const page = next.ownerDocument;
+      if (
+        restore &&
+        page.activeElement === page.body &&
+        !page.hidden &&
+        input.accepts() &&
+        canFocus(next)
+      ) {
+        this.focus = "continue";
+      }
       if (this.focus !== undefined && !this.travelling && !this.selectionOpen) {
         focusTarget(view.buttons[this.focus]);
       }
@@ -522,6 +545,9 @@ export class MapScene extends Scene implements StageSelectOpener {
     if (selection.kind === "unavailable") {
       return;
     }
+    const next = this.view?.buttons.continue;
+    this.restoreContinueFocus =
+      next !== undefined && next.ownerDocument.activeElement === next && canFocus(next);
     this.stand = selection.latest;
     saveStand(this.stand);
     this.selectionOpen = true;
@@ -532,7 +558,9 @@ export class MapScene extends Scene implements StageSelectOpener {
   stageSelectionClosed(): void {
     if (this.selectionOpen) {
       this.selectionOpen = false;
-      this.scene.restart();
+      const restore = this.restoreContinueFocus;
+      this.restoreContinueFocus = false;
+      this.scene.restart(restore ? ({ restoreContinueFocus: true } satisfies MapData) : undefined);
     }
   }
 
@@ -545,6 +573,7 @@ export class MapScene extends Scene implements StageSelectOpener {
       return;
     }
     this.selectionOpen = false;
+    this.restoreContinueFocus = false;
     this.play(stage);
   }
 

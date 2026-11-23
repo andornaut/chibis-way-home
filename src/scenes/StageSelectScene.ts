@@ -140,7 +140,12 @@ export class StageSelectScene extends Scene {
             element: button,
             ownAriaDisabled: "refusal-feedback" as const,
           })),
-          { activate: () => this.activate({ kind: "close" }), element: view.close },
+          {
+            activate: () => this.activate({ kind: "close" }),
+            element: view.close,
+            // The departing layer must not focus another target through its compatibility mouse events.
+            preventTouchMouseDefault: () => !this.finished && input.accepts(),
+          },
           ...(view.pager === undefined
             ? []
             : [

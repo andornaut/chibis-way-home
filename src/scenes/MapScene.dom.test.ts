@@ -12,7 +12,10 @@ vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string, frame: unknown) =>
     Promise.resolve(`blob:${art}-${String(frame)}`),
-  mountSceneView: (_scene: unknown, root: HTMLElement) => document.body.append(root),
+  mountSceneView: (scene: { events: EventEmitter }, root: HTMLElement) => {
+    document.body.append(root);
+    scene.events.once("shutdown", () => root.remove());
+  },
   revealSceneView: (_scene: unknown, root: HTMLElement, urls: Promise<readonly string[]>) => {
     ready.urls = urls;
     root.hidden = true;
@@ -41,7 +44,6 @@ import markerSheet from "../../public/art/sprites/map-zone.json" with { type: "j
 import { ZONE_MAP } from "../data/map.ts";
 import { SCREEN } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
-import { openMap } from "../progress/index.ts";
 import { MapScene } from "./MapScene.ts";
 import { modalInput } from "./modalInput.ts";
 
@@ -52,21 +54,19 @@ afterEach(() => {
   document.body.replaceChildren();
 });
 
-function setup() {
-  const scene = new MapScene();
+function setup(scene = new MapScene(), data: Parameters<MapScene["init"]>[0] = {}) {
   const events = new EventEmitter();
   const route = { launch: vi.fn(), restart: vi.fn(), start: vi.fn() };
   Object.assign(scene, {
     cache: { json: { get: (key: string) => (key === "bird" ? birdSheet : markerSheet) } },
-    completed: new Set(),
     events,
-    game: { events: new EventEmitter() },
-    generation: 1,
-    open: openMap(ZONE_MAP, new Set()),
+    game: Reflect.get(scene, "game") ?? { events: new EventEmitter() },
+    input: { enabled: true },
     scene: route,
-    stand: ZONE_MAP.start,
+    sys: { settings: { data } },
     textures: { getFrame: () => ({ cutHeight: 14, cutWidth: 14 }) },
   });
+  scene.init(data);
   (Reflect.get(scene, "addDom") as () => void).call(scene);
   cleanups.push(() => events.emit("shutdown"));
   const root = document.querySelector<HTMLElement>(".map-scene")!;
@@ -107,6 +107,56 @@ it("keeps native input disabled through decoding until successful reveal", async
     destination: ZONE_MAP.destinations[0]!.id,
   });
 });
+
+it("restores the focused Continue on the rebuilt map only after reveal", async () => {
+  const original = setup();
+  ready.finish!(true);
+  await Promise.resolve();
+  const next = original.root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
+  tap(next);
+  expect(document.activeElement).toBe(next);
+  expect(original.route.launch).toHaveBeenCalledOnce();
+  original.scene.stageSelectionClosed();
+  expect(original.route.restart).toHaveBeenCalledExactlyOnceWith({ restoreContinueFocus: true });
+
+  original.events.emit("shutdown");
+  const data = original.route.restart.mock.calls[0]![0] as Parameters<MapScene["init"]>[0];
+  const rebuilt = setup(original.scene, data);
+  const replacement = rebuilt.root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
+  expect(next.isConnected).toBe(false);
+  expect(document.activeElement).not.toBe(replacement);
+  ready.finish!(true);
+  await Promise.resolve();
+  expect(document.activeElement).toBe(replacement);
+});
+
+it.each(["unfocused default shortcut", "competing focus after restart"])(
+  "does not assign Continue focus after %s",
+  async (reason) => {
+    const original = setup();
+    ready.finish!(true);
+    await Promise.resolve();
+    if (reason === "unfocused default shortcut") {
+      original.root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, code: "Enter" }));
+    } else {
+      tap(original.root.querySelector('[data-control="continue"]')!);
+    }
+    expect(original.route.launch).toHaveBeenCalledOnce();
+    original.scene.stageSelectionClosed();
+    const data = original.route.restart.mock.calls[0]![0] as Parameters<MapScene["init"]>[0];
+    original.events.emit("shutdown");
+    setup(original.scene, data);
+    if (reason === "competing focus after restart") {
+      const other = document.createElement("button");
+      document.body.append(other);
+      other.focus();
+    }
+    const focused = document.activeElement;
+    ready.finish!(true);
+    await Promise.resolve();
+    expect(document.activeElement).toBe(focused);
+  },
+);
 
 it("rejects a tap crossing modal ownership and leaves travel input locked", async () => {
   const { root, route, scene } = setup();
