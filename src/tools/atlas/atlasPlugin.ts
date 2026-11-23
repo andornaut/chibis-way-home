@@ -23,7 +23,8 @@ interface AtlasPluginApi {
   textureKeys(): readonly string[];
 }
 
-// Writes the shared art and the stage previews to separate groups of lossless WebP pages.
+// Writes the shared art, including the start background, and the stage previews to separate
+// groups of lossless WebP pages.
 // The atlas module maps every packed key and frame to its page and rect. The dev server
 // loads each file under public/art/ on its own.
 export function atlasPlugin(): Plugin & { api: AtlasPluginApi } {
@@ -44,7 +45,10 @@ export function atlasPlugin(): Plugin & { api: AtlasPluginApi } {
         new TextDecoder().decode(await readArt(ART_MANIFEST_FILE)),
       ) as ArtManifest;
       const dependencies = { encode: encodeLosslessWebp, readArt };
-      const shared = await buildAtlas(dependencies, { ...art, images: [] });
+      const shared = await buildAtlas(dependencies, {
+        ...art,
+        images: art.images.filter(({ key }) => key === "start-background"),
+      });
       const previewKeys = new Set(Object.values(STAGE_PREVIEWS));
       const previews = await buildAtlas(dependencies, {
         backdrops: [],

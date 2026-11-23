@@ -22,7 +22,11 @@ describe("game atlas packing adapter", () => {
   it("passes whole PNG rectangles with the game's page widths, maximum and extrusion", () => {
     const images = [{ height: 24, key: "portrait", width: 48 }];
     const [policy, subjects] = policyFor(images);
-    expect(policy).toMatchObject({ extrude: 1, maxSize: 2048, widths: [256, 512, 1024, 2048] });
+    expect(policy).toMatchObject({
+      extrude: 1,
+      maxSize: 2048,
+      widths: [256, 512, 1024, 1792, 2048],
+    });
     expect(subjects).toEqual([{ rectangles: [{ height: 24, width: 48 }], value: images[0] }]);
   });
 

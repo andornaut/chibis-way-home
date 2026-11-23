@@ -21,8 +21,14 @@ it("emits hashed atlas assets and exposes their dimensions, frames and URLs to t
   const emitted: { fileName: string; source: Uint8Array; type: string }[] = [];
   const source = art.sprites.find(({ key }) => key === "bird")!;
   const preview = art.images.find(({ key }) => key === STAGE_PREVIEWS.street)!;
+  const start = art.images.find(({ key }) => key === "start-background")!;
   const logo = art.images.find(({ key }) => key === "logo")!;
-  const manifest = { backdrops: [], images: [preview, logo], sprites: [source], tilesets: [] };
+  const manifest = {
+    backdrops: [],
+    images: [preview, start, logo],
+    sprites: [source],
+    tilesets: [],
+  };
   const context = {
     emitFile: (asset: (typeof emitted)[number]) => emitted.push(asset),
     environment: { config: { command: "build", publicDir }, logger: { info: vi.fn() } },
@@ -51,15 +57,20 @@ it("emits hashed atlas assets and exposes their dimensions, frames and URLs to t
   const image = vi.mocked(encodeLosslessWebp).mock.calls[0]![0];
   expect(result.pages[0]).toMatchObject({ height: image.height, width: image.width });
   expect(result.textures.map(({ key, page }) => ({ key, page }))).toEqual([
+    { key: start.key, page: 0 },
     { key: "bird", page: 0 },
     { key: preview.key, page: 1 },
   ]);
-  expect(plugin.api.textureKeys()).toEqual(["bird", preview.key]);
-  expect(result.textures[1]!.frames).toEqual([
+  expect(plugin.api.textureKeys()).toEqual([start.key, "bird", preview.key]);
+  const [startTexture, birdTexture, previewTexture] = result.textures;
+  expect(startTexture!.frames).toEqual([
+    { h: start.height, name: BASE_FRAME, w: start.width, x: 1, y: 1 },
+  ]);
+  expect(previewTexture!.frames).toEqual([
     { h: preview.height, name: BASE_FRAME, w: preview.width, x: 1, y: 1 },
   ]);
-  expect(result.textures[0]!.tags).toEqual(bird.meta.frameTags);
-  expect(result.textures[0]!.frames.map(({ duration, name }) => ({ duration, name }))).toEqual(
+  expect(birdTexture!.tags).toEqual(bird.meta.frameTags);
+  expect(birdTexture!.frames.map(({ duration, name }) => ({ duration, name }))).toEqual(
     Object.entries(bird.frames).map(([name, frame]) => ({ duration: frame.duration, name })),
   );
 });

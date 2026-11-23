@@ -6,7 +6,7 @@ const ATLAS_MAX_SIZE = 2048;
 // Each image's edge pixels repeat this far outward, so a frame sampled just past its edge reads
 // its own colour rather than a neighbour's.
 export const EXTRUDE = 1;
-const PAGE_WIDTHS = [256, 512, 1024, 2048] as const;
+const PAGE_WIDTHS = [256, 512, 1024, 1792, 2048] as const;
 
 // An image to pack, by its key.
 export interface PackItem {
