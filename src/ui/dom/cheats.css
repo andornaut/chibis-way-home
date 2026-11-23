@@ -1,9 +1,6 @@
 /* One compact Cheats column retains its save warning, feedback and navigation without scrolling. */
 .cheats-card > .ui-card-header {
   flex: none;
-  flex-direction: column;
-  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
-  padding-block: 0;
 }
 
 .cheats-warning {
@@ -36,6 +33,10 @@
 .cheats-status,
 .cheats-footer {
   flex: none;
+}
+
+.cheats-status {
+  margin-top: calc(-1 * var(--ui-unit) * var(--card-gap) * 1px);
 }
 
 .cheats-status:empty {

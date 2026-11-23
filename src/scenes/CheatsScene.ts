@@ -131,7 +131,7 @@ export class CheatsScene extends Scene {
       this.cheats.status.textContent = DEV_TEXT.results.unlockAllPowerUps;
     } else {
       unlockAllZones();
-      this.cheats.status.textContent = DEV_TEXT.results.unlockAllZones;
+      this.cheats.status.textContent = "";
     }
   }
 }

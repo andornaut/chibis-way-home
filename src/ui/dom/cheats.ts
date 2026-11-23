@@ -66,7 +66,7 @@ export function createCheatsCard(
   heading.id = `${id}-title`;
   const warning = text("p", "ui-card-text cheats-warning", words.groupDescription);
   warning.id = `${id}-warning`;
-  header.append(heading, warning);
+  header.append(heading);
   const body = element("div", "cheats-body");
   const actionColumn = element(
     "div",
@@ -92,7 +92,7 @@ export function createCheatsCard(
   name.append(label, note);
   const value = createToggleValue(document);
   invincibility.append(name, value);
-  body.append(actionColumn, invincibility);
+  body.append(warning, actionColumn, invincibility);
   const status = element("p", "ui-card-text cheats-status");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");

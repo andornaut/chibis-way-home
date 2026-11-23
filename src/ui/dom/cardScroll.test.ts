@@ -49,7 +49,11 @@ it("fits Cheats as one Medium column with only its two actions, switch, status a
   expect(view.dialog.dataset.cardWidth).toBe("medium");
   expect(view.dialog.querySelector(".ui-card-scroll")).toBeNull();
   expect(rule("cheats.css", ".cheats-status:empty + .cheats-footer")).toContain("margin-top: 0;");
+  const header = view.dialog.querySelector(".ui-card-header")!;
+  const warning = view.dialog.querySelector(".cheats-warning")!;
+  expect([...header.children].map((element) => element.className)).toEqual(["ui-card-title"]);
   expect([...view.body.children]).toEqual([
+    warning,
     view.actions.unlockAllPowerUps.parentElement,
     view.invincibility,
   ]);
