@@ -139,27 +139,17 @@
   background-image: var(--ui-switch-on-image);
 }
 
-/* The compact Install face, centred in the row's height, its label clear of its sides by the
-   compact inset, pressed with the row. The whole row stays its press area. */
-.settings-install .ui-text-button-face {
-  --ui-button-height: var(--settings-install-height);
-  --ui-button-min-width: var(--settings-install-width);
-
-  flex: none;
-  width: calc(var(--ui-unit) * var(--settings-install-width) * 1px);
-  height: calc(var(--ui-unit) * var(--settings-install-height) * 1px);
-  padding-inline: calc(
-    var(--ui-unit) * (var(--settings-install-inset) - var(--ui-button-left)) * 1px
-  );
+/* One standard Install face contains its decorative icon and only label. The face is also its
+   full-size target, so its row needs no separate caption or compact nested action. */
+.settings-install {
+  justify-self: start;
+  padding: 0;
 }
 
-.settings-install[data-pressed] .ui-text-button-face {
-  --ui-frame-image: var(--ui-button-pressed-image);
-  --ui-frame-slice: var(--ui-button-pressed-slice);
-}
-
-.settings-install[data-pressed] .ui-text-button-label {
-  translate: 0 var(--button-sink);
+.settings-install .ui-text-button-label {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
 }
 
 .settings-build {

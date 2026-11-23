@@ -19,7 +19,7 @@ import { createToggleValue, fitToggleValues, showToggleValue } from "./toggleVal
 // with its title, the browser's steps beside their glyph and its own close X. Each row is one
 // button and its whole press area: a switch row (role switch, aria-checked, named by its label)
 // holds its icons, label and art's ui-switch; the Install row (named by its label) holds its icon,
-// label and art's ui-button face. A switch row shows its current state beside the switch and
+// single label in a standard secondary face. A switch row shows its current state below the switch and
 // can describe its effect under its label. Touch rows draw the controls they show or hide as inline
 // control icons; Install and Reduced motion use art sprites. The icons are decorative, hidden
 // from assistive technology. The close X comes last, so the keyboard's focus moves through the
@@ -45,7 +45,6 @@ export interface SettingsCardWords {
   readonly descriptions: Readonly<Record<Exclude<SettingsSwitch, "fps">, string>>;
   readonly fps: string;
   readonly install: string;
-  readonly installButton: string;
   readonly moveControls: string;
   readonly reducedMotion: string;
   readonly state: {
@@ -137,7 +136,7 @@ export function createSettingsCard(
   const icons: Partial<Record<SettingsSpriteRow, HTMLImageElement>> = {};
   // A row's button with its icons and its label, which names it. Each switch's note describes
   // its effect; aria-checked exposes the current state without repeating the visible state text.
-  const row = (key: "install" | SettingsSwitch) => {
+  const row = (key: SettingsSwitch) => {
     const button = element("button", "settings-row ui-press");
     button.type = "button";
     const slot = element("span", "settings-icons");
@@ -163,7 +162,7 @@ export function createSettingsCard(
     label.id = `${id}-${key}`;
     button.setAttribute("aria-labelledby", label.id);
     name.append(label);
-    if (key !== "install" && key !== "fps") {
+    if (key !== "fps") {
       const note = text("span", "settings-note", words.descriptions[key]);
       note.id = `${id}-${key}-note`;
       button.setAttribute("aria-describedby", note.id);
@@ -185,11 +184,14 @@ export function createSettingsCard(
   ) as Record<SettingsSwitch, HTMLButtonElement>;
   let install: HTMLButtonElement | undefined;
   if (rows.install) {
-    install = row("install");
+    install = createTextButtonElement(document, words.install);
     install.classList.add("settings-install");
-    const face = element("span", "ui-text-button-face ui-frame");
-    face.append(text("span", "ui-text-button-label", words.installButton));
-    install.append(face);
+    const icon = element("img", "settings-icon");
+    icon.alt = "";
+    icon.setAttribute("aria-hidden", "true");
+    icons.install = icon;
+    install.querySelector(".ui-text-button-label")!.prepend(icon);
+    right.append(install);
   }
   const back = createTextButtonElement(document, words.back, true);
   const footer = element("div", "ui-card-actions settings-footer");

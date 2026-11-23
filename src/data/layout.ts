@@ -179,9 +179,6 @@ export const LOADING_FAILURE_PRESENTATION = {
 export const SETTINGS_CARD = {
   // art: each row's leading icon side, and the install steps glyph's.
   icon: 16,
-  // art: the compact Install face, centred in its full-height row, and its label's least
-  // clearance from the face's left and right edges.
-  install: { height: 28, inset: 8, width: 72 },
   // Install steps wrap within this width beside their glyph.
   stepsTextWidth: 320,
   // art: the toggle switch's size.

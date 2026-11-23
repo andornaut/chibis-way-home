@@ -216,6 +216,48 @@ it("shows current state text before and after toggling without changing the sett
   }
 });
 
+it.each(["tap", "hold", "keyboard"] as const)(
+  "opens Install once by %s from its single labelled icon face",
+  async (action) => {
+    const { control, key, steps } = await openCard("pause", true);
+    const install = control(WORDS.install);
+    expect(install.textContent).toBe(WORDS.install);
+    expect(install.querySelectorAll(".ui-text-button-face")).toHaveLength(1);
+    expect(install.querySelector(".settings-label")).toBeNull();
+    const icon = install.querySelector("img")!;
+    expect(icon.getAttribute("src")).toBe("blob:icon-install");
+    expect(icon.getAttribute("alt")).toBe("");
+    expect(icon.getAttribute("aria-hidden")).toBe("true");
+    vi.useFakeTimers();
+    try {
+      if (action === "keyboard") {
+        install.focus();
+        key("Enter");
+        key("Enter", { repeat: true });
+      } else {
+        const options = {
+          bubbles: true,
+          button: 0,
+          isPrimary: true,
+          pointerId: 81,
+          pointerType: "touch",
+        };
+        install.dispatchEvent(new PointerEvent("pointerdown", options));
+        if (action === "hold") {
+          await vi.advanceTimersByTimeAsync(TOUCH.actionHoldMilliseconds);
+        }
+        install.dispatchEvent(new PointerEvent("pointerup", options));
+        install.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+      }
+      await vi.advanceTimersByTimeAsync(0);
+      expect(offer.install).toHaveBeenCalledOnce();
+      expect(steps.hidden).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  },
+);
+
 it("moves the keyboard's focus through the rows, Install, Back and the close X, wrapping", async () => {
   const { control, dialog, focused, key } = await openCard("start", true);
   const [left, right] = dialog.querySelectorAll(".settings-column");

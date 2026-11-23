@@ -7,8 +7,8 @@ import { FONT_METRICS } from "./fontRoles.ts";
 
 // The settings card's and the install steps card's geometry in base px (src/ui/dom/settings.css
 // lays them out): each row is its own press target, already the minimum target height, so it
-// gains no margin; its icons, name and switch or compact Install face sit in it, the switches and
-// the face at the widest row's right end. A touch row's name is its label over its note, two body
+// gains no margin; its icons, name and switch sit in it. Install uses a standard face around its
+// icon and only label. A touch row's name is its label over its note, two body
 // lines within the row's height. Each row's icons are centred in one slot as wide as Action
 // buttons' Use and Jump, each one body line square, the action help gap apart, so every row's
 // name starts at the same x. Install steps wrap within the steps width beside their glyph, or
@@ -17,9 +17,6 @@ export const SETTINGS_LAYOUT: LayoutValues = {
   "--settings-icon": SETTINGS_CARD.icon,
   "--settings-icon-gap": ACTION_HELP.gap,
   "--settings-icon-slot": 2 * FONT_METRICS.body.lineHeight + ACTION_HELP.gap,
-  "--settings-install-height": SETTINGS_CARD.install.height,
-  "--settings-install-inset": SETTINGS_CARD.install.inset,
-  "--settings-install-width": SETTINGS_CARD.install.width,
   "--settings-row-gap": CARD_CONTENT.rowGap,
   "--settings-row-height": HIT_RULE.minTarget,
   "--settings-steps-width": SETTINGS_CARD.stepsTextWidth,
