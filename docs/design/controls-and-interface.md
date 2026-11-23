@@ -46,3 +46,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0282 | Disable Reset save until a real game is saved                           | [cwh-0282.md](../work/cwh-0282.md) |
 | cwh-0285 | Move the FPS counter into Settings                                      | [cwh-0285.md](../work/cwh-0285.md) |
 | cwh-0286 | Verify and fix modal X pointer dismissal                                | [cwh-0286.md](../work/cwh-0286.md) |
+| cwh-0287 | Put the FPS setting at the top of the right Settings column             | [cwh-0287.md](../work/cwh-0287.md) |
