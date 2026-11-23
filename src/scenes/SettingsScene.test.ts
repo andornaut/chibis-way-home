@@ -64,7 +64,7 @@ import {
 import { SettingsScene } from "./SettingsScene.ts";
 
 const WORDS = TEXT.settings;
-const SWITCHES = [WORDS.moveControls, WORDS.actionButtons, WORDS.reducedMotion, WORDS.fps];
+const SWITCHES = [WORDS.moveControls, WORDS.actionButtons, WORDS.fps, WORDS.reducedMotion];
 let layer: UiLayer;
 
 beforeEach(() => {
@@ -142,8 +142,8 @@ it("shows a switch for each setting named from TEXT, then the build label, focus
     checked: [
       touchSettingShown("moveControls"),
       touchSettingShown("actionButtons"),
-      reducedMotion(window),
       fpsCounterShown(),
+      reducedMotion(window),
     ].map(String),
     focused: true,
     icons: ["blob:icon-reduced-motion"],
@@ -169,6 +169,10 @@ it("keeps switch descriptions separate from their accessible setting names", asy
       note: note && button.contains(note) ? note.textContent : null,
     };
   };
+  const fpsIcon = control(WORDS.fps).querySelector(".settings-fps-icon");
+  expect(fpsIcon?.closest("[aria-hidden]")?.getAttribute("aria-hidden")).toBe("true");
+  expect(fpsIcon?.querySelector("svg")?.getAttribute("viewBox")).toBe("0 0 20 20");
+  expect(fpsIcon?.querySelector("img")).toBeNull();
   expect(SWITCHES.map(row)).toEqual([
     {
       decorative: true,
@@ -182,13 +186,13 @@ it("keeps switch descriptions separate from their accessible setting names", asy
       name: [WORDS.actionButtons, WORDS.descriptions.actionButtons],
       note: WORDS.descriptions.actionButtons,
     },
+    { decorative: true, icons: [], name: [WORDS.fps], note: null },
     {
       decorative: true,
       icons: [],
       name: [WORDS.reducedMotion, WORDS.descriptions.reducedMotion],
       note: WORDS.descriptions.reducedMotion,
     },
-    { decorative: true, icons: [], name: [WORDS.fps], note: null },
   ]);
 });
 
@@ -215,8 +219,12 @@ it("shows current state text before and after toggling without changing the sett
 it("moves the keyboard's focus through the rows, Install, Back and the close X, wrapping", async () => {
   const { control, dialog, focused, key } = await openCard("start", true);
   const [left, right] = dialog.querySelectorAll(".settings-column");
-  expect([...left!.children]).toEqual(SWITCHES.slice(0, -1).map(control));
-  expect([...right!.children]).toEqual([control(WORDS.fps), control(WORDS.install)]);
+  expect([...left!.children]).toEqual(SWITCHES.slice(0, 2).map(control));
+  expect([...right!.children]).toEqual([
+    control(WORDS.fps),
+    control(WORDS.reducedMotion),
+    control(WORDS.install),
+  ]);
   const steps = (values: readonly string[]) =>
     values.map((value) => {
       key(value);

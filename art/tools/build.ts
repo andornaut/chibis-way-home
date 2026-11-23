@@ -481,6 +481,7 @@ const STATIC = [
   "art/README.md",
   "art/controls.md",
   "art/fonts",
+  "art/icons/icon-fps-counter.svg",
   "art/inventory.md",
   "art/layout.md",
   "art/style-guide.md",

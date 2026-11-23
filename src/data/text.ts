@@ -306,8 +306,8 @@ export const TEXT: GameText = {
     back: "Back",
     close: "Close",
     descriptions: {
-      actionButtons: "Use and Jump are shown or hidden. Touch actions remain available.",
-      moveControls: "The movement guide is shown or hidden. Touch movement remains available.",
+      actionButtons: "Touch buttons still work.",
+      moveControls: "Touch movement still works.",
       reducedMotion: "Screen shake, flashing and feedback motion are reduced.",
     },
     fps: "FPS counter",

@@ -6,8 +6,6 @@ import { expect, it } from "vitest";
 import { DEV_TEXT } from "../../data/dev.ts";
 import { CARD_SCREEN_MARGIN } from "../../data/layout.ts";
 import { TEXT } from "../../data/text.ts";
-import type { SkillId } from "../../data/types/index.ts";
-import { SKILL_IDS } from "../../progress/index.ts";
 import { TOUCH_SETTINGS } from "../settings/touchControls.ts";
 import { type CheatsCardWords, createCheatsCard } from "./cheats.ts";
 import { UI_LAYOUT } from "./layer.ts";
@@ -16,26 +14,13 @@ import { createSettingsCard } from "./settings.ts";
 const WORDS: CheatsCardWords = {
   back: TEXT.achievements.back,
   close: DEV_TEXT.cheats.close,
-  confirm: DEV_TEXT.resetSave.confirm,
-  group: DEV_TEXT.cheats.group,
   groupDescription: DEV_TEXT.cheats.groupDescription,
   invulnerable: DEV_TEXT.invulnerable,
-  load: DEV_TEXT.load,
-  powerUps: Object.fromEntries(
-    SKILL_IDS.map((skill) => [
-      skill,
-      DEV_TEXT.powerUpEnable.replace("{skill}", TEXT.skills[skill].title),
-    ]),
-  ) as Record<SkillId, string>,
-  resetSave: DEV_TEXT.resetSave.action,
-  showTipsAgain: DEV_TEXT.showTipsAgain,
-  stage: DEV_TEXT.stage,
-  state: { off: TEXT.settings.state.off, on: TEXT.settings.state.on },
+  invulnerableNote: DEV_TEXT.invulnerableNote,
+  state: TEXT.settings.state,
   title: DEV_TEXT.cheats.title,
-  tools: DEV_TEXT.cheats.tools,
   unlockAllPowerUps: DEV_TEXT.unlockAllPowerUps,
   unlockAllZones: DEV_TEXT.unlockAllZones,
-  zone: DEV_TEXT.zone,
 };
 
 // Vitest blanks CSS imports, so the stylesheets are read from disk.
@@ -58,69 +43,43 @@ it("bounds every card at the view less the screen margin above and below", () =>
   expect(scroll).toContain("overflow-y: auto;");
 });
 
-it("scrolls only the Cheats groups between the title and Back", () => {
-  const view = createCheatsCard(document, "cheats", WORDS, SKILL_IDS);
-  const [title, scroller, status, actions, closeX] = view.dialog.children;
-  expect(view.dialog.children).toHaveLength(5);
-  expect(title?.querySelector("h2")?.textContent).toBe(WORDS.title);
-  expect([...view.dialog.querySelectorAll(".ui-card-scroll")]).toEqual([view.scrollBody]);
-  expect(scroller).toBe(view.scrollBody);
-  expect(status).toBe(view.status);
-  expect(actions?.contains(view.back)).toBe(true);
-  expect(closeX).toBe(view.closeX);
-  const rows = [
-    ...Object.values(view.switches),
-    ...Object.values(view.pickers),
-    ...Object.values(view.actions),
-  ];
-  expect(rows.every((row) => scroller?.contains(row))).toBe(true);
-  expect(scroller?.contains(view.back)).toBe(false);
-});
-
-it("keeps the warning above the two Cheats columns, with unlocks opposite skills", () => {
-  const view = createCheatsCard(document, "cheats", WORDS, SKILL_IDS);
-  const descriptionId = view.dialog.getAttribute("aria-describedby");
-  expect(view.dialog.querySelector(`#${descriptionId}`)?.textContent).toBe(WORDS.groupDescription);
-  const [cheats, tools] = view.scrollBody.children;
-  expect(cheats?.getAttribute("aria-label")).toBe(WORDS.group);
-  const [columns, stageGrid] = cheats!.children;
-  const [left, right] = columns!.children;
-  expect([...left!.children]).toEqual([
+it("fits Cheats as one Medium column with only its two actions, switch, status and navigation", () => {
+  const view = createCheatsCard(document, "cheats", WORDS);
+  expect(view.dialog.dataset.cardWidth).toBe("medium");
+  expect(view.dialog.querySelector(".ui-card-scroll")).toBeNull();
+  expect([...view.body.children]).toEqual([
+    view.actions.unlockAllPowerUps.parentElement,
+    view.invincibility,
+  ]);
+  expect([...view.actions.unlockAllPowerUps.parentElement!.children]).toEqual([
     view.actions.unlockAllPowerUps,
     view.actions.unlockAllZones,
   ]);
-  expect([...right!.children]).toEqual([
-    ...SKILL_IDS.map((skill) => view.switches[`powerUp:${skill}`]),
-    view.switches.invulnerable,
-  ]);
-  expect([...stageGrid!.children]).toEqual([
-    view.pickers.zone,
-    view.pickers.stage,
-    view.actions.load,
-  ]);
-  expect([...tools!.querySelectorAll("button")]).toEqual([
-    view.actions.showTipsAgain,
-    view.actions.resetSave,
-  ]);
+  expect(view.body.contains(view.status)).toBe(false);
+  expect(view.body.contains(view.back)).toBe(false);
+  expect(
+    view.dialog.querySelector(`#${view.dialog.getAttribute("aria-describedby")}`)?.textContent,
+  ).toBe(WORDS.groupDescription);
 });
 
-it("keeps the Settings title, Back and close X outside its scrolling rows", () => {
+it("fits Settings in two non-scrolling columns with fixed navigation", () => {
   const colours = { cream: 0, ink: 0, navy: 0, white: 0 };
   const view = createSettingsCard(document, colours, "settings", TEXT.settings, {
     build: "build",
     install: true,
-    switches: [...TOUCH_SETTINGS, "reducedMotion", "fps"],
+    switches: [...TOUCH_SETTINGS, "fps", "reducedMotion"],
   });
   const scrollers = view.dialog.querySelectorAll(".ui-card-scroll");
-  expect(scrollers).toHaveLength(1);
+  expect(scrollers).toHaveLength(0);
   expect(view.back).toBeInstanceOf(HTMLButtonElement);
   expect(view.back.closest(".ui-card-actions.settings-footer")?.parentElement).toBe(view.dialog);
   expect(view.back.classList.contains("ui-text-button-primary")).toBe(true);
   expect(view.back.textContent).toBe(TEXT.settings.back);
-  const [scroller] = scrollers;
   const rows = [...Object.values(view.switches), view.install!];
-  expect(rows.every((row) => scroller?.contains(row))).toBe(true);
+  expect(rows.every((row) => view.dialog.querySelector(".settings-rows")?.contains(row))).toBe(
+    true,
+  );
   for (const fixed of [view.dialog.querySelector(".ui-card-title")!, view.back, view.close]) {
-    expect(scroller?.contains(fixed)).toBe(false);
+    expect(view.dialog.querySelector(".settings-rows")?.contains(fixed)).toBe(false);
   }
 });

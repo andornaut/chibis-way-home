@@ -4,24 +4,17 @@ The [shared saves and cheats policy](https://github.com/andornaut/game-coordinat
 
 ## Entry and modal
 
-- **Entry:** The Cheats button in Menu or Pause is the sole entry in browser tabs and installed apps. Cheats actions require the active foreground card and remain blocked during a pending save write.
-- **Modal:** the Cheats card uses the Large width family. Its scrollable body contains Cheats, then Tools. The top-right X and the sole centred Back button in the footer dismiss only Cheats. Both return to the invoking Menu or Pause with focus on the Cheats button, preserving the held scenes.
+- **Entry:** the Cheats button in Menu or Pause is the sole entry in browser tabs and installed apps. Actions require the active foreground card.
+- **Modal:** the narrower card fits a single column and its footer without scrolling. The top-right X and sole centred Back button each return to the invoking Menu or Pause, restore focus to Cheats and preserve the held scenes.
 
 ## Cheat session
 
-Cheats never touch the save. Using any cheat starts a cheat session: from then on nothing is saved, earned or banked, including progress, unlocks, skill grants, seen tips, achievements and statistics. Cheats chosen on the start screen apply to the session that the next Start or Continue begins. Returning to the start screen from play, reloading or closing the game ends the session, which is itself never stored, and Continue then loads the save as it was before the first cheat.
+Using a cheat starts a session that keeps progress, unlocks, skill grants, seen tips, achievements and statistics out of the save. A cheat chosen on the start screen applies to the session begun by the next Start or Continue. Returning to the start screen from play, reloading or closing the game ends the session. Continue then loads the save from before the first cheat. Ordinary first-time tips still work under the [tip rules](player-copy.md#dialogue).
 
-## Cheats
+## Controls
 
-- **Invulnerability (contact hazards only):** red hazards and boss contact do not kill Chibi; falling out of the world still uses its safety fallback.
-- **Enable a power-up:** each of Dash, Double jump and Speedy can be made selectable. An enabled power-up never selects itself.
-- **Load stage:** enters any catalogued stage without reloading the page, chosen by stepping through zone and stage picker rows.
-- **Unlock all power-ups:** makes Dash, Double jump and Speedy owned for the session. No power-up selects itself and any current selection stays.
-- **Unlock all zones:** makes every zone and stage available on the map for the session, from the next time the map opens.
+The controls stack in this order:
 
-## Tools
-
-Tools are not cheats and start no cheat session.
-
-- **Show tips again:** clears the saved seen-tips record, so every first-time tip, including each power-up's, can show again.
-- **Reset save:** the last tool opens a confirmation card. Cancel or the confirmation’s close X dismisses only the confirmation and returns focus to Reset save in Cheats. A successful reset clears the save entirely (progress, statistics, achievements and seen tips), then returns to the start screen. Device settings outside the save stay.
+1. **Unlock all power-ups** makes Dash, Double jump and Speedy eligible for the session and preserves the current selection.
+2. **Unlock all zones** makes every zone and stage available the next time the map opens during the session.
+3. **Invincibility** is a switch with its visible On or Off state centred below it. It prevents deaths from contact hazards, including red hazards and bosses. Falling out of the world remains lethal.

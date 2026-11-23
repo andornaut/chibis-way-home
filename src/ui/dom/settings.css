@@ -13,9 +13,7 @@
   display: none;
 }
 
-/* The rows as wide as the widest, stacked the kit's stack button gap apart, in ui.css's
-   .ui-card-scroll. They are their own press areas, so the first starts where the header's text
-   buttons' press areas would. */
+/* Rows retain full press areas; the first starts at the header action clearance. */
 .settings-rows {
   display: grid;
   align-self: stretch;
@@ -25,13 +23,8 @@
 }
 
 .settings-card .settings-rows {
-  --settings-column-min: calc(var(--ui-unit) * var(--card-width-medium) / 2 * 1px);
-  --settings-column-half: calc((100% - var(--ui-button-gap)) / 2);
-
-  grid-template-columns: repeat(
-    auto-fit,
-    minmax(min(100%, max(var(--settings-column-min), var(--settings-column-half))), 1fr)
-  );
+  flex: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: start;
   column-gap: var(--ui-button-gap);
 }
@@ -192,7 +185,49 @@
   max-width: calc(var(--ui-unit) * var(--settings-steps-width) * 1px);
 }
 
-/* Back stays centred below the fixed build label while the rows scroll. */
+/* Back stays centred below the fixed build label. */
 .settings-footer {
   flex: none;
+}
+
+/* Every toggle uses the same centred trailing switch and state stack. */
+.settings-toggle-value {
+  width: var(--settings-toggle-width, max-content);
+  flex-direction: column;
+  justify-content: center;
+  min-width: calc(var(--ui-unit) * var(--settings-switch-width) * 1px);
+  gap: calc(var(--ui-unit) * var(--settings-row-gap) * 1px);
+}
+
+.settings-toggle-value .settings-state {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.settings-card .settings-column {
+  row-gap: calc(var(--ui-unit) * var(--settings-row-gap) * 1px);
+}
+
+.settings-fps-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.settings-fps-icon path {
+  stroke: currentColor;
+}
+
+.settings-card > .ui-card-header,
+.settings-build {
+  flex: none;
+}
+
+.settings-card [role="switch"] .settings-name {
+  align-self: start;
+}
+
+.settings-card [role="switch"] .settings-icons {
+  align-self: start;
+  min-height: calc(var(--ui-unit) * var(--text-line) * 1px);
 }

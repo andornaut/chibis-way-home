@@ -1,7 +1,7 @@
 import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import type { LayoutValues } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import { SETTINGS_CARD } from "../../data/layout.ts";
+import { CARD_CONTENT, SETTINGS_CARD } from "../../data/layout.ts";
 import { ACTION_HELP } from "./actionHelp.ts";
 import { FONT_METRICS } from "./fontRoles.ts";
 
@@ -20,6 +20,7 @@ export const SETTINGS_LAYOUT: LayoutValues = {
   "--settings-install-height": SETTINGS_CARD.install.height,
   "--settings-install-inset": SETTINGS_CARD.install.inset,
   "--settings-install-width": SETTINGS_CARD.install.width,
+  "--settings-row-gap": CARD_CONTENT.rowGap,
   "--settings-row-height": HIT_RULE.minTarget,
   "--settings-steps-width": SETTINGS_CARD.stepsTextWidth,
   "--settings-switch-height": SETTINGS_CARD.switch.height,

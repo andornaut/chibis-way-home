@@ -1,5 +1,6 @@
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
+import fpsCounterIcon from "../../../art/icons/icon-fps-counter.svg?raw";
 import type { CardWidth } from "../layout/contentCard.ts";
 import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
 import {
@@ -10,6 +11,7 @@ import {
 import { createActionIcon } from "./actionHelp.ts";
 import { closeButton, setCardWidth } from "./card.ts";
 import { createTextButtonElement } from "./cardElements.ts";
+import { createToggleValue, fitToggleValues, showToggleValue } from "./toggleValue.ts";
 
 // The settings card in the HTML UI (settings.css, on ui.css's .ui-card): its title, a switch row
 // for each setting, the Install row while the game can be installed, the build label, a fixed Back action and the close
@@ -82,8 +84,8 @@ function isTouchSetting(key: string): key is TouchSetting {
   return (TOUCH_SETTINGS as readonly string[]).includes(key);
 }
 
-// Place the existing settings in the left column, with FPS atop the right column and Install
-// below it where available. The two columns share the card's scroll body.
+// Touch settings fill the left column. FPS, Reduced motion and optional Install fill the right.
+// Both columns fit without a scrolling region.
 export function createSettingsCard(
   document: Document,
   colours: SettingsCardColours,
@@ -126,10 +128,9 @@ export function createSettingsCard(
   writeLayoutProperties(SETTINGS_LAYOUT, root);
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
-  // Large: at medium the rows' wrapped notes leave the card taller than the view less its screen
-  // margins. The install steps card over it stays medium.
+  // The full-width Settings form retains two columns; its Install steps child stays medium.
   const { dialog } = dialogFor(id, words.title, "settings-card", "large");
-  const list = element("div", "settings-rows ui-card-scroll");
+  const list = element("div", "settings-rows");
   const left = element("div", "settings-column");
   const right = element("div", "settings-column");
   list.append(left, right);
@@ -147,7 +148,11 @@ export function createSettingsCard(
           createActionIcon(document, colours, undefined, action),
         ),
       );
-    } else if (key !== "fps") {
+    } else if (key === "fps") {
+      const icon = element("span", "settings-icon settings-fps-icon");
+      icon.innerHTML = fpsCounterIcon;
+      slot.append(icon);
+    } else {
       const icon = element("img", "settings-icon");
       icon.alt = "";
       icons[key] = icon;
@@ -165,7 +170,7 @@ export function createSettingsCard(
       name.append(note);
     }
     button.append(slot, name);
-    (key === "fps" || key === "install" ? right : left).append(button);
+    (isTouchSetting(key) ? left : right).append(button);
     return button;
   };
   const switches = Object.fromEntries(
@@ -173,12 +178,7 @@ export function createSettingsCard(
       const button = row(key);
       button.setAttribute("role", "switch");
       button.setAttribute("aria-checked", "false");
-      const toggle = element("span", "settings-switch");
-      toggle.setAttribute("aria-hidden", "true");
-      const value = element("span", "settings-value");
-      const state = element("span", "settings-state");
-      state.setAttribute("aria-hidden", "true");
-      value.append(state, toggle);
+      const value = createToggleValue(document);
       button.append(value);
       return [key, button];
     }),
@@ -241,8 +241,13 @@ export function showSwitches(
     const enabled = on(setting);
     button.setAttribute("aria-checked", String(enabled));
     const state = isTouchSetting(setting) ? (enabled ? "shown" : "hidden") : enabled ? "on" : "off";
-    button.querySelector<HTMLElement>(".settings-state")!.textContent = words[state];
+    showToggleValue(words[state], button.querySelector<HTMLElement>(".settings-toggle-value")!);
   }
+  fitToggleValues(
+    Object.values(view.switches).map((button) =>
+      button.querySelector<HTMLElement>(".settings-toggle-value")!,
+    ),
+  );
 }
 
 // Shows the install steps card in the settings card's place, with words, and its glyph where it

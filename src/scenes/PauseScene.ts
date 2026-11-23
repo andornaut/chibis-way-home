@@ -52,12 +52,12 @@ import {
   trackMenuActionBinding,
 } from "./modalInput.ts";
 import { type PauseDiscTimeline, pauseDiscTimeline, playPauseDiscPress } from "./pauseChrome.ts";
-import { activeSkill, savedSkills, saveStand, selectActiveSkill } from "./save.ts";
+import { activeSkill, savedSkills, selectActiveSkill } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
 import type { SettingsData, SettingsOpener, SettingsScene } from "./SettingsScene.ts";
 import type { SkillDetailData } from "./SkillDetailScene.ts";
 import type { StartData } from "./StartScene.ts";
-import type { ZoneData, ZoneScene } from "./ZoneScene.ts";
+import type { ZoneScene } from "./ZoneScene.ts";
 
 // The scenes that show a conversation over the paused zone, each holding its modal input in turn:
 // a line, the line's required choice, and the departure.
@@ -381,20 +381,6 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
       modalInput(this).open();
       this.showCard(true);
     }
-  }
-
-  // Ends content and shows the start screen, keeping the persistent pause overlay.
-  // Cheats' Load stage: the menu closes and stage plays, entered as the map's stage picker enters
-  // it, from whatever the menu covered.
-  loadStage(stage: string): void {
-    saveStand(stage);
-    this.leaveMenu(ZONE, { node: stage } satisfies ZoneData);
-  }
-
-  // After Reset save: the menu closes on the start screen, as Back to title does.
-  returnToStart(): void {
-    const returnedToTitle = this.overScene !== undefined && this.overScene !== START;
-    this.returnHome(returnedToTitle ? { returnedToTitle } : {});
   }
 
   private returnHome(data: StartData): void {

@@ -1,96 +1,62 @@
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import type { SkillId } from "../../data/types/index.ts";
 import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
 import { closeButton, setCardWidth } from "./card.ts";
 import { createTextButtonElement } from "./cardElements.ts";
+import { createToggleValue, showToggleValue } from "./toggleValue.ts";
 
-// The Cheats card and its Reset save confirmation (cheats.css, on ui.css's .ui-card and
-// settings.css's rows), mounted above the invoking Menu or Pause. Both unlock actions are on the
-// left, power-ups and Invulnerability on the right. Stage controls and Tools follow.
-// The saving warning, status and primary Back stay outside the scroll body. The confirmation is
-// an alert dialog with its body text, Cancel and Reset.
-
-export type CheatSwitch = "invulnerable" | `powerUp:${SkillId}`;
-
-export type CheatAction =
-  "load" | "resetSave" | "showTipsAgain" | "unlockAllPowerUps" | "unlockAllZones";
-
-export type CheatPicker = "stage" | "zone";
+export type CheatAction = "unlockAllPowerUps" | "unlockAllZones";
 
 export interface CheatsCardWords {
   readonly back: string;
   readonly close: string;
-  readonly confirm: {
-    readonly accept: string;
-    readonly body: string;
-    readonly cancel: string;
-    readonly title: string;
-  };
-  readonly group: string;
   readonly groupDescription: string;
   readonly invulnerable: string;
-  readonly load: string;
-  // Each power-up's enable label, its {skill} already filled.
-  readonly powerUps: Readonly<Record<SkillId, string>>;
-  readonly resetSave: string;
-  readonly showTipsAgain: string;
-  readonly stage: string;
+  readonly invulnerableNote: string;
   readonly state: { readonly off: string; readonly on: string };
   readonly title: string;
-  readonly tools: string;
   readonly unlockAllPowerUps: string;
   readonly unlockAllZones: string;
-  readonly zone: string;
 }
 
 export interface CheatsCardView {
   readonly actions: Readonly<Record<CheatAction, HTMLButtonElement>>;
   readonly back: HTMLButtonElement;
   readonly backdrop: HTMLElement;
+  readonly body: HTMLElement;
   readonly closeX: HTMLButtonElement;
-  readonly confirm: {
-    readonly accept: HTMLButtonElement;
-    readonly cancel: HTMLButtonElement;
-    readonly close: HTMLButtonElement;
-    readonly dialog: HTMLElement;
-  };
   readonly dialog: HTMLElement;
-  readonly pickers: Readonly<Record<CheatPicker, HTMLButtonElement>>;
+  readonly invincibility: HTMLButtonElement;
   readonly root: HTMLElement;
-  readonly scrollBody: HTMLElement;
   readonly status: HTMLElement;
-  readonly switches: Readonly<Record<CheatSwitch, HTMLButtonElement>>;
 }
 
-// The cards for words, a switch for each of skills' enables, identified by id and `${id}-confirm`,
-// which their titles' and rows' ids extend.
+// The run-only actions, contact-invincibility switch, save warning and Back fit in one column.
 export function createCheatsCard(
   document: Document,
   id: string,
   words: CheatsCardWords,
-  skills: readonly SkillId[],
 ): CheatsCardView {
   const element = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
-    const created = document.createElement(tag);
-    created.className = className;
-    return created;
+    const node = document.createElement(tag);
+    node.className = className;
+    return node;
   };
   const text = <K extends keyof HTMLElementTagNameMap>(
     tag: K,
     className: string,
     value: string,
   ) => {
-    const created = element(tag, className);
-    created.textContent = value;
-    return created;
+    const node = element(tag, className);
+    node.textContent = value;
+    return node;
   };
   const root = element("div", "ui-card-scene");
   writeLayoutProperties(SETTINGS_LAYOUT, root);
   const backdrop = element("div", "ui-backdrop");
   const view = element("div", "ui-view ui-card-view");
   const dialog = element("section", "ui-card ui-frame ui-card-closeable cheats-card");
-  setCardWidth("large", dialog);
+  setCardWidth("medium", dialog);
   dialog.id = id;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-title`);
@@ -101,146 +67,53 @@ export function createCheatsCard(
   const warning = text("p", "ui-card-text cheats-warning", words.groupDescription);
   warning.id = `${id}-warning`;
   header.append(heading, warning);
-  const body = element("div", "cheats-body ui-card-scroll");
-  // A row's button named by its label, with its value at its right end.
-  const row = (key: string, label: string, value: HTMLElement, into: HTMLElement) => {
-    const button = element("button", "settings-row ui-press");
-    button.type = "button";
-    const name = element("span", "settings-name");
-    const labelText = text("span", "settings-label", label);
-    labelText.id = `${id}-${key.replace(":", "-")}`;
-    button.setAttribute("aria-labelledby", labelText.id);
-    name.append(labelText);
-    button.append(name, value);
-    into.append(button);
-    return button;
+  const body = element("div", "cheats-body");
+  const actionColumn = element(
+    "div",
+    "ui-card-actions ui-control-group ui-button-stack cheats-actions",
+  );
+  actionColumn.dataset.uiAxis = "stack";
+  const actions = {
+    unlockAllPowerUps: createTextButtonElement(document, words.unlockAllPowerUps),
+    unlockAllZones: createTextButtonElement(document, words.unlockAllZones),
   };
-  const switchRow = (key: CheatSwitch, label: string, into: HTMLElement) => {
-    const value = element("span", "settings-value");
-    const state = element("span", "settings-state");
-    state.setAttribute("aria-hidden", "true");
-    const toggle = element("span", "settings-switch");
-    toggle.setAttribute("aria-hidden", "true");
-    value.append(state, toggle);
-    const button = row(key, label, value, into);
-    button.setAttribute("role", "switch");
-    button.setAttribute("aria-checked", "false");
-    return button;
-  };
-  const pickerRow = (key: CheatPicker, label: string, into: HTMLElement) => {
-    const value = element("span", "settings-value cheats-choice");
-    const button = row(key, label, value, into);
-    button.classList.add("cheats-picker");
-    // The choice is read with the label: the label names the row, the choice describes it.
-    value.id = `${id}-${key}-choice`;
-    button.setAttribute("aria-describedby", value.id);
-    return button;
-  };
-  const button = (label: string, into: HTMLElement) => {
-    const created = createTextButtonElement(document, label);
-    into.append(created);
-    return created;
-  };
-  const rows = () => element("div", "settings-rows cheats-rows");
-  const cheats = element("section", "cheats-group");
-  cheats.setAttribute("aria-label", words.group);
-  const columns = element("div", "cheats-columns");
-  const quickActions = element("div", "settings-rows cheats-column");
-  const skillSwitches = element("div", "settings-rows cheats-column cheats-switches");
-  columns.append(quickActions, skillSwitches);
-  const stageGrid = rows();
-  cheats.append(columns, stageGrid);
-  const switches: Partial<Record<CheatSwitch, HTMLButtonElement>> = {};
-  const unlockAllPowerUps = button(words.unlockAllPowerUps, quickActions);
-  const unlockAllZones = button(words.unlockAllZones, quickActions);
-  for (const skill of skills) {
-    switches[`powerUp:${skill}`] = switchRow(
-      `powerUp:${skill}`,
-      words.powerUps[skill],
-      skillSwitches,
-    );
-  }
-  switches.invulnerable = switchRow("invulnerable", words.invulnerable, skillSwitches);
-  const zone = pickerRow("zone", words.zone, stageGrid);
-  const stage = pickerRow("stage", words.stage, stageGrid);
-  const pickers = { stage, zone };
-  const load = button(words.load, stageGrid);
-  const tools = element("section", "cheats-group");
-  const toolsHeading = text("h3", "cheats-group-title", words.tools);
-  toolsHeading.id = `${id}-tools`;
-  tools.setAttribute("aria-labelledby", toolsHeading.id);
-  const toolGrid = rows();
-  const showTipsAgain = button(words.showTipsAgain, toolGrid);
-  const resetSave = button(words.resetSave, toolGrid);
-  tools.append(toolsHeading, toolGrid);
-  body.append(cheats, tools);
+  actionColumn.append(actions.unlockAllPowerUps, actions.unlockAllZones);
+  const invincibility = element("button", "settings-row ui-press");
+  invincibility.type = "button";
+  invincibility.setAttribute("role", "switch");
+  invincibility.setAttribute("aria-checked", "false");
+  const label = text("span", "settings-label", words.invulnerable);
+  label.id = `${id}-invulnerable`;
+  invincibility.setAttribute("aria-labelledby", label.id);
+  const name = element("span", "settings-name");
+  const note = text("span", "settings-note", words.invulnerableNote);
+  note.id = `${id}-invulnerable-note`;
+  invincibility.setAttribute("aria-describedby", note.id);
+  name.append(label, note);
+  const value = createToggleValue(document);
+  invincibility.append(name, value);
+  body.append(actionColumn, invincibility);
   const status = element("p", "ui-card-text cheats-status");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
-  const actionRow = element("div", "ui-card-actions ui-control-group");
-  actionRow.dataset.uiAxis = "row";
+  const footer = element("div", "ui-card-actions cheats-footer");
   const back = createTextButtonElement(document, words.back, true);
-  actionRow.append(back);
+  footer.append(back);
   const closeX = closeButton(document, words.close);
-  dialog.append(header, body, status, actionRow, closeX);
-
-  const confirm = element("section", "ui-card ui-frame ui-card-closeable cheats-confirm");
-  setCardWidth("small", confirm);
-  confirm.id = `${id}-confirm`;
-  confirm.hidden = true;
-  confirm.setAttribute("role", "alertdialog");
-  confirm.setAttribute("aria-labelledby", `${id}-confirm-title`);
-  confirm.setAttribute("aria-describedby", `${id}-confirm-text`);
-  const confirmHeader = element("div", "ui-card-header");
-  const confirmTitle = text("h2", "ui-card-title", words.confirm.title);
-  confirmTitle.id = `${id}-confirm-title`;
-  confirmHeader.append(confirmTitle);
-  const confirmText = text("p", "ui-card-text", words.confirm.body);
-  confirmText.id = `${id}-confirm-text`;
-  const confirmActions = element("div", "ui-card-actions ui-control-group");
-  confirmActions.dataset.uiAxis = "row";
-  const cancel = createTextButtonElement(document, words.confirm.cancel);
-  const accept = createTextButtonElement(document, words.confirm.accept, true);
-  confirmActions.append(cancel, accept);
-  const confirmClose = closeButton(document, words.close);
-  confirm.append(confirmHeader, confirmText, confirmActions, confirmClose);
-  view.append(dialog, confirm);
+  dialog.append(header, body, status, footer, closeX);
+  view.append(dialog);
   root.append(backdrop, view);
-  return {
-    actions: { load, resetSave, showTipsAgain, unlockAllPowerUps, unlockAllZones },
-    back,
-    backdrop,
-    closeX,
-    confirm: { accept, cancel, close: confirmClose, dialog: confirm },
-    dialog,
-    pickers,
-    root,
-    scrollBody: body,
-    status,
-    switches: switches as Record<CheatSwitch, HTMLButtonElement>,
-  };
+  return { actions, back, backdrop, body, closeX, dialog, invincibility, root, status };
 }
 
-// Shows each switch on or off as on states it, and each picker's choice.
 export function showCheats(
-  on: (setting: CheatSwitch) => boolean,
-  choices: Readonly<Record<CheatPicker, string>>,
+  enabled: boolean,
   words: CheatsCardWords["state"],
   view: CheatsCardView,
 ): void {
-  for (const [setting, button] of Object.entries(view.switches) as [
-    CheatSwitch,
-    HTMLButtonElement,
-  ][]) {
-    const enabled = on(setting);
-    button.setAttribute("aria-checked", String(enabled));
-    button.querySelector<HTMLElement>(".settings-state")!.textContent =
-      words[enabled ? "on" : "off"];
-  }
-  for (const [picker, button] of Object.entries(view.pickers) as [
-    CheatPicker,
-    HTMLButtonElement,
-  ][]) {
-    button.querySelector<HTMLElement>(".cheats-choice")!.textContent = choices[picker];
-  }
+  view.invincibility.setAttribute("aria-checked", String(enabled));
+  showToggleValue(
+    words[enabled ? "on" : "off"],
+    view.invincibility.querySelector<HTMLElement>(".settings-toggle-value")!,
+  );
 }

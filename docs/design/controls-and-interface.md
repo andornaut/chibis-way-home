@@ -50,4 +50,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0288 | Add a centred Back button to Settings                                   | [cwh-0288.md](../work/cwh-0288.md) |
 | cwh-0289 | Swap Cheats and Settings in Pause                                       | [cwh-0289.md](../work/cwh-0289.md) |
 | cwh-0292 | Fit Settings without scrolling                                          | [cwh-0292.md](../work/cwh-0292.md) |
-| cwh-0293 | Simplify Cheats into two columns                                        | [cwh-0293.md](../work/cwh-0293.md) |
+| cwh-0293 | Simplify Cheats into one compact column                                 | [cwh-0293.md](../work/cwh-0293.md) |

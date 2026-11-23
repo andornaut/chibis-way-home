@@ -59,10 +59,8 @@ export {
 } from "./dom/celebration.ts";
 export {
   type CheatAction,
-  type CheatPicker,
   type CheatsCardView,
   type CheatsCardWords,
-  type CheatSwitch,
   createCheatsCard,
   showCheats,
 } from "./dom/cheats.ts";

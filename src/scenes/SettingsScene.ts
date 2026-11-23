@@ -40,7 +40,7 @@ export interface SettingsData {
 }
 
 // Keep the touch switches together, followed by the two display preferences.
-const SWITCH_SETTINGS: readonly SettingsSwitch[] = [...TOUCH_SETTINGS, "reducedMotion", "fps"];
+const SWITCH_SETTINGS: readonly SettingsSwitch[] = [...TOUCH_SETTINGS, "fps", "reducedMotion"];
 
 // The sprite icon on each row but the touch settings', which draw their controls, shown once
 // Art's texture is loaded.
@@ -208,6 +208,7 @@ export class SettingsScene extends Scene {
     void Promise.all([backdrop, icons]).then(() => {
       if (shown && !this.closed) {
         card.root.hidden = false;
+        this.render();
         this.closeModal = sceneDomUi(this)?.modals.open(
           { backdrop: card.backdrop, close: () => this.back(), isolation: "dialog" },
           card.dialog,
