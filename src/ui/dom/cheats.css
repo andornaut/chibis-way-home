@@ -41,3 +41,8 @@
 .cheats-status:empty {
   display: none;
 }
+
+/* Without a feedback line, retain clearance from the preceding switch's full press target. */
+.cheats-status:empty + .cheats-footer {
+  margin-top: 0;
+}

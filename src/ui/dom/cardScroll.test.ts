@@ -25,9 +25,10 @@ const WORDS: CheatsCardWords = {
 
 // Vitest blanks CSS imports, so the stylesheets are read from disk.
 const rule = (sheet: string, selector: string) =>
-  new RegExp(`(?:^|\\n)${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`, "u").exec(
-    readFileSync(new URL(sheet, import.meta.url), "utf8"),
-  )?.[1];
+  new RegExp(
+    `(?:^|\\n)${selector.replaceAll(".", "\\.").replaceAll("+", "\\+")} \\{([^}]*)\\}`,
+    "u",
+  ).exec(readFileSync(new URL(sheet, import.meta.url), "utf8"))?.[1];
 
 // The view's one row is the view's height and a card is no taller than that less the screen margin
 // above and below, so a card taller than that shrinks its scroll body and keeps the rest in view.
@@ -47,6 +48,7 @@ it("fits Cheats as one Medium column with only its two actions, switch, status a
   const view = createCheatsCard(document, "cheats", WORDS);
   expect(view.dialog.dataset.cardWidth).toBe("medium");
   expect(view.dialog.querySelector(".ui-card-scroll")).toBeNull();
+  expect(rule("cheats.css", ".cheats-status:empty + .cheats-footer")).toContain("margin-top: 0;");
   expect([...view.body.children]).toEqual([
     view.actions.unlockAllPowerUps.parentElement,
     view.invincibility,
