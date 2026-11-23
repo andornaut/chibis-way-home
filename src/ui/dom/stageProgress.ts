@@ -70,7 +70,7 @@ export function createStageProgress(
       }
       frame = { ...rect };
       bar?.remove();
-      bar = createDomProgressBar(plane, style, rect);
+      bar = createDomProgressBar({ frame: rect, style }, plane);
       bar.element.setAttribute("aria-label", label);
       bindPalette(bar.element);
       bar.update(value);

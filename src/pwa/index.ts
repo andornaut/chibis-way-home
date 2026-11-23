@@ -101,13 +101,13 @@ export function setupPhoneApp(): Promise<LaunchResult> {
   if (!isFirefoxAndroidApp(navigator.userAgent, (query) => matchMedia(query).matches)) {
     guardBackNavigation(
       {
+        createCloseWatcher,
+        history,
         onBack: () => dispatchPhoneEvent(window, PHONE_EVENTS.backPressed),
         stateKey: BACK_GUARD_KEY,
+        timer: window,
       },
       window,
-      window,
-      createCloseWatcher,
-      history,
     );
   }
   screenWakeLock = createScreenWakeLock(

@@ -69,7 +69,7 @@ export function mountLoading(parent: HTMLElement): () => void {
     parent.append(host);
   }
   let style = stageProgressStyle();
-  let bar = createDomProgressBar(host, style, PROGRESS_RECT, LOADING_TIMING);
+  let bar = createDomProgressBar({ frame: PROGRESS_RECT, style, timing: LOADING_TIMING }, host);
   // Under a modal window the bar stays painted over the canvas, inert, in the modal dim's colours.
   let dimmed = false;
   const paint = () => paintBar(bar.element, dimmed ? modalProgressStyle(style) : style);
@@ -100,7 +100,7 @@ export function mountLoading(parent: HTMLElement): () => void {
   refreshStyle = (stage) => {
     bar.remove();
     style = stageProgressStyle(stage);
-    bar = createDomProgressBar(host, style, PROGRESS_RECT, LOADING_TIMING);
+    bar = createDomProgressBar({ frame: PROGRESS_RECT, style, timing: LOADING_TIMING }, host);
     paint();
     show();
   };

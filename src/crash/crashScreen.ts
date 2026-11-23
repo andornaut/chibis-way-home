@@ -14,10 +14,13 @@ import { CRASH_COLOURS, installCrashTheme } from "./theme.ts";
 installCrashTheme(document.documentElement.style);
 
 // ?dev=1 shows the error's message and stack, with a Copy button.
-export const CRASH_SCREEN = installCrashScreen(window, {
-  bindHoldAction: bindFactoryAction,
-  buildLabel: BUILD_LABEL,
-  colours: CRASH_COLOURS,
-  dev: new URLSearchParams(window.location.search).get("dev") === "1",
-  words: CRASH_TEXT,
-});
+export const CRASH_SCREEN = installCrashScreen(
+  {
+    bindHoldAction: bindFactoryAction,
+    buildLabel: BUILD_LABEL,
+    colours: CRASH_COLOURS,
+    dev: new URLSearchParams(window.location.search).get("dev") === "1",
+    words: CRASH_TEXT,
+  },
+  window,
+);

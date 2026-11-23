@@ -10,7 +10,7 @@ import { TEXT } from "../data/text.ts";
 const { install, screen } = vi.hoisted(() => {
   const screen = { stopGameOnCrash: vi.fn() };
   return {
-    install: vi.fn<(page: unknown, options: CrashScreenOptions) => typeof screen>(() => screen),
+    install: vi.fn<(options: CrashScreenOptions, page: unknown) => typeof screen>(() => screen),
     screen,
   };
 });
@@ -40,7 +40,8 @@ describe("native crash screen adapter", () => {
       const { bindFactoryAction } = await import("../ui/input/actionBinding.ts");
       expect(CRASH_SCREEN).toBe(screen);
       expect(install).toHaveBeenCalledOnce();
-      const options = install.mock.calls[0]![1];
+      const [options, page] = install.mock.calls[0]!;
+      expect(page).toBe(window);
       expect(options).toMatchObject({ buildLabel: "test build", dev, words: TEXT.crash });
       expect(options.bindHoldAction).toBe(bindFactoryAction);
       expect(options.colours).toEqual({

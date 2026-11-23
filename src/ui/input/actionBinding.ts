@@ -92,13 +92,12 @@ export function createGameButton(
   const view = createButton(document, {
     appearance: { ...appearance, layout: "caller" },
     content,
-    getAction: () => (mounted.element === undefined ? null : currentButtonAction(mounted.element)),
-    getState: () => {
-      const { element } = mounted;
-      const pressed = element?.getAttribute("aria-pressed");
+    getAction: currentButtonAction,
+    getState: (element) => {
+      const pressed = element.getAttribute("aria-pressed");
       return {
         availability: {
-          kind: element?.hidden ? "omitted" : element?.disabled ? "disabled" : "available",
+          kind: element.hidden ? "omitted" : element.disabled ? "disabled" : "available",
         },
         ...(pressed === "true" || pressed === "false" ? { toggled: pressed === "true" } : {}),
       };

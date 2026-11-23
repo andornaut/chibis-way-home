@@ -174,9 +174,15 @@ function startGame(attempt: LoadingAttempt): void {
   // changed (the kit's followFrameTurn).
   const parent = document.getElementById("game");
   if (parent !== null) {
-    followFrameTurn(FRAME_TURN, game.scale.gameSize, parent, game, {
-      deviceResolution: { max: MAX_RENDER_SCALE },
-    });
+    followFrameTurn(
+      {
+        deviceResolution: { max: MAX_RENDER_SCALE },
+        gameSize: game.scale.gameSize,
+        parent,
+        watch: FRAME_TURN,
+      },
+      game,
+    );
   }
   // Menus draw at most about MENU_FPS frames a second; gameplay and the animated opening draw
   // every display frame.
