@@ -99,3 +99,20 @@
 .cheats-status:empty {
   display: none;
 }
+
+/* Busy writes retain the close control's shape with the disabled text face's ink. */
+:is(.cheats-card, .cheats-confirm)[aria-busy="true"] .ui-close-button:disabled {
+  cursor: default;
+}
+
+:is(.cheats-card, .cheats-confirm)[aria-busy="true"] .ui-close-button:disabled .ui-close-face {
+  background-image: none;
+  background-color: var(--colour-dslate);
+  mask: var(--ui-close-image) center / 100% 100% no-repeat;
+}
+
+@media (forced-colors: active) {
+  :is(.cheats-card, .cheats-confirm)[aria-busy="true"] .ui-close-button:disabled .ui-close-face {
+    background-color: GrayText;
+  }
+}

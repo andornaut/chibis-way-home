@@ -43,6 +43,9 @@ let layer: UiLayer;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  saves.clearSeenTips.mockReset().mockResolvedValue({ status: "saved" });
+  saves.resetSave.mockReset().mockResolvedValue({ status: "saved" });
+  saves.resetSaveAvailable.mockReset().mockResolvedValue(true);
   gate.accepts.mockReturnValue(true);
   gate.capture.mockImplementation(() => () => gate.accepts());
   layer = createUiLayer([], document);
@@ -95,7 +98,7 @@ function openCard(installed = false) {
     document.activeElement?.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: value, ...options }),
     );
-  return { control, dialog, key, openCheats, owner };
+  return { control, dialog, key, openCheats, owner, scene };
 }
 
 it.each([false, true])("keeps cheat and tool behaviour in app mode %s", async (installed) => {
@@ -243,4 +246,136 @@ it("prevents compatibility mouse focus only for an eligible touch on a Cheats di
   expect(prevented(reset)).toBe(false);
   gate.accepts.mockReturnValue(false);
   expect(prevented(closeX)).toBe(false);
+});
+
+it("renders a pending tips write as busy and consumes held releases before restoring dismissal", async () => {
+  let available!: (value: boolean) => void;
+  saves.resetSaveAvailable.mockReturnValueOnce(
+    new Promise((resolve) => {
+      available = resolve;
+    }),
+  );
+  saves.resetSaveAvailable.mockResolvedValueOnce(false);
+  let saved!: (value: { status: string }) => void;
+  saves.clearSeenTips.mockReturnValueOnce(
+    new Promise((resolve) => {
+      saved = resolve;
+    }),
+  );
+  const { control, dialog, owner, scene } = openCard();
+  await settle();
+  vi.useFakeTimers();
+  const tips = control(DEV_TEXT.showTipsAgain);
+  const cheats = tips.closest<HTMLElement>("[role=dialog]")!;
+  const close = cheats.querySelector<HTMLButtonElement>(".ui-close-button")!;
+  const back = cheats.querySelector<HTMLButtonElement>(".ui-card-actions button")!;
+  const pointer = (element: HTMLElement, type: string, pointerId: number) =>
+    element.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        isPrimary: true,
+        pointerId,
+        pointerType: "touch",
+      }),
+    );
+  pointer(tips, "pointerdown", 21);
+  await vi.advanceTimersByTimeAsync(TOUCH.actionHoldMilliseconds);
+  expect(saves.clearSeenTips).toHaveBeenCalledOnce();
+  expect(cheats.getAttribute("aria-busy")).toBe("true");
+  expect([close.disabled, back.disabled, tips.disabled]).toEqual([true, true, true]);
+  expect(cheats.querySelector("[data-pressed], [data-ui-pressed]")).toBeNull();
+  expect(document.activeElement).toBe(cheats);
+  available(true);
+  await vi.advanceTimersByTimeAsync(0);
+  expect(control(DEV_TEXT.resetSave.action).disabled).toBe(true);
+  close.click();
+  back.click();
+  pointer(close, "pointerdown", 22);
+  await vi.advanceTimersByTimeAsync(TOUCH.actionHoldMilliseconds);
+  scene.back();
+  cheats.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Escape" }));
+  cheats.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+  expect(owner.cheatsClosed).not.toHaveBeenCalled();
+  saved({ status: "saved" });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(cheats.getAttribute("aria-busy")).toBe("false");
+  expect([close.disabled, back.disabled, tips.disabled]).toEqual([false, false, false]);
+  expect(control(DEV_TEXT.resetSave.action).disabled).toBe(true);
+  expect(document.activeElement).toBe(tips);
+  pointer(tips, "pointerup", 21);
+  tips.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+  pointer(close, "pointerup", 22);
+  expect(saves.clearSeenTips).toHaveBeenCalledOnce();
+  expect(owner.cheatsClosed).not.toHaveBeenCalled();
+  expect(saves.startCheatSession).not.toHaveBeenCalled();
+  pointer(close, "pointerdown", 23);
+  pointer(close, "pointerup", 23);
+  expect(owner.cheatsClosed).toHaveBeenCalledOnce();
+  expect(dialog.closest("[inert]")).toBeNull();
+});
+
+it("keeps Reset X and Cancel disabled until settlement, then restores the available invoker", async () => {
+  let saved!: (value: { status: string }) => void;
+  saves.resetSave.mockReturnValueOnce(
+    new Promise((resolve) => {
+      saved = resolve;
+    }),
+  );
+  const { control, key, owner, scene } = openCard();
+  await settle();
+  const reset = control(DEV_TEXT.resetSave.action);
+  reset.click();
+  const confirm = document.querySelector<HTMLElement>("[role=alertdialog]")!;
+  const close = confirm.querySelector<HTMLButtonElement>(".ui-close-button")!;
+  const cancel = control(DEV_TEXT.resetSave.confirm.cancel);
+  const accept = control(DEV_TEXT.resetSave.confirm.accept);
+  vi.useFakeTimers();
+  const pointer = (element: HTMLElement, type: string, pointerId: number) =>
+    element.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        isPrimary: true,
+        pointerId,
+        pointerType: "touch",
+      }),
+    );
+  pointer(accept, "pointerdown", 31);
+  await vi.advanceTimersByTimeAsync(TOUCH.actionHoldMilliseconds);
+  expect(saves.resetSave).toHaveBeenCalledOnce();
+  expect(confirm.getAttribute("aria-busy")).toBe("true");
+  expect([close.disabled, cancel.disabled, accept.disabled]).toEqual([true, true, true]);
+  expect(document.activeElement).toBe(confirm);
+  expect(confirm.querySelector("[data-pressed], [data-ui-pressed]")).toBeNull();
+  close.click();
+  cancel.click();
+  key("Escape");
+  key(" ");
+  scene.back();
+  pointer(close, "pointerdown", 32);
+  await vi.advanceTimersByTimeAsync(TOUCH.actionHoldMilliseconds);
+  expect(confirm.hidden).toBe(false);
+  expect(owner.cheatsClosed).not.toHaveBeenCalled();
+  saved({ status: "unavailable" });
+  await vi.advanceTimersByTimeAsync(0);
+  expect(confirm.hidden).toBe(true);
+  expect(confirm.getAttribute("aria-busy")).toBe("false");
+  expect(reset.disabled).toBe(false);
+  expect(document.activeElement).toBe(reset);
+  expect(document.querySelector(".cheats-status")?.textContent).toBe(
+    DEV_TEXT.grantResults.unavailable,
+  );
+  pointer(accept, "pointerup", 31);
+  accept.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
+  pointer(close, "pointerup", 32);
+  expect(saves.resetSave).toHaveBeenCalledOnce();
+  expect(owner.returnToStart).not.toHaveBeenCalled();
+  reset.click();
+  expect([close.disabled, cancel.disabled, accept.disabled]).toEqual([false, false, false]);
+  pointer(close, "pointerdown", 33);
+  pointer(close, "pointerup", 33);
+  expect(confirm.hidden).toBe(true);
+  expect(document.activeElement).toBe(reset);
+  expect(owner.cheatsClosed).not.toHaveBeenCalled();
 });

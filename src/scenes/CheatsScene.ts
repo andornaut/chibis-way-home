@@ -82,6 +82,9 @@ export class CheatsScene extends Scene {
   private closeModal: (() => void) | undefined;
   private closeConfirmModal: (() => void) | undefined;
   private writing = false;
+  private resetAvailable = false;
+  private resetCheck = 0;
+  private cancelActions: (() => void) | undefined;
   private zoneChoice = 0;
   private stageChoice = 0;
 
@@ -97,12 +100,14 @@ export class CheatsScene extends Scene {
     this.closeModal = undefined;
     this.closeConfirmModal = undefined;
     this.writing = false;
+    this.resetAvailable = false;
+    this.cancelActions = undefined;
   }
 
   create(): void {
     const cheats = createCheatsCard(document, "cheats-card", CHEATS_WORDS, SKILL_IDS);
     this.cheats = cheats;
-    this.refreshResetAvailability(cheats);
+    this.refreshResetAvailability(false, cheats);
     this.render();
     const input = modalInput(this);
     input.open();
@@ -154,7 +159,9 @@ export class CheatsScene extends Scene {
       ],
       cheats.root,
     );
+    this.cancelActions = stop.cancel;
     this.events.once("shutdown", () => {
+      this.cancelActions = undefined;
       this.cheats = undefined;
       this.closeCards();
       stop();
@@ -199,6 +206,13 @@ export class CheatsScene extends Scene {
     if (this.cheats === undefined) {
       return;
     }
+    const { actions, confirm, dialog, root } = this.cheats;
+    dialog.setAttribute("aria-busy", String(this.writing && !this.confirming));
+    confirm.dialog.setAttribute("aria-busy", String(this.writing && this.confirming));
+    for (const button of root.querySelectorAll<HTMLButtonElement>("button")) {
+      button.disabled = this.writing;
+    }
+    actions.resetSave.disabled = this.writing || !this.resetAvailable;
     const zone = cheatStages()[this.zoneChoice];
     showCheats(
       cheatOn,
@@ -288,11 +302,23 @@ export class CheatsScene extends Scene {
     }
   }
 
-  private refreshResetAvailability(cheats: CheatsCardView): void {
-    cheats.actions.resetSave.disabled = true;
+  private refreshResetAvailability(restoreFocus: boolean, cheats: CheatsCardView): void {
+    const check = ++this.resetCheck;
+    this.resetAvailable = false;
+    this.render();
     void resetSaveAvailable().then((available) => {
-      if (this.cheats === cheats && !this.closed) {
-        cheats.actions.resetSave.disabled = !available;
+      if (this.cheats === cheats && !this.closed && check === this.resetCheck) {
+        this.resetAvailable = available;
+        this.render();
+        if (
+          restoreFocus &&
+          available &&
+          !this.writing &&
+          modalInput(this).accepts() &&
+          document.activeElement === cheats.dialog
+        ) {
+          focusTarget(cheats.actions.resetSave);
+        }
       }
     });
   }
@@ -305,8 +331,12 @@ export class CheatsScene extends Scene {
   ): void {
     const cheats = this.cheats!;
     const { status } = cheats;
+    const confirmation = this.confirming;
     this.writing = true;
+    this.cancelActions?.();
     status.textContent = "";
+    this.render();
+    focusTarget(confirmation ? cheats.confirm.dialog : cheats.dialog);
     void pending
       .then(
         (result) => result.status,
@@ -329,7 +359,10 @@ export class CheatsScene extends Scene {
           status.textContent = WRITE_FAILED[result];
         }
         if (!this.closed) {
-          this.refreshResetAvailability(cheats);
+          this.refreshResetAvailability(confirmation, cheats);
+          if (modalInput(this).accepts()) {
+            focusTarget(confirmation ? cheats.dialog : cheats.actions.showTipsAgain);
+          }
         }
         this.render();
       });
