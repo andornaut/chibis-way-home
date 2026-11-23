@@ -397,8 +397,8 @@ it("wraps keyboard focus through the Pause actions in order", async () => {
   });
   expect(names).toEqual([
     TEXT.start.achievements,
-    DEV_TEXT.openCheats,
     TEXT.pause.settings,
+    DEV_TEXT.openCheats,
     TEXT.pause.home,
     TEXT.pause.resume,
     TEXT.pause.close,
