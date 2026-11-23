@@ -101,7 +101,7 @@ async function openCard(opener = "start", install = false) {
   const scene = Object.assign(new SettingsScene(), {
     events,
     scene: { get: () => owner, isActive: () => true, restart: vi.fn(), stop },
-    sys: { isActive: () => true },
+    sys: { isActive: (): boolean => true },
     textures: { exists: () => true },
   });
   scene.init({ opener });
@@ -444,4 +444,80 @@ it("ignores back before its scene starts", () => {
 it("keeps the Cheats entry outside Settings", async () => {
   const { dialog } = await openCard("pause");
   expect(dialog.textContent).not.toContain(DEV_TEXT.openCheats);
+});
+
+it("prevents compatibility mouse defaults only for an eligible current Settings dismissal", async () => {
+  const { control, owner, scene } = await openCard("pause", true);
+  const close = control(WORDS.close);
+  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const prevented = (element: HTMLElement, options: PointerEventInit = {}) => {
+    const event = new PointerEvent("pointerdown", {
+      bubbles: true,
+      button: 0,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 41,
+      pointerType: "touch",
+      ...options,
+    });
+    element.dispatchEvent(event);
+    element.dispatchEvent(new PointerEvent("pointercancel", { bubbles: true, pointerId: 41 }));
+    return event.defaultPrevented;
+  };
+  expect(prevented(close)).toBe(true);
+  expect(prevented(backdrop)).toBe(true);
+  expect(prevented(control(WORDS.install))).toBe(false);
+  expect(prevented(control(WORDS.reducedMotion))).toBe(false);
+  expect(prevented(close, { pointerType: "mouse" })).toBe(false);
+  expect(prevented(close, { isPrimary: false })).toBe(false);
+  expect(prevented(close, { button: 2 })).toBe(false);
+  gate.accepts.mockReturnValue(false);
+  expect(prevented(close)).toBe(false);
+  gate.accepts.mockReturnValue(true);
+  vi.spyOn(scene.sys, "isActive").mockReturnValueOnce(false);
+  expect(prevented(close)).toBe(false);
+  close.hidden = true;
+  expect(prevented(close)).toBe(false);
+  close.hidden = false;
+  scene.back();
+  expect(owner.settingsClosed).toHaveBeenCalledOnce();
+  expect(prevented(close)).toBe(false);
+});
+
+it("restores Install after a touch-opened steps card and protects its X and backdrop dismissals", async () => {
+  const { control, dialog, owner, steps } = await openCard("pause", true);
+  const install = control(WORDS.install);
+  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const close = steps.querySelector<HTMLButtonElement>(".ui-close-button")!;
+  const tap = (element: HTMLElement) => {
+    const options = {
+      bubbles: true,
+      button: 0,
+      cancelable: true,
+      isPrimary: true,
+      pointerId: 42,
+      pointerType: "touch",
+    };
+    const down = new PointerEvent("pointerdown", options);
+    element.dispatchEvent(down);
+    element.dispatchEvent(new PointerEvent("pointerup", options));
+    return down.defaultPrevented;
+  };
+  dialog.focus();
+  expect(document.activeElement).toBe(dialog);
+  expect(tap(install)).toBe(false);
+  await settle();
+  expect(steps.hidden).toBe(false);
+  expect(document.activeElement).toBe(close);
+  expect(tap(close)).toBe(true);
+  expect(steps.hidden).toBe(true);
+  expect(document.activeElement).toBe(install);
+  expect(owner.settingsClosed).not.toHaveBeenCalled();
+  dialog.focus();
+  tap(install);
+  await settle();
+  expect(tap(backdrop)).toBe(true);
+  expect(steps.hidden).toBe(true);
+  expect(document.activeElement).toBe(install);
+  expect(owner.settingsClosed).not.toHaveBeenCalled();
 });

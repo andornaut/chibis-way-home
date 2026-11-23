@@ -2,6 +2,7 @@ import {
   type InstallStepsKind,
   offersInstall,
 } from "@andornaut/game-kit/runtime/web/pwa/installState";
+import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
@@ -143,6 +144,7 @@ export class SettingsScene extends Scene {
     }
     const guard = { gate: input };
     const settingsShown = () => !this.steps;
+    const acceptsDismissal = () => !this.closed && this.sys.isActive() && input.accepts();
     const stops = [
       bindSceneButtons(
         input,
@@ -162,13 +164,23 @@ export class SettingsScene extends Scene {
                   element: card.install,
                 },
               ]),
-          { activate: () => this.act("close"), available: settingsShown, element: card.close },
+          {
+            activate: () => this.act("close"),
+            available: settingsShown,
+            element: card.close,
+            preventTouchMouseDefault: () => settingsShown() && acceptsDismissal(),
+          },
           {
             activate: () => this.act("close"),
             available: () => this.steps,
             element: card.steps.close,
+            preventTouchMouseDefault: () => this.steps && acceptsDismissal(),
           },
-          { activate: () => this.back(), element: card.backdrop },
+          {
+            activate: () => this.back(),
+            element: card.backdrop,
+            preventTouchMouseDefault: acceptsDismissal,
+          },
         ],
         card.root,
       ),
@@ -254,6 +266,9 @@ export class SettingsScene extends Scene {
     const card = this.card;
     if (card === undefined || this.steps) {
       return;
+    }
+    if (card.install !== undefined) {
+      focusTarget(card.install);
     }
     this.steps = true;
     modalInput(this).invalidate();
