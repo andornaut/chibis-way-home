@@ -28,3 +28,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0281 | Adopt Art Kit 0.33.0 in Chibi                                                                 | [cwh-0281.md](../work/cwh-0281.md) |
 | cwh-0283 | Adopt Game Kit 0.64.0 in Chibi                                                                | [cwh-0283.md](../work/cwh-0283.md) |
 | cwh-0290 | Adopt Game Kit 0.65.0 in Chibi                                                                | [cwh-0290.md](../work/cwh-0290.md) |
+| cwh-0296 | Pack the Start background into shared art                                                    | [cwh-0296.md](../work/cwh-0296.md) |
