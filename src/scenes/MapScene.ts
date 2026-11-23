@@ -24,7 +24,7 @@ import {
   stageCompletion,
   steppedDestination,
 } from "../progress/index.ts";
-import { PHONE_EVENTS } from "../pwa/index.ts";
+import { PHONE_EVENTS, requestUpdateCheck } from "../pwa/index.ts";
 import {
   bentCurve,
   createMap,
@@ -579,6 +579,7 @@ export class MapScene extends Scene implements StageSelectOpener {
 
   private play(stage: string): void {
     saveStand(stage);
+    requestUpdateCheck();
     this.scene.start("zone", { node: stage } satisfies ZoneData);
   }
 

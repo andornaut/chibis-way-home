@@ -190,8 +190,19 @@ it("ends a paused room for the title without resuming its already-paused zone", 
   expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
 });
 
-it("returns to Start after Reset save with fresh neutral scene data", () => {
-  const { pause, scenes } = content();
-  pause.scene.returnToStart();
-  expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("start", {});
-});
+it.each([
+  { from: "map", startData: { returnedToTitle: true } },
+  { from: "start", startData: {} },
+])(
+  "marks Reset save as a return to Start only from other content ($from)",
+  async ({ from, startData }) => {
+    const { active, pause, scenes } = content();
+    active.clear();
+    active.add(from);
+    pause.update();
+    tap(pause.pauseButton);
+    await settle();
+    pause.scene.returnToStart();
+    expect(scenes.launch).toHaveBeenCalledExactlyOnceWith("start", startData);
+  },
+);

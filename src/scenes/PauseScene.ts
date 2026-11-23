@@ -393,7 +393,8 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
 
   // After Reset save: the menu closes on the start screen, as Back to title does.
   returnToStart(): void {
-    this.returnHome({});
+    const returnedToTitle = this.overScene !== undefined && this.overScene !== START;
+    this.returnHome(returnedToTitle ? { returnedToTitle } : {});
   }
 
   private returnHome(data: StartData): void {

@@ -6,6 +6,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 const saved = vi.hoisted(() => ({
   progress: { at: "beginning" as "beginning" | "map", openingSeen: false },
 }));
+const requestUpdateCheck = vi.hoisted(() => vi.fn());
 const gate = vi.hoisted(() => ({
   accepts: vi.fn(() => true),
   capture: vi.fn(),
@@ -13,6 +14,10 @@ const gate = vi.hoisted(() => ({
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
+vi.mock("../pwa/index.ts", async (original) => ({
+  ...(await original<typeof import("../pwa/index.ts")>()),
+  requestUpdateCheck,
+}));
 vi.mock("./save.ts", () => ({
   clearProgress: vi.fn(),
   resetWholeRunStats: vi.fn(),
@@ -125,6 +130,7 @@ it("closes without clearing from the close X", async () => {
   expect(restartClosed).toHaveBeenCalledOnce();
   expect(stop).toHaveBeenCalledExactlyOnceWith();
   expect(clearProgress).not.toHaveBeenCalled();
+  expect(requestUpdateCheck).not.toHaveBeenCalled();
 });
 
 it("never defaults to clearing, and Cancel closes without clearing", async () => {
@@ -146,6 +152,11 @@ it("never defaults to clearing, and Cancel closes without clearing", async () =>
 it("commits a confirmed restart only once", async () => {
   const { button, key, start, stop } = await openCard();
   button(TEXT.restart.restart).focus();
+  gate.accepts.mockReturnValue(false);
+  key("Enter");
+  expect(start).not.toHaveBeenCalled();
+  expect(requestUpdateCheck).not.toHaveBeenCalled();
+  gate.accepts.mockReturnValue(true);
   key("Enter");
   key(" ");
   button(TEXT.restart.restart).click();
@@ -153,6 +164,7 @@ it("commits a confirmed restart only once", async () => {
   expect(resetWholeRunStats).toHaveBeenCalledOnce();
   expect(stop).toHaveBeenCalledExactlyOnceWith("start");
   expect(start).toHaveBeenCalledExactlyOnceWith("opening");
+  expect(requestUpdateCheck).toHaveBeenCalledOnce();
 });
 
 it.each(["Escape", "P", "p"])("closes on %s", async (value) => {
@@ -241,4 +253,5 @@ it.each([
   expect(resetWholeRunStats).not.toHaveBeenCalled();
   expect(clearProgress).not.toHaveBeenCalled();
   expect(start).toHaveBeenCalledExactlyOnceWith("map");
+  expect(requestUpdateCheck).toHaveBeenCalledOnce();
 });

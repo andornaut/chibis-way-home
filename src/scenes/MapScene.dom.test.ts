@@ -8,7 +8,12 @@ const ready = vi.hoisted(() => ({
   finish: undefined as ((shown: boolean) => void) | undefined,
   urls: undefined as Promise<readonly string[]> | undefined,
 }));
+const requestUpdateCheck = vi.hoisted(() => vi.fn());
 vi.mock("phaser", () => ({ Scene: class {} }));
+vi.mock("../pwa/index.ts", async (original) => ({
+  ...(await original<typeof import("../pwa/index.ts")>()),
+  requestUpdateCheck,
+}));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string, frame: unknown) =>
     Promise.resolve(`blob:${art}-${String(frame)}`),
@@ -188,6 +193,21 @@ it("marks the Map Back to title action as a return to Start", async () => {
   await Promise.resolve();
   tap(home);
   expect(route.start).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
+});
+
+it("requests discovery only when a stage is admitted, once per selection", async () => {
+  const { root, route, scene } = setup();
+  ready.finish!(true);
+  await Promise.resolve();
+  scene.stageSelected(ZONE_MAP.start);
+  tap(root.querySelector('[data-control="continue"]')!);
+  scene.stageSelected(ZONE_MAP.destinations[1]!.stages[0]!);
+  expect(route.start).not.toHaveBeenCalled();
+  expect(requestUpdateCheck).not.toHaveBeenCalled();
+  scene.stageSelected(ZONE_MAP.start);
+  scene.stageSelected(ZONE_MAP.start);
+  expect(route.start).toHaveBeenCalledExactlyOnceWith("zone", { node: ZONE_MAP.start });
+  expect(requestUpdateCheck).toHaveBeenCalledOnce();
 });
 
 it("does not hand off a failed or shutdown reveal", async () => {

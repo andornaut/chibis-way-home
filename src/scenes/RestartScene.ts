@@ -1,6 +1,7 @@
 import { Scene } from "phaser";
 
 import { TEXT } from "../data/text.ts";
+import { requestUpdateCheck } from "../pwa/index.ts";
 import { type CardView, createCard } from "../ui/index.ts";
 import { bindSceneButtons } from "./domTaps.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
@@ -122,6 +123,7 @@ export class RestartScene extends Scene {
       this.decided = true;
       clearProgress();
       resetWholeRunStats();
+      requestUpdateCheck();
       this.scene.stop(this.opener);
       this.scene.start("opening");
     }

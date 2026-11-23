@@ -267,6 +267,7 @@ export class StartScene extends Scene implements RestartOpener {
         return;
       }
       this.starting = true;
+      requestUpdateCheck();
       // Unseen new games show the opening; Continue returns directly to the map.
       this.scene.start(openingDestination(savedProgress()));
     } else if (control === "restart") {

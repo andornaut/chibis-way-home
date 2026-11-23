@@ -58,13 +58,14 @@ it("opens the restart card from Restart and takes focus back when it closes", ()
   expect(launch).not.toHaveBeenCalled();
   scene.act("restart");
   expect(launch).toHaveBeenCalledExactlyOnceWith("restart", { opener: "start" });
+  expect(requestUpdateCheck).not.toHaveBeenCalled();
   drawFocus.mockClear();
   scene.restartClosed();
   expect(drawFocus).toHaveBeenCalledOnce();
   events.emit("shutdown");
 });
 
-it("requests discovery once per actual return to Start, excluding boot and save reset", () => {
+it("requests discovery once per actual return to Start, excluding boot and title redraws", () => {
   vi.stubGlobal("window", new EventTarget());
   const events = new EventEmitter();
   const scene = Object.assign(new StartScene(), {
@@ -133,6 +134,7 @@ it("enables Start input only after the native view decodes, then cancels on shut
   const button = root.querySelector<HTMLButtonElement>('[data-control="start"]')!;
   button.click();
   expect(start).not.toHaveBeenCalled();
+  expect(requestUpdateCheck).not.toHaveBeenCalled();
   reveal(true);
   await Promise.resolve();
   const repeat = new KeyboardEvent("keydown", {
@@ -155,10 +157,12 @@ it("enables Start input only after the native view decodes, then cancels on shut
     new PointerEvent("pointerup", { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
   );
   expect(start).not.toHaveBeenCalled();
+  expect(requestUpdateCheck).not.toHaveBeenCalled();
   root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
   expect(start).toHaveBeenCalledExactlyOnceWith("map");
   button.click();
   expect(start).toHaveBeenCalledOnce();
+  expect(requestUpdateCheck).toHaveBeenCalledOnce();
   events.emit("shutdown");
   expect(native.cancel).toHaveBeenCalledOnce();
   root.remove();
