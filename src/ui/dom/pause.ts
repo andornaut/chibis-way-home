@@ -254,4 +254,9 @@ export function showPauseMenu(
   view.card.dialog.toggleAttribute("data-home-shown", homeShown);
   view.card.buttons.home.hidden = !homeShown;
   view.card.buttons.achievements.hidden = false;
+  const { cheats, settings } = view.card.buttons;
+  const [first, second] = mode === "pause" ? [settings, cheats] : [cheats, settings];
+  if (first.nextElementSibling !== second) {
+    second.before(first);
+  }
 }

@@ -443,11 +443,20 @@ it("opens Achievements above gameplay Pause and returns to its held context befo
   const rows = [...f.pause.dialog.querySelectorAll<HTMLButtonElement>(".ui-text-button")].filter(
     (button) => !button.hidden,
   );
-  expect(rows.map((button) => button.textContent)).toEqual([
-    ...ALPHABETICAL,
+  const actions = [
+    TEXT.start.achievements,
+    TEXT.pause.settings,
+    DEV_TEXT.openCheats,
     TEXT.pause.home,
     TEXT.pause.resume,
-  ]);
+  ];
+  expect(rows.map((button) => button.textContent)).toEqual(actions);
+  expect(
+    actions.map(() => {
+      pressKey([], "Tab");
+      return document.activeElement?.textContent;
+    }),
+  ).toEqual(actions);
   expect(rows.map((button) => button.classList.contains("ui-text-button-primary"))).toEqual([
     false,
     false,
@@ -474,6 +483,15 @@ it("opens Achievements above gameplay Pause and returns to its held context befo
   tap(f.pause.button(TEXT.pause.resume));
   expect(f.active.has("zone")).toBe(true);
   expect(f.scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
+  f.active.delete("zone");
+  f.active.add("map");
+  f.pause.update();
+  tap(f.pause.pauseButton);
+  await settle();
+  expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.menu.title);
+  expect(
+    [...f.pause.dialog.querySelectorAll(".ui-text-button")].map((button) => button.textContent),
+  ).toEqual([...ALPHABETICAL, TEXT.pause.home, TEXT.pause.close]);
 });
 
 it.each([
