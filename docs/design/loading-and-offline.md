@@ -20,3 +20,4 @@ Reference: [startup and update rules](../../gameplay/design.md#start-screen), [a
 | cwh-0018 | Retry a failed first offline installation through the shared Retry | [cwh-0018.md](../work/cwh-0018.md) |
 | cwh-0266 | Adopt the game-kit 0.59 install and update loader                  | [cwh-0266.md](../work/cwh-0266.md) |
 | cwh-0284 | Check for updates when the installed app regains focus             | [cwh-0284.md](../work/cwh-0284.md) |
+| cwh-0291 | Request an update check when play starts                           | [cwh-0291.md](../work/cwh-0291.md) |
