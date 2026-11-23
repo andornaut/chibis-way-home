@@ -26,6 +26,7 @@ export interface MapWords {
 export interface MapView {
   readonly buttons: Readonly<Record<MapAction, HTMLButtonElement>>;
   readonly destinations: ReadonlyMap<string, HTMLButtonElement>;
+  readonly letterbox: HTMLElement;
   readonly markers: ReadonlyMap<string, HTMLImageElement>;
   readonly root: HTMLElement;
   readonly view: HTMLElement;
@@ -70,6 +71,9 @@ function box(rect: Rect, element: HTMLElement): void {
 export function createMap(document: Document, words: MapWords, faces: readonly MapFace[]): MapView {
   const root = document.createElement("section");
   root.className = "map-scene";
+  const letterbox = document.createElement("div");
+  letterbox.className = "map-letterbox";
+  letterbox.setAttribute("aria-hidden", "true");
   const view = document.createElement("div");
   view.className = "ui-view map-view";
   writeLayoutProperties(MAP_PROPERTIES, view);
@@ -216,6 +220,7 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
     props: { element: root },
     slots: {
       content: [
+        { component: "Native", key: "letterbox", kind: "component", props: { element: letterbox } },
         {
           component: "Native",
           key: "view",
@@ -237,5 +242,5 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
     },
   });
   const buttons = { continue: controls.get("continue")!, home: controls.get("home")! };
-  return { buttons, destinations, markers, root, view };
+  return { buttons, destinations, letterbox, markers, root, view };
 }

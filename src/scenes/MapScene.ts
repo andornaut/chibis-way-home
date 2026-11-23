@@ -3,6 +3,7 @@ import {
   type AsepriteSheet,
   sheetTags,
 } from "@andornaut/game-kit/runtime/art/aseprite";
+import { containsPoint } from "@andornaut/game-kit/runtime/rect";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import { type GameObjects, Scene } from "phaser";
@@ -366,18 +367,25 @@ export class MapScene extends Scene implements StageSelectOpener {
     );
     mountSceneView(this, view.root);
     const live = () => this.domReady && !this.selectionOpen && !this.travelling;
-    const controls = new Map<HTMLButtonElement, Control>([
+    const controls = new Map<HTMLElement, Control>([
       [view.buttons.continue, { kind: "continue" }],
       [view.buttons.home, { kind: "home" }],
+      [view.letterbox, { kind: "home" }],
       ...[...view.destinations].map(
         ([id, button]) => [button, { id, kind: "node" } as Control] as const,
       ),
     ]);
-    const controlAt = (target: EventTarget | null) => {
+    const controlAt = ({ clientX, clientY, target }: PointerEvent) => {
+      if (target === view.letterbox) {
+        return containsPoint(view.root.getBoundingClientRect(), clientX, clientY) &&
+          !containsPoint(view.view.getBoundingClientRect(), clientX, clientY)
+          ? view.letterbox
+          : null;
+      }
       const button = target instanceof Element ? target.closest("button") : null;
       return button instanceof HTMLButtonElement && controls.has(button) ? button : null;
     };
-    const activate = (button: HTMLButtonElement) => {
+    const activate = (button: HTMLElement) => {
       if (
         !live() ||
         !modalInput(this).accepts() ||
@@ -398,11 +406,12 @@ export class MapScene extends Scene implements StageSelectOpener {
       {
         accepts: live,
         activate,
-        controlAt: (event) => controlAt(event.target),
+        available: (button) => button !== view.letterbox || canFocus(view.buttons.home),
+        controlAt,
         controls: [...controls.keys()],
         element: (button) => button,
         land: (button) => {
-          if (button.getAttribute("aria-disabled") === "true") {
+          if (button === view.letterbox || button.getAttribute("aria-disabled") === "true") {
             return;
           }
           const control = controls.get(button)!;

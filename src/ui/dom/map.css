@@ -1,3 +1,28 @@
+/* Only the space around the fitted view receives the letterbox action. */
+.map-letterbox {
+  --map-view-left: var(--ui-view-left, 0%);
+  --map-view-top: var(--ui-view-top, 0%);
+  --map-view-right: calc(var(--map-view-left) + var(--ui-view-width, 100%));
+  --map-view-bottom: calc(var(--map-view-top) + var(--ui-view-height, 100%));
+
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  clip-path: polygon(
+    evenodd,
+    0 0,
+    100% 0,
+    100% 100%,
+    0 100%,
+    0 0,
+    var(--map-view-left) var(--map-view-top),
+    var(--map-view-right) var(--map-view-top),
+    var(--map-view-right) var(--map-view-bottom),
+    var(--map-view-left) var(--map-view-bottom),
+    var(--map-view-left) var(--map-view-top)
+  );
+}
+
 /* Map geometry stays in base pixels on the fitted play view. */
 .map-title,
 .map-label,

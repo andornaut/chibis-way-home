@@ -78,8 +78,8 @@ function setup(scene = new MapScene(), data: Parameters<MapScene["init"]>[0] = {
   return { events, root, route, scene };
 }
 
-function tap(target: Element) {
-  const at = { bubbles: true, button: 0, clientX: 0, clientY: 0, isPrimary: true, pointerId: 1 };
+function tap(target: Element, clientX = 0, clientY = 0) {
+  const at = { bubbles: true, button: 0, clientX, clientY, isPrimary: true, pointerId: 1 };
   target.dispatchEvent(new PointerEvent("pointerdown", at));
   target.dispatchEvent(new PointerEvent("pointerup", at));
 }
@@ -193,6 +193,70 @@ it("marks the Map Back to title action as a return to Start", async () => {
   await Promise.resolve();
   tap(home);
   expect(route.start).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
+});
+
+it("routes a letterbox tap through Back to title once without moving keyboard focus", async () => {
+  const { root, route } = setup();
+  const letterbox = root.querySelector<HTMLElement>(".map-letterbox")!;
+  const view = root.querySelector<HTMLElement>(".map-view")!;
+  vi.spyOn(root, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 900, 400));
+  vi.spyOn(view, "getBoundingClientRect").mockReturnValue(new DOMRect(50, 0, 800, 400));
+  const next = root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
+  ready.finish!(true);
+  await Promise.resolve();
+  next.focus();
+  tap(letterbox, 20, 40);
+  const click = new PointerEvent("click", {
+    bubbles: true,
+    cancelable: true,
+    detail: 1,
+    pointerId: 1,
+  });
+  letterbox.dispatchEvent(click);
+  expect(click.defaultPrevented).toBe(true);
+  expect(route.start).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
+  expect(route.launch).not.toHaveBeenCalled();
+  expect(document.activeElement).toBe(next);
+});
+
+it("ignores letterbox releases after a drag or ownership change, and bars outside the active range", async () => {
+  const { root, route, scene } = setup();
+  const letterbox = root.querySelector<HTMLElement>(".map-letterbox")!;
+  const view = root.querySelector<HTMLElement>(".map-view")!;
+  vi.spyOn(root, "getBoundingClientRect").mockReturnValue(new DOMRect(0, 0, 900, 400));
+  vi.spyOn(view, "getBoundingClientRect").mockReturnValue(new DOMRect(50, 0, 800, 400));
+  tap(letterbox, 20, 40);
+  expect(route.start).not.toHaveBeenCalled();
+  ready.finish!(true);
+  await Promise.resolve();
+  tap(letterbox, 55, 40);
+  tap(letterbox, 920, 40);
+  const pointer = (type: string, clientY: number) =>
+    letterbox.dispatchEvent(
+      new PointerEvent(type, {
+        bubbles: true,
+        button: 0,
+        clientX: 20,
+        clientY,
+        isPrimary: true,
+        pointerId: 1,
+      }),
+    );
+  pointer("pointerdown", 40);
+  pointer("pointermove", 80);
+  pointer("pointerup", 40);
+  pointer("pointerdown", 40);
+  const overlay = modalInput({
+    events: new EventEmitter(),
+    game: scene.game,
+  } as unknown as MapScene);
+  overlay.open();
+  pointer("pointerup", 40);
+  tap(letterbox, 20, 40);
+  overlay.close();
+  Object.assign(scene, { travelling: true });
+  tap(letterbox, 20, 40);
+  expect(route.start).not.toHaveBeenCalled();
 });
 
 it("requests discovery only when a stage is admitted, once per selection", async () => {
