@@ -520,14 +520,6 @@ export function releaseSave(): void {
   stats.release();
 }
 
-// Show tips again: the saved seen-tips record is cleared, so every first-time tip can show again,
-// written even during a cheat session.
-export function clearSeenTips(): Promise<StoreSaveResult> {
-  progress = { ...progress, seenTips: [] };
-  stored = { ...stored, seenTips: [] };
-  return persist(stored);
-}
-
 // Reset save: progress, statistics and achievements go back to a new game's, each written, and
 // nothing is queued. Settings outside the save stay. The first failed write's result, otherwise
 // saved.

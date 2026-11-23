@@ -1,7 +1,6 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
-import { PROGRESS_VERSION } from "../progress/index.ts";
 import type { ZoneState } from "../rules/zone.ts";
 
 const PROGRESS_KEY = "chibis-way-home.save";
@@ -117,30 +116,6 @@ it("applies cheats chosen before play to the play that follows; a reload has non
     session: false,
     stored: 0,
   });
-});
-
-it("clears every seen tip, each power-up's included, writing even in a cheat session", async () => {
-  const values = storage([
-    [
-      PROGRESS_KEY,
-      JSON.stringify({
-        activeSkill: null,
-        at: "beginning",
-        openingSeen: true,
-        seenTips: ["controls", "powerUp:dash", "powerUp:speedy"],
-        skills: ["dash", "speedy"],
-        version: PROGRESS_VERSION,
-      }),
-    ],
-  ]);
-  const { mode, save } = await page();
-  await save.loadProgress();
-  save.startCheatSession();
-  expect(await save.clearSeenTips()).toEqual({ status: "saved" });
-  expect(mode.isDevelopmentSession()).toBe(true);
-  expect(JSON.parse(values.get(PROGRESS_KEY)!).seenTips).toEqual([]);
-  save.endCheatSession();
-  expect(save.savedProgress().seenTips).toEqual([]);
 });
 
 it("resets progress, statistics and achievements and keeps device settings", async () => {

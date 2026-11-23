@@ -57,9 +57,6 @@ export function mapFullyOpen(): boolean {
 }
 
 // The tools, which start no cheat session and write the save.
-export function clearSeenTips(): Promise<StoreSaveResult> {
-  return pageSave.clearSeenTips();
-}
 export function resetSaveAvailable(): Promise<boolean> {
   return pageSave.resetSaveAvailable();
 }

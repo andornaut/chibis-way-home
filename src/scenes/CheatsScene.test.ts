@@ -13,7 +13,6 @@ const gate = vi.hoisted(() => ({
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 const saves = vi.hoisted(() => ({
-  clearSeenTips: vi.fn(() => Promise.resolve({ status: "saved" })),
   resetSave: vi.fn(() => Promise.resolve({ status: "saved" })),
   resetSaveAvailable: vi.fn(() => Promise.resolve(true)),
   startCheatSession: vi.fn(),
@@ -48,7 +47,6 @@ let layer: UiLayer;
 
 beforeEach(() => {
   vi.clearAllMocks();
-  saves.clearSeenTips.mockReset().mockResolvedValue({ status: "saved" });
   saves.resetSave.mockReset().mockResolvedValue({ status: "saved" });
   saves.resetSaveAvailable.mockReset().mockResolvedValue(true);
   gate.accepts.mockReturnValue(true);
@@ -122,7 +120,6 @@ it.each([false, true])("shows only the current run-only controls in app mode %s"
   expect(card.querySelector(".ui-card-scroll")).toBeNull();
   expect(document.querySelector("[role=alertdialog]")).toBeNull();
   expect(saves.resetSave).not.toHaveBeenCalled();
-  expect(saves.clearSeenTips).not.toHaveBeenCalled();
 });
 
 it("applies each cheat only to the session and reports unlocks without touching saved progress", () => {
@@ -144,7 +141,6 @@ it("applies each cheat only to the session and reports unlocks without touching 
   expect(invulnerabilityEnabled()).toBe(false);
   expect(saves.startCheatSession).toHaveBeenCalledTimes(4);
   expect(saves.resetSave).not.toHaveBeenCalled();
-  expect(saves.clearSeenTips).not.toHaveBeenCalled();
 });
 
 it.each(["tap", "hold", "keyboard"] as const)(
