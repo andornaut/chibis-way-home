@@ -34,7 +34,7 @@ Targets are assessed per stage and player skill. Bands other than the successful
 - **Route spread:** every route a choice opens lands within a narrow window of the stage's median clear time and restart rate, so no route is a lot easier or harder
 - **Session length:** the time to finish the game, by skill
 
-The approved Blue cityscape pool change retires all 274 legacy-profile entries. The replacement pool uses only the 35 existing ordinary-qualified layout IDs, comprising three recorded entries and 32 from the checked proposal. Admission is pending final-tree proof provenance and City boundary assembly, encounter and fixed gift placement checks.
+Blue cityscape’s generated middle pool contains 35 distinct certified layouts with ordinary no-powerup required-route proofs. City boundary’s separate authored approach and arena are outside that count.
 
 ## Boss playtest criteria
 

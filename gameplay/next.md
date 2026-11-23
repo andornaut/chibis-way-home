@@ -1,6 +1,6 @@
 # Next
 
-Agreed later scope, outside the current build. Nothing here is scheduled or ordered; detailed mechanics still require design decisions. Current rules remain in [`design.md`](design.md), and unresolved proposals remain in [`ideas.md`](ideas.md).
+Agreed later scope, outside the current build. Nothing here is scheduled or ordered; detailed mechanics still require design decisions. The [gameplay index](README.md) links to current rules. [Ideas](ideas.md) records unresolved proposals.
 
 ## Routes and encounters
 

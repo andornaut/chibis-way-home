@@ -1,6 +1,6 @@
 # Homeward journey: design notes
 
-These notes hold the journey's connective scenes and story beats; undecided rule proposals belong in [`ideas.md`](../ideas.md). Established facts come from the [rulebook](../design.md#setting). Everything labelled **Proposal** is unapproved and unimplemented, including friendly characters, rooms, items, quests and rewards.
+These notes hold the journey's connective scenes and story beats; undecided rule proposals belong in [`ideas.md`](../ideas.md). Established facts come from the [rulebook](../design.md#setting). The proposed scenes, optional rooms, characters, items, quests and rewards are unapproved and unimplemented.
 
 ## Established direction
 
