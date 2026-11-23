@@ -192,7 +192,9 @@
 
 /* Every toggle uses the same centred trailing switch and state stack. */
 .settings-toggle-value {
-  width: var(--settings-toggle-width, max-content);
+  --settings-toggle-width: max-content;
+
+  width: var(--settings-toggle-width);
   flex-direction: column;
   justify-content: center;
   min-width: calc(var(--ui-unit) * var(--settings-switch-width) * 1px);
