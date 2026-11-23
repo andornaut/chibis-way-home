@@ -1,6 +1,6 @@
 {
   "arenas": [
-    { "hash": "646286b50ec954a9", "id": "arena-dog-city-boundary", "stage": "city-boundary" }
+    { "hash": "e90c9e86575d1457", "id": "arena-dog-city-boundary", "stage": "city-boundary" }
   ],
   "entries": [
     {
@@ -459,7 +459,7 @@
       "work": 1486
     }
   ],
-  "inputs": { "data": "c2de1acf21b858d4", "proofs": "8a0c73faa47c147d" },
+  "inputs": { "data": "c2de1acf21b858d4", "proofs": "2bc00cff22846723" },
   "version": 1,
   "zone": "blue",
   "approaches": [
@@ -473,7 +473,7 @@
         "seed": 2,
         "trace": "d73ff52a073b0406:40863"
       },
-      "inputs": { "data": "c2de1acf21b858d4", "proofs": "8a0c73faa47c147d" },
+      "inputs": { "data": "c2de1acf21b858d4", "proofs": "2bc00cff22846723" },
       "predecessors": ["outdoor-deep-ascent"],
       "profile": "cold-encounter-v1",
       "stage": "city-boundary"
