@@ -303,6 +303,7 @@ export const TEXT: GameText = {
   },
   settings: {
     actionButtons: "Display Jump and Use buttons",
+    back: "Back",
     close: "Close",
     descriptions: {
       actionButtons: "Use and Jump are shown or hidden. Touch actions remain available.",
