@@ -51,3 +51,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0289 | Swap Cheats and Settings in Pause                                       | [cwh-0289.md](../work/cwh-0289.md) |
 | cwh-0292 | Fit Settings without scrolling                                          | [cwh-0292.md](../work/cwh-0292.md) |
 | cwh-0293 | Simplify Cheats into one compact column                                 | [cwh-0293.md](../work/cwh-0293.md) |
+| cwh-0294 | Use one Install action in Settings                                      | [cwh-0294.md](../work/cwh-0294.md) |
