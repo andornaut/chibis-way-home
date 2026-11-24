@@ -53,13 +53,18 @@ describe("touchRoleAt", () => {
   });
   // A button's press radius: its clear circle and the move hint's radius beyond it.
   const reach = TOUCH_CIRCLE_RADIUS + (moveHint.art.width - 1) / 2;
+  // Probe Jump's circle away from Use and the bottom-right corner extension.
+  const jumpArc = (distance: number) => ({
+    x: jump.centre.x + distance / 2,
+    y: jump.centre.y - (distance * Math.sqrt(3)) / 2,
+  });
   it.each<[string, { x: number; y: number }, string]>([
     ["Use's centre", use.centre, "use"],
     ["inside Use's area", left(use.centre, reach - 0.1), "use"],
     ["outside Use's area", left(use.centre, reach + 0.1), "move"],
     ["Jump's centre", jump.centre, "jump"],
-    ["inside Jump's area", left(jump.centre, reach - 0.1), "jump"],
-    ["outside Jump's area", left(jump.centre, reach + 0.1), "move"],
+    ["inside Jump's area", jumpArc(reach - 0.1), "jump"],
+    ["outside Jump's area", jumpArc(reach + 0.1), "move"],
     [
       "just on Use's side of the midway line",
       { x: (use.centre.x + jump.centre.x) / 2 - 0.1, y: (use.centre.y + jump.centre.y) / 2 },
