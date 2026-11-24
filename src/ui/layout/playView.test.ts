@@ -168,7 +168,7 @@ describe("the touch controls", () => {
       hint: moveHint.centre,
       jump: buttons.jump.centre,
       use: buttons.use.centre,
-    }).toEqual({ hint: { x: 96, y: 283 }, jump: { x: 623, y: 283 }, use: { x: 546, y: 183 } });
+    }).toEqual({ hint: { x: 96, y: 283 }, jump: { x: 623, y: 283 }, use: { x: 553, y: 213 } });
   });
 
   // Each side's drawn edge sits CONTROL_SIDE (or CONTROL_BOTTOM) from the canvas's edge, unless
@@ -227,11 +227,16 @@ describe("the touch controls", () => {
     const { jump, use } = buttons;
     const reach = TOUCH_CIRCLE_RADIUS + (moveHint.art.width - 1) / 2;
     const left = (centre: Point, distance: number) => ({ x: centre.x - distance, y: centre.y });
+    // Check Jump's circle away from both Use and the corner extension.
+    const jumpArc = (distance: number) => ({
+      x: jump.centre.x + distance / 2,
+      y: jump.centre.y - (distance * Math.sqrt(3)) / 2,
+    });
     const midway = { x: (use.centre.x + jump.centre.x) / 2, y: (use.centre.y + jump.centre.y) / 2 };
     const roles = [
       jump.centre,
-      left(jump.centre, reach - 0.1),
-      left(jump.centre, reach + 0.1),
+      jumpArc(reach - 0.1),
+      jumpArc(reach + 0.1),
       use.centre,
       left(use.centre, reach - 0.1),
       left(use.centre, reach + 0.1),
@@ -240,6 +245,10 @@ describe("the touch controls", () => {
       { x: SCREEN.width - 1, y: SCREEN.height - 1 },
     ].map((point) => touchRoleAt(pressAreas, point));
     expect(jump.centre.x).toBeGreaterThan(623);
+    expect({ x: jump.centre.x - use.centre.x, y: jump.centre.y - use.centre.y }).toEqual({
+      x: 70,
+      y: 70,
+    });
     expect(roles).toEqual(["jump", "jump", "move", "use", "use", "move", "use", "jump", "jump"]);
   });
 });
