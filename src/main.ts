@@ -30,16 +30,12 @@ import { capFrameRate } from "@andornaut/game-kit/runtime/clock/phaser/capFrameR
 import { LOADER_CONFIG } from "@andornaut/game-kit/runtime/load/loaderConfig";
 import type { LoadingAttempt } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
-import { trackInputModality } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
-import { lockGameOrientation } from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
 import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn";
 import { Core, Game, Scale, WEBGL } from "phaser";
 
 import { CRASH_SCREEN } from "./crash/crashScreen.ts";
 import { SCREEN } from "./data/screen.ts";
 import { TEXT } from "./data/text.ts";
-import { setupPhoneApp } from "./pwa/index.ts";
-import { installOffer } from "./pwa/installOffer.ts";
 import { AchievementNoticeScene } from "./scenes/AchievementNoticeScene.ts";
 import { AchievementsScene } from "./scenes/AchievementsScene.ts";
 import { BootScene } from "./scenes/BootScene.ts";
@@ -190,25 +186,12 @@ function startGame(attempt: LoadingAttempt): void {
   CRASH_SCREEN.stopGameOnCrash(() => game.pause());
 }
 
-let launch: ReturnType<typeof setupPhoneApp> | undefined;
-let setupStarted = false;
 let started = false;
 
-// Document services are installed once; only the current attempt may acquire a Game.
+// The page entry installs the document services before handing over to the game.
 export async function bootstrap(attempt: LoadingAttempt): Promise<void> {
-  if (!setupStarted) {
-    setupStarted = true;
-    trackInputModality(document);
-    installOffer();
-    lockGameOrientation("landscape", screen);
-    launch = setupPhoneApp();
-  }
-  if (launch === undefined) {
-    throw new Error("Document startup did not complete");
-  }
-  const result = await launch;
   await retirement;
-  if (attempt.isCurrent() && !started && result !== "reloading") {
+  if (attempt.isCurrent() && !started) {
     startGame(attempt);
     started = true;
   }

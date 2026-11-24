@@ -5,16 +5,30 @@ import {
   type LoadingAttempt,
 } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 import type { ProgressHandle, ProgressSnapshot } from "@andornaut/game-kit/runtime/progressState";
+import {
+  type BrowserLaunchPreparation,
+  prepareBrowserLaunch,
+} from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
+
+import { CACHE_POLICY } from "../pwa/cachePolicy.ts";
 
 const startup = vi.hoisted(() => ({
   bootstrap: vi.fn(),
+  importGame: vi.fn(),
   initial: undefined as ProgressHandle | undefined,
+  install: vi.fn(),
+  launch: vi.fn(),
   mount: vi.fn(),
   pending: vi.fn(),
 }));
 vi.mock("../crash/install.ts", () => ({}));
-vi.mock("../main.ts", () => ({ bootstrap: startup.bootstrap }));
+vi.mock("../pwa/index.ts", () => ({ setupPhoneApp: startup.launch }));
+vi.mock("../pwa/installOffer.ts", () => ({ installOffer: startup.install }));
+vi.mock("../main.ts", () => {
+  startup.importGame();
+  return { bootstrap: startup.bootstrap };
+});
 vi.mock("./progress.ts", async () => {
   const { createProgressState } = await import("@andornaut/game-kit/runtime/progressState");
   const loadingProgress = createProgressState();
@@ -33,6 +47,9 @@ vi.mock("./progress.ts", async () => {
 beforeEach(() => {
   vi.resetModules();
   startup.bootstrap.mockReset();
+  startup.importGame.mockClear();
+  startup.install.mockClear();
+  startup.launch.mockReset().mockResolvedValue("play");
   startup.mount.mockClear();
   startup.pending.mockClear();
   vi.spyOn(window.location, "reload").mockImplementation(() => {});
@@ -40,6 +57,7 @@ beforeEach(() => {
 afterEach(() => {
   window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: false }));
   document.getElementById("game")?.remove();
+  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 const settle = () =>
@@ -58,6 +76,61 @@ function host(progress: Pick<typeof import("./progress.ts"), "loadingProgress">)
   return element;
 }
 
+it.each(["play", "reloading", "disposed"] as const)(
+  "defers the game import through the launch fence on %s",
+  async (outcome) => {
+    let finish!: (result: "play" | "reloading") => void;
+    startup.launch.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    host(await import("./progress.ts"));
+    await import("../play.ts");
+    await settle();
+    expect(startup.launch).toHaveBeenCalledOnce();
+    expect(startup.mount.mock.invocationCallOrder[0]).toBeLessThan(
+      startup.launch.mock.invocationCallOrder[0]!,
+    );
+    expect(startup.importGame).not.toHaveBeenCalled();
+    if (outcome === "disposed") {
+      window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: false }));
+    }
+    finish(outcome === "reloading" ? "reloading" : "play");
+    await settle();
+    expect(startup.importGame).toHaveBeenCalledTimes(outcome === "play" ? 1 : 0);
+    expect(startup.bootstrap).toHaveBeenCalledTimes(outcome === "play" ? 1 : 0);
+  },
+);
+
+it("shows the shared terminal failure without progress, gameplay or install setup", async () => {
+  vi.stubGlobal("caches", undefined);
+  startup.launch.mockImplementationOnce((preparation: BrowserLaunchPreparation) =>
+    prepareBrowserLaunch(preparation, CACHE_POLICY),
+  );
+  const progress = await import("./progress.ts");
+  let current: ProgressSnapshot | undefined;
+  const off = progress.loadingProgress.subscribe((value) => {
+    current = value;
+  });
+  const element = host(progress);
+  await import("../play.ts");
+  await settle();
+
+  const failure = element.querySelector<HTMLElement>(".loading-failure")!;
+  expect(failure.hidden).toBe(false);
+  expect(failure.textContent).toContain(LOADING_FAILURE_TEXT.title);
+  expect(failure.querySelector("button")).toBeNull();
+  expect(current).toEqual({ active: false, value: undefined });
+  expect(startup.importGame).not.toHaveBeenCalled();
+  expect(startup.install).not.toHaveBeenCalled();
+  expect(window.location.reload).not.toHaveBeenCalled();
+
+  window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: false }));
+  expect(element.querySelector(".loading-failure")).toBeNull();
+  off();
+});
+
 it("reloads only explicit startup-entry Retry and coalesces pending navigation", async () => {
   const partial = vi.fn();
   const progress = await import("./progress.ts");
@@ -70,7 +143,7 @@ it("reloads only explicit startup-entry Retry and coalesces pending navigation",
     throw new Error("Private startup failure");
   });
   const element = host(progress);
-  await import("./entry.ts");
+  await import("../play.ts");
   await settle();
   const failure = element.querySelector<HTMLElement>(".loading-failure")!;
   const retry = failure.querySelector<HTMLButtonElement>("button")!;
@@ -125,7 +198,7 @@ it("retries a failed font in place after committed entry without reloading or re
     boot.progress(0.4);
   });
   const element = host(progress);
-  await import("./entry.ts");
+  await import("../play.ts");
   await settle();
   const { observeRequiredAttempt, requiredLoading } = await import("./required.ts");
   const load = vi
@@ -169,7 +242,7 @@ it("finishes only its own token when an incomplete entry is disposed", async () 
     current = value;
   });
   host(progress);
-  await import("./entry.ts");
+  await import("../play.ts");
   await settle();
   expect(current).toEqual({ active: true, value: undefined });
   window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: false }));

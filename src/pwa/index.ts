@@ -1,5 +1,5 @@
 // The game as an installed phone app: install and updates, the back gesture, the screen wake lock
-// and persistent storage. setupPhoneApp runs once from main.ts; the scenes listen for
+// and persistent storage. setupPhoneApp runs once from play.ts; the scenes listen for
 // PHONE_EVENTS on window and call the functions below.
 //
 // The kit's launch installs the complete build under the loading bar before the game exists, and
@@ -17,7 +17,13 @@ import {
   guardBackNavigation,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/backNavigation";
 import { pageRunsAsApp } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
-import { browserLaunchContext, createLaunch } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
+import {
+  type BrowserLaunchPreparation,
+  createLaunch,
+  type LaunchContext,
+  prepareBrowserLaunch,
+  type PreparedBrowserLaunch,
+} from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import {
   createScreenWakeLock,
   type ScreenWakeLock,
@@ -49,17 +55,8 @@ let appCloses = false;
 let backLeaves = true;
 let screenWakeLock: ScreenWakeLock | undefined;
 
-// The production build only: the dev server has no sw.js, and a worker would serve stale modules
-// over hot reloads. Where the browser has no service workers or Cache Storage the game plays from
-// the network. A first install's progress and failure belong to the loading bar and Loading
-// failed. A device whose router cannot register, or whose storage is full, plays from the network
-// with a notice (onNetworkPlay), and the next launch tries the install again. A background update
-// reports nothing (onUpdateState), and a failed one retries at the next check.
-function setupLaunch(): Promise<LaunchResult> {
-  const context = import.meta.env.PROD ? browserLaunchContext(CACHE_POLICY) : undefined;
-  if (context === undefined) {
-    return Promise.resolve("play");
-  }
+// A first install reports progress and failure to the page shell before the game loads.
+function setupLaunch(context: LaunchContext): Promise<LaunchResult> {
   launch = createLaunch(context, {
     onFailure: (failure) => {
       launchLoading.failed();
@@ -83,10 +80,20 @@ function setupLaunch(): Promise<LaunchResult> {
   return launch.run();
 }
 
-// The launch result settles before game construction or save reads: "play" once this document
-// runs the active build, or "reloading" when the game must not start.
-export function setupPhoneApp(): Promise<LaunchResult> {
-  const result = setupLaunch();
+// Production requires the browser capabilities used to serve the archived game. Development
+// starts from the dev server. The page imports the game only after the launch resolves "play".
+export function setupPhoneApp(
+  preparation: BrowserLaunchPreparation,
+  beforeLaunch: () => void,
+): Promise<LaunchResult> | Extract<PreparedBrowserLaunch, { kind: "unsupported" }> {
+  const prepared = import.meta.env.PROD
+    ? prepareBrowserLaunch(preparation, CACHE_POLICY)
+    : undefined;
+  if (prepared?.kind === "unsupported") {
+    return prepared;
+  }
+  beforeLaunch();
+  const result = prepared ? setupLaunch(prepared.context) : Promise.resolve<LaunchResult>("play");
   // Asked once per launch of the installed app, never in a browser tab. Not waited for: the game
   // boots whatever the browser answers, or if it never does.
   void requestPersistentStorage(

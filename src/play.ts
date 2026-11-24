@@ -1,15 +1,25 @@
 // Bootstrap dependencies must load before the failure presenter can exist.
 // Once loaded, crash handlers precede the deferred Phaser/game import.
-import "../crash/install.ts";
+import "./crash/install.ts";
 import "@andornaut/game-kit/runtime/web/progress/dom/progressBar.css";
 import "@andornaut/game-kit/runtime/web/view/frameTurnLandscapeGame.css";
-import "../main.css";
-import "./required.css";
+import "./main.css";
+import "./loading/required.css";
 
 import { createLoadingAttempts } from "@andornaut/game-kit/runtime/load/loadingAttempts";
+import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
+import { trackInputModality } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
+import { lockGameOrientation } from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
 
-import { beginStartupChecks, mountLoading, startupLoading } from "./progress.ts";
-import { mountRequiredLoading, observeRequiredAttempt, requiredLoading } from "./required.ts";
+import { loadingFailurePresentation } from "./loading/presentation.ts";
+import { beginStartupChecks, mountLoading, startupLoading } from "./loading/progress.ts";
+import {
+  mountRequiredLoading,
+  observeRequiredAttempt,
+  requiredLoading,
+} from "./loading/required.ts";
+import { setupPhoneApp } from "./pwa/index.ts";
+import { installOffer } from "./pwa/installOffer.ts";
 
 const parent = document.getElementById("game");
 if (parent && !new URLSearchParams(window.location.search).has("stagePreview")) {
@@ -21,11 +31,38 @@ if (parent && !new URLSearchParams(window.location.search).has("stagePreview")) 
 
 let operation = startupLoading;
 let completeNavigation: (() => void) | undefined;
+let launch: Promise<LaunchResult> | undefined;
+const failureHost = document.createElement("div");
+failureHost.className = "required-loading-host";
+let disposeUnsupported: (() => void) | undefined;
 
-// Phaser and its module graph download only after the existing single top bar is mounted.
+// Install or select the routed build before importing Phaser. The shell owns the single
+// document launch and its progress while the game is still absent.
 const attempts = createLoadingAttempts({
   async load(attempt) {
-    const game = await import("../main.ts");
+    if (launch === undefined) {
+      const prepared = setupPhoneApp(
+        {
+          failure: { presentation: loadingFailurePresentation(1) },
+          onUnsupported: () => operation.finish(),
+          parent: failureHost,
+        },
+        () => {
+          trackInputModality(document);
+          installOffer();
+          lockGameOrientation("landscape", screen);
+        },
+      );
+      if ("kind" in prepared) {
+        disposeUnsupported = () => prepared.failure.dispose();
+        return;
+      }
+      launch = prepared;
+    }
+    if ((await launch) === "reloading" || !attempt.isCurrent()) {
+      return;
+    }
+    const game = await import("./main.ts");
     if (attempt.isCurrent()) {
       await game.bootstrap(attempt);
     }
@@ -55,10 +92,8 @@ const stopAttempt = observeRequiredAttempt(() => {
 }, attempts);
 let stopFailure = () => {};
 if (parent !== null) {
-  const failure = document.createElement("div");
-  failure.className = "required-loading-host";
-  parent.append(failure);
-  stopFailure = mountRequiredLoading(failure);
+  parent.append(failureHost);
+  stopFailure = mountRequiredLoading(failureHost);
 }
 const pageHide = (event: PageTransitionEvent) => {
   if (event.persisted) {
@@ -68,6 +103,7 @@ const pageHide = (event: PageTransitionEvent) => {
   operation.finish();
   stopAttempt();
   stopFailure();
+  disposeUnsupported?.();
   requiredLoading.dispose();
   completeNavigation?.();
   completeNavigation = undefined;

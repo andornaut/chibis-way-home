@@ -2,7 +2,11 @@ import type {
   LaunchProgress,
   UpdateOffer,
 } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
-import type { createLaunch, LaunchOptions } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
+import type {
+  BrowserLaunchPreparation,
+  createLaunch,
+  LaunchOptions,
+} from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { PHASER_BUILD } from "../tools/phaserBuild.ts";
@@ -24,6 +28,7 @@ const kit = vi.hoisted(() => {
       return launch;
     }),
     launch,
+    prepare: vi.fn(),
   };
 });
 const feedback = vi.hoisted(() => ({ fail: vi.fn() }));
@@ -36,8 +41,8 @@ const loading = vi.hoisted(() => ({
 vi.mock("../loading/required.ts", () => ({ installationFeedback: feedback }));
 vi.mock("../loading/launch.ts", () => ({ launchLoading: loading }));
 vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/launch", () => ({
-  browserLaunchContext: vi.fn(() => kit.context),
   createLaunch: kit.create,
+  prepareBrowserLaunch: kit.prepare,
 }));
 vi.mock("@andornaut/game-kit/runtime/web/pwa/backNavigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@andornaut/game-kit/runtime/web/pwa/backNavigation")>()),
@@ -76,11 +81,18 @@ beforeEach(() => {
   vi.stubGlobal("navigator", navigator);
   vi.stubGlobal("document", {});
   kit.context = {};
+  kit.prepare.mockReturnValue({ context: kit.context, kind: "supported" });
 });
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
+
+const preparation: BrowserLaunchPreparation = {
+  onUnsupported: () => undefined,
+  parent: {} as HTMLElement,
+};
+const beforeLaunch = vi.fn();
 
 // The options setupPhoneApp gave the kit's launch.
 const launchOptions = () => kit.create.mock.calls[0]![1];
@@ -90,7 +102,7 @@ it.each(["play", "reloading"] as const)(
   async (result) => {
     kit.launch.run.mockResolvedValueOnce(result);
     const pwa = await import("./index.ts");
-    expect(await pwa.setupPhoneApp()).toBe(result);
+    expect(await pwa.setupPhoneApp(preparation, beforeLaunch)).toBe(result);
     expect(kit.create).toHaveBeenCalledOnce();
     expect(kit.create.mock.calls[0]![0]).toBe(kit.context);
     expect(launchOptions().serviceWorkerUrl).toBe("/sw.js");
@@ -108,14 +120,11 @@ it.each(["play", "reloading"] as const)(
   },
 );
 
-it.each([
-  ["the development server", false, {}],
-  ["a browser without service workers", true, undefined],
-])("plays from the network on %s", async (_, production, context) => {
-  vi.stubEnv("PROD", production);
-  kit.context = context;
+it("plays from the development server without checking browser capabilities", async () => {
+  vi.stubEnv("PROD", false);
   const pwa = await import("./index.ts");
-  expect(await pwa.setupPhoneApp()).toBe("play");
+  expect(await pwa.setupPhoneApp(preparation, beforeLaunch)).toBe("play");
+  expect(kit.prepare).not.toHaveBeenCalled();
   expect(kit.create).not.toHaveBeenCalled();
   pwa.requestUpdateCheck();
   expect(kit.launch.requestUpdateCheck).not.toHaveBeenCalled();
@@ -125,9 +134,19 @@ it.each([
   expect(states).toEqual(["unavailable"]);
 });
 
+it("returns the terminal Kit view before installing or creating the launch", async () => {
+  const pwa = await import("./index.ts");
+  const failure = { failure: {}, kind: "unsupported" };
+  kit.prepare.mockReturnValueOnce(failure);
+  expect(pwa.setupPhoneApp(preparation, beforeLaunch)).toBe(failure);
+  expect(kit.prepare).toHaveBeenCalledWith(preparation, expect.any(Object));
+  expect(beforeLaunch).not.toHaveBeenCalled();
+  expect(kit.create).not.toHaveBeenCalled();
+});
+
 it("shows first-install progress on the bar, and a failure as Loading failed whose Retry resumes", async () => {
   const pwa = await import("./index.ts");
-  void pwa.setupPhoneApp();
+  void pwa.setupPhoneApp(preparation, beforeLaunch);
   const progress: LaunchProgress = {
     phase: "installing",
     receivedBytes: 5,
@@ -156,7 +175,7 @@ it("plays from the network where the device cannot install, arming its notice on
     return "play";
   });
   const pwa = await import("./index.ts");
-  expect(await pwa.setupPhoneApp()).toBe("play");
+  expect(await pwa.setupPhoneApp(preparation, beforeLaunch)).toBe("play");
   expect([pwa.networkPlay.take(), pwa.networkPlay.take()]).toEqual([true, false]);
   expect(loading.failed).not.toHaveBeenCalled();
   expect(feedback.fail).not.toHaveBeenCalled();
@@ -169,7 +188,7 @@ it("plays from the network where the device cannot install, arming its notice on
 
 it("keeps background update states off the bar and Loading failed", async () => {
   const pwa = await import("./index.ts");
-  void pwa.setupPhoneApp();
+  void pwa.setupPhoneApp(preparation, beforeLaunch);
   for (const state of [
     { phase: "staging", value: 0.5, version: "b" },
     { phase: "failed", version: "b" },
@@ -184,7 +203,7 @@ it("keeps background update states off the bar and Loading failed", async () => 
 
 it("shows a staged update's prompt from the launch", async () => {
   const pwa = await import("./index.ts");
-  void pwa.setupPhoneApp();
+  void pwa.setupPhoneApp(preparation, beforeLaunch);
   const shown: boolean[] = [];
   pwa.updateOffer.subscribe((visible) => shown.push(visible));
   const offer: UpdateOffer = { dismiss: vi.fn(), updateNow: vi.fn(), version: "b" };
@@ -197,7 +216,7 @@ it("shows a staged update's prompt from the launch", async () => {
 
 it("forwards an ordinary update check without taking the forced update path", async () => {
   const pwa = await import("./index.ts");
-  await pwa.setupPhoneApp();
+  await pwa.setupPhoneApp(preparation, beforeLaunch);
   pwa.requestUpdateCheck();
   expect(kit.launch.requestUpdateCheck).toHaveBeenCalledOnce();
   expect(kit.launch.requireNewer).not.toHaveBeenCalled();
@@ -205,7 +224,7 @@ it("forwards an ordinary update check without taking the forced update path", as
 
 it("forwards a forced update to the launch and its reports to requiredUpdate", async () => {
   const pwa = await import("./index.ts");
-  void pwa.setupPhoneApp();
+  void pwa.setupPhoneApp(preparation, beforeLaunch);
   const states: string[] = [];
   pwa.requiredUpdate.subscribe((state) => states.push(state));
   pwa.requireNewer();
@@ -254,7 +273,7 @@ it.each([
     });
     vi.stubGlobal("navigator", appNavigator);
     const pwa = await import("./index.ts");
-    pwa.setupPhoneApp();
+    pwa.setupPhoneApp(preparation, beforeLaunch);
     expect(pwa.exitShown()).toBe(shown);
     // Back leaves from a browser tab, and from an app only where its window closes.
     expect(pwa.backLeavesGame()).toBe(app ? shown : true);

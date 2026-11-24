@@ -136,10 +136,6 @@ it("awaits actual destruction before replacement and retains only one committed 
   await retry;
   expect(startup.games).toHaveLength(2);
   expect(attempts.state.kind).toBe("ready");
-  expect(startup.setup).toHaveBeenCalledOnce();
-  expect(startup.install).toHaveBeenCalledOnce();
-  expect(startup.modality).toHaveBeenCalledOnce();
-  expect(startup.orientation).toHaveBeenCalledOnce();
   attempts.dispose();
   expect(startup.signals[1]!.aborted).toBe(false);
   expect(startup.games[1]!.destroy).not.toHaveBeenCalled();
@@ -163,14 +159,4 @@ it("does not wake an unstarted loop or acquire after a waiting replacement is ca
   await retry;
   expect(startup.games).toHaveLength(1);
   expect(attempts.state.kind).toBe("disposed");
-});
-
-it("constructs no game while the launch reloads into another build", async () => {
-  startup.setup.mockResolvedValue("reloading");
-  const { bootstrap } = await import("../main.ts");
-  const attempts = createLoadingAttempts({ load: bootstrap, onState: () => {} });
-  await attempts.start();
-  expect(startup.setup).toHaveBeenCalledOnce();
-  expect(startup.games).toHaveLength(0);
-  attempts.dispose();
 });
