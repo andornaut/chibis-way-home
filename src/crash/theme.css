@@ -99,8 +99,6 @@
   margin-top: 16px;
 }
 
-/* The stack keeps the backdrop's light text on its ink face: the page's primary text is dark. */
 .crash-stack {
-  color: var(--crash-text);
   font-family: "Chibi crash body", monospace;
 }

@@ -28,8 +28,9 @@
   display: none;
 }
 
-/* Art's SVG paints the entry in every state and the kit's fill layer each skill's disc, so the
-   face keeps no theme fill of its own and the art and icon stay opaque over it. */
+/* Art's SVG paints the entry's rim, face and glyph in every state and the kit's fill layer each
+   skill's disc, so the face keeps no theme fill of its own and the art and icon stay opaque over
+   it. */
 button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button) > .ui-hud-disc-face {
   background-color: transparent;
 }
@@ -40,8 +41,16 @@ button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
   opacity: 1;
 }
 
+/* The kit draws the entry's ink ring, the same in every state, PAUSE_DISC.inset inside the face
+   with no fill, so the corners outside the ring stay clear. */
+.pause-button {
+  --ui-hud-disc-ring: var(--pause-ring);
+  --ui-hud-disc-ring-colour: var(--colour-ink);
+  --ui-hud-disc-ring-inset: var(--pause-ring-inset);
+}
+
 /* Each Menu/Pause pose has its own disc in the face's art, which is art's frame. Exit uses the
-   same disc with its own glyph. */
+   same disc with its own glyph, and draws its ring in its art. */
 .pause-disc {
   position: absolute;
   inset: 0;
@@ -60,7 +69,7 @@ button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
   --navigation-glyph: var(--button-state-ink);
 }
 
-.navigation-disc circle:nth-child(3) {
+.navigation-disc [data-part="face"] {
   fill: var(--navigation-face, var(--colour-navy));
 }
 
@@ -132,10 +141,18 @@ button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
     forced-color-adjust: none;
   }
 
-  /* The entry's art carries the system colours, so it stays where the kit would hide it, and a
-     skill's face takes them where the kit sets its fill aside. */
+  /* The entry's art and ring carry the system colours, so they stay where the kit would hide
+     them, and a skill's face takes them where the kit sets its fill aside. */
   .pause-button > .ui-hud-disc-face > .ui-hud-disc-art {
     display: block;
+  }
+
+  .pause-button > .ui-hud-disc-face::before {
+    display: block;
+  }
+
+  .pause-button {
+    --ui-hud-disc-ring-colour: ButtonText;
   }
 
   button.ui-standard-button.ui-hud-disc.skill-button > .ui-hud-disc-face {
@@ -147,11 +164,11 @@ button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
     --navigation-glyph: ButtonText;
   }
 
-  .navigation-disc circle:first-child {
+  .navigation-disc [data-part="ring"] {
     fill: ButtonText;
   }
 
-  .navigation-disc circle:nth-child(2) {
+  .navigation-disc [data-part="rim"] {
     fill: ButtonFace;
   }
 

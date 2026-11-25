@@ -5,12 +5,15 @@ import { CONTROL_DISC_FRAME, CONTROL_FRAME_INSET, SKILL_HUD } from "../../data/l
 const frame = CONTROL_DISC_FRAME;
 const restDiameter = frame - 2 * CONTROL_FRAME_INSET;
 
+// The entry and Exit discs: a frame-sized box, the drawn disc inset inside it, and the disc's ink
+// ring, ring units wide at its edge.
 export const PAUSE_DISC = {
   expandedRadius: frame / 2,
   frame,
   inset: CONTROL_FRAME_INSET,
   restDiameter,
   restRadius: restDiameter / 2,
+  ring: 1,
 } as const;
 
 // Visible diameter of the native Pause rest disc, excluding its transparent frame inset.

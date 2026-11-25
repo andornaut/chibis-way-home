@@ -10,7 +10,7 @@ import type { GameText, SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
 import type { PauseChromePose } from "../chrome/pauseChrome.ts";
 import { createGameHudDisc } from "../input/actionBinding.ts";
-import { HUD_DISC_SIZES } from "../layout/controlChrome.ts";
+import { HUD_DISC_SIZES, PAUSE_DISC } from "../layout/controlChrome.ts";
 import { ENTRY_ORIGIN, ENTRY_WIDTH } from "../layout/pauseCard.ts";
 import {
   SKILL_HUD_GROUP,
@@ -40,10 +40,13 @@ import type { SkillDiscLook } from "./skillDisc.ts";
 // painted but dim and take no presses beneath the top card.
 
 // The layout properties pause.css anchors the two groups by, in base px: the entry group's
-// top-left corner in the view, and the skill row's top and its inset from the view's right.
+// top-left corner in the view, the entry's ink ring and its inset inside the face, and the skill
+// row's top and its inset from the view's right.
 export const PAUSE_LAYOUT: LayoutValues = {
   "--pause-entry-x": ENTRY_ORIGIN.x,
   "--pause-entry-y": ENTRY_ORIGIN.y,
+  "--pause-ring": PAUSE_DISC.ring,
+  "--pause-ring-inset": PAUSE_DISC.inset,
   "--skill-hud-right": HUD_EDGE,
   "--skill-hud-y": SKILL_HUD_TOP,
 };
@@ -256,7 +259,7 @@ export function showPauseDisc(
   const poses = [...art.querySelectorAll<SVGSVGElement>(".pause-disc")];
   let shown = poses.find((svg) => svg.dataset.pose === key);
   if (shown === undefined) {
-    shown = createNavigationDisc(button.ownerDocument, colours, pose.tag, mode);
+    shown = createNavigationDisc(button.ownerDocument, colours, "kit", pose.tag, mode);
     shown.classList.add("pause-disc");
     shown.dataset.pose = key;
     art.append(shown);

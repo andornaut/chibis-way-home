@@ -86,7 +86,7 @@ export function createStart(
   view.append(nav, logo, actions.element);
   const at = layout.exit;
   if (at !== undefined) {
-    const icon = createNavigationDisc(document, colours, "rest", "exit");
+    const icon = createNavigationDisc(document, colours, "art", "rest", "exit");
     const { element: button, face } = createGameButton(
       document,
       { className: "start-icon-button ui-button-reset", face: { className: "start-icon-face" } },

@@ -7,9 +7,15 @@ import { TEXT } from "../../data/text.ts";
 import type { SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
 import { svgLayers } from "../../testing/chromeSvg.ts";
+import { createNavigationDisc } from "../dom/navigationDisc.ts";
 import { createPauseView, showPauseDisc } from "../dom/pause.ts";
 import { PAUSE_DISC, PAUSE_VISIBLE_DIAMETER } from "../layout/controlChrome.ts";
-import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./pauseChrome.ts";
+import {
+  PAUSE_CHROME_FRAME,
+  pauseChromeLayers,
+  type PauseChromePose,
+  pauseRingLayer,
+} from "./pauseChrome.ts";
 
 const colour = (key: keyof typeof palette.colours) => parseInt(palette.colours[key].slice(1), 16);
 const colours = {
@@ -39,7 +45,7 @@ it.each<{ pose: PauseChromePose; expanded: boolean; face: string; core: string }
   { core: "white", expanded: false, face: "dslate", pose: "press" },
   { core: "white", expanded: false, face: "dslate", pose: "held" },
 ])(
-  "shows the $pose pose as inline SVG in its frame, painted in palette colours by name",
+  "shows the $pose pose inside the kit's ring as inline SVG in its frame, painted by name",
   ({ core, expanded, face, pose }) => {
     const button = entryButton();
     showPauseDisc(colours, { expanded, tag: pose }, button);
@@ -47,10 +53,12 @@ it.each<{ pose: PauseChromePose; expanded: boolean; face: string; core: string }
     expect({
       layers: svgLayers(svg),
       paints: [...svg.children].map((shape) => shape.getAttribute("data-ui-fill")),
+      parts: [...svg.children].map((shape) => shape.getAttribute("data-part")),
       viewBox: svg.getAttribute("viewBox"),
     }).toEqual({
       layers: pauseChromeLayers(colours, pose),
-      paints: ["ink", "cream", face, core, core],
+      paints: ["cream", face, core, core],
+      parts: ["rim", "face", null, null],
       viewBox: `0 0 ${PAUSE_CHROME_FRAME} ${PAUSE_CHROME_FRAME}`,
     });
     showPauseDisc(colours, { expanded: false, tag: "rest" }, button);
@@ -61,7 +69,7 @@ it.each<{ pose: PauseChromePose; expanded: boolean; face: string; core: string }
   },
 );
 
-it("keeps the same disc and border across all poses, changing the face and glyph paint", () => {
+it("keeps the same ring and rim across all poses, changing the face and glyph paint", () => {
   const centre = { x: 17.5, y: 17.5 };
   expect(PAUSE_DISC).toEqual({
     expandedRadius: 17.5,
@@ -69,19 +77,24 @@ it("keeps the same disc and border across all poses, changing the face and glyph
     inset: 1,
     restDiameter: 33,
     restRadius: 16.5,
+    ring: 1,
   });
   expect(PAUSE_CHROME_FRAME).toBe(PAUSE_DISC.frame);
   expect(PAUSE_VISIBLE_DIAMETER).toBe(PAUSE_DISC.restDiameter);
+  expect(pauseRingLayer(colours)).toEqual({
+    centre,
+    colour: colours.ink,
+    kind: "disc",
+    radius: 16.5,
+  });
   expect(pauseChromeLayers(colours, "rest")).toEqual([
-    { centre, colour: colours.ink, kind: "disc", radius: 16.5 },
     { centre, colour: colours.cream, kind: "disc", radius: 15.5 },
     { centre, colour: colours.navy, kind: "disc", radius: 13.5 },
     { colour: colours.cream, kind: "rect", rect: { height: 13, width: 4, x: 12, y: 11 } },
     { colour: colours.cream, kind: "rect", rect: { height: 13, width: 4, x: 19, y: 11 } },
   ]);
   for (const pose of ["press", "held"] as const) {
-    const [outer, border, face, ...glyphs] = pauseChromeLayers(colours, pose);
-    expect(outer).toEqual({ centre, colour: colours.ink, kind: "disc", radius: 16.5 });
+    const [border, face, ...glyphs] = pauseChromeLayers(colours, pose);
     expect(border).toEqual({ centre, colour: colours.cream, kind: "disc", radius: 15.5 });
     expect(face).toEqual({ centre, colour: colours.dslate, kind: "disc", radius: 13.5 });
     expect(glyphs.map(({ colour }) => colour)).toEqual([colours.white, colours.white]);
@@ -92,8 +105,8 @@ it("uses the shared three-bar menu glyph without changing the Pause poses or but
   const button = entryButton();
   showPauseDisc(colours, { expanded: false, tag: "rest" }, button, "menu");
   const menu = svgLayers(button.querySelector("svg[data-shown]")!);
-  expect(menu.slice(0, 3)).toEqual(pauseChromeLayers(colours, "rest").slice(0, 3));
-  expect(menu.slice(3)).toEqual([
+  expect(menu.slice(0, 2)).toEqual(pauseChromeLayers(colours, "rest").slice(0, 2));
+  expect(menu.slice(2)).toEqual([
     { colour: colours.cream, kind: "rect", rect: { height: 3, width: 11, x: 12, y: 11 } },
     { colour: colours.cream, kind: "rect", rect: { height: 3, width: 11, x: 12, y: 16 } },
     { colour: colours.cream, kind: "rect", rect: { height: 3, width: 11, x: 12, y: 21 } },
@@ -102,4 +115,21 @@ it("uses the shared three-bar menu glyph without changing the Pause poses or but
   expect(svgLayers(button.querySelector("svg[data-shown]")!)).toEqual(
     pauseChromeLayers(colours, "rest"),
   );
+});
+
+it("draws Exit's ring in its art, under the same rim and face", () => {
+  const svg = createNavigationDisc(document, colours, "art", "rest", "exit");
+  // The door glyph is a filled path, which svgLayers does not read.
+  const circles = svg.cloneNode(true) as SVGSVGElement;
+  circles.querySelector("path")!.remove();
+  expect(svgLayers(circles)).toEqual([
+    pauseRingLayer(colours),
+    ...pauseChromeLayers(colours, "rest", "exit"),
+  ]);
+  expect([...svg.children].map((shape) => shape.getAttribute("data-part"))).toEqual([
+    "ring",
+    "rim",
+    "face",
+    null,
+  ]);
 });
