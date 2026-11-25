@@ -11,6 +11,7 @@ import {
   destinationForStage,
   destinationSelection,
   destinationStages,
+  stageDestinationId,
   steppedDestination,
 } from "./mapDestinations.ts";
 import { progressFormat } from "./save/progress.ts";
@@ -82,5 +83,13 @@ describe("destination selection", () => {
     expect(
       steppedDestination(AVAILABLE, MAP, openMap(MAP, new Set(["one", "two"])), "one", 1),
     ).toBe("second");
+  });
+
+  it("names the destination that lists a stage, and none for a stage outside the catalogue", () => {
+    const [destination] = MAP.destinations;
+    expect(destination!.stages.map((stage) => stageDestinationId(MAP, stage))).toEqual(
+      destination!.stages.map(() => destination!.id),
+    );
+    expect(stageDestinationId(MAP, "outside-the-catalogue")).toBeUndefined();
   });
 });

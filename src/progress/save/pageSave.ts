@@ -19,6 +19,7 @@ import {
   zoneEndingAt,
 } from "../achievements.ts";
 import { openMap } from "../map.ts";
+import { stageDestinationId } from "../mapDestinations.ts";
 import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks.ts";
 import { resolveActiveSkill, SKILL_IDS } from "../skills.ts";
 import { type PlayTipId, type QueuedTip, seenTip } from "../tips.ts";
@@ -379,14 +380,14 @@ export function savedRecentMiddleChunks(zone: string): readonly string[] {
 
 // The middle chunk ids a fresh entry of a catalogued stage avoids: its destination's recent ones.
 export function recentStageChunks(stage: string): readonly string[] {
-  const zone = ZONE_MAP.destinations.find(({ stages }) => stages.includes(stage))?.id;
+  const zone = stageDestinationId(ZONE_MAP, stage);
   return zone === undefined ? [] : recentMiddleChunks(progress, zone);
 }
 
 // A fresh entry of a catalogued stage, after assembly, with its plan's middle chunk ids: the
 // stage's destination remembers them as its newest entry.
 export function recordStageChunks(stage: string, middle: readonly string[]): void {
-  const zone = ZONE_MAP.destinations.find(({ stages }) => stages.includes(stage))?.id;
+  const zone = stageDestinationId(ZONE_MAP, stage);
   if (zone === undefined || progress.at !== "map") {
     return;
   }

@@ -11,6 +11,11 @@ export function destinationOf(map: ZoneMap, id: string): MapDestination {
   return destination;
 }
 
+// The id of the destination that lists stage, if any does.
+export function stageDestinationId(map: ZoneMap, stage: string): string | undefined {
+  return map.destinations.find(({ stages }) => stages.includes(stage))?.id;
+}
+
 export function destinationForStage(map: ZoneMap, stage: string): MapDestination {
   const destination = map.destinations.find((item) => item.stages.includes(stage));
   if (!destination) {
