@@ -44,8 +44,8 @@ const behaviourHash = (preimage: Readonly<Record<string, unknown>>) =>
   hashOf({ ...preimage, gameKit: BASELINE_GAME_KIT });
 const HASHES: Readonly<Record<string, string>> = {
   "arena-bear-sample": "f5540bddca01cd8e",
-  "arena-dog-sample": "079b40df2f9b15c6",
-  "arena-ferret-sample": "0dade7eff803fb9a",
+  "arena-dog-sample": "f552eeb385f3af0a",
+  "arena-ferret-sample": "30b85b933977a97c",
   "arena-goose-sample": "3d1037f72c384840",
   "arena-pigeon-sample": "0d2d1f46f7966699",
   "arena-raccoon-sample": "67b003634d9f3a02",
