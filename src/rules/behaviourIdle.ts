@@ -146,7 +146,7 @@ export function planIdleRecovery(
 ): BehaviourIdleState {
   const watchdog = object.behaviour!.idleWatchdog!;
   const pace = object.behaviour!.pursuit?.pace;
-  const entry = motion.mode === "ground" && pace ? world.groundMap?.() : undefined;
+  const entry = motion.mode === "ground" && pace ? world.groundMap : undefined;
   const goal =
     entry &&
     mapRecoveryGoal(

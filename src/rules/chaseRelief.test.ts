@@ -75,7 +75,7 @@ function run({
     const step = stepBehaviour(
       BIRD,
       archie,
-      { ...world(tick, at), ...(groundMap && { groundMap: () => groundMap }) },
+      { ...world(tick, at), ...(groundMap && { groundMap }) },
       STEP_SECONDS,
       chibi(target),
       at,

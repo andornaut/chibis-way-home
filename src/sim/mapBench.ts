@@ -69,7 +69,7 @@ function decisionBench(seeds: number): number {
           all.builds.push(built);
           const { map, terrain } = found;
           scripts.set(object.character, map.options.jumps.length);
-          const world = { ...terrain.world, groundMap: () => found };
+          const world = { ...terrain.world, groundMap: found };
           const { body } = map.profile;
           for (const from of map.nodes) {
             const at = { x: from.left - body.offset.x, y: from.y - body.height - body.offset.y };

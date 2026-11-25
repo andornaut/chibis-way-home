@@ -223,7 +223,7 @@ function mapLeg(
 ): MapPlan | undefined {
   const traversal = state.traversal;
   const pace = object.behaviour!.pursuit!.pace;
-  const entry = perception.world.groundMap?.();
+  const entry = perception.world.groundMap;
   if (
     !entry ||
     !pace ||

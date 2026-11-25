@@ -546,7 +546,7 @@ function matches(
   }
   if (condition.kind === "reachable" || condition.kind === "lost-target") {
     // A mapped ground pursuer paces where no path reaches Chibi instead of losing him.
-    const entry = state.pursuit?.phase === "engaged" ? world.groundMap?.() : undefined;
+    const entry = state.pursuit?.phase === "engaged" ? world.groundMap : undefined;
     if (
       condition.kind === "lost-target" &&
       entry &&
@@ -652,7 +652,7 @@ function pursuitReachable(
       return undefined;
     }
     // Engaged on the map, the route pursuit chose last says whether a path reaches Chibi.
-    const entry = world.groundMap?.();
+    const entry = world.groundMap;
     const route = state.mapPursuit?.route;
     if (entry && mapCovers(world, object, entry, at, birdBox(tuning, bird))) {
       return route
@@ -818,7 +818,7 @@ function updatePursuit(
   const target = birdBox(tuning, bird);
   const aware =
     targetInSameChunk(world, observer, target) || targetInCurrentView(world, observer, target);
-  const entry = pursuitKinds(object.behaviour!).groundTraversal ? world.groundMap?.() : undefined;
+  const entry = pursuitKinds(object.behaviour!).groundTraversal ? world.groundMap : undefined;
   if (
     prior?.phase === "escaped" &&
     prior.settled &&

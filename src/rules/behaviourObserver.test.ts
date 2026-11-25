@@ -121,7 +121,7 @@ it("counts actual map queries and explicit route reuse without changing the rout
   const area = chunksLayout("city-boundary", ["arena-dog-city-boundary"]).areas.main!;
   const actor = area.objects.find(({ character }) => character === "dog-antagonist")!;
   const entry = pursuitGroundMap(area, actor)!;
-  const world = { ...entry.terrain.world, groundMap: () => entry };
+  const world = { ...entry.terrain.world, groundMap: entry };
   const pace = actor.behaviour!.pursuit!.pace!;
   const target: Rect = {
     height: BIRD.height,
@@ -338,7 +338,7 @@ it.each(["reachable", "unreachable", "unknown", "skipped"] as const)(
         ? flatWorld
         : kind === "unknown"
           ? { solids: [] }
-          : { groundMap: () => entry, solids: [...entry.terrain.world.solids, roof] };
+          : { groundMap: entry, solids: [...entry.terrain.world.solids, roof] };
     const before: BehaviourState = {
       ...startBehaviour(ORDINARY, actor, bird),
       active: true,

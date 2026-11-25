@@ -15,7 +15,7 @@ const area: AreaLayout = layout.areas.main!;
 const archie: ObjectLayout = area.objects.find(({ character }) => character === "dog-antagonist")!;
 const entry = pursuitGroundMap(area, archie)!;
 const pace = archie.behaviour!.pursuit!.pace!;
-const world = { ...entry.terrain.world, groundMap: () => entry };
+const world = { ...entry.terrain.world, groundMap: entry };
 
 const PIER = { col: 43, row: 74 } as const;
 const GANTRY_ROW = 68;

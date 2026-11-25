@@ -1031,33 +1031,27 @@ function stepZoneBodiesInternal(
         ? holdDefeated(seconds, before, prior)
         : object.behaviour
           ? stepEncounter(
-              { object, tuning },
+              {
+                groundMap: object.behaviour.pursuit && pursuitGroundMap(area, object, false),
+                object,
+                observation: observer && {
+                  metadata: {
+                    area: zone.area,
+                    attempt: zone.attempt,
+                    objectIndex: index,
+                    tick: zone.steps,
+                  },
+                  observer,
+                },
+                streams: namedStreams(zone.seed + zone.attempt, `idle-roam:${zone.area}:${index}`),
+                tuning,
+              },
               zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
               {
                 at: before,
                 seconds,
                 target: zone.bird,
-                world: {
-                  ...(kinds.traversal[index] ? traversalGeometry(object) : geometry),
-                  ...(object.behaviour.pursuit && {
-                    groundMap: () => pursuitGroundMap(area, object, false),
-                  }),
-                  decisions: namedStreams(
-                    zone.seed + zone.attempt,
-                    `idle-roam:${zone.area}:${index}`,
-                  ),
-                  ...(observer && {
-                    observation: {
-                      metadata: {
-                        area: zone.area,
-                        attempt: zone.attempt,
-                        objectIndex: index,
-                        tick: zone.steps,
-                      },
-                      observer,
-                    },
-                  }),
-                },
+                world: kinds.traversal[index] ? traversalGeometry(object) : geometry,
               },
             )
           : undefined;
