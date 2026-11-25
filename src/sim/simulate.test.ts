@@ -4,11 +4,14 @@ import { BIRD_FRAME } from "../assets/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import { STATIC_MOTION } from "../data/archetypes.ts";
 import { BIRD } from "../data/bird.ts";
+import { SCREEN } from "../data/screen.ts";
 import type { AreaLayout, ObjectLayout, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
+import { isBoss } from "../rules/bossDefeat.ts";
 import { stageProgress } from "../rules/stageProgress.ts";
 import * as zoneRules from "../rules/zone.ts";
 import { startZone, stepZone } from "../rules/zone.ts";
+import { chunkLayout } from "../testing/encounterLayouts.ts";
 import * as botRules from "./bot.ts";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_VALIDATION } from "./bot.ts";
 import { traceEvent, VALIDATION_LIMITS } from "./diagnostics.ts";
@@ -924,4 +927,35 @@ describe("bounded actionable stall snapshots", () => {
     expect(event.planner?.candidates[0]?.predictedEndpoint.x).toBe(90);
     expect(event.planner?.waypoint?.x).toBe(90);
   });
+});
+
+it("samples an area's boss beyond the nearest objects", () => {
+  const layout = chunkLayout("city-boundary", "arena-dog-city-boundary");
+  const area = layout.areas[layout.start.area]!;
+  const boss = area.objects.findIndex(isBoss);
+  const still = { jumpHeld: false, move: 0, useHeld: false } as const;
+  const started = startZone(BIRD, layout, 1);
+  // Chibi more than half a screen from the boss, where no other object is sampled that far.
+  const zone = {
+    ...started,
+    bird: { ...started.bird, x: started.objects[boss]!.x - SCREEN.width },
+  };
+  const { objects } = traceEvent(
+    BIRD,
+    layout,
+    "sample",
+    1,
+    1,
+    still,
+    undefined,
+    undefined,
+    zone,
+  ).nearby;
+  const sampled = objects.at(-1)!;
+  expect(sampled).toMatchObject({ character: "dog-antagonist", index: boss });
+  expect(sampled.distance).toBeGreaterThan(SCREEN.width / 2);
+  const nearest = objects.slice(0, -1);
+  expect(nearest.length).toBeLessThanOrEqual(4);
+  expect(nearest.every(({ distance }) => distance <= SCREEN.width / 2)).toBe(true);
+  expect(nearest.map(({ index }) => index)).not.toContain(boss);
 });

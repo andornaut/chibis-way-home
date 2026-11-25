@@ -97,6 +97,7 @@ export const KNOWN_VIOLATIONS: KnownViolations = {
     "sim -> src/rules/behaviourTrack.ts",
     "sim -> src/rules/behaviourTraversal.ts",
     "sim -> src/rules/bird.ts",
+    "sim -> src/rules/bossDefeat.ts",
     "sim -> src/rules/effectiveCollision.ts",
     "sim -> src/rules/flyLanding.ts",
     "sim -> src/rules/movementMaps.ts",

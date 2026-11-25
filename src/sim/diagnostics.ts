@@ -14,6 +14,7 @@ import type {
 } from "../data/types/index.ts";
 import { contactBox } from "../rules/behaviour.ts";
 import { birdBox } from "../rules/bird.ts";
+import { isBoss } from "../rules/bossDefeat.ts";
 import type { ZoneInput, ZoneState } from "../rules/zone.ts";
 import type { NavigationDiagnostic } from "./bot.ts";
 import type { SimulationConfig, SimulationProvenance, SimulationSeeds } from "./simulate.ts";
@@ -56,6 +57,8 @@ export interface TraceEvent {
     readonly vx: number;
     readonly vy: number;
   };
+  // objects: the four nearest within half a screen, nearest first, then every boss of the area
+  // not among them, in index order, so a boss is sampled at any distance.
   readonly nearby: {
     readonly terrain: readonly NearbyTerrain[];
     readonly objects: readonly NearbyObject[];
@@ -106,6 +109,7 @@ export function traceEvent(
   let closest: TraceEvent["object"];
   const terrain: NearbyTerrain[] = [];
   const objects: NearbyObject[] = [];
+  const bosses: NearbyObject[] = [];
   const distanceTo = (rect: Rect) =>
     Math.hypot(
       Math.max(0, rect.x - box.x - box.width, box.x - rect.x - rect.width),
@@ -137,7 +141,7 @@ export function traceEvent(
         : rectAt(object, at);
     const distance = distanceTo(rect);
     if (object.collision !== "use") {
-      retain(objects, {
+      const sample: NearbyObject = {
         active: behaviour?.active,
         areaSeconds: zone.seconds,
         behaviourMotion: behaviour
@@ -153,7 +157,11 @@ export function traceEvent(
         rect: { ...rect },
         stateKey: behaviour?.stateKey,
         stateSeconds: behaviour?.elapsed,
-      });
+      };
+      retain(objects, sample);
+      if (isBoss(object)) {
+        bosses.push(sample);
+      }
     }
     const touching = rectsOverlap(box, rect);
     if (
@@ -191,7 +199,10 @@ export function traceEvent(
       vx: zone.bird.vx,
       vy: zone.bird.vy,
     },
-    nearby: { objects, terrain },
+    nearby: {
+      objects: [...objects, ...bosses.filter((boss) => !objects.includes(boss))],
+      terrain,
+    },
     ...(planner
       ? {
           planner: {
