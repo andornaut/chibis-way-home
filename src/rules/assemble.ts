@@ -29,13 +29,15 @@ import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry.ts";
 
 // What zones are assembled from: the chunks and themes by key, the chunk rules, the seam rows,
 // a zone's height in rows, and the characters by key, for the size of each theme's door.
-// arenas: the chunk id of each stage's arena, by stage key.
+// arenas: the chunk id of each stage's arena, by stage key. loopCap: the most loops a flat
+// stage's run holds (runLoops); absent means any number.
 export interface ChunkLibrary {
   readonly approaches?: Readonly<Record<string, ArenaApproach>>;
   readonly arenas?: Readonly<Record<string, string>>;
   readonly backgrounds?: Readonly<Record<string, BackgroundSection>>;
   readonly characters: Readonly<Record<string, Pick<Character, "cols" | "rows">>>;
   readonly chunks: Readonly<Record<string, ChunkPlan>>;
+  readonly loopCap?: number;
   readonly rows: number;
   readonly rules: ChunkRules;
   readonly seams: readonly number[];
@@ -272,6 +274,8 @@ function encounterFits(
 interface PoolChunk {
   // Its equivalence class: chunks alike in every fact the search tests share one.
   readonly class: number;
+  // Whether it closes a loop: it returns to the start's exit row from another seam row.
+  readonly closes: boolean;
   readonly cols: number;
   readonly doors: number;
   readonly encounters: number;
@@ -296,6 +300,17 @@ export const SEARCH_NODE_LIMIT = 2_000_000;
 
 // The exact search's answer when its pool or its nodes exceed its bounds.
 const EXCEEDED = "exceeded";
+
+// The loops of a run of middle chunks after the start chunk: how many times its seam row returns
+// to the start's exit row after leaving it, which is how many of its chunks enter on another row
+// and exit on that one.
+export function runLoops(library: ChunkLibrary, start: string, run: readonly string[]): number {
+  const row = chunkOf(library, start).exit.row;
+  return run.filter((id) => {
+    const { entry, exit } = chunkOf(library, id);
+    return entry.row !== row && exit.row === row;
+  }).length;
+}
 
 // A chunk a run must hold at one middle index.
 interface Pinned {
@@ -323,9 +338,13 @@ interface Pinned {
 //
 // With a pinned chunk, the run holds it once, as its middle chunk at index `at`, which lies in
 // the run's second half (floor(n / 2) to n - 1 of n middle chunks); the pool never holds it.
+//
+// With a loop cap, the run holds at most that many loops (runLoops): a chunk that would close
+// one more is no candidate, and a failed state is remembered with its loops.
 function searchRun(
   library: ChunkLibrary,
   random: Random,
+  loopCap: number | undefined,
   pinned: Pinned | undefined,
   recipe: ZoneRecipe,
   exact: boolean,
@@ -384,6 +403,7 @@ function searchRun(
     return {
       ...facts,
       class: classId,
+      closes: facts.entryRow !== start.exit.row && facts.exitRow === start.exit.row,
       id,
       keyPower: id === pinned?.chunk ? 1 : 1 / weights.get(id)!,
       limit: chunk.maxPerZone === undefined ? -1 : limits++,
@@ -533,6 +553,7 @@ function searchRun(
     doors: number,
     remaining: number | undefined,
     quietChunks: number,
+    loops: number,
   ) => {
     const lastChunk = last < 0 ? undefined : chunks[last]!;
     let key = exact
@@ -548,6 +569,9 @@ function searchRun(
     }
     if (pinned) {
       key += `|${Math.min(ids.length, 2 * pinned.at + 2)}`;
+    }
+    if (loopCap !== undefined) {
+      key += `|${loops}`;
     }
     if (exact) {
       // A fixed-length tail of one character per count.
@@ -577,6 +601,7 @@ function searchRun(
     doors: number,
     remaining: number | undefined,
     quietChunks: number,
+    loops: number,
   ): boolean => {
     if (++nodes > (exact ? EXACT_NODE_LIMIT : SEARCH_NODE_LIMIT)) {
       if (exact) {
@@ -592,7 +617,7 @@ function searchRun(
     if (width + minCols + finishCols > max && exitRow !== finish.entry.row) {
       return false;
     }
-    const key = keyOf(width, last, events, doors, remaining, quietChunks);
+    const key = keyOf(width, last, events, doors, remaining, quietChunks, loops);
     if (failed.has(key)) {
       return false;
     }
@@ -615,6 +640,7 @@ function searchRun(
           (chunk.encounters <= remaining && (chunk.encounters === 0 || prevEncounters === 0))) &&
         (chunk.encounters === 0 || quietChunks >= minimumGap) &&
         chunk.entryRow === exitRow &&
+        (loopCap === undefined || !chunk.closes || loops < loopCap) &&
         (chunk.limit < 0 || counts[chunk.limit]! < chunk.maxPerZone) &&
         width + chunk.cols + finishCols <= max
       ) {
@@ -648,6 +674,7 @@ function searchRun(
         doors + chunk.doors,
         remaining === undefined ? undefined : remaining - chunk.encounters,
         quietAfter(minimumGap, quietChunks, chunk.encounters),
+        loops + (chunk.closes ? 1 : 0),
       );
       if (found) {
         return true;
@@ -669,6 +696,7 @@ function searchRun(
       slotCount(start, "door"),
       initialRemaining,
       start.encounters > 0 ? 0 : minimumGap,
+      0,
     )
       ? ids.map((index) => chunks[index]!.id)
       : undefined;
@@ -681,7 +709,9 @@ function searchRun(
 }
 
 // The zone key's run for a seed: the exact search's, or when that exceeds its bounds, the class
-// search's from a fresh stream of the same seed.
+// search's from a fresh stream of the same seed. The run is searched without the library's loop
+// cap first; only one that holds more loops is searched again, from fresh streams of the same
+// seed, with the cap enforced. A run within the cap is therefore the same with and without it.
 function seededRun(
   library: ChunkLibrary,
   seed: number,
@@ -689,12 +719,23 @@ function seededRun(
   pinned: Pinned | undefined,
   recipe: ZoneRecipe,
 ): readonly string[] | undefined {
-  const run = searchRun(library, randomStream(seed, `assemble:${key}`), pinned, recipe, true);
-  if (run !== EXCEEDED) {
-    return run;
-  }
-  const fallback = searchRun(library, randomStream(seed, `assemble:${key}`), pinned, recipe, false);
-  return fallback === EXCEEDED ? undefined : fallback;
+  const search = (loopCap: number | undefined) => {
+    const attempt = (exact: boolean) =>
+      searchRun(library, randomStream(seed, `assemble:${key}`), loopCap, pinned, recipe, exact);
+    const run = attempt(true);
+    if (run !== EXCEEDED) {
+      return run;
+    }
+    const fallback = attempt(false);
+    return fallback === EXCEEDED ? undefined : fallback;
+  };
+  const run = search(undefined);
+  const { loopCap } = library;
+  return run === undefined ||
+    loopCap === undefined ||
+    runLoops(library, recipe.start, run) <= loopCap
+    ? run
+    : search(loopCap);
 }
 
 // The run of a stage with an arena: the arena once, among its pool's chunks without encounters.
