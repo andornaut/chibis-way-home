@@ -10,7 +10,12 @@ import {
 } from "./behaviour.ts";
 import type { BehaviourObservationContext } from "./behaviourObserver.ts";
 import type { BehaviourPerception } from "./behaviourPerception.ts";
-import { type BehaviourGeometry, type BehaviourWorld, behaviourWorld } from "./behaviourReach.ts";
+import {
+  type BehaviourGeometry,
+  type BehaviourWorld,
+  behaviourWorld,
+  type SupportSampler,
+} from "./behaviourReach.ts";
 import { contactBox } from "./behaviourTrack.ts";
 import { birdBox, type BirdState } from "./bird.ts";
 import { defeatBoss, holdDefeated } from "./bossDefeat.ts";
@@ -27,6 +32,9 @@ export interface EncounterContext {
   readonly observation?: BehaviourObservationContext | undefined;
   // Object-local decision streams; equal keys replay equal draws.
   readonly streams?: RandomStreams | undefined;
+  // The sampler of the supports' later frames, for an object whose world holds a traversal frame.
+  // It answers on demand, because the queried intervals follow from the object's own search.
+  readonly supports?: SupportSampler | undefined;
   // The tuning that sizes Chibi's body.
   readonly tuning: BirdTuning;
 }
@@ -122,13 +130,15 @@ function moveEncounter(
   state: BehaviourState,
   input: EncounterInput,
 ): BehaviourStep {
-  const { groundMap, object, observation, streams, tuning } = context;
+  const { groundMap, object, observation, streams, supports, tuning } = context;
   const { at, seconds, target } = input;
   if (state.defeat) {
     return holdDefeated(seconds, at, state);
   }
+  const frame = input.world.traversalFrame;
   const world: BehaviourWorld = {
     ...input.world,
+    ...(frame && supports && { traversalFrame: { ...frame, sample: supports } }),
     ...(groundMap && { groundMap }),
     ...(streams && { decisions: streams }),
     ...(observation && { observation }),

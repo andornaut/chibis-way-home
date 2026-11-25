@@ -40,12 +40,16 @@ export interface CrumblingPrediction {
   readonly unknown: (timeSeconds: number) => readonly Rect[];
 }
 
+// The moving supports' frames over a later interval of the tick's horizon, each clipped to the
+// interval; undefined where their future is unknown. Equal arguments return equal frames.
+export type SupportSampler = (
+  timeSeconds: number,
+  dtSeconds: number,
+) => readonly BehaviourPlatformFrame[] | undefined;
+
 export interface BehaviourTraversalFrame {
   readonly crumbling?: CrumblingPrediction;
-  readonly sample?: (
-    timeSeconds: number,
-    dtSeconds: number,
-  ) => readonly BehaviourPlatformFrame[] | undefined;
+  readonly sample?: SupportSampler;
   readonly bounds: Rect;
   readonly dtSeconds: number;
   readonly platforms: readonly BehaviourPlatformFrame[];

@@ -32,6 +32,7 @@ import type {
   BehaviourPlatformFrame,
   BehaviourWorld,
   CrumblingPrediction,
+  SupportSampler,
 } from "./behaviourReach.ts";
 import {
   birdBox,
@@ -798,8 +799,7 @@ function stepZoneBodiesInternal(
   const frames: (ObjectFrame | undefined)[] = new Array(area.objects.length);
   const resolving = new Uint8Array(area.objects.length);
   let supportFrames: readonly BehaviourPlatformFrame[] | undefined;
-  let futureSupports:
-    ((time: number, dt: number) => readonly BehaviourPlatformFrame[] | undefined) | undefined;
+  let futureSupports: SupportSampler | undefined;
   // Every perceiver this tick shares the area bounds and the crumbling prediction.
   let traversalShared:
     { readonly bounds: Rect; readonly crumbling: CrumblingPrediction | undefined } | undefined;
@@ -973,10 +973,14 @@ function stepZoneBodiesInternal(
         bounds: traversalShared.bounds,
         dtSeconds: seconds,
         platforms: supportFrames.filter((frame) => frame.owner !== owner),
-        sample: futureSupports,
         timeSeconds: zone.seconds,
       },
     };
+  };
+  // The sampler the traversal worlds share, built with the first of them.
+  const supportSampler = (owner: ObjectLayout): SupportSampler | undefined => {
+    traversalGeometry(owner);
+    return futureSupports;
   };
   const spottedBefore = zone.spotted[zone.area];
   const resolveFrame = (index: number): ObjectFrame => {
@@ -1033,35 +1037,38 @@ function stepZoneBodiesInternal(
       // Perceive once per object per tick; deciding and acting read only this snapshot. A dead
       // boss perceives nothing.
       const prior = zone.behaviours[index];
-      const behaviour =
-        object.behaviour || prior?.defeat
-          ? stepEncounter(
-              {
-                groundMap: groundMaps?.[index],
-                object,
-                observation: observer && {
-                  metadata: {
-                    area: zone.area,
-                    attempt: zone.attempt,
-                    objectIndex: index,
-                    tick: zone.steps,
-                  },
-                  observer,
+      const behaves = object.behaviour !== undefined || prior?.defeat !== undefined;
+      const traverses = behaves && !prior?.defeat && kinds.traversal[index];
+      // The traversal world resolves the supports first, which builds their sampler.
+      const world = traverses ? traversalGeometry(object) : geometry;
+      const behaviour = behaves
+        ? stepEncounter(
+            {
+              groundMap: groundMaps?.[index],
+              object,
+              observation: observer && {
+                metadata: {
+                  area: zone.area,
+                  attempt: zone.attempt,
+                  objectIndex: index,
+                  tick: zone.steps,
                 },
-                streams: namedStreams(zone.seed + zone.attempt, `idle-roam:${zone.area}:${index}`),
-                tuning,
+                observer,
               },
-              prior ?? startBehaviour(tuning, object, zone.bird),
-              {
-                at: before,
-                seconds,
-                target: zone.bird,
-                ...(prior && !spottedBefore?.includes(index) && { unspotted: true }),
-                world:
-                  !prior?.defeat && kinds.traversal[index] ? traversalGeometry(object) : geometry,
-              },
-            )
-          : undefined;
+              streams: namedStreams(zone.seed + zone.attempt, `idle-roam:${zone.area}:${index}`),
+              supports: traverses ? futureSupports : undefined,
+              tuning,
+            },
+            prior ?? startBehaviour(tuning, object, zone.bird),
+            {
+              at: before,
+              seconds,
+              target: zone.bird,
+              ...(prior && !spottedBefore?.includes(index) && { unspotted: true }),
+              world,
+            },
+          )
+        : undefined;
       const path = pathAt(object, zone.tracks[index] as Track, time);
       const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
       return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
@@ -1383,7 +1390,7 @@ function stepZoneBodiesInternal(
     carrier !== undefined && area.objects[carrier]!.forcedTransit && seconds === STEP_SECONDS
       ? forecastForcedTransit(
           { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: time },
-          traversalGeometry(area.objects[carrier]!).traversalFrame?.sample,
+          supportSampler(area.objects[carrier]!),
           {
             bird,
             skillProfiles,
