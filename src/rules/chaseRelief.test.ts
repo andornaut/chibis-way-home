@@ -7,15 +7,11 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { AreaLayout, BehaviourPlan, Point, Rect } from "../data/types/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
-import {
-  type BehaviourState,
-  type BehaviourStep,
-  startBehaviour,
-  stepBehaviour,
-} from "./behaviour.ts";
+import { type BehaviourState, type BehaviourStep, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { openingScorerState } from "./behaviourScorer.ts";
 import { birdBox, startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { type PursuitGroundMap, pursuitGroundMap } from "./movementMaps.ts";
 import { objectLayout } from "./tiles.ts";
 

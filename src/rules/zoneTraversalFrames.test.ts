@@ -6,12 +6,12 @@ import { BEHAVIOUR_TRAVERSAL_SEARCH } from "../data/behaviours.ts";
 import { BIRD } from "../data/bird.ts";
 import type { AreaLayout, BehaviourPlan, ObjectLayout, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { advanceBehaviour } from "./behaviour.ts";
+import { actBehaviour } from "./behaviour.ts";
 import { startZone, stepZone } from "./zone.ts";
 
 vi.mock("./behaviour.ts", async (original) => {
   const actual = await original<typeof import("./behaviour.ts")>();
-  return { ...actual, advanceBehaviour: vi.fn(actual.advanceBehaviour) };
+  return { ...actual, actBehaviour: vi.fn(actual.actBehaviour) };
 });
 
 function object(
@@ -57,7 +57,7 @@ function object(
 }
 
 it("supplies actual traversal context to flying pursuit for idle recovery", () => {
-  vi.mocked(advanceBehaviour).mockClear();
+  vi.mocked(actBehaviour).mockClear();
   const actor = object(
     {
       axis: "x",
@@ -107,8 +107,7 @@ it("supplies actual traversal context to flying pursuit for idle recovery", () =
     { jumpHeld: false, move: 0, useHeld: false },
     startZone(BIRD, layout, 1),
   );
-  const world = vi.mocked(advanceBehaviour).mock.calls.find(([, owner]) => owner === actor)![0]
-    .world;
+  const world = vi.mocked(actBehaviour).mock.calls.find(([, owner]) => owner === actor)![0].world;
   expect(world.solids).toContain(floor);
   expect(world.hazards?.[0]?.owner).toBe(actor);
   expect(world.hazards?.[0]?.boundsAt).toBeTypeOf("function");
@@ -129,7 +128,7 @@ it.each([
 ])(
   "shares exact support samples across queries, reversed=$reversed, turning=$turning",
   ({ reversed, turning }) => {
-    vi.mocked(advanceBehaviour).mockClear();
+    vi.mocked(actBehaviour).mockClear();
     const mover = object(
       {
         axis: "x",
@@ -216,7 +215,7 @@ it.each([
       { jumpHeld: false, move: 0, useHeld: false },
       zone,
     );
-    const calls = vi.mocked(advanceBehaviour).mock.calls;
+    const calls = vi.mocked(actBehaviour).mock.calls;
     expect(calls.filter(([, owner]) => owner === mover)).toHaveLength(1);
     const actorWorld = calls.find(([, owner]) => owner === actor)![0].world;
     const moverWorld = calls.find(([, owner]) => owner === mover)![0].world;
@@ -282,7 +281,7 @@ it.each([
       actual = next;
     }
     const latest = vi
-      .mocked(advanceBehaviour)
+      .mocked(actBehaviour)
       .mock.calls.filter(([, owner]) => owner === actor)
       .at(-1)![0].world;
     const fresh = latest.traversalFrame!;

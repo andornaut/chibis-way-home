@@ -5,13 +5,14 @@ import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBeha
 import type { Archetype, BehaviourNode, BehaviourPlan, ObjectLayout } from "../data/types/index.ts";
 import { behaviourPose } from "../presentation/index.ts";
 import { TEST_PURSUER, withAnticipationContact } from "../testing/behaviours.ts";
-import { startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { startBehaviour } from "./behaviour.ts";
 import { startBird } from "./bird.ts";
 import {
   effectiveCollision,
   effectiveHazardPhase,
   validateHazardPhases,
 } from "./effectiveCollision.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 
 const archetype: Archetype = {

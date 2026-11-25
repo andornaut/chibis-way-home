@@ -8,10 +8,11 @@ import { BIRD } from "../data/bird.ts";
 import { CHARACTERS } from "../data/characters.ts";
 import { SCREEN, TILE } from "../data/screen.ts";
 import type { Archetype, BehaviourPlan, Rect } from "../data/types/index.ts";
-import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { type BehaviourState, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { screenBand, screenClamp } from "./behaviourScreen.ts";
 import { startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 
 const archetype: Archetype = {

@@ -3,8 +3,9 @@ import { expect, it } from "vitest";
 import { STEP_SECONDS } from "../core/index.ts";
 import { BIRD } from "../data/bird.ts";
 import type { Archetype, BehaviourPlan } from "../data/types/index.ts";
-import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import { startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 
 const archetype: Archetype = {

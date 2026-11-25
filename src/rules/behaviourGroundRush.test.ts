@@ -6,9 +6,10 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { Rect } from "../data/types/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
-import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 
 // Archie's committed charge from a bank whose left edge is at x 240, with Chibi far left.

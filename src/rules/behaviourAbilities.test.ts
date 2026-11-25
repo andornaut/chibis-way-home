@@ -8,9 +8,10 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { ObjectLayout } from "../data/types/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
-import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { type BehaviourState, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { startBird, stepBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 
 // Every boss graph state, entered engaged against a Chibi who walks onto the boss's sampled

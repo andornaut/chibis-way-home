@@ -12,8 +12,9 @@ import type {
 } from "../data/types/index.ts";
 import { behaviourPose } from "../presentation/index.ts";
 import { TEST_PURSUER, TEST_SHUTTLE, withAnticipationContact } from "../testing/behaviours.ts";
-import { contactBox, layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { contactBox, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import { birdBox, startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 
 const ACTOR: Archetype = {

@@ -4,15 +4,11 @@ import { namedStreams } from "../ai/randomStreams.ts";
 import { BIRD } from "../data/bird.ts";
 import type { Archetype, BehaviourPlan, Character, Rect } from "../data/types/index.ts";
 import { sweptBehaviourRect } from "../sim/behaviourBounds.ts";
-import {
-  type BehaviourState,
-  layoutBehaviour,
-  startBehaviour,
-  stepBehaviour,
-} from "./behaviour.ts";
+import { type BehaviourState, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import { selectSupportedFlight } from "./behaviourFlightSelection.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { supportedLanding } from "./flyLanding.ts";
 import { objectLayout } from "./tiles.ts";
 

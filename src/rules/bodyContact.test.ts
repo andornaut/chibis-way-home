@@ -4,8 +4,9 @@ import { contactFrameAt, silhouetteContact, spriteFrameOrigin } from "../core/in
 import { BIRD } from "../data/bird.ts";
 import type { Archetype, BehaviourPlan, SpriteContact, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { startBehaviour } from "./behaviour.ts";
 import { startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 import { startZone, stepZone } from "./zone.ts";
 

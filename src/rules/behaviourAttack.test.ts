@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 
 import { BIRD } from "../data/bird.ts";
 import type { Archetype, BehaviourNode, BehaviourPlan } from "../data/types/index.ts";
-import { layoutBehaviour, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import {
   advanceAttackClock,
   attackReady,
@@ -12,6 +12,7 @@ import {
   enterAttack,
 } from "./behaviourAttack.ts";
 import { startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 
 const archetype: Archetype = {

@@ -11,14 +11,14 @@ import type {
   ZoneLayout,
 } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { advanceBehaviour } from "./behaviour.ts";
+import { actBehaviour } from "./behaviour.ts";
 import { traversalContext } from "./behaviourTraversal.ts";
 import { crumblingDefinitions } from "./crumbling.ts";
 import { startZone, stepZone, type ZoneState } from "./zone.ts";
 
 vi.mock("./behaviour.ts", async (original) => {
   const actual = await original<typeof import("./behaviour.ts")>();
-  return { ...actual, advanceBehaviour: vi.fn(actual.advanceBehaviour) };
+  return { ...actual, actBehaviour: vi.fn(actual.actBehaviour) };
 });
 
 const idle = { jumpHeld: false, move: 0, useHeld: false } as const;
@@ -131,7 +131,7 @@ it("a boss standing on a crumbling support does not start its warning", () => {
 
 it("boss predictions keep current presence only until each support's earliest change", () => {
   const f = fixture({ height: 24, width: 48, x: 412, y: 176 });
-  vi.mocked(advanceBehaviour).mockClear();
+  vi.mocked(actBehaviour).mockClear();
   const known = STEP_SECONDS + PROFILE.warningSeconds;
   // The warning Chibi started under the boss.
   const start = startZone(BIRD, f.layout, 1);
@@ -143,8 +143,7 @@ it("boss predictions keep current presence only until each support's earliest ch
     },
   };
   const zone = stepZone(SKILL_PROFILES, BIRD, f.layout, STEP_SECONDS, idle, warned);
-  const world = vi.mocked(advanceBehaviour).mock.calls.find(([, owner]) => owner === f.actor)![0]
-    .world;
+  const world = vi.mocked(actBehaviour).mock.calls.find(([, owner]) => owner === f.actor)![0].world;
   const frame = world.traversalFrame!;
   expect(frame.crumbling!.unknown(0)).toEqual([]);
   expect(frame.crumbling!.unknown(known - STEP_SECONDS)).toEqual([]);

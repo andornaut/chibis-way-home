@@ -2,7 +2,7 @@ import type { TraversalSafety } from "@andornaut/game-kit/runtime/terrain/traver
 
 import { sweptContact } from "../core/index.ts";
 import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types/index.ts";
-import { advanceBehaviour, type BehaviourState } from "./behaviour.ts";
+import { actBehaviour, type BehaviourState } from "./behaviour.ts";
 import { perceiveBehaviour } from "./behaviourPerception.ts";
 import { startBird } from "./bird.ts";
 import { effectiveHazardPhase, validateHazardPhases } from "./effectiveCollision.ts";
@@ -82,7 +82,8 @@ export function createTimedHazardSampler(
       return undefined;
     }
     remaining -= cost;
-    return advanceBehaviour(perception, object, seconds, at, prior);
+    // A stationary elapsed-only clock needs only the act stage of the encounter step.
+    return actBehaviour(perception, object, seconds, at, prior);
   };
   const stateAt = (offset: number): BehaviourState | undefined => {
     const cached = checkpoints.get(offset);

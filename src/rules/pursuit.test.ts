@@ -22,15 +22,10 @@ import type {
   ZoneLayout,
 } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import {
-  type BehaviourState,
-  contactBox,
-  layoutBehaviour,
-  startBehaviour,
-  stepBehaviour,
-} from "./behaviour.ts";
+import { type BehaviourState, contactBox, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import { type BehaviourWorld, flightContactApproach } from "./behaviourReach.ts";
 import { startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { flyLandingPath, flyLandingRoute, landingWorldAt, supportedLanding } from "./flyLanding.ts";
 import { objectLayout } from "./tiles.ts";
 import { retryZone, startZone, stepZone } from "./zone.ts";

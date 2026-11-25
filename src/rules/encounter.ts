@@ -1,13 +1,16 @@
 import type { RandomStreams } from "../ai/randomStreams.ts";
 import type { BirdTuning, DialogueLine, ObjectLayout, Point } from "../data/types/index.ts";
 import {
-  advanceBehaviour,
+  actBehaviour,
   type BehaviourEvent,
   type BehaviourState,
   type BehaviourStep,
+  keepClear,
+  stampPreparation,
 } from "./behaviour.ts";
 import type { BehaviourObservationContext } from "./behaviourObserver.ts";
-import type { BehaviourWorld } from "./behaviourReach.ts";
+import type { BehaviourPerception } from "./behaviourPerception.ts";
+import { type BehaviourGeometry, type BehaviourWorld, behaviourWorld } from "./behaviourReach.ts";
 import type { BirdState } from "./bird.ts";
 import { defeatBoss, holdDefeated } from "./bossDefeat.ts";
 import type { PursuitGroundMap } from "./movementMaps.ts";
@@ -46,8 +49,11 @@ export type EncounterEvent =
   // Its engaged pursuit ended because Chibi left through a room door.
   | { readonly cause: "door"; readonly kind: "escaped" };
 
-export interface EncounterStep extends BehaviourStep {
+export interface EncounterStep {
+  readonly at: Point;
   readonly events: readonly EncounterEvent[];
+  readonly segments: BehaviourStep["segments"];
+  readonly state: BehaviourState;
 }
 
 // What a tick decides about the object from every object's finished step, so it follows the step
@@ -63,17 +69,38 @@ export interface EncounterOutcome {
 // The state and events of one object's step, which the tick's outcome settles.
 export type EncounterResult = Pick<EncounterStep, "events" | "state">;
 
-// One fixed step of one behaviour-driven object: perceive, decide and act, or hold still when
-// dead. Pure: it reads only its arguments, so equal arguments replay an equal step.
+// One fixed step of one behaviour-driven object. Pure: it reads only its arguments, so equal
+// arguments replay an equal step. Its stages run in this order:
+// 1. hold: a dead boss holds still while its removal plays, and the other stages are skipped.
+// 2. perceive: one snapshot of Chibi and the world, with the context's map, streams and observer.
+// 3. act: the pursuit update, recovery, then decide and act slices through the ability table.
+// 4. keep clear: after an ended chase, movement toward Chibi within the escape distance is
+//    cancelled.
+// 5. stamp preparation: a takeoff preparation records its start once.
+// 6. events: the entry actions and a distance escape, in order.
 export function stepEncounter(
   context: EncounterContext,
   state: BehaviourState,
   input: EncounterInput,
 ): EncounterStep {
+  const step = moveEncounter(context, state, input);
+  const events: EncounterEvent[] = step.actions.map((action) => ({ action, kind: "action" }));
+  if (step.escaped) {
+    events.push({ bark: step.escaped, cause: "distance", kind: "escaped" });
+  }
+  return { at: step.at, events, segments: step.segments, state: step.state };
+}
+
+// Stages 1 to 5: the step before its outcomes become events.
+function moveEncounter(
+  context: EncounterContext,
+  state: BehaviourState,
+  input: EncounterInput,
+): BehaviourStep {
   const { groundMap, object, observation, streams, tuning } = context;
   const { at, seconds, target } = input;
   if (state.defeat) {
-    return { ...holdDefeated(seconds, at, state), events: [] };
+    return holdDefeated(seconds, at, state);
   }
   const world: BehaviourWorld = {
     ...input.world,
@@ -81,12 +108,29 @@ export function stepEncounter(
     ...(streams && { decisions: streams }),
     ...(observation && { observation }),
   };
-  const step = advanceBehaviour({ target, tuning, world }, object, seconds, at, state);
-  const events: EncounterEvent[] = step.actions.map((action) => ({ action, kind: "action" }));
-  if (step.escaped) {
-    events.push({ bark: step.escaped, cause: "distance", kind: "escaped" });
-  }
-  return { ...step, events };
+  const perception: BehaviourPerception = { target, tuning, world };
+  const acted = actBehaviour(perception, object, seconds, at, state);
+  const clear = keepClear(perception, object, at, acted);
+  return stampPreparation(clear);
+}
+
+// Fixtures that hold their own geometry read the step before its outcomes become events, without
+// a map, streams or observer of the context.
+export function stepBehaviour(
+  tuning: BirdTuning,
+  object: ObjectLayout,
+  geometry: BehaviourGeometry,
+  seconds: number,
+  bird: BirdState,
+  at: Point,
+  state: BehaviourState,
+): BehaviourStep {
+  return moveEncounter({ object, tuning }, state, {
+    at,
+    seconds,
+    target: bird,
+    world: behaviourWorld(geometry),
+  });
 }
 
 // Applies the tick's outcome to a stepped object. A death ends its pursuit without an escape and

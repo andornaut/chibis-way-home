@@ -19,12 +19,7 @@ import { SKILL_PROFILES } from "../progress/index.ts";
 import { withAnticipationContact } from "../testing/behaviours.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import { zonePlanOf } from "./assemble.ts";
-import {
-  type BehaviourState,
-  layoutBehaviour,
-  startBehaviour,
-  stepBehaviour,
-} from "./behaviour.ts";
+import { type BehaviourState, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach.ts";
 import { moveIntent, openingScorerState } from "./behaviourScorer.ts";
 import {
@@ -37,6 +32,7 @@ import {
   traversalGoal,
 } from "./behaviourTraversal.ts";
 import { birdBox, startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { supportContact } from "./flyLanding.ts";
 import { objectLayout, zoneLayout } from "./tiles.ts";
 import { activateBehaviour, startZone, stepZone } from "./zone.ts";

@@ -14,9 +14,10 @@ import { TILE } from "../data/screen.ts";
 import type { SpriteSilhouettes, ZoneLayout } from "../data/types/index.ts";
 import { behaviourPose } from "../presentation/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { type BehaviourState, contactBox, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
 import { INITIAL_SCORER_STATE } from "./behaviourScorer.ts";
 import { startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 import { startZone, stepZone } from "./zone.ts";
 

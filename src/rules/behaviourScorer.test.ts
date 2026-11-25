@@ -14,12 +14,7 @@ import {
 import { TILE } from "../data/screen.ts";
 import type { BehaviourTransition, BossScoredAttack } from "../data/types/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
-import {
-  type BehaviourState,
-  layoutBehaviour,
-  startBehaviour,
-  stepBehaviour,
-} from "./behaviour.ts";
+import { type BehaviourState, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import {
   type BossScorerValues,
   decideScored,
@@ -28,6 +23,7 @@ import {
   scorerPressure,
 } from "./behaviourScorer.ts";
 import { birdBox, startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 
 // A level Chibi 6 tiles out, standing still, just after an attack.

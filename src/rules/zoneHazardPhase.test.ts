@@ -6,8 +6,8 @@ import { BIRD } from "../data/bird.ts";
 import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours.ts";
 import type { Archetype, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { stepBehaviour } from "./behaviour.ts";
 import { effectiveHazardPhase } from "./effectiveCollision.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
 import { retryZone, startZone, stepZone } from "./zone.ts";
 

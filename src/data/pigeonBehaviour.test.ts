@@ -6,10 +6,10 @@ import {
   contactBox,
   layoutBehaviour,
   startBehaviour,
-  stepBehaviour,
 } from "../rules/behaviour.ts";
 import { INITIAL_SCORER_STATE } from "../rules/behaviourScorer.ts";
 import { birdBox, startBird, stepBird } from "../rules/bird.ts";
+import { stepBehaviour } from "../rules/encounter.ts";
 import { supportedLanding } from "../rules/flyLanding.ts";
 import { targetVisible } from "../rules/perception.ts";
 import { objectLayout } from "../rules/tiles.ts";

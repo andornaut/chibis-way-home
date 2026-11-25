@@ -12,7 +12,7 @@ import { SKILL_PROFILES } from "../progress/index.ts";
 import { zoneTraceLine } from "../sim/zoneTrace.ts";
 import { createBehaviourObservations } from "../testing/behaviourObservations.ts";
 import { chunksLayout, ORDINARY } from "../testing/encounterLayouts.ts";
-import { type BehaviourState, startBehaviour, stepBehaviour } from "./behaviour.ts";
+import { type BehaviourState, startBehaviour } from "./behaviour.ts";
 import { mapReachable, mapRecoveryGoal, planMapLeg } from "./behaviourMapPursuit.ts";
 import {
   type BehaviourObservation,
@@ -22,6 +22,7 @@ import {
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { probeRearm, traversalGoal } from "./behaviourTraversal.ts";
 import { startBird } from "./bird.ts";
+import { stepBehaviour } from "./encounter.ts";
 import { pursuitGroundMap } from "./movementMaps.ts";
 import { objectLayout } from "./tiles.ts";
 import { startZone, stepZone, stepZoneObserved } from "./zone.ts";

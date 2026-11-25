@@ -6,16 +6,12 @@ import { BIRD_FRAME } from "../assets/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { assembleZone, zonePlanOf } from "../rules/assemble.ts";
-import {
-  type BehaviourState,
-  contactBox,
-  startBehaviour,
-  stepBehaviour,
-} from "../rules/behaviour.ts";
+import { type BehaviourState, contactBox, startBehaviour } from "../rules/behaviour.ts";
 import type { BehaviourWorld } from "../rules/behaviourReach.ts";
 import { advanceTraversal, type BehaviourTraversalState } from "../rules/behaviourTraversal.ts";
 import { startBird } from "../rules/bird.ts";
 import { chunkProblems } from "../rules/chunk.ts";
+import { stepBehaviour } from "../rules/encounter.ts";
 import { zoneLayout } from "../rules/tiles.ts";
 import { standsOn, startZone, stepZone } from "../rules/zone.ts";
 import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";

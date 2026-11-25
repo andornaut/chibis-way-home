@@ -52,7 +52,6 @@ import { recordBehaviourWork } from "./behaviourObserver.ts";
 import { type BehaviourPerception, perceiveBehaviour } from "./behaviourPerception.ts";
 import { pursuitKinds } from "./behaviourProfile.ts";
 import {
-  type BehaviourGeometry,
   type BehaviourWorld,
   flightContactApproach,
   overheadFlightGoal,
@@ -1593,37 +1592,11 @@ function actSlice(context: BehaviourRunContext, decision: SliceDecision, run: Be
   run.traversalStep = traversalStep;
 }
 
-// Fixtures and predictions that hold their own geometry perceive and advance in one call.
-export function stepBehaviour(
-  tuning: BirdTuning,
-  object: ObjectLayout,
-  geometry: BehaviourGeometry,
-  seconds: number,
-  bird: BirdState,
-  at: Point,
-  state: BehaviourState,
-): BehaviourStep {
-  return advanceBehaviour(perceiveBehaviour(tuning, geometry, bird), object, seconds, at, state);
-}
-
-// Decides and acts for one object over one step from its perception snapshot and own state.
-// Generic state graphs choose the motion, animation and transition order; registered abilities
-// act each motion without character-specific sequencing. A pursuit that keeps clear then holds
-// the step clear of Chibi (keptClear).
-export function advanceBehaviour(
-  perception: BehaviourPerception,
-  object: ObjectLayout,
-  seconds: number,
-  at: Point,
-  state: BehaviourState,
-): BehaviourStep {
-  return preparedAt(
-    keptClear(perception, object, at, advanceUnclear(perception, object, seconds, at, state)),
-  );
-}
+// The stages of one object's step, which stepEncounter runs in order: actBehaviour, keepClear and
+// stampPreparation.
 
 // Each takeoff preparation records its start once, whichever ability began it.
-function preparedAt(step: BehaviourStep): BehaviourStep {
+export function stampPreparation(step: BehaviourStep): BehaviourStep {
   const started = step.state.traversal?.preparation?.startedAtSeconds;
   const last = step.state.takeoffPreparedAt;
   return started !== undefined && (last === undefined || last < started - EDGE)
@@ -1635,7 +1608,7 @@ function preparedAt(step: BehaviourStep): BehaviourStep {
 // moves toward Chibi while he is within its escape distance: the step's horizontal movement
 // toward his centre is cancelled, and for a flyer its vertical movement toward him too, its
 // traversal dropped so it replans from there.
-function keptClear(
+export function keepClear(
   perception: BehaviourPerception,
   object: ObjectLayout,
   before: Point,
@@ -1686,7 +1659,10 @@ function keptClear(
   };
 }
 
-function advanceUnclear(
+// Decides and acts for one object over one step from its perception snapshot and own state.
+// Generic state graphs choose the motion, animation and transition order; registered abilities
+// act each motion without character-specific sequencing.
+export function actBehaviour(
   perception: BehaviourPerception,
   object: ObjectLayout,
   seconds: number,

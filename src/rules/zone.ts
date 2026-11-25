@@ -25,10 +25,9 @@ import type {
   ZoneDeath,
   ZoneLayout,
 } from "../data/types/index.ts";
-import { advanceBehaviour, type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
+import { type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
 import { behaviourEffect } from "./behaviourEffects.ts";
 import { type BehaviourObserver, recordBehaviourWork } from "./behaviourObserver.ts";
-import { perceiveBehaviour } from "./behaviourPerception.ts";
 import type {
   BehaviourPlatformFrame,
   BehaviourWorld,
@@ -873,13 +872,12 @@ function stepZoneBodiesInternal(
               const state = states[slot];
               const behaviour =
                 object.behaviour && state
-                  ? advanceBehaviour(
-                      perceiveBehaviour(tuning, futureGeometry, zone.bird),
-                      object,
+                  ? stepEncounter({ object, tuning }, state, {
+                      at: before,
                       seconds,
-                      before,
-                      state,
-                    )
+                      target: zone.bird,
+                      world: futureGeometry,
+                    })
                   : undefined;
               nextStates.push(behaviour?.state);
               const after = rectAt(
