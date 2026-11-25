@@ -7,10 +7,10 @@ import { expect, it } from "vitest";
 const ROOT = new URL("../../", import.meta.url).pathname;
 const BINDING = "ui/input/actionBinding.ts";
 const COMPOUND_CONSTRUCTORS: Readonly<Record<string, readonly string[]>> = {
-  "ui/dom/cheats.ts": ['element("button", "settings-row")'],
+  "ui/dom/cheats.ts": ['element("button", "settings-row ui-button-reset")'],
   "ui/dom/map.ts": ['document.createElement("button")'],
-  "ui/dom/settings.ts": ['element("button", "settings-row")'],
-  "ui/dom/stageSelect.ts": ['element("button", "stage-select-stage")'],
+  "ui/dom/settings.ts": ['element("button", "settings-row ui-button-reset")'],
+  "ui/dom/stageSelect.ts": ['element("button", "stage-select-stage ui-button-reset")'],
 };
 
 function sourceFiles(directory: string): string[] {

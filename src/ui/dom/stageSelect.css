@@ -37,15 +37,9 @@
 
 .stage-select-stage {
   display: block;
-  margin: 0;
   padding: var(--hit);
-  border: 0;
-  background: none;
   font: inherit;
   color: inherit;
-  pointer-events: auto;
-  touch-action: none;
-  cursor: pointer;
 }
 
 .stage-select-stage:not(:first-child) {
@@ -54,10 +48,6 @@
 
 .stage-select-stage:not(:last-child) {
   padding-right: var(--half-gap);
-}
-
-.stage-select-stage:focus {
-  outline: none;
 }
 
 .stage-select-face {
@@ -198,9 +188,6 @@
 
 .stage-select-count {
   margin: 0 calc(var(--ui-unit) * var(--card-gap) / 2 * 1px);
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 400;
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
   white-space: nowrap;
   text-box: trim-both cap alphabetic;
 }

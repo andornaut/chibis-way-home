@@ -183,8 +183,8 @@ export function createStageSummary(
   stats.append(divider);
   dialog.append(
     zone,
-    text("p", "stage-summary-stage", words.stage),
-    text("p", "stage-summary-progress", words.progress),
+    text("p", "stage-summary-stage ui-text-body", words.stage),
+    text("p", "stage-summary-progress ui-text-body", words.progress),
     preview,
     stats,
   );
@@ -192,7 +192,7 @@ export function createStageSummary(
     words.statement === undefined
       ? undefined
       : (() => {
-          const line = element("p", "stage-summary-statement");
+          const line = element("p", "stage-summary-statement ui-text-body");
           line.dataset.continue = "";
           const name = text("span", "stage-summary-speaker", `${words.statement.name}:`);
           name.dataset.colour = words.statement.colour;

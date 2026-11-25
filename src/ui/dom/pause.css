@@ -35,17 +35,6 @@
   box-sizing: border-box;
   width: calc(var(--ui-unit) * var(--pause-button-size) * 1px);
   height: calc(var(--ui-unit) * var(--pause-button-size) * 1px);
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  pointer-events: auto;
-  touch-action: none;
-  cursor: pointer;
-}
-
-.pause-button:focus {
-  outline: none;
 }
 
 .pause-button[hidden],
@@ -96,21 +85,11 @@
   left: calc(var(--ui-unit) * var(--skill-x) * 1px);
   width: calc(var(--ui-unit) * var(--skill-button-size) * 1px);
   height: calc(var(--ui-unit) * var(--skill-button-size) * 1px);
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
   pointer-events: none;
-  touch-action: none;
-  cursor: pointer;
 }
 
 .skill-hud[data-live] .skill-button {
   pointer-events: auto;
-}
-
-.skill-button:focus {
-  outline: none;
 }
 
 .skill-button[aria-pressed="true"] .ui-skill-disc-chrome [data-ui-fill="navy"] {

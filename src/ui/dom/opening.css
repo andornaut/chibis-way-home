@@ -20,9 +20,6 @@
 
 .opening-caption {
   margin: 0;
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 400;
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
   white-space: pre;
   color: var(--colour-white);
   text-box: trim-both cap alphabetic;

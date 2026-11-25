@@ -123,7 +123,7 @@ export function createPauseView(
   const view = element("div", "ui-view pause-hud-view");
   const { element: pauseButton } = createGameButton(
     document,
-    { className: "pause-button" },
+    { className: "pause-button ui-button-reset" },
     { kind: "icon", name: words.button },
   );
   writeLayoutProperties(PAUSE_LAYOUT, pauseButton);
@@ -146,7 +146,7 @@ export function createPauseView(
       const disc = createSkillDisc(document, colours, { ready: false }, undefined);
       const { element: button } = createGameButton(
         document,
-        { className: "skill-button" },
+        { className: "skill-button ui-button-reset" },
         { icon: disc.element, kind: "icon", name: words.skills[skill] },
       );
       button.tabIndex = -1;

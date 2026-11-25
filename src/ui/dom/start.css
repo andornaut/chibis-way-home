@@ -18,20 +18,6 @@
   --ui-frame-width: var(--ui-nav-bar-border);
 }
 
-.start-view .start-icon-button {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  pointer-events: auto;
-  touch-action: none;
-  cursor: pointer;
-}
-
-.start-view button:focus {
-  outline: none;
-}
-
 .start-icon-face,
 .start-icon-face .navigation-disc {
   display: block;

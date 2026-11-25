@@ -136,7 +136,7 @@ export function createStageSelect(
       next: createStagePageButton(document, pagerActions, 1, words.pager.next),
       previous: createStagePageButton(document, pagerActions, -1, words.pager.previous),
     };
-    count = element("p", "stage-select-count");
+    count = element("p", "stage-select-count ui-text-body");
     count.setAttribute("aria-live", "polite");
     const row = element("div", "stage-select-pager");
     row.append(pager.previous.element, count, pager.next.element);
@@ -156,7 +156,7 @@ function stageButton(
   lockedReason: string,
   stage: StageFace,
 ): HTMLButtonElement {
-  const button = element("button", "stage-select-stage");
+  const button = element("button", "stage-select-stage ui-button-reset");
   button.type = "button";
   button.dataset.stage = stage.id;
   button.dataset.look = stage.look;

@@ -51,9 +51,9 @@ export function createRunStats(
     list.append(
       ...rows.map(({ label, value }) => {
         const row = element("div", "ui-run-stats-row");
-        const term = element("dt", "ui-run-stats-label");
+        const term = element("dt", "ui-run-stats-label ui-text-body");
         term.textContent = label;
-        const detail = element("dd", "ui-run-stats-value");
+        const detail = element("dd", "ui-run-stats-value ui-text-body");
         detail.textContent = value;
         row.append(term, detail);
         return row;

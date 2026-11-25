@@ -14,9 +14,6 @@
   left: calc(var(--ui-unit) * var(--room-name-x) * 1px);
   margin: 0;
   color: var(--colour-cream);
-  font-size: calc(var(--ui-unit) * var(--heading-size) * 1px);
-  font-weight: 700;
-  line-height: calc(var(--ui-unit) * var(--heading-line) * 1px);
   text-align: center;
   translate: -50% 0;
 }
@@ -40,9 +37,6 @@
 .room-description {
   max-width: calc(var(--ui-unit) * var(--room-description-width) * 1px);
   margin: 0;
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 400;
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
   text-align: start;
 }
 

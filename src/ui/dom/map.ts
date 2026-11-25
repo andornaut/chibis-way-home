@@ -87,7 +87,7 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
       key: "title",
       kind: "component",
       props: {
-        className: "map-title",
+        className: "map-title ui-text-heading",
         id: "map-title",
         ref: (title) =>
           writeLayoutProperties(

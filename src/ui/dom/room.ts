@@ -87,7 +87,7 @@ export function createRoomView(
     key: "title",
     kind: "component",
     props: {
-      className: words.gift === undefined ? "room-name" : "ui-card-title",
+      className: words.gift === undefined ? "room-name ui-text-heading" : "ui-card-title",
       id: "room-title",
       tag: "h1",
       text: words.gift?.title ?? words.name,
@@ -111,7 +111,7 @@ export function createRoomView(
     const body = make("div", "room-skill-body");
     const disc = createSkillDisc(document, colours, { ready: true }, gift.disc);
     glyph = disc.glyph;
-    const description = make("p", "room-description");
+    const description = make("p", "room-description ui-text-body");
     description.id = "room-description";
     description.append(...createActionHelp(document, colours, words, gift.description));
     children.push(

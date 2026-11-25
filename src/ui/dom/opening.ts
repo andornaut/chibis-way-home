@@ -76,7 +76,7 @@ export function createOpeningView(document: Document, words: OpeningWords): Open
                       kind: "component",
                       props: {
                         attributes: { "aria-live": "polite" },
-                        className: "opening-caption",
+                        className: "opening-caption ui-text-body",
                         ref: (element) => {
                           caption = element;
                         },

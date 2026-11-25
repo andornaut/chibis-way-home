@@ -37,8 +37,6 @@
   padding: 0;
   list-style: none;
   text-align: start;
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
 }
 
 /* The icon centred on the title's line, the text beside it; an earned entry in ink, a locked one
@@ -105,8 +103,6 @@
 
 .achievements-page {
   margin: 0;
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }

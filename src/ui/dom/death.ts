@@ -57,7 +57,7 @@ export function createDeathCard(document: Document, words: DeathCardWords): Deat
     return created;
   };
   const line = (key: string, text: string) => {
-    const paragraph = element("p", "ui-death-line");
+    const paragraph = element("p", "ui-death-line ui-text-body");
     paragraph.id = `${ID}-${key}`;
     paragraph.textContent = text;
     return paragraph;

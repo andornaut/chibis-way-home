@@ -74,7 +74,7 @@ export function createCheatsCard(
     unlockAllZones: createTextButtonElement(document, words.unlockAllZones),
   };
   actionColumn.append(actions.unlockAllPowerUps, actions.unlockAllZones);
-  const invincibility = element("button", "settings-row");
+  const invincibility = element("button", "settings-row ui-button-reset");
   invincibility.type = "button";
   invincibility.setAttribute("role", "switch");
   invincibility.setAttribute("aria-checked", "false");

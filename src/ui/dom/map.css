@@ -38,8 +38,6 @@
   max-width: calc(var(--ui-unit) * var(--map-title-width) * 1px);
   text-align: center;
   translate: -50% 0;
-  font-size: calc(var(--ui-unit) * var(--heading-size) * 1px);
-  line-height: calc(var(--ui-unit) * var(--heading-line) * 1px);
 }
 
 .map-label,

@@ -76,7 +76,7 @@ export function createAchievementsCard(
   const title = text("h2", "ui-card-title", words.title);
   title.id = `${id}-title`;
   header.append(title);
-  const list = element("ul", "achievements-list");
+  const list = element("ul", "achievements-list ui-text-body");
   const shown = entries.map((entry) => {
     const item = element("li", "achievements-entry");
     item.toggleAttribute("data-earned", entry.earned);
@@ -94,7 +94,7 @@ export function createAchievementsCard(
   });
   list.append(...shown.map(({ item }) => item));
   const pager = element("div", "achievements-pager");
-  const pageCount = element("p", "achievements-page");
+  const pageCount = element("p", "achievements-page ui-text-body");
   pageCount.setAttribute("aria-live", "polite");
   const buttons = {
     back: textButton(document, words.back, true),

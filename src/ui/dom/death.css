@@ -18,9 +18,6 @@
    below: the body line box, its half-leading past that height taken back. */
 .ui-death-line {
   margin: calc(var(--ui-unit) * (var(--death-line) - var(--text-line)) / 2 * 1px) 0;
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 400;
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
 }
 
 /* The first line starts at its ink, as the title's balance measures it. */

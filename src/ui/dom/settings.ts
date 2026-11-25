@@ -137,7 +137,7 @@ export function createSettingsCard(
   // A row's button with its icons and its label, which names it. Each switch's note describes
   // its effect; aria-checked exposes the current state without repeating the visible state text.
   const row = (key: SettingsSwitch) => {
-    const button = element("button", "settings-row");
+    const button = element("button", "settings-row ui-button-reset");
     button.type = "button";
     const slot = element("span", "settings-icons");
     slot.setAttribute("aria-hidden", "true");

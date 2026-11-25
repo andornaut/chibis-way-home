@@ -43,14 +43,6 @@
   line-height: calc(var(--ui-unit) * var(--summary-heading-line) * 1px);
 }
 
-.stage-summary-stage,
-.stage-summary-progress,
-.stage-summary-statement {
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 400;
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
-}
-
 .stage-summary-stage {
   margin-top: calc(var(--ui-unit) * var(--summary-stage-gap) * 1px);
   color: var(--colour-cream);

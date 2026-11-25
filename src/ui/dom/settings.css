@@ -43,20 +43,9 @@
   align-items: center;
   gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
   min-height: calc(var(--ui-unit) * var(--settings-row-height) * 1px);
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
   font: inherit;
   color: var(--colour-ink);
   text-align: start;
-  pointer-events: auto;
-  touch-action: none;
-  cursor: pointer;
-}
-
-.settings-row:focus {
-  outline: none;
 }
 
 .settings-row:not(:disabled, [aria-disabled="true"]):is(:focus-visible, [data-pressed]) {

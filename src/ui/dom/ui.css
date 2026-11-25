@@ -96,15 +96,41 @@
 /* The title's ink sits as far below the frame as the content's ink sits below the title's. */
 .ui-card-title {
   margin-bottom: calc(var(--card-inside) - var(--ui-unit) * var(--card-gap) * 1px);
+}
+
+/* Text roles. A card's title and text carry theirs; any other element takes the class. */
+.ui-card-title,
+.ui-text-heading {
   font-size: calc(var(--ui-unit) * var(--heading-size) * 1px);
   font-weight: 700;
   line-height: calc(var(--ui-unit) * var(--heading-line) * 1px);
 }
 
-.ui-card-text {
+.ui-card-text,
+.ui-text-body {
   font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
   font-weight: 400;
   line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+}
+
+/* A native button without the browser's box, spacing or focus outline, taking presses. Text and
+   close buttons carry it; any other button takes the class. */
+.ui-button-reset,
+.ui-close-button,
+.ui-text-button {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+
+.ui-button-reset:focus,
+.ui-close-button:focus,
+.ui-text-button:focus {
+  outline: none;
 }
 
 /* Each row face fits its own label with the standard padding. The button's press area
@@ -174,15 +200,9 @@
 
 .ui-text-button {
   display: block;
-  margin: 0;
   padding: var(--hit);
-  border: 0;
-  background: none;
   font: inherit;
   color: inherit;
-  pointer-events: auto;
-  touch-action: none;
-  cursor: pointer;
 }
 
 :where(.ui-card-actions:not(.ui-button-stack), .achievements-pager, .stage-select-pager)
@@ -193,10 +213,6 @@
 :where(.ui-card-actions:not(.ui-button-stack), .achievements-pager, .stage-select-pager)
   > .ui-text-button:not([hidden]):not(:nth-last-child(1 of :not([hidden]))) {
   padding-right: var(--half-gap);
-}
-
-.ui-text-button:focus {
-  outline: none;
 }
 
 /* A row of two visible buttons, primary then secondary, shows the secondary on the left and the primary on
@@ -345,17 +361,7 @@
   position: absolute;
   top: var(--at);
   right: var(--at);
-  margin: 0;
   padding: calc(var(--ui-unit) * var(--close-hit) * 1px);
-  border: 0;
-  background: none;
-  pointer-events: auto;
-  touch-action: none;
-  cursor: pointer;
-}
-
-.ui-close-button:focus {
-  outline: none;
 }
 
 .ui-close-face {
