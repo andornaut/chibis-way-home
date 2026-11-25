@@ -60,7 +60,7 @@ export const TOUCH_LAYOUT = {
   // The decorative touch controls' opacity.
   opacity: 0.85,
   // Use's centre from Jump's centre.
-  useFromJump: { x: -70, y: -70 } satisfies Point,
+  useFromJump: { x: -80, y: -80 } satisfies Point,
 } as const;
 
 // The skill HUD's buttons, packed along the view's top right, centred on the top section's middle

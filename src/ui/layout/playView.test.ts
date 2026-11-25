@@ -165,11 +165,16 @@ describe("the touch controls", () => {
     ["2:1 desktop at DPR 1", { height: 640, width: 1280 }, 1],
   ])("in a %s area, with no bars, sit where the view's edges place them", (_, css, dpr) => {
     const { buttons, moveHint } = touchLayout(fitAt(css, dpr));
+    const jump = { x: 623, y: 283 };
     expect({
       hint: moveHint.centre,
       jump: buttons.jump.centre,
       use: buttons.use.centre,
-    }).toEqual({ hint: { x: 96, y: 283 }, jump: { x: 623, y: 283 }, use: { x: 553, y: 213 } });
+    }).toEqual({
+      hint: { x: 96, y: 283 },
+      jump,
+      use: { x: jump.x + TOUCH_LAYOUT.useFromJump.x, y: jump.y + TOUCH_LAYOUT.useFromJump.y },
+    });
   });
 
   // Each side's drawn edge sits CONTROL_SIDE (or CONTROL_BOTTOM) from the canvas's edge, unless
@@ -246,12 +251,36 @@ describe("the touch controls", () => {
       { x: SCREEN.width - 1, y: SCREEN.height - 1 },
     ].map((point) => touchRoleAt(pressAreas, point));
     expect(jump.centre.x).toBeGreaterThan(623);
-    expect({ x: jump.centre.x - use.centre.x, y: jump.centre.y - use.centre.y }).toEqual({
-      x: 70,
-      y: 70,
-    });
+    expect({ x: use.centre.x - jump.centre.x, y: use.centre.y - jump.centre.y }).toEqual(
+      TOUCH_LAYOUT.useFromJump,
+    );
     expect(roles).toEqual(["jump", "jump", "move", "use", "use", "move", "use", "jump", "jump"]);
   });
+
+  // Use's press circle clears Pause's and every skill's press area and the move hint at rest;
+  // Jump's circle is cut from it midway between their centres.
+  it.each<[string, Size, number]>([...CASES, ["2.36:1 at DPR 3", { height: 358, width: 844 }, 3]])(
+    "in a %s area keep Use's press area off the other controls",
+    (_, css, dpr) => {
+      const { buttons, moveHint } = touchLayout(fitAt(css, dpr));
+      const { centre, hit } = buttons.use;
+      if (!("radius" in hit)) {
+        throw new Error("Use presses in a circle");
+      }
+      const others = [
+        moveHint.art,
+        PAUSE_BUTTON.hit,
+        ...[...skillHud(SKILL_IDS).values()].map((at) => skillButton(at).hit),
+      ];
+      // Each rect's nearest point's distance from Use's centre, less Use's reach.
+      const clearances = others.map((rect) => {
+        const dx = Math.max(rect.x - centre.x, 0, centre.x - (rect.x + rect.width));
+        const dy = Math.max(rect.y - centre.y, 0, centre.y - (rect.y + rect.height));
+        return Math.hypot(dx, dy) - hit.radius;
+      });
+      expect(Math.min(...clearances)).toBeGreaterThan(0);
+    },
+  );
 });
 
 describe("the stage progress strip", () => {
