@@ -43,7 +43,6 @@ Drawn faces, content padding, texture nine-slice margins and expanded press targ
 | Minimum press target    | 48x48       | logical px | Ordinary discrete game controls | Verified `HIT_RULE.minTarget`, [UI layout values](../src/data/layout.ts) |
 | Horizontal action inset | 16 per side | logical px | Ordinary action labels          | Verified `TEXT_BUTTON.inset`                                             |
 | Settings icon           | 16x16       | logical px | Ordinary settings-row icons     | Verified `SETTINGS_CARD`, [UI layout values](../src/data/layout.ts)      |
-| Compact Install face    | 28 high     | logical px | Explicit settings-row exception | Existing exception; retain the whole 48px row target                     |
 
 Centre each button label's actual visible ink within its current drawn face, including its font bearings and kerning, rather than centring its baseline, advance width or press target. The shared `TEXT_BUTTON.lipHeight` ([UI layout values](../src/data/layout.ts)) excludes the 4px lower lip from normal and pressed faces, shifts the pressed face down 2px exactly once and uses the full flat rectangle for disabled faces. Optional marks and labels centre horizontally as one group, with the native 5x10 mark and 6px gap; each centres vertically within that state's face. Label origins derive from these measured bounds, with no fixed vertical label offset. These bitmap-font measurements apply to canvas controls; HTML controls, in the game's UI layer and on responsive pages, use their CSS font metrics.
 
@@ -69,7 +68,7 @@ All actual modals retain canonical dimming and exclusive input. Page headers, li
 
 ## HUD/overlays
 
-Place HUD elements from their own screen and control anchors. The progress line, touch circles, movement hint, pause control and skill HUD are bespoke overlays; their working geometry is not replaced by the ordinary 16px page grid. The pause control and the skill HUD are HTML buttons on the UI layer, placed in base pixels times `--ui-unit` from the same view anchors. The Pause/Menu disc's frame and each skill's 48x48 target sit on whole logical pixels; where centring leaves an odd pixel, the spare pixel falls right of or below the frame or target. The touch circles and movement hint stay on the canvas.
+Place HUD elements from their own screen and control anchors. The progress line, touch circles, movement hint, pause control and skill HUD are bespoke overlays; their working geometry is not replaced by the ordinary 16px page grid. The pause control and the skill HUD are HTML buttons on the UI layer, placed in base pixels times `--ui-unit` from the same view anchors. The Pause/Menu disc's frame, Start's Exit frame, each skill's disc and its 48x48 target sit on whole logical pixels; where centring leaves an odd pixel, the spare pixel falls right of or below the frame, disc or target. The touch circles and movement hint stay on the canvas.
 
 The top zone-dialogue panel is 480 wide and centred on the view at 120,76,480,60, with its name tab overhanging to y 66, its portrait regions and its compact 36px footer row at y 140 to 176, as defined in `DIALOGUE_LAYOUT` ([UI layout values](../src/data/layout.ts)). Reserve its actual bounds before arranging content below it. Live barks remain distinct from paused dialogue and modal overlays.
 
@@ -77,7 +76,6 @@ The top zone-dialogue panel is 480 wide and centred on the view at 120,76,480,60
 
 | Exception                     | Concrete reason                                                                  | Retained rules                                                           | Status or source                                          |
 | ----------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------- |
-| Compact Install face          | Embedded in a full-height settings row                                           | Full font, labelled action and 48px row target                           | Existing control exception                                |
 | Compact summary heading       | Separate identity rows, complete preview and footer clearance share a fixed page | Uniform compact heading role; full body/action fonts and measured bounds | [Typography exception](style-guide.md#typography-scale)   |
 | Dialogue panel                | Fixed portrait and speaker regions and a compact 36px footer row                 | Full fonts, measured text and reserved footer                            | `DIALOGUE_SCREEN`                                         |
 | Navigation and touch controls | Icon navigation or continuous directional input                                  | Contrast, target handling and clear state                                | Existing bespoke geometry                                 |
