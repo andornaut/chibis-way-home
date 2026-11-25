@@ -1,5 +1,12 @@
-// The proofs the certification CLI runs: arena, current-list and selected-pair certification and
-// the arena approach traces. Tests import the harness modules directly.
+// The proofs the certification CLI and the acceptance batch run: arena, current-list and
+// selected-pair certification, the arena approach traces and the acceptance targets. Tests import
+// the harness modules directly.
+export {
+  ACCEPTANCE_ARENAS,
+  ACCEPTANCE_FAILURES,
+  acceptanceProblems,
+  missedTargets,
+} from "./arenaAcceptance.ts";
 export { canonicalApproachTrace } from "./arenaApproaches.ts";
 export {
   ARENA_COST,

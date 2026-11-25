@@ -14,6 +14,7 @@
     "preview": "npm run build && wrangler dev",
     "check": "./tests/container/check check",
     "typecheck": "./tests/container/check typecheck",
+    "acceptance": "node src/tools/arenaAcceptance.ts",
     "pairs": "node src/tools/chunkPairs.ts",
     "lint": "./tests/container/check lint-only",
     "format": "prettier --write . && eslint --fix .",
