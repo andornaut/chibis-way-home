@@ -24,7 +24,7 @@ export interface ChoiceCardView {
   readonly root: HTMLElement;
 }
 
-// The card for words, its dialog identified by id, which its prompt's id extends.
+// The card for words, its dialog identified by id and named by its prompt.
 export function createChoiceCard(
   document: Document,
   id: string,
@@ -35,13 +35,12 @@ export function createChoiceCard(
     alert: true,
     className: "dialogue-choice",
     id,
+    label: words.prompt,
     width: "small",
   });
   const prompt = document.createElement("p");
   prompt.className = "ui-card-text ui-text-body";
-  prompt.id = `${id}-prompt`;
   prompt.textContent = words.prompt;
-  frame.dialog.setAttribute("aria-labelledby", prompt.id);
   const buttons = new Map(
     words.options.map(({ id: answer, label }) => {
       const button = textButton(document, label);

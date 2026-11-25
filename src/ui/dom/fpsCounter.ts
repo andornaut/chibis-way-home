@@ -1,9 +1,10 @@
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
+import { setTextRole } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import palette from "../../../public/art/palette.json" with { type: "json" };
 import { UI_FONT_FAMILY } from "../chrome/uiFonts.ts";
 import { fpsCounterShown, watchFpsCounter } from "../settings/fpsCounter.ts";
-import { setThemeText, textRole } from "./theme.ts";
+import { setThemeText } from "./theme.ts";
 
 // How often the counter shows the latest reading.
 const REFRESH_MS = 500;
@@ -19,7 +20,8 @@ const { cream, ink } = palette.colours;
 // removal.
 export function mountFpsCounter(document: Document, fps: () => number, label: string): () => void {
   const counter = document.createElement("output");
-  counter.className = `fps-counter ${textRole("label")}`;
+  counter.className = "fps-counter";
+  setTextRole("label", counter);
   setThemeText(counter);
   writeLayoutProperties(
     {

@@ -108,7 +108,7 @@ export function createCard<Key extends string>(
 // A card holding one line of text over a backdrop that takes every tap: a status message with no
 // title, buttons or close X. Returns the scene's view, which the UI layer mounts.
 export function createMessageCard(document: Document, id: string, text: string): HTMLElement {
-  const frame = createCardFrame(document, { id, width: "small" });
+  const frame = createCardFrame(document, { id, label: text, width: "small" });
   frame.dialog.setAttribute("role", "status");
   const message = document.createElement("p");
   message.className = "ui-card-text ui-text-body";

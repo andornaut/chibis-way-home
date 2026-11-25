@@ -1,4 +1,4 @@
-import { REFUSAL_ATTRIBUTES, refuse } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
+import { refuse, refusing } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 
 import { CONTROL_REFUSAL } from "../../data/feedback.ts";
 
@@ -14,13 +14,6 @@ export const REFUSAL_CUE = {
   stepMs: CONTROL_REFUSAL.flashMs,
   steps: CONTROL_REFUSAL.flashes,
 } as const;
-
-// Whether the cue is playing on element.
-export function refusing(element: HTMLElement): boolean {
-  return (
-    element.hasAttribute(REFUSAL_ATTRIBUTES.red) || element.hasAttribute(REFUSAL_ATTRIBUTES.shake)
-  );
-}
 
 // Plays the cue on element unless it is already playing there, and returns a function that stops
 // it at once.

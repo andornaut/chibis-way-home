@@ -124,6 +124,7 @@ export class AchievementsScene extends Scene {
     let shown = true;
     this.events.once("shutdown", () => {
       shown = false;
+      card.pager.stopRefusal();
       this.closeModal?.();
       this.closeModal = undefined;
       stops.forEach((stop) => stop());
@@ -166,6 +167,7 @@ export class AchievementsScene extends Scene {
     if (!this.acceptsActions() || page < 0 || page >= this.pages()) {
       return;
     }
+    this.card?.pager.stopRefusal();
     this.page = page;
     modalInput(this).invalidate();
     this.render();

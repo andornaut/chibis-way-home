@@ -4,7 +4,6 @@ import { afterEach, expect, it, vi } from "vitest";
 import { TEXT } from "../../data/text.ts";
 import { fpsCounterShown, setFpsCounterShown } from "../settings/fpsCounter.ts";
 import { mountFpsCounter } from "./fpsCounter.ts";
-import { textRole } from "./theme.ts";
 
 afterEach(() => {
   vi.useRealTimers();
@@ -24,7 +23,7 @@ it("is off by default, then shows the rounded frame rate as a label on the page 
     hidden: counter.hidden,
     label: counter.getAttribute("aria-label"),
     onPage: counter.parentElement === document.body && !game.contains(counter),
-    role: counter.classList.contains(textRole("label")),
+    role: counter.classList.contains("ui-text-label"),
     text: counter.textContent,
   }).toEqual({ hidden: false, label: TEXT.settings.fps, onPage: true, role: true, text: "60" });
   unmount();

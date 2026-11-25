@@ -19,7 +19,7 @@ function place(card: Parameters<typeof cardFramePlacement>[0], body: number, foo
     body,
     ...(bodyOutset === undefined ? {} : { bodyOutset }),
     ...(footer === undefined ? {} : { footer }),
-    title: { ...title, height: card.titled ? TITLE : 0 },
+    ...(title === undefined ? {} : { title: { ...title, height: TITLE } }),
   });
 }
 
@@ -127,10 +127,17 @@ it("names a card by its title, describes it by its text and puts the close X las
   expect(controls.at(-1)).toBe(card.close);
 });
 
-it("leaves an untitled card unnamed by a title and a status message without controls", () => {
-  const frame = createCardFrame(document, { alert: true, id: "choice", width: "small" });
+it("names an untitled card by its label and shows a status message without controls", () => {
+  const frame = createCardFrame(document, {
+    alert: true,
+    id: "choice",
+    label: TEXT.update.connect,
+    width: "small",
+  });
   expect(frame.dialog.getAttribute("role")).toBe("alertdialog");
   expect(frame.dialog.hasAttribute("aria-labelledby")).toBe(false);
+  expect(frame.dialog.getAttribute("aria-label")).toBe(TEXT.update.connect);
+  expect(frame.title.hidden).toBe(true);
   const message = createMessageCard(document, "connect-card", TEXT.update.connect);
   const status = message.querySelector("[role=status]")!;
   expect(status.textContent).toBe(TEXT.update.connect);

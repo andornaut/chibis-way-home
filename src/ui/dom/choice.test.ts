@@ -20,8 +20,8 @@ const ROOM = CARD_WIDTH.small - 2 * CARD_CONTENT.padding;
 it("is an alert named by its prompt, with no title text or close", () => {
   const { dialog } = createChoiceCard(document, "choice", WORDS);
   expect(dialog.getAttribute("role")).toBe("alertdialog");
-  const named = dialog.querySelector(`#${dialog.getAttribute("aria-labelledby")}`);
-  expect(named?.textContent).toBe(WORDS.prompt);
+  expect(dialog.getAttribute("aria-label")).toBe(WORDS.prompt);
+  expect(dialog.querySelector("p")?.textContent).toBe(WORDS.prompt);
   expect(dialog.querySelector("h2")).toMatchObject({ hidden: true, textContent: "" });
 });
 

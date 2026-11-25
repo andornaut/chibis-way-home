@@ -47,7 +47,7 @@ function themeColour(slot: string): string {
 
 const achievements = textColours("src/ui/dom/achievements.css");
 
-const LOCKED_STAGE = '.stage-select-stage[data-look="locked"]';
+const LOCKED_STAGE = '.stage-select-stage[aria-disabled="true"]';
 const lockedStageRules = rules("src/ui/dom/stageSelect.css").filter(([selector]) =>
   selector.includes(LOCKED_STAGE),
 );

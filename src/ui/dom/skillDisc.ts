@@ -10,7 +10,7 @@ import { createPaletteSvg } from "./chrome.ts";
 
 // A skill's disc in the HTML UI (skillDisc.css): its circle as inline SVG from the skill chrome's
 // layers in the button's square target, with the skill's glyph at native size centred on it,
-// named as one image. The skill HUD shows the same circle and glyph as a HUD disc's parts.
+// named as one image. The skill HUD draws the same circle as a HUD disc's fill (pause.css).
 
 // The layout properties skillDisc.css reads, in base px.
 export const SKILL_DISC_LAYOUT: LayoutValues = {
@@ -35,10 +35,6 @@ export interface SkillDiscColours {
 export interface SkillDiscLook {
   readonly ready: boolean;
 }
-
-// The view box that crops the chrome to its circle.
-const DISC_MARGIN = (SKILL_BUTTON.target - SKILL_BUTTON.disc) / 2;
-const DISC_VIEW_BOX = `${DISC_MARGIN} ${DISC_MARGIN} ${SKILL_BUTTON.disc} ${SKILL_BUTTON.disc}`;
 
 function discSvg(document: Document, colours: SkillDiscColours, look: SkillDiscLook) {
   const { navy, yellow } = colours;
@@ -75,42 +71,6 @@ export function createSkillDisc(
   glyph.alt = "";
   element.append(discSvg(document, colours, look), glyph);
   return { element, glyph };
-}
-
-// A HUD disc's parts (the kit's hudDisc): the circle alone as the face's art, cropped to its
-// drawn disc, and the glyph for the icon box. The button they are in names them.
-export function createSkillDiscFace(
-  document: Document,
-  colours: SkillDiscColours,
-  look: SkillDiscLook,
-): SkillDiscView {
-  const element = document.createElement("span");
-  element.className = "ui-skill-disc-face";
-  const chrome = discSvg(document, colours, look);
-  chrome.setAttribute("viewBox", DISC_VIEW_BOX);
-  const glyph = document.createElement("img");
-  glyph.className = "ui-skill-disc-glyph";
-  glyph.alt = "";
-  element.append(chrome);
-  return { element, glyph };
-}
-
-// Redraws view's circle for look, in the view box it has.
-export function paintSkillDisc(
-  colours: SkillDiscColours,
-  look: SkillDiscLook,
-  view: SkillDiscView,
-): void {
-  const shown = view.element.querySelector(".ui-skill-disc-chrome");
-  if (shown === null) {
-    return;
-  }
-  const chrome = discSvg(view.element.ownerDocument, colours, look);
-  const viewBox = shown.getAttribute("viewBox");
-  if (viewBox !== null) {
-    chrome.setAttribute("viewBox", viewBox);
-  }
-  shown.replaceWith(chrome);
 }
 
 // rect of source filled with colour (a CSS colour) where it is opaque, keeping its alpha, as the

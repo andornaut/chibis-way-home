@@ -1,15 +1,7 @@
 /* The cheats card (cheats.ts) on the card frame: a stack of unlock actions, the Invincibility
    switch row (settings.css .switch-rows) the card gap below it, and the feedback line. */
 
-/* The row is its own press target: it takes the presses over the press areas of the stack above
-   it and of Back below it where they reach it. */
-.cheats-card {
-  isolation: isolate;
-}
-
 .cheats-rows {
-  position: relative;
-  z-index: 1;
   align-self: stretch;
 }
 

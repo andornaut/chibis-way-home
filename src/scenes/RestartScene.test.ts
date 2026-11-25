@@ -177,7 +177,7 @@ it.each(["Escape", "P", "p"])("closes on %s", async (value) => {
 
 it("closes on a tap outside the card, never on one that lands on it or travels", async () => {
   const { dialog, restartClosed } = await openCard();
-  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const backdrop = document.querySelector<HTMLElement>(".ui-modal-backdrop")!;
   const tap = (target: HTMLElement, travel: number) => {
     target.dispatchEvent(
       new PointerEvent("pointerdown", {

@@ -2,12 +2,14 @@ import {
   ACTION_GAPS,
   type ActionArrangement,
   type ActionGapSelection,
+  type ActionGridArrangement,
 } from "@andornaut/game-kit/runtime/ui/actionGroup";
 import type { ButtonRole, ButtonSize } from "@andornaut/game-kit/runtime/ui/buttonLayout";
 import {
   type ActionGroupView,
   createActionGroup,
   type DomAction,
+  type DomActionGridContext,
   type DomActionGroupContext,
 } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
 import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
@@ -21,11 +23,16 @@ import { registerLayout, rendered } from "./layout.ts";
 
 export type ActionsContext = Omit<DomActionGroupContext, "width">;
 
+// A grid's context, and which of its actions keep their own size in their cells.
+export type ActionsGridContext = Omit<DomActionGridContext, "width"> & {
+  readonly locked?: (element: HTMLElement) => boolean;
+};
+
 export interface ActionsView {
   readonly element: HTMLElement;
   readonly group: ActionGroupView;
   // Measures and places the actions; undefined while the group is not rendered.
-  arrange(): ActionArrangement<HTMLElement> | undefined;
+  arrange(): ActionArrangement<HTMLElement> | ActionGridArrangement<HTMLElement> | undefined;
 }
 
 // A text button's role: art's primary face, or the ordinary one.
@@ -66,13 +73,15 @@ function room(element: HTMLElement): number {
 }
 
 // A group holding elements in their focus order, arranged in context within width base px, or
-// within its parent's content width. size fixes every face's size instead of measuring it.
+// within its parent's content width, or as a grid while grid gives one. size fixes every face's
+// size instead of measuring it.
 export function createActions(
   document: Document,
   elements: readonly HTMLElement[],
   options: {
     readonly className?: string;
     readonly context?: ActionsContext | (() => ActionsContext);
+    readonly grid?: () => ActionsGridContext | undefined;
     readonly size?: () => ButtonSize | undefined;
     // The room across in base px; "content" makes a row exactly as wide as its faces and gaps.
     readonly width?: number | "content";
@@ -86,6 +95,20 @@ export function createActions(
   const arrange = () => {
     if (!rendered(group.element.parentElement ?? group.element)) {
       return undefined;
+    }
+    const grid = options.grid?.();
+    if (grid !== undefined) {
+      const { locked, ...context } = grid;
+      const children = [...group.element.children] as HTMLElement[];
+      return group.arrangeGrid(
+        {
+          ...context,
+          width: typeof options.width === "number" ? options.width : room(group.element),
+        },
+        measuredActions(group, children, options.size?.()).map((action) =>
+          locked?.(action.element) === true ? { ...action, locked: true } : action,
+        ),
+      );
     }
     const context = typeof options.context === "function" ? options.context() : options.context;
     const shown = [...group.element.children].filter(

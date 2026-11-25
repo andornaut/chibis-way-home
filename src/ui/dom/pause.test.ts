@@ -70,7 +70,7 @@ it("shows the selected skill pressed and described by its readiness, and the oth
   const view = mount();
   const [selected, other] = SKILL_IDS as readonly [SkillId, SkillId];
   const show = (skill: SkillId, state: { ready: boolean; selected: boolean; shown: boolean }) =>
-    showSkillButton(COLOURS, view.readiness, { ...state, tabbable: true }, view.skills[skill]);
+    showSkillButton(view.readiness, { ...state, tabbable: true }, view.skills[skill]);
   show(selected, { ready: true, selected: true, shown: true });
   show(other, { ready: false, selected: false, shown: true });
   const state = (skill: SkillId) => {
@@ -100,17 +100,18 @@ it("shows the selected skill pressed and described by its readiness, and the oth
   expect(state(selected)).toMatchObject({ described: undefined, hidden: true, pressed: "false" });
 });
 
-it("repaints a skill's disc and changes the entry's pose without replacing either button", () => {
+it("marks a skill's disc ready and changes the entry's pose without replacing either button", () => {
   const view = mount();
   const [skill] = SKILL_IDS as readonly [SkillId];
-  const { button, disc } = view.skills[skill];
-  const paint = () => button.querySelector("svg [data-ui-fill]")!.getAttribute("data-ui-fill");
+  const { button, glyph } = view.skills[skill];
   const look = { selected: true, shown: true, tabbable: false };
-  showSkillButton(COLOURS, view.readiness, { ...look, ready: false }, view.skills[skill]);
-  expect(paint()).toBe("navy");
-  showSkillButton(COLOURS, view.readiness, { ...look, ready: true }, view.skills[skill]);
-  expect(paint()).toBe("yellow");
-  expect([view.skills[skill].button, button.contains(disc.glyph)]).toEqual([button, true]);
+  showSkillButton(view.readiness, { ...look, ready: false }, view.skills[skill]);
+  expect(button.hasAttribute("data-ready")).toBe(false);
+  showSkillButton(view.readiness, { ...look, ready: true }, view.skills[skill]);
+  expect(button.hasAttribute("data-ready")).toBe(true);
+  // The kit's fill layer draws the disc; the button holds only its glyph.
+  expect(button.querySelector("svg")).toBeNull();
+  expect([view.skills[skill].button, button.contains(glyph)]).toEqual([button, true]);
 
   const entry = view.pauseButton;
   const shown = () => [...entry.querySelectorAll<SVGElement>("svg[data-shown]")];

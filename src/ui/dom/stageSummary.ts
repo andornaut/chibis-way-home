@@ -3,6 +3,7 @@ import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
+import { setTextRole } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 import { slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT, DEATH_CARD, STAGE_PREVIEW, STAGE_SUMMARY } from "../../data/layout.ts";
@@ -12,7 +13,6 @@ import type { StatsMetricRow } from "../layout/runStats.ts";
 import { createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
 import { createRunStats } from "./runStats.ts";
-import { textRole } from "./theme.ts";
 
 // The full-page stage summary in the HTML UI (stageSummary.css, after runStats.css): over a black
 // view, the zone's name, the stage and progress lines, the cleared stage's preview, the stage's
@@ -108,7 +108,8 @@ export function createStageSummary(
   dialog.id = id;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-zone`);
-  const zone = text("h2", `stage-summary-zone ${textRole("summaryZone")}`, words.zone);
+  const zone = text("h2", "stage-summary-zone", words.zone);
+  setTextRole("summaryZone", zone);
   zone.id = `${id}-zone`;
   const preview = element("img", "stage-summary-preview");
   preview.alt = "";

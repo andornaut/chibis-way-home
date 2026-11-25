@@ -219,7 +219,7 @@ it("closes on the close X and on back, once", async () => {
 
 it("closes on a tap outside the card, never on one that lands on it or travels", async () => {
   const { achievementsClosed, dialog } = await openCard();
-  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const backdrop = document.querySelector<HTMLElement>(".ui-modal-backdrop")!;
   const tap = (target: HTMLElement, travel: number) => {
     target.dispatchEvent(
       new PointerEvent("pointerdown", {
@@ -254,7 +254,7 @@ it("prevents compatibility mouse defaults only on eligible primary touch dismiss
   const back = button(WORDS.back);
   const close = button(WORDS.close);
   const next = button(WORDS.pages.next);
-  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const backdrop = document.querySelector<HTMLElement>(".ui-modal-backdrop")!;
   const pointer = (type: string, options: PointerEventInit, target: HTMLElement) =>
     target.dispatchEvent(
       new PointerEvent(type, {

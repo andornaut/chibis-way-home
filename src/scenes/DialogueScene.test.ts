@@ -224,7 +224,7 @@ it("asks a required choice as an alert dialog with no answer focused, selecting 
   const dialog = document.querySelector<HTMLElement>("[role=alertdialog]")!;
   expect({
     focused: document.activeElement === dialog,
-    name: document.getElementById(dialog.getAttribute("aria-labelledby")!)?.textContent,
+    name: dialog.getAttribute("aria-label"),
   }).toEqual({ focused: true, name: TEXT.lines[prompt!] });
   for (const key of ["Escape", "Enter"]) {
     pressKey([], key);

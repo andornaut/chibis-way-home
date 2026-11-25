@@ -195,7 +195,7 @@ it.each([
   [
     "a tap outside",
     ({ root }: Awaited<ReturnType<typeof openCard>>) =>
-      tap(root.querySelector<HTMLElement>(".ui-backdrop")!),
+      tap(root.querySelector<HTMLElement>(".ui-modal-backdrop")!),
   ],
 ] as const)("closes once for %s and tells the opener after its input closes", async (_, act) => {
   const card = await openCard();
@@ -232,7 +232,7 @@ it("stays open for P, a held Enter, a tap on the card and input the modal gate r
   key("Escape");
   key("Enter");
   close.click();
-  tap(root.querySelector<HTMLElement>(".ui-backdrop")!);
+  tap(root.querySelector<HTMLElement>(".ui-modal-backdrop")!);
   window.dispatchEvent(new Event(PHONE_EVENTS.backPressed));
   expect(onClose).not.toHaveBeenCalled();
   expect(dialog.isConnected).toBe(true);

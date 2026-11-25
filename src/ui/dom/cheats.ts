@@ -9,7 +9,8 @@ import { createCardFrame } from "./cardFrame.ts";
 // The cheats card in the HTML UI (cardFrame.ts, cheats.css): its title, the unlock actions as a
 // full-width stack, the Invincibility switch row on the kit's form rows (role switch,
 // aria-checked, named by its label and described by its note), a feedback line, Back in the
-// footer and the close X. The keyboard's focus moves through the unlock actions, the switch row,
+// footer and the close X. The card's press context clamps the stack's, the row's and Back's press
+// areas toward each other. The keyboard's focus moves through the unlock actions, the switch row,
 // Back and the close X.
 
 export type CheatAction = "unlockAllPowerUps" | "unlockAllZones";
@@ -75,6 +76,8 @@ export function createCheatsCard(
   frame.content.append(stack.element, rows.element, status);
   const back = textButton(document, words.back, true);
   frame.setFooter([back]);
+  frame.presses.add(stack.group);
+  frame.presses.add(invincibility.element);
   return {
     actions,
     back,

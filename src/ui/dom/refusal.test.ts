@@ -1,8 +1,9 @@
 // @vitest-environment happy-dom
+import { refusing } from "@andornaut/game-kit/runtime/web/ui/dom/refusalCue";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 import { CONTROL_REFUSAL } from "../../data/feedback.ts";
-import { refuseControl, refusing } from "./refusal.ts";
+import { refuseControl } from "./refusal.ts";
 
 const { flashMs, flashes, shake, shakeMs } = CONTROL_REFUSAL;
 let control: HTMLButtonElement;

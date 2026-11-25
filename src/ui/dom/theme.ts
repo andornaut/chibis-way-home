@@ -1,9 +1,9 @@
 import { colourProperties, TEXT_ROLES } from "@andornaut/game-kit/runtime/ui/uiTheme";
 import {
-  type LayoutValues,
-  writeLayoutProperties,
-} from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
-import { setTextRoles, setUiColours } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
+  setGameTextRoles,
+  setTextRoles,
+  setUiColours,
+} from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import { THEME_COLOURS } from "../../data/layout.ts";
 import { TEXT_ROLE_STYLES } from "../layout/fontRoles.ts";
@@ -14,17 +14,6 @@ import { TEXT_ROLE_STYLES } from "../layout/fontRoles.ts";
 
 // A clear slot's colour: art draws that face.
 const CLEAR = "#00000000";
-
-type Role = keyof typeof TEXT_ROLE_STYLES;
-
-function kebab(name: string): string {
-  return name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
-}
-
-// The class of a text role.
-export function textRole(role: Role): string {
-  return `ui-text-${kebab(role)}`;
-}
 
 // Each slot's colour from a palette's #rrggbb colours by name.
 function slotColours(colours: Readonly<Record<string, string>>): Record<string, string> {
@@ -52,21 +41,13 @@ export function setThemeColours(
   setUiColours(slotColours(colours), root);
 }
 
-// Writes every text role's size, line height and weight on root: the kit's through its theme,
-// and this game's as the same properties under their own names.
+// Writes every text role's size, line height and weight on root: the kit's four and this game's.
 export function setThemeText(root: HTMLElement): void {
   const kit = TEXT_ROLES as readonly string[];
-  setTextRoles(
-    Object.fromEntries(Object.entries(TEXT_ROLE_STYLES).filter(([role]) => kit.includes(role))),
-    root,
-  );
-  const own: Record<string, number> = {};
-  for (const [role, style] of Object.entries(TEXT_ROLE_STYLES)) {
-    if (!kit.includes(role)) {
-      own[`--${textRole(role as Role)}-size`] = style.size;
-      own[`--${textRole(role as Role)}-line-height`] = style.lineHeight;
-      own[`--${textRole(role as Role)}-weight`] = style.weight;
-    }
-  }
-  writeLayoutProperties(own satisfies LayoutValues, root);
+  const ours = (own: boolean) =>
+    Object.fromEntries(
+      Object.entries(TEXT_ROLE_STYLES).filter(([role]) => kit.includes(role) !== own),
+    );
+  setTextRoles(ours(false), root);
+  setGameTextRoles(ours(true), root);
 }

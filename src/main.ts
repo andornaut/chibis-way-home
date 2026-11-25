@@ -9,6 +9,7 @@ import "@andornaut/game-kit/runtime/web/ui/dom/modalFrame.css";
 import "@andornaut/game-kit/runtime/web/ui/dom/formRow.css";
 import "@andornaut/game-kit/runtime/web/ui/dom/pager.css";
 import "@andornaut/game-kit/runtime/web/ui/dom/hudDisc.css";
+import "@andornaut/game-kit/runtime/web/ui/dom/buttonFrame.css";
 import "./main.css";
 import "./ui/dom/ui.css";
 import "./ui/dom/achievements.css";

@@ -1,6 +1,10 @@
 import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import type { ModalFrameLayout } from "@andornaut/game-kit/runtime/ui/modalFrame";
 import {
+  createPressContext,
+  type PressContext,
+} from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
+import {
   createModalFrame,
   type DomModalFrameContext,
   type ModalFrameView,
@@ -17,12 +21,15 @@ import { hitMargin } from "../layout/hitAreas.ts";
 import { type ActionsContext, measuredActions } from "./actions.ts";
 import { registerLayout, rendered } from "./layout.ts";
 
-// A modal card in the HTML UI on the kit's modal frame (modalFrame.css): the scene's view holds a
-// full-area backdrop that takes the presses outside the card, and on the play view the card in
+// A modal card in the HTML UI on the kit's modal frame (modalFrame.css): the frame's backdrop
+// covers the whole layer, letterbox bars included, and takes the presses outside the card, and on
+// the play view the card in
 // art's ui-settings-card frame at its width family's width, centred, as tall as its content up
 // to the view's height less the screen margin, past which its body scrolls. The card holds its
 // title, its content, an optional pinned footer and an optional close X, which is last in the
-// focus order. Every part is placed from the card's outer edge in whole base px.
+// focus order. Every part is placed from the card's outer edge in whole base px. The card's press
+// context clamps the press areas of the groups and rows added to it, and of its footer, toward
+// each other.
 
 // The play view a card is centred in.
 const VIEW = { height: SCREEN.height, width: SCREEN.width, x: 0, y: 0 } as const;
@@ -62,6 +69,8 @@ const CLOSE_CLEAR =
 // What the kit's frame places a card from: its context, its title's insets and how far the
 // body's first press area reaches above the body.
 export function cardFramePlacement(card: {
+  // The rect the backdrop covers, in the play view's base px.
+  readonly backdrop?: Rect;
   // How far the body's first press area reaches above it, on a closeable card.
   readonly bodyOutset?: number;
   readonly close: boolean;
@@ -73,7 +82,8 @@ export function cardFramePlacement(card: {
 }): {
   readonly bodyOutset?: number;
   readonly context: DomModalFrameContext;
-  readonly title: { readonly inkOffset?: number; readonly inset: number };
+  // A titled card's title insets.
+  readonly title?: { readonly inkOffset?: number; readonly inset: number };
 } {
   const bodyOutset = card.bodyOutset ?? CLOSEABLE_BODY_OUTSET;
   const height = card.titleHeight ?? Math.ceil(TITLE_LINE);
@@ -85,6 +95,7 @@ export function cardFramePlacement(card: {
   return {
     ...(card.close ? { bodyOutset } : {}),
     context: {
+      ...(card.backdrop === undefined ? {} : { backdrop: card.backdrop }),
       ...(card.close ? { close: CLOSE } : {}),
       content: card.content ?? VIEW,
       families: CARD_WIDTH,
@@ -93,12 +104,34 @@ export function cardFramePlacement(card: {
       margin: CARD_SCREEN_MARGIN,
       padding: CARD_CONTENT.padding,
     },
-    title: card.titled
+    ...(card.titled
       ? {
-          inkOffset: fits ? top - Math.floor((header - height) / 2) : TITLE_INK_OFFSET,
-          inset: TITLE_INSET,
+          title: {
+            inkOffset: fits ? top - Math.floor((header - height) / 2) : TITLE_INK_OFFSET,
+            inset: TITLE_INSET,
+          },
         }
-      : { inset: CARD_CONTENT.padding / 2 },
+      : {}),
+  };
+}
+
+// The rect of the layer that holds view, in view's base px, each edge rounded outward to a whole
+// unit: what a card's backdrop covers. Undefined outside a layer.
+function layerCover(view: HTMLElement): Rect | undefined {
+  const layer = view.closest<HTMLElement>(".ui-layer");
+  if (layer === null) {
+    return undefined;
+  }
+  const unit = readUnit(view);
+  const outer = layer.getBoundingClientRect();
+  const inner = view.getBoundingClientRect();
+  const x = Math.floor((outer.left - inner.left) / unit + 1e-6);
+  const y = Math.floor((outer.top - inner.top) / unit + 1e-6);
+  return {
+    height: Math.ceil((outer.bottom - inner.top) / unit - 1e-6) - y,
+    width: Math.ceil((outer.right - inner.left) / unit - 1e-6) - x,
+    x,
+    y,
   };
 }
 
@@ -119,8 +152,11 @@ export interface CardFrameOptions {
   readonly id: string;
   // The scene view's own class names.
   readonly sceneClassName?: string;
-  // A card without a title starts its content at the top padding.
+  // The card's title, which names it. A card without one starts its content at the top padding
+  // and is named by label.
   readonly title?: string;
+  // An untitled card's accessible name.
+  readonly label?: string;
   readonly width: CardWidth;
 }
 
@@ -132,6 +168,8 @@ export interface CardFrame {
   // The card itself: role dialog or alertdialog, named by its title.
   readonly dialog: HTMLElement;
   readonly frame: ModalFrameView;
+  // The press context of the card's neighbouring groups and rows; the footer is in it.
+  readonly presses: PressContext;
   // The scene's view, which the UI layer mounts.
   readonly root: HTMLElement;
   readonly title: HTMLElement;
@@ -162,27 +200,22 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
     id: options.id,
     role: options.alert === true ? "alertdialog" : "dialog",
     skinClassName: "ui-frame ui-card-skin",
-    title: options.title ?? "",
+    ...(options.title === undefined ? { label: options.label! } : { title: options.title }),
     titleClassName: "ui-card-title",
   });
   frame.content.classList.add("ui-card-content");
   frame.content.querySelector(".ui-modal-text")?.classList.add("ui-card-text");
-  if (options.title === undefined) {
-    frame.title.hidden = true;
-    frame.card.removeAttribute("aria-labelledby");
-  }
   const root = document.createElement("div");
   root.className = ["ui-card-scene", options.sceneClassName].filter(Boolean).join(" ");
   const view = document.createElement("div");
   view.className = "ui-view";
   view.append(frame.element);
-  // The backdrop covers the whole layer, past the play view the frame is placed in.
-  frame.backdrop.classList.add("ui-backdrop");
-  root.append(frame.backdrop, view);
+  root.append(view);
   const close = options.close === undefined ? undefined : closeButton(document, options.close);
   if (close !== undefined) {
     frame.card.append(close);
   }
+  const presses = createPressContext(frame.card);
   let family = options.width;
   let footer:
     | {
@@ -194,10 +227,12 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
     if (!rendered(frame.element)) {
       return undefined;
     }
+    const backdrop = layerCover(view);
     const placement = cardFramePlacement({
+      ...(backdrop === undefined ? {} : { backdrop }),
       ...(options.bodyOutset === undefined ? {} : { bodyOutset: options.bodyOutset }),
       close: close !== undefined,
-      ...(frame.title.hidden
+      ...(options.title === undefined
         ? {}
         : {
             titleHeight: Math.max(
@@ -209,7 +244,7 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
       family,
       titled: options.title !== undefined,
     });
-    return frame.layout(placement.context, {
+    const placed = frame.layout(placement.context, {
       ...(placement.bodyOutset === undefined ? {} : { bodyOutset: placement.bodyOutset }),
       ...(close === undefined ? {} : { close }),
       ...(footer === undefined
@@ -225,8 +260,10 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
                   }),
             },
           }),
-      title: placement.title,
+      ...(placement.title === undefined ? {} : { title: placement.title }),
     }).frame;
+    presses.apply();
+    return placed;
   };
   registerLayout(layout, frame.card);
   return {
@@ -236,11 +273,11 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
     dialog: frame.card,
     frame,
     layout,
+    presses,
     root,
     setFooter(actions, context) {
       frame.footer.element.append(...actions);
-      // The footer shows from now on, so its actions have boxes to measure.
-      frame.card.setAttribute("data-ui-modal-footer", "");
+      presses.add(frame.footer);
       footer = { actions, ...(context === undefined ? {} : { context }) };
       layout();
     },

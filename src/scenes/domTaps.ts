@@ -111,6 +111,9 @@ export function bindSceneActions<Control>(
 export type SceneButtonAction = Omit<GameAction, "available"> & {
   readonly available?: () => boolean;
   readonly preventTouchMouseDefault?: () => boolean;
+  // The attribute that shows the button pressed: data-pressed, or the kit's data-ui-pressed for a
+  // face on the kit's button frame states (buttonFrame.css).
+  readonly pressedAttribute?: "data-pressed" | "data-ui-pressed";
 };
 
 export function bindSceneButtons(
@@ -152,7 +155,7 @@ export function bindSceneButtons(
     show: (pressed) => {
       for (const action of actions) {
         action.element.toggleAttribute(
-          "data-pressed",
+          action.pressedAttribute ?? "data-pressed",
           action === pressed && action.element.getAttribute("aria-disabled") !== "true",
         );
       }

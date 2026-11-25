@@ -274,14 +274,14 @@ describe("refusals", () => {
         }),
       );
     pointer("pointerdown");
-    expect(locked.hasAttribute("data-pressed")).toBe(false);
+    expect(locked.hasAttribute("data-ui-pressed")).toBe(false);
     vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
     expect(refuseControl).toHaveBeenCalledOnce();
     expect(stageSelected).not.toHaveBeenCalled();
     pointer("pointerup");
     locked.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
     expect(refuseControl).toHaveBeenCalledOnce();
-    expect(locked.hasAttribute("data-pressed")).toBe(false);
+    expect(locked.hasAttribute("data-ui-pressed")).toBe(false);
     expect(stageSelected).not.toHaveBeenCalled();
   });
 
@@ -450,7 +450,7 @@ it.each(["Escape", "close"])("closes on %s but not on P", async (how) => {
 
 it("closes on a tap outside the card, never on one that lands on it", async () => {
   const { dialog, stageSelectionClosed } = await openPicker();
-  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const backdrop = document.querySelector<HTMLElement>(".ui-modal-backdrop")!;
   const tap = (target: HTMLElement) => {
     for (const type of ["pointerdown", "pointerup"]) {
       target.dispatchEvent(

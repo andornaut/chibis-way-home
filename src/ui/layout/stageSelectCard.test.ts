@@ -1,4 +1,4 @@
-import { arrangeActions } from "@andornaut/game-kit/runtime/ui/actionGroup";
+import { arrangeActions, separatePressAreas } from "@andornaut/game-kit/runtime/ui/actionGroup";
 import { placeModalFrame } from "@andornaut/game-kit/runtime/ui/modalFrame";
 import { arrangePager } from "@andornaut/game-kit/runtime/ui/pager";
 import { expect, it } from "vitest";
@@ -9,7 +9,6 @@ import { FONT_METRICS } from "./fontRoles.ts";
 import { hitMargin } from "./hitAreas.ts";
 import {
   STAGE_FACE,
-  STAGE_PAGER_INSET,
   STAGE_ROW_INSET,
   STAGE_ROW_WIDTH,
   STAGE_SELECT_WIDTH,
@@ -31,14 +30,12 @@ function placed<K>(action: ReturnType<typeof arrangeActions<K>>["actions"][numbe
   return action;
 }
 
-const faces = arrangeActions(
-  { axis: "row", width: STAGE_ROW_WIDTH },
-  Array.from({ length: STAGES_PER_PAGE }, (_, key) => ({
-    key,
-    role: "secondary" as const,
-    size: STAGE_FACE,
-  })),
-).actions.map(placed);
+const FACES = Array.from({ length: STAGES_PER_PAGE }, (_, key) => ({
+  key,
+  role: "secondary" as const,
+  size: STAGE_FACE,
+}));
+const faces = arrangeActions({ axis: "row", width: STAGE_ROW_WIDTH }, FACES).actions.map(placed);
 const pager = arrangePager({ width: STAGE_ROW_WIDTH }, PAGER);
 
 // The paged card's frame, as the card frame places a closeable, titled card.
@@ -54,7 +51,7 @@ const frame = placeModalFrame(
     padding,
   },
   {
-    body: STAGE_ROW_INSET + STAGE_FACE.height + gap + STAGE_PAGER_INSET + pager.group.height,
+    body: STAGE_ROW_INSET + STAGE_FACE.height + gap + pager.group.height,
     bodyOutset: hitMargin({
       height: TEXT_BUTTON.height,
       width: TEXT_BUTTON.height,
@@ -101,16 +98,32 @@ it("fits the paged card in the view less the screen margin, without scrolling", 
   }).toEqual({ fits: true, scrolls: false });
 });
 
-it("keeps the card gap between the close X's, the faces' and the pager's press areas", () => {
+it("keeps the card gap below the close X's press area and meets the pager's midway", () => {
   const face = faces.at(-1)!;
   const faceTop = frame.body.y + STAGE_ROW_INSET;
-  const faceBottom = faceTop + STAGE_FACE.height;
-  const pagerTop = faceBottom + gap + STAGE_PAGER_INSET;
+  const pagerTop = faceTop + STAGE_FACE.height + gap;
   const close = frame.close!.press;
+  // The card's press context clamps the faces' and the pager buttons' press areas toward each
+  // other across the gap between the rows.
+  const [row, steps] = separatePressAreas([
+    arrangeActions({ axis: "row", origin: { x: 0, y: faceTop }, width: STAGE_ROW_WIDTH }, FACES),
+    arrangeActions({ axis: "row", origin: { x: 0, y: pagerTop }, width: STAGE_ROW_WIDTH }, [
+      { key: "previous", role: "secondary", size: PAGER.previous },
+      { key: "next", role: "secondary", size: PAGER.next },
+    ]),
+  ] as const);
+  const previous = placed(steps.actions[0]);
+  const above = row.actions
+    .map(placed)
+    .find(
+      ({ face: { width, x } }) =>
+        x < previous.face.x + previous.face.width && previous.face.x < x + width,
+    )!;
   expect({
     belowClose: faceTop - face.outset.top - (close.y + close.height),
-    belowFaces: pagerTop - pager.next.outset.top - (faceBottom + face.outset.bottom),
-  }).toEqual({ belowClose: gap, belowFaces: gap });
+    faces: above.outset.bottom,
+    pager: previous.outset.top,
+  }).toEqual({ belowClose: gap, faces: gap / 2, pager: gap / 2 });
 });
 
 it("finds each stage's page", () => {

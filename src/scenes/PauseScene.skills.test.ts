@@ -332,7 +332,7 @@ it("takes a skill tap while a move finger and the Jump and Use fingers stay down
 it("keeps presses on its controls from Phaser, which handles presses off the canvas", async () => {
   const { dialog, open, pauseButton, skill } = play();
   await open();
-  const backdrop = dialog.closest(".ui-card-scene")!.querySelector(".ui-backdrop")!;
+  const backdrop = dialog.closest(".ui-card-scene")!.querySelector(".ui-modal-backdrop")!;
   for (const target of [pauseButton, skill("dash"), backdrop]) {
     for (const type of ["pointerdown", "touchstart", "touchend"]) {
       const event = new Event(type, { bubbles: true, cancelable: true });
@@ -522,7 +522,7 @@ it.each([
   [
     "a tap outside the card",
     ({ dialog }: ReturnType<typeof play>) =>
-      tap(dialog.closest(".ui-card-scene")!.querySelector(".ui-backdrop")!),
+      tap(dialog.closest(".ui-card-scene")!.querySelector(".ui-modal-backdrop")!),
   ],
 ])("closes by %s and resumes the zone", async (_, route) => {
   const fixture = play();

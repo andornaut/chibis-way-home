@@ -1,4 +1,3 @@
-import { BUTTON_GAP, STACK_BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
 import { HUD_DISC_ART_CLASS } from "@andornaut/game-kit/runtime/web/ui/dom/hudDisc";
 import {
@@ -6,12 +5,11 @@ import {
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import { CARD_CONTENT, HUD_EDGE, TEXT_BUTTON } from "../../data/layout.ts";
+import { HUD_EDGE } from "../../data/layout.ts";
 import type { GameText, SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
 import type { PauseChromePose } from "../chrome/pauseChrome.ts";
 import { createGameHudDisc } from "../input/actionBinding.ts";
-import { cardWidth } from "../layout/contentCard.ts";
 import { HUD_DISC_SIZES } from "../layout/controlChrome.ts";
 import { ENTRY_ORIGIN, ENTRY_WIDTH } from "../layout/pauseCard.ts";
 import {
@@ -20,17 +18,17 @@ import {
   skillHudItems,
   skillHudWidth,
 } from "../layout/skillHud.ts";
-import { type ActionsContext, type ActionsView, createActions } from "./actions.ts";
+import {
+  type ActionsContext,
+  type ActionsGridContext,
+  type ActionsView,
+  createActions,
+} from "./actions.ts";
 import { type CardFrame, createCardFrame, setTextButtonLabel, textButton } from "./card.ts";
 import { UI_COVERED } from "./layer.ts";
 import { registerLayout } from "./layout.ts";
 import { createNavigationDisc } from "./navigationDisc.ts";
-import {
-  createSkillDiscFace,
-  paintSkillDisc,
-  type SkillDiscLook,
-  type SkillDiscView,
-} from "./skillDisc.ts";
+import type { SkillDiscLook } from "./skillDisc.ts";
 
 // The pause scene's view in the HTML UI (pause.css, on ui.css and skillDisc.css): the pause card,
 // the entry disc at the view's top-left corner and the skill HUD along its top-right. The entry
@@ -93,14 +91,14 @@ export interface PauseCardView {
   readonly close: HTMLButtonElement;
   readonly dialog: HTMLElement;
   readonly frame: CardFrame;
-  // The action groups, top to bottom: one stack, or two rows of two above the primary.
-  readonly groups: readonly ActionsView[];
+  // The menu's action group: one stack, or a grid of two columns above the centred primary.
+  readonly menu: ActionsView;
   readonly root: HTMLElement;
 }
 export interface SkillButtonView {
   readonly button: HTMLButtonElement;
-  // The disc's face art and its glyph, the button's icon.
-  readonly disc: SkillDiscView;
+  // The skill's glyph, the button's icon, whose source the caller sets.
+  readonly glyph: HTMLImageElement;
 }
 
 export interface PauseView {
@@ -152,24 +150,20 @@ export function createPauseView(
       textButton(document, label, primary),
     ]),
   ) as Record<PauseCardButton, HTMLButtonElement>;
-  const menu = element("div", "pause-actions");
-  const columns = () => menu.hasAttribute("data-columns");
-  const groups = [0, 1, 2].map((index) =>
-    createActions(document, [], {
-      className: "ui-card-actions",
-      context: () => (columns() ? (index < 2 ? PAIR : SOLE) : STACK),
-      size: () => (columns() && index < 2 ? PAIR_FACE : undefined),
-    }),
-  );
-  menu.append(...groups.map((group) => group.element));
-  frame.content.append(menu);
+  const menu = createActions(document, [], {
+    className: "ui-card-actions",
+    context: STACK,
+    grid: () =>
+      buttons.home.hidden ? undefined : { ...GRID, locked: (button) => button === buttons.resume },
+  });
+  frame.content.append(menu.element);
   const card: PauseCardView = {
     backdrop: frame.backdrop,
     buttons,
     close: frame.close!,
     dialog: frame.dialog,
     frame,
-    groups,
+    menu,
     root: frame.root,
   };
   card.root.hidden = true;
@@ -203,11 +197,11 @@ export function createPauseView(
   }
   const skills = Object.fromEntries(
     SKILL_IDS.map((skill) => {
-      const disc = createSkillDiscFace(document, colours, { ready: false });
+      const glyph = element("img", "ui-skill-disc-glyph");
+      glyph.alt = "";
       const { element: button } = createGameHudDisc(document, {
-        art: disc.element,
         className: "skill-button ui-button-reset",
-        icon: disc.glyph,
+        icon: glyph,
         name: words.skills[skill],
         size: "skill",
         sizes: HUD_DISC_SIZES,
@@ -216,7 +210,7 @@ export function createPauseView(
       button.hidden = true;
       button.dataset.skill = skill;
       button.setAttribute("aria-pressed", "false");
-      return [skill, { button, disc }];
+      return [skill, { button, glyph }];
     }),
   ) as Record<SkillId, SkillButtonView>;
   hud.append(...SKILL_IDS.map((skill) => skills[skill].button));
@@ -280,10 +274,9 @@ export interface SkillButtonState extends SkillDiscLook {
   readonly tabbable: boolean;
 }
 
-// Shows a skill button in state: pressed while selected, and the selected one described by its
-// readiness.
+// Shows a skill button in state: its disc yellow while ready, pressed while selected, and the
+// selected one described by its readiness.
 export function showSkillButton(
-  colours: PauseColours,
   readiness: PauseView["readiness"],
   state: SkillButtonState,
   view: SkillButtonView,
@@ -300,20 +293,13 @@ export function showSkillButton(
   } else {
     button.removeAttribute("aria-describedby");
   }
-  paintSkillDisc(colours, state, view.disc);
+  button.toggleAttribute("data-ready", state.ready);
 }
 
 // The four-action menu is one stack of full-width faces. With Back to title shown, the five
-// actions are two rows of two equal faces above the centred primary; the rows are separate
-// groups, so each press area reaches half the stacked gap past its face.
+// actions are a grid of two equal columns, the primary last in a centred row of its own.
 const STACK: ActionsContext = { axis: "stack", stackWidth: "fill" };
-const HALF_STACK_GAP = { margin: STACK_BUTTON_GAP / 2 } as const;
-const PAIR: ActionsContext = { press: HALF_STACK_GAP };
-const SOLE: ActionsContext = { press: HALF_STACK_GAP };
-const PAIR_FACE = {
-  height: TEXT_BUTTON.height,
-  width: (cardWidth("medium") - 2 * CARD_CONTENT.padding - BUTTON_GAP) / 2,
-} as const;
+const GRID: ActionsGridContext = { cellWidth: "fill", columns: 2 };
 
 // Vertical menu actions keep the primary last in both reading and visual order.
 export function pauseMenuActions(words: PauseWords["card"]): readonly {
@@ -336,7 +322,7 @@ export function showPauseMenu(
   homeShown: boolean,
   view: PauseView,
 ): void {
-  const { buttons, frame, groups } = view.card;
+  const { buttons, frame, menu } = view.card;
   frame.frame.setTitle(mode === "pause" ? words.pause.title : words.menu.title);
   setTextButtonLabel(mode === "pause" ? words.pause.resume : words.pause.close, buttons.resume);
   buttons.home.hidden = !homeShown;
@@ -346,23 +332,9 @@ export function showPauseMenu(
     mode === "pause"
       ? [achievements, settings, cheats, home]
       : [achievements, cheats, settings, home];
-  const [first, second, last] = groups.map((group) => group.element) as [
-    HTMLElement,
-    HTMLElement,
-    HTMLElement,
-  ];
-  first.parentElement!.toggleAttribute("data-columns", homeShown);
-  if (homeShown) {
-    first.append(...order.slice(0, 2));
-    second.append(...order.slice(2));
-    last.append(resume);
-  } else {
-    first.append(...order, resume);
-  }
-  second.hidden = !homeShown;
-  last.hidden = !homeShown;
-  // The frame gives the groups their room, then takes their height.
+  menu.element.append(...order, resume);
+  // The frame gives the group its room, then takes its height.
   frame.layout();
-  groups.forEach((group) => group.arrange());
+  menu.arrange();
   frame.layout();
 }

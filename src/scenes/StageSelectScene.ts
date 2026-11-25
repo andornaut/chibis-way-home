@@ -143,6 +143,7 @@ export class StageSelectScene extends Scene {
             activate: () => this.activate({ id, kind: "stage" }),
             element: button,
             ownAriaDisabled: "refusal-feedback" as const,
+            pressedAttribute: "data-ui-pressed" as const,
           })),
           {
             activate: () => this.activate({ kind: "close" }),
@@ -299,16 +300,19 @@ export class StageSelectScene extends Scene {
     }
   }
 
+  // Stops every refusal cue on the card: the faces' and the pager's.
   private stopRefusals(): void {
     this.refusals.forEach((stop) => stop());
     this.refusals.clear();
+    this.view?.pager?.stopRefusal();
   }
 
   // Shows no control pressed, for a press the modal stack or a page turn has voided.
   private releasePresses(): void {
-    this.view?.root.querySelectorAll<HTMLElement>("[data-pressed]").forEach((control) => {
-      delete control.dataset.pressed;
-    });
+    for (const button of this.view?.stages.values() ?? []) {
+      button.removeAttribute("data-ui-pressed");
+    }
+    this.view?.close.removeAttribute("data-pressed");
   }
 
   private visibleStages(): readonly string[] {

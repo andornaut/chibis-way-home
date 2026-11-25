@@ -75,37 +75,6 @@
   text-box: trim-both cap alphabetic;
 }
 
-/* This game's text roles beside the kit theme's (theme.ts): one class each. */
-.ui-text-dialogue-heading {
-  font-size: calc(var(--ui-unit) * var(--ui-text-dialogue-heading-size) * 1px);
-  font-weight: var(--ui-text-dialogue-heading-weight);
-  line-height: calc(var(--ui-unit) * var(--ui-text-dialogue-heading-line-height) * 1px);
-}
-
-.ui-text-dialogue-line {
-  font-size: calc(var(--ui-unit) * var(--ui-text-dialogue-line-size) * 1px);
-  font-weight: var(--ui-text-dialogue-line-weight);
-  line-height: calc(var(--ui-unit) * var(--ui-text-dialogue-line-line-height) * 1px);
-}
-
-.ui-text-dialogue-name {
-  font-size: calc(var(--ui-unit) * var(--ui-text-dialogue-name-size) * 1px);
-  font-weight: var(--ui-text-dialogue-name-weight);
-  line-height: calc(var(--ui-unit) * var(--ui-text-dialogue-name-line-height) * 1px);
-}
-
-.ui-text-stage-number {
-  font-size: calc(var(--ui-unit) * var(--ui-text-stage-number-size) * 1px);
-  font-weight: var(--ui-text-stage-number-weight);
-  line-height: calc(var(--ui-unit) * var(--ui-text-stage-number-line-height) * 1px);
-}
-
-.ui-text-summary-zone {
-  font-size: calc(var(--ui-unit) * var(--ui-text-summary-zone-size) * 1px);
-  font-weight: var(--ui-text-summary-zone-weight);
-  line-height: calc(var(--ui-unit) * var(--ui-text-summary-zone-line-height) * 1px);
-}
-
 /* A native button takes presses; its face shows the focus, so the browser draws no outline. */
 .ui-button-reset,
 .ui-close-button,

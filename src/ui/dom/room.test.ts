@@ -92,7 +92,7 @@ it("names a gift room by its skill, described by the skill's text, with a sole p
   expect(description).toBeTruthy();
   expect(description).not.toMatch(/\{\w+\}/u);
   // The card is part of the room: nothing takes the presses outside it.
-  expect(view.root.querySelector<HTMLElement>(".ui-backdrop")?.hidden).toBe(true);
+  expect(view.root.querySelector<HTMLElement>(".ui-modal-backdrop")?.hidden).toBe(true);
 });
 
 it("keeps authoring gift glyphs and dialogue portraits independent of a live room", () => {

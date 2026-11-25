@@ -72,7 +72,15 @@ it("is a dialog named by its destination whose controls end with the close X", (
 it("keeps every stage in its page in catalogue order, in its look", () => {
   const view = picker(paged, 4, 0);
   expect(
-    view.pages.map((page) => [...page.children].map((face) => (face as HTMLElement).dataset.look)),
+    view.pages.map((page) =>
+      [...page.children].map((face) =>
+        face.getAttribute("aria-disabled") === "true"
+          ? "locked"
+          : face.getAttribute("data-ui-button-role") === "primary"
+            ? "primary"
+            : "normal",
+      ),
+    ),
   ).toEqual([
     ["normal", "normal", "normal"],
     ["primary", "locked", "locked"],

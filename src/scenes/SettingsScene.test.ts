@@ -405,7 +405,7 @@ it("closes on the close X and on back, once", async () => {
 
 it("closes on a tap outside the card, never on one that lands on it or travels", async () => {
   const { dialog, owner } = await openCard();
-  const outside = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const outside = document.querySelector<HTMLElement>(".ui-modal-backdrop")!;
   const tap = (target: HTMLElement, travel: number) => {
     target.dispatchEvent(
       new PointerEvent("pointerdown", {
@@ -501,7 +501,7 @@ it("keeps the Cheats entry outside Settings", async () => {
 it("prevents compatibility mouse defaults only for an eligible current Settings dismissal", async () => {
   const { control, owner, scene } = await openCard("pause", true);
   const close = control(WORDS.close);
-  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const backdrop = document.querySelector<HTMLElement>(".ui-modal-backdrop")!;
   const prevented = (element: HTMLElement, options: PointerEventInit = {}) => {
     const event = new PointerEvent("pointerdown", {
       bubbles: true,
@@ -541,7 +541,7 @@ it("restores Install after a touch-opened steps card and protects its X and back
   const { control, dialog, hidden, owner, steps } = await openCard("pause", true);
   const install = control(WORDS.install);
   const back = control(WORDS.back);
-  const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const backdrop = document.querySelector<HTMLElement>(".ui-modal-backdrop")!;
   const close = steps.querySelector<HTMLButtonElement>(".ui-close-button")!;
   const tap = (element: HTMLElement) => {
     const options = {

@@ -20,38 +20,29 @@
   height: calc(var(--ui-unit) * var(--stage-face-height) * 1px);
 }
 
-/* Art's frame under the face's content: ui-button, ui-button-primary for the latest stage, and
-   the flat disabled ui-button, which has no lip, for a locked one, which never shows pressed
-   (the shared action binding). The states are this sheet's: ui.css binds the text button's to
-   its 48px label face, and its primary class also orders an action group. */
+/* Art's frame under the face's content, on the kit's button frame states (buttonFrame.css):
+   ui-button, ui-button-primary for the latest stage, and the flat disabled ui-button, which has
+   no lip, for a locked one, which never shows pressed (the shared action binding). A locked
+   stage's content sits half the lip lower, centred on the lipless face. */
+.stage-select-stage {
+  --ui-button-frame-disabled-shift: calc(var(--button-lip) / 2);
+}
+
 .stage-select-frame {
-  --ui-frame-image: var(--ui-button-image);
-  --ui-frame-slice: var(--ui-button-slice);
-  --ui-frame-width: var(--ui-button-border);
+  --ui-button-frame-image: var(--ui-button-image);
+  --ui-button-frame-slice: var(--ui-button-slice);
+  --ui-button-frame-width: var(--ui-button-border);
+  --ui-button-frame-pressed-image: var(--ui-button-pressed-image);
+  --ui-button-frame-pressed-slice: var(--ui-button-pressed-slice);
+  --ui-button-frame-primary-image: var(--ui-button-primary-image);
+  --ui-button-frame-primary-slice: var(--ui-button-primary-slice);
+  --ui-button-frame-primary-pressed-image: var(--ui-button-primary-pressed-image);
+  --ui-button-frame-primary-pressed-slice: var(--ui-button-primary-pressed-slice);
+  --ui-button-frame-disabled-image: var(--ui-button-disabled-image);
+  --ui-button-frame-disabled-slice: var(--ui-button-disabled-slice);
 
   position: absolute;
   inset: 0;
-  box-sizing: border-box;
-}
-
-.stage-select-stage[data-pressed] .stage-select-frame {
-  --ui-frame-image: var(--ui-button-pressed-image);
-  --ui-frame-slice: var(--ui-button-pressed-slice);
-}
-
-.stage-select-stage[data-look="primary"] .stage-select-frame {
-  --ui-frame-image: var(--ui-button-primary-image);
-  --ui-frame-slice: var(--ui-button-primary-slice);
-}
-
-.stage-select-stage[data-look="primary"][data-pressed] .stage-select-frame {
-  --ui-frame-image: var(--ui-button-primary-pressed-image);
-  --ui-frame-slice: var(--ui-button-primary-pressed-slice);
-}
-
-.stage-select-stage[data-look="locked"] .stage-select-frame {
-  --ui-frame-image: var(--ui-button-disabled-image);
-  --ui-frame-slice: var(--ui-button-disabled-slice);
 }
 
 .stage-select-number,
@@ -60,8 +51,8 @@
   position: absolute;
 }
 
-.stage-select-stage[data-pressed]
-  :is(.stage-select-number, .stage-select-preview, .stage-select-name) {
+/* A pressed face's content sinks by the text button's whole-pixel sink. */
+.stage-select-stage[data-ui-pressed]:not([aria-disabled="true"]) .ui-button-frame-content {
   translate: 0 var(--button-sink);
 }
 
@@ -104,27 +95,21 @@
   text-box: trim-both cap alphabetic;
 }
 
-.stage-select-stage[data-look="primary"] [data-ui-refusal-label] {
+.stage-select-stage[data-ui-button-role="primary"] [data-ui-refusal-label] {
   color: var(--ui-colour-button-primary-text);
 }
 
-/* A locked stage: its content centred on the whole lipless face, half the lip lower, and labels
-   in the disabled text colour, as on a disabled text button, with the screenshot multiplied by
-   grey and faded. */
-.stage-select-stage[data-look="locked"]
-  :is(.stage-select-number, .stage-select-preview, .stage-select-name) {
-  translate: 0 calc(var(--ui-unit) * var(--button-lip) / 2 * 1px);
-}
-
-.stage-select-stage[data-look="locked"] [data-ui-refusal-label] {
+/* A locked stage: labels in the disabled text colour, as on a disabled text button, with the
+   screenshot multiplied by grey and faded. */
+.stage-select-stage[aria-disabled="true"] [data-ui-refusal-label] {
   color: var(--ui-colour-button-disabled-text);
 }
 
-.stage-select-stage[data-look="locked"] .stage-select-preview {
+.stage-select-stage[aria-disabled="true"] .stage-select-preview {
   opacity: 0.45;
 }
 
-.stage-select-stage[data-look="locked"] .stage-select-preview::after {
+.stage-select-stage[aria-disabled="true"] .stage-select-preview::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -132,24 +117,15 @@
   mix-blend-mode: multiply;
 }
 
-/* Previous, the page count and Next, below the faces so both rows' press areas stay the card
-   gap apart. The page count is as wide as its text until the pager first places it. */
-.stage-select-pager {
-  margin-top: calc(var(--ui-unit) * var(--stage-pager-inset) * 1px);
-}
-
+/* Previous, the page count and Next, the card gap below the faces; the card's press context
+   meets both rows' press areas midway. The page count is as wide as its text until the pager
+   first places it. */
 .stage-select-pager > .ui-pager-count:not(.ui-action) {
   width: max-content;
 }
 
-/* Focus and press fill the face inside its frame and colour its labels, as on a text button. */
-.stage-select-stage:not([aria-disabled="true"]):is(:focus-visible, [data-pressed])
-  .stage-select-frame {
-  border-image-slice: var(--ui-frame-slice);
-  background: var(--button-state-fill) padding-box;
-}
-
-.stage-select-stage:not([aria-disabled="true"]):is(:focus-visible, [data-pressed])
+/* Focus and press colour the labels, as on a text button; the kit fills the frame's inside. */
+.stage-select-stage:not([aria-disabled="true"]):is(:focus-visible, [data-ui-pressed])
   [data-ui-refusal-label] {
   color: var(--button-state-ink);
 }
@@ -159,19 +135,9 @@
     forced-color-adjust: none;
   }
 
-  .stage-select-stage .stage-select-frame {
-    border-image: none;
-    border-color: ButtonText;
-    background: ButtonFace padding-box;
-  }
-
   .stage-select-stage [data-ui-refusal-label],
-  .stage-select-stage[data-look="primary"] [data-ui-refusal-label] {
+  .stage-select-stage[data-ui-button-role="primary"] [data-ui-refusal-label] {
     color: ButtonText;
-  }
-
-  .stage-select-stage[aria-disabled="true"] .stage-select-frame {
-    border-color: GrayText;
   }
 
   .stage-select-stage[aria-disabled="true"] [data-ui-refusal-label] {

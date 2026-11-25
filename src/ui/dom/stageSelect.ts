@@ -1,7 +1,9 @@
 import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPresentation";
 import type { PagerState } from "@andornaut/game-kit/runtime/ui/pager";
+import { setButtonRole } from "@andornaut/game-kit/runtime/web/ui/dom/buttonLayout";
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import type { PagerView } from "@andornaut/game-kit/runtime/web/ui/dom/pager";
+import { setTextRole } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import { createGamePager, type GameAction } from "../input/actionBinding.ts";
 import {
@@ -20,7 +22,8 @@ import { REFUSAL_CUE } from "./refusal.ts";
 // name, one row of stage faces per page, of which one shows, on a paged card the pager
 // (Previous, the page count and Next), and the close X, last in the focus order. Each face is a
 // button holding its number, its screenshot and its name, in art's ui-button, or
-// ui-button-primary for the latest stage, or the locked look; a locked stage is aria-disabled,
+// ui-button-primary for the latest stage (the kit's primary button role), or the locked look; a
+// locked stage is aria-disabled,
 // outside the Tab order and described as locked. A pager button with no page to turn to refuses
 // a press and leaves the Tab order.
 
@@ -99,7 +102,7 @@ export function createStageSelect(
   const previews = new Map<string, HTMLImageElement>();
   // A page's faces in catalogue order: a row group of fixed-size faces, the button gap apart.
   const pages = Array.from({ length: Math.ceil(stages.length / perPage) }, (_, index) => {
-    const page = createActions(
+    const actions = createActions(
       document,
       stages.slice(index * perPage, (index + 1) * perPage).map((stage) => {
         const button = stageButton(element, `${ID}-locked`, words.locked, stage);
@@ -113,9 +116,10 @@ export function createStageSelect(
         size: () => STAGE_FACE,
         width: STAGE_ROW_WIDTH,
       },
-    ).element;
-    page.hidden = true;
-    return page;
+    );
+    frame.presses.add(actions.group);
+    actions.element.hidden = true;
+    return actions.element;
   });
   frame.content.append(...pages);
   let pager: PagerView | undefined;
@@ -139,6 +143,7 @@ export function createStageSelect(
     setTextButtonRole(false, view.previous.element);
     setTextButtonRole(false, view.next.element);
     frame.content.append(view.element);
+    frame.presses.add(view.group);
     registerLayout(() => {
       if (rendered(frame.content)) {
         view.arrange({ width: STAGE_ROW_WIDTH });
@@ -173,7 +178,7 @@ function stageButton(
   const button = element("button", "stage-select-stage ui-button-reset");
   button.type = "button";
   button.dataset.stage = stage.id;
-  button.dataset.look = stage.look;
+  setButtonRole(stage.look === "primary" ? "primary" : "secondary", button);
   const presentation = controlPresentation(
     stage.look === "locked" ? { kind: "unavailable", reason: lockedReason } : { kind: "available" },
   );
@@ -183,20 +188,21 @@ function stageButton(
     button.tabIndex = -1;
   }
   const face = element("span", "stage-select-face");
-  const number = element("span", "stage-select-number ui-text-stage-number");
+  const number = element("span", "stage-select-number ui-button-frame-content");
+  setTextRole("stageNumber", number);
   number.dataset.uiRefusalLabel = "";
   number.textContent = stage.number;
-  const preview = element("span", "stage-select-preview");
+  const preview = element("span", "stage-select-preview ui-button-frame-content");
   const image = element("img", "");
   image.alt = "";
   image.draggable = false;
   preview.append(image);
-  const name = element("span", "stage-select-name ui-text-label");
+  const name = element("span", "stage-select-name ui-button-frame-content ui-text-label");
   const text = element("span", "stage-select-name-text");
   text.dataset.uiRefusalLabel = "";
   text.textContent = stage.name;
   name.append(text);
-  face.append(element("span", "stage-select-frame ui-frame"), number, preview, name);
+  face.append(element("span", "stage-select-frame ui-button-frame"), number, preview, name);
   button.append(face);
   return button;
 }

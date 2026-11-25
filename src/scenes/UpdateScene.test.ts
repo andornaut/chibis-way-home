@@ -186,7 +186,7 @@ it("defers on Escape and on back while the gate accepts, and ignores P", async (
 
 it("defers on a tap outside the card, never on one that lands on it or travels", async () => {
   const { dialog } = await openCard();
-  const outside = document.querySelector<HTMLElement>(".ui-backdrop")!;
+  const outside = document.querySelector<HTMLElement>(".ui-modal-backdrop")!;
   const tap = (target: HTMLElement, travel: number) => {
     target.dispatchEvent(
       new PointerEvent("pointerdown", {

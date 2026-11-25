@@ -2,14 +2,6 @@
    actionGroup.css: lengths are base px times --ui-unit, from the layer's layout properties and
    PAUSE_LAYOUT on the two disc groups. */
 
-/* The card's action groups, the stacked gap apart (pause.ts). */
-.pause-actions {
-  display: flex;
-  flex-direction: column;
-  align-self: stretch;
-  gap: var(--ui-stack-button-gap);
-}
-
 /* The entry and the skill HUD over the card's backdrop. They take presses only while they act: a
    press on the HUD while it takes none goes on to the canvas under it. */
 .pause-hud-view {
@@ -36,8 +28,8 @@
   display: none;
 }
 
-/* Art's SVG paints each disc in every state, so the face keeps no fill of its own and the art
-   stays opaque over it. */
+/* Art's SVG paints the entry in every state and the kit's fill layer each skill's disc, so the
+   face keeps no theme fill of its own and the art and icon stay opaque over it. */
 button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button) > .ui-hud-disc-face {
   background-color: transparent;
 }
@@ -93,28 +85,32 @@ button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
   pointer-events: auto;
 }
 
-.skill-button[aria-pressed="true"] .ui-skill-disc-chrome [data-ui-fill="navy"] {
-  fill: var(--skill-disc-fill, var(--colour-dslate));
+/* The kit draws a skill's disc in its face fill (hudDisc.css): navy, yellow while ready and dark
+   slate while a skill that is not ready is selected, in every state the HUD holds it disabled.
+   Focus fills it cream, since the focus slot's yellow is a ready skill's face, and press with
+   the pressed slot; both recolour the glyph from the theme's slots. */
+.skill-button {
+  --skill-disc-look: var(--colour-navy);
+  --ui-hud-disc-fill: var(--skill-disc-look);
+  --ui-hud-disc-disabled-fill: var(--skill-disc-look);
+  --ui-hud-disc-focus-fill: var(--colour-cream);
+  --ui-hud-disc-pressed-fill: var(--ui-colour-button-pressed-face);
 }
 
-/* Focus and press recolour the disc and its glyph from the theme's slots. A focused disc is
-   cream, since the focus slot's yellow is a ready skill's face. */
+.skill-button[data-ready] {
+  --skill-disc-look: var(--colour-yellow);
+}
+
+.skill-button[aria-pressed="true"]:not([data-ready]) {
+  --skill-disc-look: var(--colour-dslate);
+}
+
 .skill-button:not(:disabled):focus-visible {
-  --skill-disc-fill: var(--colour-cream);
   --skill-disc-ink: var(--ui-button-focus-text);
 }
 
 .skill-button:not(:disabled)[data-ui-pressed] {
-  --skill-disc-fill: var(--ui-colour-button-pressed-face);
   --skill-disc-ink: var(--ui-colour-button-pressed-text);
-}
-
-.skill-button .ui-skill-disc-chrome circle {
-  fill: var(--skill-disc-fill, var(--colour-navy));
-}
-
-.skill-button .ui-skill-disc-chrome [data-ui-fill="yellow"] {
-  fill: var(--skill-disc-fill, var(--colour-yellow));
 }
 
 /* A recoloured glyph is its image as a mask over the icon box, filled with the state's ink. */
@@ -136,9 +132,14 @@ button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
     forced-color-adjust: none;
   }
 
-  /* The art carries the system colours, so it stays where the kit would hide it. */
-  :is(.pause-button, .skill-button) > .ui-hud-disc-face > .ui-hud-disc-art {
+  /* The entry's art carries the system colours, so it stays where the kit would hide it, and a
+     skill's face takes them where the kit sets its fill aside. */
+  .pause-button > .ui-hud-disc-face > .ui-hud-disc-art {
     display: block;
+  }
+
+  button.ui-standard-button.ui-hud-disc.skill-button > .ui-hud-disc-face {
+    background-color: var(--skill-disc-fill);
   }
 
   .navigation-disc {

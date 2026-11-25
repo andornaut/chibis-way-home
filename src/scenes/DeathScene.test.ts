@@ -177,7 +177,7 @@ it("stays open for back, Escape, P and taps outside or on the card", async () =>
   for (const value of ["Escape", "P", "p"]) {
     key(value);
   }
-  const backdrop = document.querySelector<HTMLElement>(".ui-death-scene .ui-backdrop")!;
+  const backdrop = document.querySelector<HTMLElement>(".ui-death-scene .ui-modal-backdrop")!;
   for (const target of [backdrop, dialog]) {
     const pointer = {
       bubbles: true,

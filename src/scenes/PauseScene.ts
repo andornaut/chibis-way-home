@@ -605,10 +605,10 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
       this.shownSkills.set(skill, key);
       const button = view.skills[skill];
       moved ||= button.button.hidden === slot;
-      showSkillButton(this.colours, view.readiness, { ...look, shown: slot, tabbable }, button);
+      showSkillButton(view.readiness, { ...look, shown: slot, tabbable }, button);
       if (glyph !== undefined) {
         const src = look.ready ? glyph.ready : glyph.muted;
-        button.disc.glyph.src = src;
+        button.glyph.src = src;
         button.button.style.setProperty("--skill-glyph-image", `url("${src}")`);
       }
     }

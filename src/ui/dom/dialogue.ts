@@ -2,6 +2,7 @@ import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
+import { setTextRole } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import { DIALOGUE_PANEL_ALPHA } from "../../data/dialogues.ts";
 import { DIALOGUE_LAYOUT } from "../../data/layout.ts";
@@ -15,7 +16,6 @@ import {
 } from "../layout/dialogueScreen.ts";
 import { createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
-import { textRole } from "./theme.ts";
 
 // The dialogue panel in the HTML UI (dialogue.css, on ui.css): art's ui-dialogue-box at the
 // panel's alpha across the top of the view, the portrait in art's ui-portrait-frame at the
@@ -96,13 +96,16 @@ export function createDialoguePanel(document: Document, id: string): DialoguePan
   const portrait = element(document, "img", "dialogue-portrait");
   portrait.alt = "";
   frame.append(portrait);
-  const tab = element(document, "h2", `dialogue-name-tab ui-frame ${textRole("dialogueName")}`);
+  const tab = element(document, "h2", "dialogue-name-tab ui-frame");
+  setTextRole("dialogueName", tab);
   tab.id = `${id}-name`;
   tab.hidden = true;
   const words = element(document, "div", "dialogue-words");
-  const heading = element(document, "p", `dialogue-heading ${textRole("dialogueHeading")}`);
+  const heading = element(document, "p", "dialogue-heading");
+  setTextRole("dialogueHeading", heading);
   heading.hidden = true;
-  const line = element(document, "p", `dialogue-line ${textRole("dialogueLine")}`);
+  const line = element(document, "p", "dialogue-line");
+  setTextRole("dialogueLine", line);
   line.id = `${id}-line`;
   words.append(heading, line);
   const column = element(document, "div", "dialogue-text");
