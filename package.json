@@ -16,7 +16,6 @@
     "typecheck": "./tests/container/check typecheck",
     "pairs": "node src/tools/chunkPairs.ts",
     "lint": "./tests/container/check lint-only",
-    "lint:imports": "node src/tools/importsCheck.ts",
     "format": "prettier --write . && eslint --fix .",
     "test": "./tests/container/check test",
     "test:game-kit": "vitest run --configLoader runner --no-cache --no-fsModuleCache src/rules/boss/behaviourTraversalGoals.test.ts src/scenes/BootScene.test.ts",

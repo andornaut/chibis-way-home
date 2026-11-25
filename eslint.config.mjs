@@ -1,4 +1,4 @@
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
@@ -38,93 +38,167 @@ const BOUNDARIES = [
   },
 ];
 
-// The bounded contexts: the folders of src/ each context's files may import, besides its own.
-// Tests are exempt, so a test may build its fixtures from any context.
-// Each context imports only contexts below it, bottom first: data; core; ai and
-// assets; camera and stage; rules; progress; save; presentation and ui; crash; loading; pwa; the
-// side pages (homePage, gallery, tuningPage); scenes; then the tooling (dev, sim, build,
-// tools). "folder/module.ts" allows one module of a folder ("folder/index.ts" its index):
-// each is an import that a later move removes, by moving the module into a context or the
-// importer out of one. The boundaries above govern src/testing/.
-const CONTEXTS = {
-  ai: [],
-  assets: ["core", "data"],
-  build: ["assets", "data", "homePage", "loading", "pwa", "ui"],
-  camera: ["data"],
-  core: ["data"],
-  crash: ["assets", "data", "ui/binding/index.ts"],
-  data: [],
-  dev: ["data", "progress", "rules"],
-  gallery: ["assets"],
-  homePage: ["data", "ui"],
-  loading: ["crash", "data", "presentation", "ui"],
-  presentation: ["assets", "camera", "core", "data", "progress", "rules", "stage"],
-  progress: ["data"],
-  pwa: ["assets", "loading", "ui"],
-  rules: ["ai", "camera", "core", "data", "stage"],
-  save: ["data", "progress"],
-  scenes: [
-    "assets",
-    "core",
-    "data",
-    "dev/index.ts",
-    "loading",
-    "presentation",
-    "progress",
-    "pwa",
-    "rules",
-    "save",
-    "stage",
-    "ui",
+// The source bands, lowest first, each a list of layers lowest first. A group is a file directly in
+// src/ (`game.ts`), a folder of src/ (`ui`) or an area: a subfolder that is a group of its own
+// (`ui/binding`), which its folder does not hold. Outside the tests a module imports its own group
+// and the groups of lower layers, type-only imports, re-exports and dynamic imports included: never
+// another group of its own layer or a higher one, and a folder or area only through its index.ts,
+// `data` excepted. The areas presentation/zoneTheme, ui/binding and ui/dim are what the page's
+// first chunk loads, held apart from their folders' entries, which would pull the game's modules
+// into that chunk.
+const SOURCE_BANDS = [
+  ["Foundation", [["data"], ["ai", "buildLabel.ts", "camera", "core", "stage"]]],
+  ["Model", [["assets", "rules/bird"], ["rules/boss"], ["rules/stage"], ["rules/zone"]]],
+  ["Saving", [["progress"], ["save"]]],
+  [
+    "Presentation",
+    [
+      ["presentation/zoneTheme", "ui/binding", "ui/dim"],
+      ["presentation", "ui"],
+    ],
   ],
-  sim: ["ai", "assets", "core", "data", "presentation", "progress", "rules", "stage"],
-  stage: ["data"],
-  tools: ["assets", "data", "rules", "sim"],
-  tuningPage: ["data", "gallery"],
-  ui: ["data", "progress", "rules"],
+  ["Platform", [["crash", "dev"], ["loading"], ["pwa"]]],
+  ["Engine and views", [["scenes"], ["game.ts"]]],
+  ["Entries", [["gallery", "homePage", "play.ts", "tuningPage"]]],
+  ["Support", [["sim"], ["testing"], ["build", "tools"]]],
+];
+// The groups whose every module is its own entry: one table to a file.
+const OPEN_GROUPS = ["data"];
+// The bands whose modules use no ambient entropy or wall-clock time.
+const PURE_BANDS = ["Foundation", "Model", "Saving", "Presentation"];
+
+const LAYERS = SOURCE_BANDS.flatMap(([, layers]) => layers);
+const GROUPS = LAYERS.flat();
+const isFile = (group) => group.endsWith(".ts");
+
+// The group of a module, given as a path relative to src/.
+function groupOf(module) {
+  const [folder, area, ...rest] = module.split("/");
+  return rest.length > 0 && GROUPS.includes(`${folder}/${area}`) ? `${folder}/${area}` : folder;
+}
+
+// Every module of src/, tests included, is in exactly one group, so none escapes the zones below.
+const unplaced = readdirSync(new URL("src", import.meta.url), { encoding: "utf8", recursive: true })
+  .map((name) => name.replaceAll("\\", "/"))
+  .filter((name) => name.endsWith(".ts") && !GROUPS.includes(groupOf(name)));
+const placedTwice = GROUPS.filter((group, at) => GROUPS.indexOf(group) !== at);
+if (unplaced.length > 0 || placedTwice.length > 0) {
+  throw new Error(
+    `Place each src/ module in one SOURCE_BANDS group: ${[...unplaced, ...placedTwice].join(", ")}`,
+  );
+}
+
+// The globs over a folder or area's modules, or over those past its index.ts.
+function groupGlobs(group, pastEntry = false) {
+  const areas = GROUPS.filter((other) => other.startsWith(`${group}/`)).map((other) =>
+    other.slice(group.length + 1),
+  );
+  const folders = areas.length === 0 ? "*" : `!(${areas.join("|")})`;
+  return [`src/${group}/${pastEntry ? "!(index)" : "*"}.ts`, `src/${group}/${folders}/**/*.ts`];
+}
+
+// What each group may not import. A zone takes either globs or plain paths, so the file groups of
+// its own and later layers get a zone of their own. Stylesheets load beside the code that mounts
+// what they style, so the globs name only modules.
+const LAYER_ZONES = LAYERS.flatMap((groups, layer) =>
+  groups.flatMap((group) => {
+    const target = isFile(group) ? `src/${group}` : groupGlobs(group);
+    const direction = `src/${group} imports only its own group and lower layers (SOURCE_BANDS).`;
+    const later = LAYERS.slice(layer)
+      .flat()
+      .filter((other) => other !== group);
+    const earlierFolders = LAYERS.slice(0, layer)
+      .flat()
+      .filter((other) => !isFile(other) && !OPEN_GROUPS.includes(other));
+    const zones = [
+      { from: later.filter((other) => !isFile(other)).flatMap((other) => groupGlobs(other)) },
+      { from: later.filter(isFile).map((other) => `src/${other}`) },
+    ].map(({ from }) => ({ from, message: direction, target }));
+    zones.push({
+      from: earlierFolders.flatMap((other) => groupGlobs(other, true)),
+      message: `src/${group} imports another folder or area only through its index.ts.`,
+      target,
+    });
+    return zones.filter(({ from }) => from.length > 0);
+  }),
+);
+
+// The modules of the pure bands, tests included.
+const PURE_FILES = SOURCE_BANDS.filter(([band]) => PURE_BANDS.includes(band))
+  .flatMap(([, layers]) => layers.flat())
+  .map((group) => (isFile(group) ? `src/${group}` : `src/${group}/**/*.ts`));
+// The sites in the pure bands that may read the clock: a wall-clock budget on a test's loop.
+const AMBIENT_SITES = ["src/data/verticalRoutes.test.ts"];
+
+// The size ratchet: every shipped and support module stays within SIZE_LIMIT lines and each of
+// its functions within FUNCTION_LIMIT, except the modules SIZE_CEILINGS names, held at their
+// present size. A ceiling only falls: lower it when its module shrinks, and remove it once the
+// module is within the limit. A file ceiling above its module's present size fails the config.
+const SIZE_LIMIT = 500;
+const FUNCTION_LIMIT = 150;
+const SIZE_CEILINGS = {
+  "src/ai/agentProperties.ts": { file: 659 },
+  "src/data/behaviours.ts": { file: 1302 },
+  "src/data/chunks.ts": { file: 1858 },
+  "src/data/types/behaviour.ts": { file: 519 },
+  "src/data/types/stage.ts": { file: 558 },
+  "src/progress/save/stats.ts": { function: 249 },
+  "src/rules/bird/bird.ts": { file: 675, function: 254 },
+  "src/rules/boss/behaviour.ts": { file: 2008, function: 208 },
+  "src/rules/boss/behaviourInterludes.ts": { function: 156 },
+  "src/rules/boss/behaviourLayout.ts": { file: 615, function: 606 },
+  "src/rules/boss/behaviourMapPursuit.ts": { file: 520 },
+  "src/rules/boss/behaviourPursuitAbilities.ts": { function: 166 },
+  "src/rules/boss/behaviourReach.ts": { file: 588 },
+  "src/rules/boss/behaviourTraversal.ts": { file: 1264, function: 333 },
+  "src/rules/boss/flyLanding.ts": { file: 549 },
+  "src/rules/boss/hazardOccupancy.ts": { function: 237 },
+  "src/rules/boss/movementMaps.ts": { file: 642 },
+  "src/rules/boss/transients.ts": { function: 155 },
+  "src/rules/stage/assemble.ts": { file: 1776, function: 253 },
+  "src/rules/stage/chunk.ts": { function: 175 },
+  "src/rules/stage/tiles.ts": { file: 504, function: 276 },
+  "src/rules/zone/zone.ts": { file: 1838, function: 227 },
+  "src/save/pageSave.ts": { file: 674 },
+  "src/scenes/MapScene.ts": { file: 616, function: 184 },
+  "src/scenes/PauseScene.ts": { file: 924 },
+  "src/scenes/zoneObjectArt.ts": { file: 764, function: 211 },
+  "src/scenes/ZoneScene.ts": { file: 1684 },
+  "src/sim/bossProperties.ts": { file: 1024, function: 247 },
+  "src/sim/cli.ts": { function: 217 },
+  "src/sim/navigation.ts": { file: 1341, function: 563 },
+  "src/sim/playability.ts": { file: 638, function: 259 },
+  "src/sim/simulate.ts": { file: 826, function: 422 },
+  "src/sim/tuning.ts": { function: 182 },
+  "src/sim/zoneWalk.ts": { file: 1769, function: 408 },
+  "src/testing/bossScenarios.ts": { file: 644 },
+  "src/testing/chunks.ts": { file: 677 },
+  "src/testing/continuousRequiredRoute.ts": { function: 247 },
+  "src/testing/evade.ts": { file: 1767, function: 748 },
+  "src/testing/evadeLaunch.ts": { function: 279 },
+  "src/testing/evadeProjectileAvoidance.ts": { function: 194 },
+  "src/testing/groundedGapController.ts": { function: 248 },
+  "src/testing/pairCertify.ts": { file: 842 },
+  "src/testing/requiredRouteIntent.ts": { function: 171 },
+  "src/tools/chunkPairs.ts": { file: 830, function: 209 },
+  "src/tools/stagePreviewCapture.ts": { file: 570 },
 };
 
-// The components whose files outside them may import only their index.ts, so the index is the
-// component's whole contract. Each lists the further modules that outside folders may import
-// directly ("*" for every folder). Modules that start page state on load stay out of the
-// indexes, so importing an index has no side effects, and the loading entry imports only what
-// the loading strip draws, which keeps that entry small.
-const INDEXED = {
-  assets: {},
-  camera: {},
-  core: {},
-  presentation: { loading: ["./zoneTheme/index.ts"] },
-  progress: {},
-  save: {},
-  stage: {},
-  ui: {
-    crash: ["./binding/index.ts"],
-    loading: ["./binding/index.ts", "./dim/index.ts"],
-    "*": [
-      "./dom/achievements.css",
-      "./dom/actionHelp.css",
-      "./dom/celebration.css",
-      "./dom/cheats.css",
-      "./dom/choice.css",
-      "./dom/death.css",
-      "./dom/dialogue.css",
-      "./dom/map.css",
-      "./dom/opening.css",
-      "./dom/pause.css",
-      "./dom/room.css",
-      "./dom/runStats.css",
-      "./dom/settings.css",
-      "./dom/skillDetails.css",
-      "./dom/skillDisc.css",
-      "./dom/stageProgress.css",
-      "./dom/stageSelect.css",
-      "./dom/stageSummary.css",
-      "./dom/start.css",
-      "./dom/touchControls.css",
-      "./dom/ui.css",
-    ],
-  },
-};
+// max-lines counts every line, so a module's size is its count of line ends.
+const staleCeilings = Object.entries(SIZE_CEILINGS)
+  .filter(([, { file }]) => file !== undefined)
+  .filter(([path, { file }]) => {
+    const url = new URL(path, import.meta.url);
+    return !existsSync(url) || readFileSync(url, "utf8").split("\n").length - 1 < file;
+  })
+  .map(([path]) => path);
+if (staleCeilings.length > 0) {
+  throw new Error(`Lower or remove the SIZE_CEILINGS file ceiling of ${staleCeilings.join(", ")}`);
+}
+
+function sizeRules(file = SIZE_LIMIT, fn = FUNCTION_LIMIT) {
+  return { "max-lines": ["error", file], "max-lines-per-function": ["error", fn] };
+}
 
 const IMPORT_X = {
   rules: { extensions, "no-cycle": noCycle, "no-restricted-paths": noRestrictedPaths },
@@ -133,49 +207,6 @@ const IMPORT_X_SETTINGS = {
   "import-x/extensions": [".ts"],
   "import-x/resolver-next": [createNodeResolver({ extensions: [".ts", ".js"] })],
 };
-
-const SRC_FOLDERS = folders("src").filter((folder) => folder !== "testing");
-
-function folders(path) {
-  return readdirSync(new URL(path, import.meta.url), { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => entry.name);
-}
-
-// An import names a folder only by its path, so the pattern matches only a relative path that
-// climbs straight into a forbidden folder (`../scenes/x`). A module beside the importer
-// (`./camera`), a subfolder of an allowed folder (`../data/scenes/x`) and a package subpath
-// (`@andornaut/game-kit/runtime/save/x`) that share a forbidden folder's name stay allowed, and a
-// context's own subfolders are never forbidden to it.
-function contextBoundary(context) {
-  const allowed = CONTEXTS[context];
-  const own = [context, ...folders(`src/${context}`)];
-  const modules = allowed.filter((entry) => entry.includes("/"));
-  const forbidden = SRC_FOLDERS.filter(
-    (folder) => !own.includes(folder) && !allowed.includes(folder),
-  ).map((folder) => {
-    const exceptions = modules
-      .filter((entry) => entry.startsWith(`${folder}/`))
-      .map((entry) => escapeRegex(entry.slice(folder.length + 1)));
-    const rest = exceptions.length === 0 ? "" : `(?!(?:${exceptions.join("|")})$)`;
-    const index = exceptions.includes("index.ts") ? "" : "|$";
-    return `${escapeRegex(folder)}(?:/${rest}${index})`;
-  });
-  return {
-    files: [`src/${context}/**/!(*.test).ts`],
-    forbid: {
-      message:
-        allowed.length === 0
-          ? `src/${context}/ may import nothing from src/.`
-          : `src/${context}/ may import only ${allowed.join(", ")} from src/.`,
-      regex: `^(?:\\.\\./)+(?:${forbidden.join("|")})`,
-    },
-  };
-}
-
-function escapeRegex(text) {
-  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 // Every way to pick some of the items, the empty pick included.
 function subsets(items) {
@@ -194,30 +225,21 @@ function allOf(globLists) {
 }
 
 // A later no-restricted-imports replaces an earlier one rather than adding to it, so the configs
-// partition the files: one config per context (or none) and set of boundaries that binds a file,
-// listing the patterns of the context and of every boundary in the set.
+// partition the files: one config per set of boundaries that binds a file, listing the patterns
+// of every boundary in the set.
 function boundaryConfigs() {
-  const contexts = Object.keys(CONTEXTS).map(contextBoundary);
-  return [undefined, ...contexts].flatMap((context) =>
-    subsets(BOUNDARIES)
-      .filter((binding) => context !== undefined || binding.length > 0)
-      .map((binding) => {
-        const exempt = BOUNDARIES.filter((boundary) => !binding.includes(boundary));
-        return {
-          files: allOf([context?.files ?? SOURCE_FILES, ...exempt.map(({ except }) => except)]),
-          ignores: [
-            ...binding.flatMap(({ except }) => except),
-            ...(context === undefined ? contexts.flatMap(({ files }) => files) : []),
-          ],
-          rules: {
-            "no-restricted-imports": [
-              "error",
-              { patterns: [...binding, ...(context ? [context] : [])].map(({ forbid }) => forbid) },
-            ],
-          },
-        };
-      }),
-  );
+  return subsets(BOUNDARIES)
+    .filter((binding) => binding.length > 0)
+    .map((binding) => {
+      const exempt = BOUNDARIES.filter((boundary) => !binding.includes(boundary));
+      return {
+        files: allOf([SOURCE_FILES, ...exempt.map(({ except }) => except)]),
+        ignores: binding.flatMap(({ except }) => except),
+        rules: {
+          "no-restricted-imports": ["error", { patterns: binding.map(({ forbid }) => forbid) }],
+        },
+      };
+    });
 }
 
 export default defineConfig(
@@ -241,41 +263,43 @@ export default defineConfig(
     rules: sourceRules,
   },
   ...boundaryConfigs(),
-  // No import cycles: a module in a cycle can run before what it imports has loaded. Type-only
-  // imports are erased at build time, so they never form one.
+  // No runtime import cycles: a module in a cycle can run before what it imports has loaded.
+  // Type-only imports are erased at build time, so they may form one, and the layers keep it
+  // within one group.
   {
     files: SOURCE_FILES,
     plugins: { "import-x": IMPORT_X },
     rules: { "import-x/no-cycle": "error" },
     settings: IMPORT_X_SETTINGS,
   },
-  // Index-only components: resolved paths, so a relative path of any depth is caught.
+  // The layers, by resolved path, so a relative path of any depth is caught. Tests may import any
+  // module.
   {
     files: SOURCE_FILES,
+    ignores: TEST_FILES,
     plugins: { "import-x": IMPORT_X },
     rules: {
       "import-x/no-restricted-paths": [
         "error",
+        { basePath: import.meta.dirname, zones: LAYER_ZONES },
+      ],
+      // `import("...")` in a type is no import the layer rule sees.
+      "no-restricted-syntax": [
+        "error",
+        "WithStatement",
         {
-          zones: Object.entries(INDEXED).flatMap(([component, { "*": all = [], ...byFolder }]) => {
-            const zone = (target, exposed) => ({
-              except: ["./index.ts", ...all, ...exposed],
-              from: `./src/${component}`,
-              message: `Import src/${component}/ through its index.ts.`,
-              target,
-            });
-            const others = [component, ...Object.keys(byFolder)].join("|");
-            return [
-              zone(["./src/*.ts", `./src/!(${others})/**`], []),
-              ...Object.entries(byFolder).map(([folder, exposed]) =>
-                zone(`./src/${folder}/**`, exposed),
-              ),
-            ];
-          }),
+          message: "Import types with `import type`, which the layer rule checks.",
+          selector: "TSImportType",
         },
       ],
     },
     settings: IMPORT_X_SETTINGS,
+  },
+  // A declaration file keeps `import("...")` types: a top-level import would turn its ambient
+  // module into an augmentation.
+  {
+    files: ["src/**/*.d.ts"],
+    rules: { "no-restricted-syntax": ["error", "WithStatement"] },
   },
   // Every relative import names its file, ./x.ts or ./dir/index.ts, so plain node runs the source
   // with type stripping and no resolver. Package imports keep their exported subpaths.
@@ -285,10 +309,11 @@ export default defineConfig(
     rules: { "import-x/extensions": ["error", "ignorePackages", { checkTypeImports: true }] },
     settings: IMPORT_X_SETTINGS,
   },
-  // Rules and the agent core replay from explicit seeds and step inputs, never ambient entropy
-  // or wall-clock time.
+  // The pure bands replay from explicit seeds and step inputs, never ambient entropy or wall-clock
+  // time. Each allowed site is named in AMBIENT_SITES.
   {
-    files: ["src/ai/**/*.ts", "src/rules/**/*.ts"],
+    files: PURE_FILES,
+    ignores: AMBIENT_SITES,
     rules: {
       "no-restricted-globals": [
         "error",
@@ -303,6 +328,16 @@ export default defineConfig(
       ],
     },
   },
+  // The size ratchet, over every module of src/ but the tests.
+  {
+    files: SOURCE_FILES,
+    ignores: TEST_FILES,
+    rules: sizeRules(),
+  },
+  ...Object.entries(SIZE_CEILINGS).map(([path, { file, function: fn }]) => ({
+    files: [path],
+    rules: sizeRules(file, fn),
+  })),
   // Config files: they produce what ships rather than being it.
   {
     files: CONFIG_FILES,

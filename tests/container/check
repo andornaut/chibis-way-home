@@ -41,9 +41,6 @@ case "${category}" in
         shellcheck --shell=sh -- .husky/pre-commit
         node node_modules/prettier/bin/prettier.cjs --check .
         node node_modules/eslint/bin/eslint.js --max-warnings 0 .
-        # CLEANUP (added 2026-11-25): remove when the known-violations table is empty and ESLint
-        # guards the layers (cwh-0310).
-        node src/tools/importsCheck.ts
         node_modules/.bin/markdownlint-cli2
         ;;
     test)
