@@ -9,9 +9,9 @@ import type {
   ZoneLayout,
 } from "../../data/types/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { startBehaviour } from "../boss/behaviour.ts";
-import { stepBehaviour } from "../boss/encounter.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { startZone, stepZone } from "./zone.ts";
 

@@ -6,13 +6,13 @@ import { DOG_BEHAVIOUR } from "../../data/behaviours.ts";
 import { BIRD } from "../../data/bird.ts";
 import { TILE } from "../../data/screen.ts";
 import type { AreaLayout, BehaviourPlan, Point, Rect } from "../../data/types/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite.ts";
 import { birdBox, startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { type BehaviourState, type BehaviourStep, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { openingScorerState } from "./behaviourScorer.ts";
-import { stepBehaviour } from "./encounter.ts";
 import { type PursuitGroundMap, pursuitGroundMap } from "./movementMaps.ts";
 
 // Archie on a wide flat floor, with targets inside the escape distance for chase-relief checks.

@@ -3,11 +3,11 @@ import { expect, it } from "vitest";
 import { namedStreams } from "../../ai/randomStreams.ts";
 import { BIRD } from "../../data/bird.ts";
 import { TILE } from "../../data/screen.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { type BehaviourState, startBehaviour } from "./behaviour.ts";
-import { stepBehaviour } from "./encounter.ts";
 
 // A boss lodged at the mouth of a low nook: his hitbox rests on the end of the nook's step,
 // overhanging it, pressed against the end of the nook's roof. Chibi waits inside, out of his

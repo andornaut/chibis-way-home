@@ -18,13 +18,13 @@ import type { Archetype, BehaviourPlan, Rect, ZoneLayout } from "../../data/type
 import { behaviourPose } from "../../presentation/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { withAnticipationContact } from "../../testing/behaviours.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { birdBox, startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { retryZone, startZone, stepZone } from "../zone/zone.ts";
 import { type BehaviourState, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import { advanceIdleRecovery, observeIdle, planIdleRecovery } from "./behaviourIdle.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
-import { stepBehaviour } from "./encounter.ts";
 import { supportedLanding } from "./flyLanding.ts";
 
 const plan: BehaviourPlan = {

@@ -3,11 +3,12 @@ import { expect, it } from "vitest";
 import { BIRD } from "../../data/bird.ts";
 import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../../data/obstacleBehaviours.ts";
 import type { Archetype, BehaviourMotion, BehaviourPlan, Rect } from "../../data/types/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { startBehaviour } from "./behaviour.ts";
 import { traversalContext } from "./behaviourTraversal.ts";
-import { stepBehaviour } from "./encounter.ts";
+import { stepEncounter } from "./encounter.ts";
 import { hazardOccupancy } from "./hazardOccupancy.ts";
 import { createTimedHazardSampler } from "./timedHazard.ts";
 
@@ -50,7 +51,7 @@ const full = { ...object.origin, height: object.height, width: object.width };
 const snapshotTime = 10;
 const activeTime = snapshotTime + WARNED_VENT_SECONDS.inactive + WARNED_VENT_SECONDS.warning;
 const sampler = () =>
-  createTimedHazardSampler(stepBehaviour, BIRD, object, {
+  createTimedHazardSampler(stepEncounter, BIRD, object, {
     at: object.origin,
     state: started(),
     timeSeconds: snapshotTime,
@@ -76,7 +77,7 @@ it("clips the actual executor's active slices to absolute query times and full v
 it("anchors prediction to a copied live elapsed snapshot rather than a new cycle", () => {
   const elapsed = WARNED_VENT_SECONDS.inactive + WARNED_VENT_SECONDS.warning / 2;
   const live = stepBehaviour(BIRD, object, [], elapsed, bird, object.origin, started()).state;
-  const sample = createTimedHazardSampler(stepBehaviour, BIRD, object, {
+  const sample = createTimedHazardSampler(stepEncounter, BIRD, object, {
     at: object.origin,
     state: live,
     timeSeconds: snapshotTime,
@@ -141,7 +142,7 @@ function context(state = started()) {
         {
           owner: object,
           ...hazardOccupancy(
-            stepBehaviour,
+            stepEncounter,
             BIRD,
             [object],
             state,
@@ -181,7 +182,7 @@ it("uses native timed safety without rejecting inactive geometry as permanently 
 });
 
 it("distinguishes missing snapshot data from a certified empty active interval", () => {
-  const missing = createTimedHazardSampler(stepBehaviour, BIRD, object, {
+  const missing = createTimedHazardSampler(stepEncounter, BIRD, object, {
     at: object.origin,
     state: undefined,
     timeSeconds: snapshotTime,
@@ -205,7 +206,7 @@ it("distinguishes missing snapshot data from a certified empty active interval",
   expect(native.safe(request(snapshotTime, snapshotTime + 0.1))).toBe(false);
   expect(native.sampleColliders(snapshotTime, 0.1, full).complete).toBe(false);
   expect(
-    createTimedHazardSampler(stepBehaviour, BIRD, actor, {
+    createTimedHazardSampler(stepEncounter, BIRD, actor, {
       at: actor.origin,
       state: started(),
       timeSeconds: snapshotTime,

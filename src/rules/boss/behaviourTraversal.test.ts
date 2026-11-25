@@ -17,6 +17,7 @@ import type { Archetype, BehaviourPlan, Rect } from "../../data/types/index.ts";
 import { behaviourPose } from "../../presentation/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { withAnticipationContact } from "../../testing/behaviours.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite.ts";
 import { birdBox, startBird } from "../bird/bird.ts";
 import { zonePlanOf } from "../stage/assemble.ts";
@@ -35,7 +36,6 @@ import {
   traversalContext,
   traversalGoal,
 } from "./behaviourTraversal.ts";
-import { stepBehaviour } from "./encounter.ts";
 import { supportContact } from "./flyLanding.ts";
 
 vi.mock("@andornaut/game-kit/runtime/terrain/traversal", async (original) => {

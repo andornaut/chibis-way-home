@@ -4,6 +4,7 @@ import { sweptContact } from "../../core/index.ts";
 import type { BirdTuning, ObjectLayout, Point, Rect } from "../../data/types/index.ts";
 import { startBird } from "../bird/index.ts";
 import type { BehaviourState } from "./behaviour.ts";
+import { behaviourWorld } from "./behaviourReach.ts";
 import { effectiveHazardPhase, validateHazardPhases } from "./effectiveCollision.ts";
 import type { EncounterSampler } from "./encounter.ts";
 
@@ -82,7 +83,7 @@ export function createTimedHazardSampler(
   // The most transitions a clock can take in this many seconds.
   const cost = (seconds: number) => (seconds === 0 ? 0 : Math.ceil(seconds / minimumDuration) + 1);
   const advance = (seconds: number, prior: BehaviourState) =>
-    step(tuning, object, solids, seconds, bird, at, prior);
+    step({ object, tuning }, prior, { at, seconds, target: bird, world: behaviourWorld(solids) });
   const stateAt = (offset: number): BehaviourState => {
     const cached = checkpoints.get(offset);
     if (cached) {

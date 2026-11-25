@@ -8,12 +8,12 @@ import { BIRD } from "../../data/bird.ts";
 import { CHARACTERS } from "../../data/characters.ts";
 import { SCREEN, TILE } from "../../data/screen.ts";
 import type { Archetype, BehaviourPlan, Rect } from "../../data/types/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { type BehaviourState, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { screenBand, screenClamp } from "./behaviourScreen.ts";
-import { stepBehaviour } from "./encounter.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

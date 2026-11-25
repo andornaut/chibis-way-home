@@ -3,10 +3,10 @@ import { expect, it } from "vitest";
 import { STEP_SECONDS } from "../../core/index.ts";
 import { BIRD } from "../../data/bird.ts";
 import type { Archetype, BehaviourPlan } from "../../data/types/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { layoutBehaviour, startBehaviour } from "./behaviour.ts";
-import { stepBehaviour } from "./encounter.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

@@ -1,6 +1,11 @@
 // Behaviour-driven objects: the perceive, decide and act executor, encounters, perception, movement
 // maps, boss defeat, and the hazards, collision phases and transients those objects drive.
-export { type BehaviourEvent, type BehaviourState, layoutBehaviour } from "./behaviour.ts";
+export {
+  type BehaviourEvent,
+  type BehaviourState,
+  type BehaviourStep,
+  layoutBehaviour,
+} from "./behaviour.ts";
 export { planMapLeg } from "./behaviourMapPursuit.ts";
 export {
   type BehaviourChoiceObservation,
@@ -14,9 +19,11 @@ export {
   recordBehaviourWork,
 } from "./behaviourObserver.ts";
 export {
+  type BehaviourGeometry,
   type BehaviourPlatformFrame,
   type BehaviourTraversalFrame,
   type BehaviourWorld,
+  behaviourWorld,
   type CrumblingPrediction,
   type SupportSampler,
 } from "./behaviourReach.ts";
@@ -41,7 +48,6 @@ export {
   type EncounterStep,
   enterEncounter,
   settleEncounter,
-  stepBehaviour,
   stepEncounter,
 } from "./encounter.ts";
 export { supportContact } from "./flyLanding.ts";

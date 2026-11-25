@@ -6,12 +6,12 @@ import { GOOSE_BEHAVIOUR } from "../../data/behaviours.ts";
 import { BIRD } from "../../data/bird.ts";
 import { TILE } from "../../data/screen.ts";
 import type { BehaviourMotion, BehaviourPlan, Point, Rect } from "../../data/types/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { type BehaviourState, contactBox, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
-import { stepBehaviour } from "./encounter.ts";
 
 // Trixi's committed charge leftwards along a floor at y 600, with Chibi on the same floor.
 const trixi = objectLayout(

@@ -16,12 +16,7 @@ import {
   createBehaviourObserver,
 } from "./behaviourObserver.ts";
 import type { BehaviourPerception } from "./behaviourPerception.ts";
-import {
-  type BehaviourGeometry,
-  type BehaviourWorld,
-  behaviourWorld,
-  type SupportSampler,
-} from "./behaviourReach.ts";
+import type { BehaviourWorld, SupportSampler } from "./behaviourReach.ts";
 import { contactBox } from "./behaviourTrack.ts";
 import { defeatBoss, holdDefeated, removedBoss } from "./bossDefeat.ts";
 import type { PursuitGroundMap } from "./movementMaps.ts";
@@ -196,27 +191,8 @@ function moveEncounter(
   return stampPreparation(clear);
 }
 
-// Fixtures that hold their own geometry read the step before its outcomes become events, without
-// a map, streams or observer of the context. Timed hazard samplers advance their clocks with it.
-export function stepBehaviour(
-  tuning: BirdTuning,
-  object: ObjectLayout,
-  geometry: BehaviourGeometry,
-  seconds: number,
-  bird: BirdState,
-  at: Point,
-  state: BehaviourState,
-): BehaviourStep {
-  return moveEncounter({ object, tuning }, undefined, state, {
-    at,
-    seconds,
-    target: bird,
-    world: behaviourWorld(geometry),
-  });
-}
-
-// The encounter step as a dependency of a module that samples it.
-export type EncounterSampler = typeof stepBehaviour;
+// The encounter step as a dependency of a module that samples it, such as a timed hazard's clock.
+export type EncounterSampler = typeof stepEncounter;
 
 // Applies the tick's outcome to a stepped object. A death ends its pursuit without an escape and
 // starts its removal; a door ends an engaged pursuit as an escape without a bark. An outcome that

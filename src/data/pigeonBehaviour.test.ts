@@ -9,10 +9,10 @@ import {
   startBehaviour,
 } from "../rules/boss/behaviour.ts";
 import { INITIAL_SCORER_STATE } from "../rules/boss/behaviourScorer.ts";
-import { stepBehaviour } from "../rules/boss/encounter.ts";
 import { supportedLanding } from "../rules/boss/flyLanding.ts";
 import { targetVisible } from "../rules/boss/perception.ts";
 import { objectLayout } from "../rules/stage/tiles.ts";
+import { stepBehaviour } from "../testing/behaviourStep.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import {
   BEAR_BEHAVIOUR,

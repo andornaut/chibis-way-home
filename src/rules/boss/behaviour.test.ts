@@ -12,10 +12,10 @@ import type {
 } from "../../data/types/index.ts";
 import { behaviourPose } from "../../presentation/index.ts";
 import { TEST_PURSUER, TEST_SHUTTLE, withAnticipationContact } from "../../testing/behaviours.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { birdBox, startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { contactBox, layoutBehaviour, startBehaviour } from "./behaviour.ts";
-import { stepBehaviour } from "./encounter.ts";
 
 const ACTOR: Archetype = {
   collision: "hazard",

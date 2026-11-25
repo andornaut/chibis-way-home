@@ -10,6 +10,7 @@ import type {
 } from "../../data/types/index.ts";
 import { behaviourPose } from "../../presentation/index.ts";
 import { TEST_PURSUER, withAnticipationContact } from "../../testing/behaviours.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { startBehaviour } from "./behaviour.ts";
@@ -18,7 +19,6 @@ import {
   effectiveHazardPhase,
   validateHazardPhases,
 } from "./effectiveCollision.ts";
-import { stepBehaviour } from "./encounter.ts";
 
 const archetype: Archetype = {
   collision: "hazard",

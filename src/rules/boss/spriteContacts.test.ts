@@ -19,12 +19,12 @@ import { TILE } from "../../data/screen.ts";
 import type { SpriteSilhouettes, ZoneLayout } from "../../data/types/index.ts";
 import { behaviourPose } from "../../presentation/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { startZone, stepZone } from "../zone/zone.ts";
 import { type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
 import { INITIAL_SCORER_STATE } from "./behaviourScorer.ts";
-import { stepBehaviour } from "./encounter.ts";
 
 const manifest: ArtManifest = {
   backdrops: [],

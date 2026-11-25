@@ -13,10 +13,10 @@ import { SKILL_PROFILES } from "../progress/index.ts";
 import { startBird } from "../rules/bird/bird.ts";
 import { orbitBounds } from "../rules/bird/orbit.ts";
 import { startBehaviour } from "../rules/boss/behaviour.ts";
-import { stepBehaviour } from "../rules/boss/encounter.ts";
 import { areaLayout, objectLayout } from "../rules/stage/tiles.ts";
 import { startZone, stepZone } from "../rules/zone/zone.ts";
 import type { Tileset } from "../stage/index.ts";
+import { stepBehaviour } from "../testing/behaviourStep.ts";
 import {
   behaviourCycleSeconds,
   hasDynamicBehaviour,

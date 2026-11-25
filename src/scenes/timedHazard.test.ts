@@ -9,9 +9,9 @@ import type { Archetype, ObjectLayout, Rect, ZoneLayout } from "../data/types/in
 import { startBird } from "../rules/bird/bird.ts";
 import { startBehaviour } from "../rules/boss/behaviour.ts";
 import { effectiveCollision } from "../rules/boss/effectiveCollision.ts";
-import { stepBehaviour } from "../rules/boss/encounter.ts";
 import { timedHazardRect } from "../rules/boss/timedHazard.ts";
 import { objectLayout } from "../rules/stage/tiles.ts";
+import { stepBehaviour } from "../testing/behaviourStep.ts";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));

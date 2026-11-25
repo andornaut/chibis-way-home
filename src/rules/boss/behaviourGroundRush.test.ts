@@ -5,13 +5,13 @@ import { EDGE, STEP_SECONDS } from "../../core/index.ts";
 import { BIRD } from "../../data/bird.ts";
 import { TILE } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { nodeOf, trackEndpoint } from "./behaviourTrack.ts";
-import { stepBehaviour } from "./encounter.ts";
 
 // Archie's committed charge from a bank whose left edge is at x 240, with Chibi far left.
 const archie = objectLayout(

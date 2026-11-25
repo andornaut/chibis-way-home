@@ -4,12 +4,12 @@ import { namedStreams } from "../../ai/randomStreams.ts";
 import { BIRD } from "../../data/bird.ts";
 import { TILE } from "../../data/screen.ts";
 import type { ObjectLayout } from "../../data/types/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite.ts";
 import { startBird, stepBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { type BehaviourState, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
-import { stepBehaviour } from "./encounter.ts";
 
 // Pebble's graph states, each entered engaged against a Chibi who walks onto Pebble's sampled
 // approach target, reach the targeted flights, overhead pursuit, supported landing, committed

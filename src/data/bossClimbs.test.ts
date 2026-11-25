@@ -12,12 +12,12 @@ import {
   advanceTraversal,
   type BehaviourTraversalState,
 } from "../rules/boss/behaviourTraversal.ts";
-import { stepBehaviour } from "../rules/boss/encounter.ts";
 import { zonePlanOf } from "../rules/stage/assemble.ts";
 import { chunkProblems } from "../rules/stage/chunk.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
 import { standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
+import { stepBehaviour } from "../testing/behaviourStep.ts";
 import { withInstances } from "../testing/encounterLayouts.ts";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";
 import { assembleZone } from "../testing/stageAssembly.ts";

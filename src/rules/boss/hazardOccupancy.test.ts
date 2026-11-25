@@ -4,11 +4,11 @@ import { EDGE, prepareSpriteContact, spriteFrameOrigin, STEP_SECONDS } from "../
 import { BEAR_BEHAVIOUR } from "../../data/behaviours.ts";
 import { BIRD } from "../../data/bird.ts";
 import type { BehaviourPlan, ObjectLayout, Rect } from "../../data/types/index.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
 import { layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import { traversalContext } from "./behaviourTraversal.ts";
-import { stepBehaviour } from "./encounter.ts";
 import { hazardBoundsAt } from "./hazardOccupancy.ts";
 const target = startBird(BIRD, { x: 200, y: 300 });
 const wait = { animation: null, motion: { kind: "wait" }, transitions: [] } as const;

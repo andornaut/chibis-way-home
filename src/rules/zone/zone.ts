@@ -78,7 +78,6 @@ import {
   recordBehaviourWork,
   settleEncounter,
   type SpawnEvent,
-  stepBehaviour,
   stepEncounter,
   stepTransients,
   type SupportSampler,
@@ -1063,7 +1062,7 @@ function perceivedHazards(
       {
         ...(dynamic
           ? hazardOccupancy(
-              stepBehaviour,
+              stepEncounter,
               tuning,
               area.objects,
               state,

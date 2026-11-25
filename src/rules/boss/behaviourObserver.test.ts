@@ -16,6 +16,7 @@ import type {
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { zoneTraceLine } from "../../sim/zoneTrace.ts";
 import { createBehaviourObservations } from "../../testing/behaviourObservations.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { chunksLayout, ORDINARY } from "../../testing/encounterLayouts.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
@@ -29,7 +30,7 @@ import {
 } from "./behaviourObserver.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { probeRearm, traversalGoal } from "./behaviourTraversal.ts";
-import { stepBehaviour, stepEncounter } from "./encounter.ts";
+import { stepEncounter } from "./encounter.ts";
 import { pursuitGroundMap } from "./movementMaps.ts";
 
 vi.mock("@andornaut/game-kit/runtime/terrain/movementMap", async (original) => {
