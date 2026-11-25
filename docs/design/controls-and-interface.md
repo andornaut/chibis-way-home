@@ -56,3 +56,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0298 | Place Use 70 px left and 70 px up from Jump                             | [cwh-0298.md](../work/cwh-0298.md) |
 | cwh-0299 | Let cheats act on the real save                                         | [cwh-0299.md](../work/cwh-0299.md) |
 | cwh-0306 | Build every card from shared components and one layout rule             | [cwh-0306.md](../work/cwh-0306.md) |
+| cwh-0314 | Place Use 80 px from Jump                                               | [cwh-0314.md](../work/cwh-0314.md) |
