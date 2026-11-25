@@ -21,10 +21,6 @@ vi.mock("../ui/settings/touchControls.ts", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../ui/settings/touchControls.ts")>()),
   coarsePointer: () => true,
 }));
-vi.mock("../dev/mode.ts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../dev/mode.ts")>()),
-  developmentSkillOverrides: () => ({}),
-}));
 vi.mock("./save.ts", () => ({
   activeSkill: () => selection.active,
   savedSkills: () => selection.owned,

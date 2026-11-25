@@ -9,9 +9,7 @@ import * as engine from "../rules/zone.ts";
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 vi.mock("../dev/mode.ts", () => ({
-  developmentSkillOverrides: () => ({}),
   invulnerabilityEnabled: () => false,
-  isDevelopmentSession: () => false,
 }));
 vi.mock("./save.ts", () => ({
   activeSkill: () => "doubleJump",

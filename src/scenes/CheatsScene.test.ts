@@ -15,7 +15,8 @@ const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 const saves = vi.hoisted(() => ({
   resetSave: vi.fn(() => Promise.resolve({ status: "saved" })),
   resetSaveAvailable: vi.fn(() => Promise.resolve(true)),
-  startCheatSession: vi.fn(),
+  unlockAllPowerUps: vi.fn(),
+  unlockAllZones: vi.fn(),
 }));
 vi.mock("./save.ts", () => saves);
 vi.mock("phaser", () => ({ Scene: class {} }));
@@ -34,12 +35,7 @@ vi.mock("./domUi.ts", () => ({
 import { DEV_TEXT } from "../data/dev.ts";
 import { TEXT } from "../data/text.ts";
 import { TOUCH } from "../data/touch.ts";
-import {
-  allPowerUpsUnlocked,
-  allZonesUnlocked,
-  endDevelopmentSession,
-  invulnerabilityEnabled,
-} from "../dev/mode.ts";
+import { invulnerabilityEnabled, setInvulnerability } from "../dev/mode.ts";
 import { createUiLayer, type UiLayer } from "../ui/index.ts";
 import { CheatsScene } from "./CheatsScene.ts";
 
@@ -58,7 +54,7 @@ beforeEach(() => {
 
 afterEach(() => {
   layer.dispose();
-  endDevelopmentSession();
+  setInvulnerability(false);
   vi.restoreAllMocks();
   vi.useRealTimers();
 });
@@ -99,7 +95,7 @@ function openCard(installed = false) {
   return { control, dialog, key, openCheats, owner, scene };
 }
 
-it.each([false, true])("shows only the current run-only controls in app mode %s", (installed) => {
+it.each([false, true])("shows only the current cheat controls in app mode %s", (installed) => {
   const { control } = openCard(installed);
   const card = control(DEV_TEXT.invulnerable).closest<HTMLElement>("[role=dialog]")!;
   expect(
@@ -116,30 +112,37 @@ it.each([false, true])("shows only the current run-only controls in app mode %s"
   const invincibility = control(DEV_TEXT.invulnerable);
   const note = document.getElementById(invincibility.getAttribute("aria-describedby")!);
   expect(note?.textContent).toBe(DEV_TEXT.invulnerableNote);
+  expect([card.hasAttribute("aria-describedby"), card.querySelector(".cheats-warning")]).toEqual([
+    false,
+    null,
+  ]);
   expect(card.dataset.cardWidth).toBe("medium");
   expect(card.querySelector(".ui-card-scroll")).toBeNull();
   expect(document.querySelector("[role=alertdialog]")).toBeNull();
   expect(saves.resetSave).not.toHaveBeenCalled();
 });
 
-it("applies each cheat only to the session and reports unlocks without touching saved progress", () => {
+it("saves each unlock once, reports it, and switches the stored Invincibility setting", () => {
   const { control } = openCard();
   control(DEV_TEXT.unlockAllPowerUps).click();
-  expect(allPowerUpsUnlocked()).toBe(true);
+  expect(saves.unlockAllPowerUps).toHaveBeenCalledOnce();
+  expect(saves.unlockAllZones).not.toHaveBeenCalled();
   expect(document.querySelector(".cheats-status")?.textContent).toBe(
     DEV_TEXT.results.unlockAllPowerUps,
   );
   control(DEV_TEXT.unlockAllZones).click();
-  expect(allZonesUnlocked()).toBe(true);
+  expect(saves.unlockAllZones).toHaveBeenCalledOnce();
   expect(document.querySelector(".cheats-status")?.textContent).toBe("");
   const toggle = control(DEV_TEXT.invulnerable);
   toggle.click();
   expect(invulnerabilityEnabled()).toBe(true);
+  expect(localStorage.getItem("chibis-way-home.invincibility")).toBe("on");
   expect(toggle.getAttribute("aria-checked")).toBe("true");
   expect(toggle.querySelector(".settings-state")?.textContent).toBe(TEXT.settings.state.on);
   toggle.click();
   expect(invulnerabilityEnabled()).toBe(false);
-  expect(saves.startCheatSession).toHaveBeenCalledTimes(4);
+  expect(localStorage.getItem("chibis-way-home.invincibility")).toBeNull();
+  expect(saves.unlockAllPowerUps).toHaveBeenCalledOnce();
   expect(saves.resetSave).not.toHaveBeenCalled();
 });
 
@@ -173,7 +176,7 @@ it.each(["tap", "hold", "keyboard"] as const)(
       expect(owner.cheatsClosed).toHaveBeenCalledOnce();
       expect(dialog.closest("[hidden], [inert]")).toBeNull();
       expect(document.activeElement).toBe(openCheats);
-      expect(saves.startCheatSession).not.toHaveBeenCalled();
+      expect(saves.unlockAllPowerUps).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }
@@ -194,7 +197,7 @@ it("keeps all actions behind the modal gate and preserves the switch's decorativ
   toggle.click();
   control(TEXT.achievements.back).click();
   scene.back();
-  expect(saves.startCheatSession).not.toHaveBeenCalled();
+  expect(saves.unlockAllPowerUps).not.toHaveBeenCalled();
   expect(invulnerabilityEnabled()).toBe(false);
 });
 

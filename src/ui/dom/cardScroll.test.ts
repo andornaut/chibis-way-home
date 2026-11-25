@@ -14,7 +14,6 @@ import { createSettingsCard } from "./settings.ts";
 const WORDS: CheatsCardWords = {
   back: TEXT.achievements.back,
   close: DEV_TEXT.cheats.close,
-  groupDescription: DEV_TEXT.cheats.groupDescription,
   invulnerable: DEV_TEXT.invulnerable,
   invulnerableNote: DEV_TEXT.invulnerableNote,
   state: TEXT.settings.state,
@@ -50,10 +49,8 @@ it("fits Cheats as one Medium column with only its two actions, switch, status a
   expect(view.dialog.querySelector(".ui-card-scroll")).toBeNull();
   expect(rule("cheats.css", ".cheats-status:empty + .cheats-footer")).toContain("margin-top: 0;");
   const header = view.dialog.querySelector(".ui-card-header")!;
-  const warning = view.dialog.querySelector(".cheats-warning")!;
   expect([...header.children].map((element) => element.className)).toEqual(["ui-card-title"]);
   expect([...view.body.children]).toEqual([
-    warning,
     view.actions.unlockAllPowerUps.parentElement,
     view.invincibility,
   ]);
@@ -63,9 +60,6 @@ it("fits Cheats as one Medium column with only its two actions, switch, status a
   ]);
   expect(view.body.contains(view.status)).toBe(false);
   expect(view.body.contains(view.back)).toBe(false);
-  expect(
-    view.dialog.querySelector(`#${view.dialog.getAttribute("aria-describedby")}`)?.textContent,
-  ).toBe(WORDS.groupDescription);
 });
 
 it("fits Settings in two non-scrolling columns with fixed navigation", () => {

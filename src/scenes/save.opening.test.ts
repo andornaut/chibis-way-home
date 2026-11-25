@@ -18,6 +18,7 @@ it("preserves opening acknowledgement through progress writes and resets it inde
   save.saveStand(ZONE_MAP.start);
   expect(save.savedProgress()).toEqual({
     activeSkill: null,
+    allZonesUnlocked: false,
     at: "beginning",
     openingSeen: false,
     seenTips: [],
@@ -27,6 +28,7 @@ it("preserves opening acknowledgement through progress writes and resets it inde
   await save.loadProgress();
   expect(save.savedProgress()).toEqual({
     activeSkill: null,
+    allZonesUnlocked: false,
     at: "beginning",
     openingSeen: true,
     seenTips: [],
@@ -47,6 +49,7 @@ it("preserves opening acknowledgement through progress writes and resets it inde
   await save.loadProgress();
   expect(save.savedProgress()).toEqual({
     activeSkill: null,
+    allZonesUnlocked: false,
     at: "beginning",
     openingSeen: false,
     seenTips: [],

@@ -1,10 +1,6 @@
-/* One compact Cheats column retains its save warning, feedback and navigation without scrolling. */
+/* One compact Cheats column retains its feedback and navigation without scrolling. */
 .cheats-card > .ui-card-header {
   flex: none;
-}
-
-.cheats-warning {
-  color: var(--colour-dslate);
 }
 
 .cheats-body {

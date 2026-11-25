@@ -26,7 +26,7 @@ import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
 import { fitPlayCamera } from "./playCamera.ts";
 import type { RestartData, RestartOpener, RestartScene } from "./RestartScene.ts";
-import { endCheatSession, savedProgress } from "./save.ts";
+import { savedProgress } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
 
 const BACKGROUND = "start-background";
@@ -66,8 +66,6 @@ export class StartScene extends Scene implements RestartOpener {
   }
 
   create(data?: StartData): void {
-    // Coming back from play ends any cheat session, so Continue loads the save from before it.
-    endCheatSession();
     this.starting = false;
     this.native = false;
     this.view = undefined;

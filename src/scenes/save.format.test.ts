@@ -9,44 +9,44 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"at":"beginning","openingSeen":true,"seenTips":[],"skills":[]',
-      ',"version":12}',
+      '{"activeSkill":null,"allZonesUnlocked":false,"at":"beginning","openingSeen":true,"seenTips":[],"skills":[]',
+      ',"version":13}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
-      'seenZoneIntros":[],"skills":[],"stand":"street","version":12}',
+      '{"activeSkill":null,"allZonesUnlocked":false,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
+      'seenZoneIntros":[],"skills":[],"stand":"street","version":13}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
-      'seenZoneIntros":[],"skills":["dash"],"stand":"street","version":12}',
+      '{"activeSkill":null,"allZonesUnlocked":false,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
+      'seenZoneIntros":[],"skills":["dash"],"stand":"street","version":13}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
-      'seenZoneIntros":[],"skills":["dash","speedy"],"stand":"street","version":12}',
+      '{"activeSkill":null,"allZonesUnlocked":false,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
+      'seenZoneIntros":[],"skills":["dash","speedy"],"stand":"street","version":13}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","at":"map","completed":[],"openingSeen":true,"seenTips":',
-      '[],"seenZoneIntros":[],"skills":["dash","speedy"],"stand":"street","version":12}',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":[],"openingSeen":true,"seenTips":',
+      '[],"seenZoneIntros":[],"skills":["dash","speedy"],"stand":"street","version":13}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","at":"map","completed":[],"stand":"street","openingSeen"',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":[],"stand":"street","openingSeen"',
       ':true,"seenTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy',
-      '"],"version":12}',
+      '"],"version":13}',
     ].join(""),
   ],
   [
@@ -62,17 +62,17 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","at":"map","completed":["street"],"openingSeen":true,"se',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":["street"],"openingSeen":true,"se',
       'enTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand',
-      '":"street","version":12}',
+      '":"street","version":13}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","at":"map","completed":["street"],"openingSeen":true,"se',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":["street"],"openingSeen":true,"se',
       'enTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand',
-      '":"city-streets","version":12}',
+      '":"city-streets","version":13}',
     ].join(""),
   ],
 ];
@@ -80,9 +80,9 @@ const REOPEN_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","at":"map","completed":["street"],"openingSeen":true,"se',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":["street"],"openingSeen":true,"se',
       'enTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand',
-      '":"city-streets","version":12}',
+      '":"city-streets","version":13}',
     ].join(""),
   ],
   [
@@ -169,6 +169,7 @@ it("reopens records saved before the move and writes them back byte for byte", a
   await save.loadProgress();
   expect(save.savedProgress()).toEqual({
     activeSkill: "speedy",
+    allZonesUnlocked: false,
     at: "map",
     completed: ["street"],
     openingSeen: true,

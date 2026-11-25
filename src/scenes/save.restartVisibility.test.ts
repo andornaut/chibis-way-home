@@ -31,6 +31,7 @@ it("keeps confirmed Restart cleared across map browsing and reopen until real st
   await save.loadProgress();
   expect(save.savedProgress()).toEqual({
     activeSkill: null,
+    allZonesUnlocked: false,
     at: "beginning",
     openingSeen: false,
     seenTips: [],
@@ -55,6 +56,7 @@ it("does not begin saved progress for a non-catalogued diagnostic stage", async 
   await save.loadProgress();
   expect(save.savedProgress()).toEqual({
     activeSkill: null,
+    allZonesUnlocked: false,
     at: "beginning",
     openingSeen: false,
     seenTips: [],

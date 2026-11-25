@@ -14,7 +14,6 @@ vi.mock("../pwa/index.ts", () => ({
   requestUpdateCheck,
 }));
 vi.mock("./save.ts", () => ({
-  endCheatSession: () => {},
   savedProgress: () => ({ at: "map" }),
 }));
 vi.mock("./keyboardCapture.ts", () => ({ captureTab: vi.fn() }));

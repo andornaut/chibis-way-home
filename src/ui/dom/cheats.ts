@@ -10,7 +10,6 @@ export type CheatAction = "unlockAllPowerUps" | "unlockAllZones";
 export interface CheatsCardWords {
   readonly back: string;
   readonly close: string;
-  readonly groupDescription: string;
   readonly invulnerable: string;
   readonly invulnerableNote: string;
   readonly state: { readonly off: string; readonly on: string };
@@ -31,7 +30,7 @@ export interface CheatsCardView {
   readonly status: HTMLElement;
 }
 
-// The run-only actions, contact-invincibility switch, save warning and Back fit in one column.
+// The unlock actions, contact-invincibility switch and Back fit in one column.
 export function createCheatsCard(
   document: Document,
   id: string,
@@ -60,12 +59,9 @@ export function createCheatsCard(
   dialog.id = id;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-title`);
-  dialog.setAttribute("aria-describedby", `${id}-warning`);
   const header = element("div", "ui-card-header");
   const heading = text("h2", "ui-card-title", words.title);
   heading.id = `${id}-title`;
-  const warning = text("p", "ui-card-text cheats-warning", words.groupDescription);
-  warning.id = `${id}-warning`;
   header.append(heading);
   const body = element("div", "cheats-body");
   const actionColumn = element(
@@ -92,7 +88,7 @@ export function createCheatsCard(
   name.append(label, note);
   const value = createToggleValue(document);
   invincibility.append(name, value);
-  body.append(warning, actionColumn, invincibility);
+  body.append(actionColumn, invincibility);
   const status = element("p", "ui-card-text cheats-status");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");

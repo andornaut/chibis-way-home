@@ -18,7 +18,6 @@ const save = vi.hoisted(() => ({
 }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
-vi.mock("../dev/mode.ts", () => ({ isDevelopmentSession: () => true }));
 vi.mock("./save.ts", () => save);
 vi.mock("../progress/save/runSummary.ts", () => ({ wholeRunSummary: () => ({}) }));
 

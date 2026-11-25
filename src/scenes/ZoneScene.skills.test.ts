@@ -37,9 +37,7 @@ vi.mock("../ui/settings/touchControls.ts", () => ({
   touchSettingShown: () => true,
 }));
 vi.mock("../dev/mode.ts", () => ({
-  developmentSkillOverrides: () => ({}),
   invulnerabilityEnabled: () => false,
-  isDevelopmentSession: () => false,
 }));
 vi.mock("./save.ts", () => ({
   activeSkill: () => saved.active,

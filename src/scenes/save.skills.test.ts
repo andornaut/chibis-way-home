@@ -152,50 +152,44 @@ it("queues each distinct grant's power-up tip once and none for a duplicate gran
   ]);
 });
 
-it("keeps a cheat-enabled selection temporary and falls back to saved ownership", async () => {
-  const { PROGRESS_VERSION } = await import("../progress/index.ts");
-  const raw = JSON.stringify({
-    activeSkill: "dash",
-    at: "beginning",
-    openingSeen: false,
-    seenTips: [],
-    skills: ["dash"],
-    version: PROGRESS_VERSION,
-  });
-  const values = new Map<string, string>([["chibis-way-home.save", raw]]);
-  const write = vi.fn((key: string, value: string) => values.set(key, value));
+it("saves Unlock all power-ups as each pickup's grant and keeps the current selection", async () => {
+  const [owned, ...rest] = SKILL_IDS;
+  const values = new Map<string, string>();
   vi.stubGlobal("localStorage", {
     getItem: (key: string) => values.get(key) ?? null,
-    setItem: write,
+    setItem: (key: string, value: string) => values.set(key, value),
   });
   const save = await import("./save.ts");
-  const mode = await import("../dev/mode.ts");
   await save.loadProgress();
-  save.startCheatSession();
-  mode.setSkillOverride(true, "speedy");
-  expect(save.activeSkill()).toBe("dash");
-  expect(save.selectActiveSkill("speedy")).toBe(true);
-  expect(save.activeSkill()).toBe("speedy");
-  expect(save.selectActiveSkill(null)).toBe(true);
-  expect(save.activeSkill()).toBeNull();
-  expect(save.selectActiveSkill("speedy")).toBe(true);
-  mode.setSkillOverride(false, "speedy");
-  expect(save.activeSkill()).toBe("dash");
-  expect(save.selectActiveSkill("dash")).toBe(false);
-  expect(save.savedProgress().activeSkill).toBe("dash");
-  expect(values.get("chibis-way-home.save")).toBe(raw);
-  save.endCheatSession();
-  expect(save.grantSkill("doubleJump")).toBe(true);
-  expect(save.selectActiveSkill("doubleJump")).toBe(true);
-  await save.loadProgress();
-  expect(save.savedProgress().activeSkill).toBe("doubleJump");
-  expect(JSON.parse(values.get("chibis-way-home.save")!).activeSkill).toBe("doubleJump");
+  save.grantSkill(owned!);
+  save.selectActiveSkill(owned!);
+  while (save.nextTip(() => false) !== undefined) {
+    // The first grant's tips show before the cheat.
+  }
+  save.unlockAllPowerUps();
+  expect(save.activeSkill()).toBe(owned);
+  expect(save.selectActiveSkill(rest[0]!)).toBe(true);
+  expect(save.selectActiveSkill(owned!)).toBe(true);
+  while (save.nextAchievementNotice(() => false) !== undefined) {
+    // Tips wait for the unlock notices.
+  }
+  expect(
+    [save.nextTip(() => false), save.nextTip(() => false), save.nextTip(() => false)].map(
+      (tip) => tip && ("skill" in tip ? tip.skill : tip.id),
+    ),
+  ).toEqual([rest[0], "secondPowerUp", rest[1]]);
+
+  vi.resetModules();
+  const reloaded = await import("./save.ts");
+  await reloaded.loadProgress();
+  expect([reloaded.savedSkills(), reloaded.activeSkill()]).toEqual([SKILL_IDS, owned]);
 });
 
 it("keeps an existing save's selection on load", async () => {
   const { PROGRESS_VERSION } = await import("../progress/index.ts");
   const raw = JSON.stringify({
     activeSkill: "speedy",
+    allZonesUnlocked: false,
     at: "beginning",
     openingSeen: true,
     seenTips: [],

@@ -17,8 +17,9 @@ export type RecentChunks = Readonly<Partial<Record<string, readonly (readonly st
 // The player's progress: the beginning (no progress saved, the start screen offers Start), or
 // the map, with the zone nodes he has completed, the zone node he stands on and the recent
 // middle chunks. seenTips: the first-time tips shown this playthrough, in the order they showed
-// (SeenTip).
+// (SeenTip). allZonesUnlocked: Unlock all zones opened every zone and stage on the map.
 export type Progress = SkillSelection & {
+  readonly allZonesUnlocked: boolean;
   readonly openingSeen: boolean;
   readonly seenTips: readonly SeenTip[];
 } & (
@@ -34,6 +35,7 @@ export type Progress = SkillSelection & {
 
 export const BEGINNING: Progress = {
   activeSkill: null,
+  allZonesUnlocked: false,
   at: "beginning",
   openingSeen: false,
   seenTips: [],
@@ -43,7 +45,7 @@ export const BEGINNING: Progress = {
 // The save format's version. Before the first release, a change to the format or a map node or
 // zone renamed bumps it, and older saves reset to the beginning. Chunk ids are advisory: an
 // unknown one is dropped on load, so renaming a chunk needs no bump.
-export const PROGRESS_VERSION = 12;
+export const PROGRESS_VERSION = 13;
 export const PROGRESS_KEYS = {
   backup: "chibis-way-home.save-backup",
   save: "chibis-way-home.save",
@@ -64,11 +66,12 @@ const isNames = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((name) => typeof name === "string");
 
 // Why progress does not fit map and zones, or undefined when it does: each completed zone node,
-// and the node he stands on, is a zone node the completed zones open (openMap), whose zone is in
-// zones, named once.
+// and the node he stands on, is a zone node the completed zones open (openMap), or with
+// allZonesUnlocked any built zone node, whose zone is in zones, named once.
 function progressProblem(
   map: ZoneMap,
   zones: Readonly<Record<string, unknown>>,
+  allZonesUnlocked: boolean,
   completed: readonly string[],
   stand: string,
 ): string | undefined {
@@ -76,7 +79,7 @@ function progressProblem(
   if (done.size !== completed.length) {
     return "the save names a completed zone twice";
   }
-  const open = openMap(map, done).zones.filter((id) => {
+  const open = openMap(map, done, allZonesUnlocked).zones.filter((id) => {
     const zone = map.nodes.find((node) => node.id === id)?.zone;
     return zone !== undefined && zone in zones;
   });
@@ -134,6 +137,9 @@ export function progressFormat(
     ) {
       return { ok: false, reason: "the save has an invalid active skill" };
     }
+    if (typeof progress.allZonesUnlocked !== "boolean") {
+      return { ok: false, reason: "the save does not say whether every zone is unlocked" };
+    }
     if (typeof progress.openingSeen !== "boolean") {
       return { ok: false, reason: "the save has no opening acknowledgement" };
     }
@@ -157,12 +163,19 @@ export function progressFormat(
     if (progress.recent !== undefined && recentChunks(map, chunks, progress.recent) === undefined) {
       return { ok: false, reason: "the save's recent chunks are not lists of chunk ids" };
     }
-    const problem = progressProblem(map, zones, progress.completed, progress.stand);
+    const problem = progressProblem(
+      map,
+      zones,
+      progress.allZonesUnlocked,
+      progress.completed,
+      progress.stand,
+    );
     return problem === undefined ? { ok: true, value: progress } : { ok: false, reason: problem };
   };
   return {
     decode: ({
       activeSkill,
+      allZonesUnlocked,
       at,
       completed,
       openingSeen,
@@ -172,6 +185,9 @@ export function progressFormat(
       skills,
       stand,
     }: StoredObject): Checked<Progress> => {
+      if (typeof allZonesUnlocked !== "boolean") {
+        return { ok: false, reason: "the save does not say whether every zone is unlocked" };
+      }
       if (typeof openingSeen !== "boolean") {
         return { ok: false, reason: "the save has no opening acknowledgement" };
       }
@@ -185,7 +201,7 @@ export function progressFormat(
         return { ok: false, reason: "the save has no valid active skill" };
       }
       if (at === "beginning") {
-        return checked({ activeSkill, at, openingSeen, seenTips, skills });
+        return checked({ activeSkill, allZonesUnlocked, at, openingSeen, seenTips, skills });
       }
       if (at !== "map") {
         return { ok: false, reason: "the save does not say where he is" };
@@ -205,6 +221,7 @@ export function progressFormat(
       }
       return checked({
         activeSkill,
+        allZonesUnlocked,
         at,
         completed,
         openingSeen,

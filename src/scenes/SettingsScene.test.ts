@@ -47,11 +47,6 @@ import { DEV_TEXT } from "../data/dev.ts";
 import { TEXT } from "../data/text.ts";
 import { TOUCH } from "../data/touch.ts";
 import {
-  beginDevelopmentSession,
-  endDevelopmentSession,
-  isDevelopmentSession,
-} from "../dev/mode.ts";
-import {
   createUiLayer,
   fpsCounterShown,
   mountFpsCounter,
@@ -328,9 +323,7 @@ it("changes only the FPS device preference and overlay from Settings", async () 
       overlay.hidden,
       localStorage.getItem(deviceKey),
     ]).toEqual(["true", false, "on"]);
-    expect(isDevelopmentSession()).toBe(false);
 
-    beginDevelopmentSession();
     const touch = (type: string) =>
       button.dispatchEvent(
         new PointerEvent(type, {
@@ -350,7 +343,6 @@ it("changes only the FPS device preference and overlay from Settings", async () 
       overlay.hidden,
       localStorage.getItem(deviceKey),
     ]).toEqual(["false", true, null]);
-    expect(isDevelopmentSession()).toBe(true);
     expect(owner.setTouchSetting).not.toHaveBeenCalled();
     for (const [storageKey, value] of saved) {
       expect(localStorage.getItem(storageKey)).toBe(value);
@@ -359,7 +351,6 @@ it("changes only the FPS device preference and overlay from Settings", async () 
     unmount();
     setFpsCounterShown(false);
     vi.useRealTimers();
-    endDevelopmentSession();
     for (const storageKey of saved.keys()) {
       localStorage.removeItem(storageKey);
     }

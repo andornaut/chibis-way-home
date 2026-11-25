@@ -59,7 +59,7 @@ import type {
   ZonePlan,
 } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
-import { invulnerabilityEnabled, isDevelopmentSession } from "../dev/mode.ts";
+import { invulnerabilityEnabled } from "../dev/mode.ts";
 import { developmentStep } from "../dev/step.ts";
 import { afterLoadingPaint, beginStageLoading } from "../loading/progress.ts";
 import {
@@ -1401,13 +1401,10 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       }
       return;
     }
-    const trial =
-      this.trial ??
-      (isDevelopmentSession()
-        ? ZONE_MAP.nodes.find((node) => node.id === this.mapNode && node.kind === "zone")?.zone
-        : undefined);
     const seed = askedSeed("assembly", window.location.search) ?? newSeed();
-    this.loadPlan(trial === undefined ? zoneAt(seed, ZONE_MAP.start) : zonePlanFor(seed, trial));
+    this.loadPlan(
+      this.trial === undefined ? zoneAt(seed, ZONE_MAP.start) : zonePlanFor(seed, this.trial),
+    );
     this.drawObjects();
     this.drawBird();
     const camera = this.cameras.main;

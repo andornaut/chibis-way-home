@@ -32,15 +32,7 @@ export {
   type WholeRunStatsSummary,
   type ZoneStatsSummary,
 } from "./save/stats.ts";
-export {
-  eligibleSkills,
-  isSkillId,
-  SKILL_IDS,
-  SKILL_PROFILES,
-  skillEnabled,
-  type SkillOverrides,
-  skillTuning,
-} from "./skills.ts";
+export { isSkillId, SKILL_IDS, SKILL_PROFILES, skillTuning } from "./skills.ts";
 export { type StageCompletion, stageCompletion, stageExit } from "./stageCompletion.ts";
 export {
   isSeenTip,

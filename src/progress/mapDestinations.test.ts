@@ -48,6 +48,7 @@ describe("destination selection", () => {
   it("preserves stage-two unlock and latest highlight while replaying stage one", () => {
     const progress = {
       activeSkill: null,
+      allZonesUnlocked: false,
       at: "map" as const,
       completed: ["one"],
       openingSeen: true,

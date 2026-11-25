@@ -10,8 +10,7 @@ import { SKILL_GESTURE } from "../data/skills.ts";
 import { TEXT } from "../data/text.ts";
 import { TOUCH } from "../data/touch.ts";
 import type { SkillId } from "../data/types/index.ts";
-import { developmentSkillOverrides } from "../dev/mode.ts";
-import { SKILL_IDS, skillEnabled } from "../progress/index.ts";
+import { SKILL_IDS } from "../progress/index.ts";
 import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa/index.ts";
 import {
   type CardAction,
@@ -466,9 +465,8 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
   }
 
   private enabledSkills(): readonly SkillId[] {
-    const overrides = developmentSkillOverrides();
     const owned = savedSkills();
-    return SKILL_IDS.filter((skill) => skillEnabled(overrides, owned, skill));
+    return SKILL_IDS.filter((skill) => owned.includes(skill));
   }
 
   private openSkill(skill: SkillId): void {

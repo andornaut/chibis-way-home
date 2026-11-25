@@ -3,36 +3,16 @@ import { SKILLS } from "../data/skills.ts";
 import type { BirdTuning, SkillId, SkillTuning } from "../data/types/index.ts";
 
 export const SKILL_IDS: readonly SkillId[] = ["dash", "doubleJump", "speedy"];
-export type SkillOverrides = Readonly<Partial<Record<SkillId, boolean>>>;
-
 export function isSkillId(value: unknown): value is SkillId {
   return value === "dash" || value === "doubleJump" || value === "speedy";
 }
 
-export function skillEnabled(
-  overrides: SkillOverrides,
-  owned: readonly SkillId[],
-  skill: SkillId,
-): boolean {
-  return overrides[skill] === true || owned.includes(skill);
-}
-
-export function eligibleSkills(
-  overrides: SkillOverrides,
-  owned: readonly SkillId[],
-): readonly SkillId[] {
-  return [
-    ...owned,
-    ...SKILL_IDS.filter((skill) => !owned.includes(skill) && overrides[skill] === true),
-  ];
-}
-
-// The selected skill while it is eligible, or none.
+// The selected skill while it is owned, or none.
 export function resolveActiveSkill(
-  eligible: readonly SkillId[],
+  owned: readonly SkillId[],
   selected: SkillId | null,
 ): SkillId | null {
-  return selected !== null && eligible.includes(selected) ? selected : null;
+  return selected !== null && owned.includes(selected) ? selected : null;
 }
 
 export function skillTuning(

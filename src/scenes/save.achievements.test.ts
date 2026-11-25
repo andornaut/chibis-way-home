@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { ACHIEVEMENTS } from "../data/achievements.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import type { BehaviourState } from "../rules/behaviour.ts";
@@ -187,27 +188,28 @@ describe("tracking achievements through the page save", () => {
     expect(earned(values)).toEqual(["clear-apartment", "home-without-skills"]);
   });
 
-  it("earns, announces and stores no achievement during a cheat session", async () => {
+  it("earns, announces and stores achievements from cheats like normal play", async () => {
+    const allOwned = ACHIEVEMENTS.find(({ conditions }) =>
+      conditions.some(
+        (condition) => condition.kind === "skills-owned" && condition.count === "all",
+      ),
+    )!.id;
     const values = storage();
     const save = await import("./save.ts");
     await save.loadProgress();
-    save.startCheatSession();
+    save.unlockAllPowerUps();
+    save.unlockAllZones();
     save.beginZoneVisit(FIRST.id);
     for (const stage of FIRST.stages) {
       save.beginStageRun(stage);
       save.completeStageRun(stage);
     }
-    save.recordStepAchievements(
-      LAYOUT,
-      FIRST.stages[0]!,
-      zone([pursuit("engaged")]),
-      zone([pursuit("escaped")]),
-    );
     await settle();
-    expect({
-      card: save.achievementCard().some(({ earned: held }) => held),
-      notice: save.nextAchievementNotice(() => false),
-      stored: values.has(ACHIEVEMENTS_KEY),
-    }).toEqual({ card: false, notice: undefined, stored: false });
+    const stored = earned(values);
+    expect(stored[0]).toBe(allOwned);
+    expect(stored.length).toBeGreaterThan(1);
+    expect(save.nextAchievementNotice(() => false)).toBe(allOwned);
+    const card = save.achievementCard().filter(({ earned: held }) => held);
+    expect(card.map(({ id }) => id).sort()).toEqual([...stored].sort());
   });
 });

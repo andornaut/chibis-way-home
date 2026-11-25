@@ -2,12 +2,7 @@ import { Scene } from "phaser";
 
 import { DEV_TEXT } from "../data/dev.ts";
 import { TEXT } from "../data/text.ts";
-import {
-  invulnerabilityEnabled,
-  setInvulnerability,
-  unlockAllPowerUps,
-  unlockAllZones,
-} from "../dev/mode.ts";
+import { invulnerabilityEnabled, setInvulnerability } from "../dev/mode.ts";
 import {
   type CheatAction,
   type CheatsCardView,
@@ -18,7 +13,7 @@ import {
 import { bindSceneButtons } from "./domTaps.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { modalInput } from "./modalInput.ts";
-import { startCheatSession } from "./save.ts";
+import { unlockAllPowerUps, unlockAllZones } from "./save.ts";
 
 export interface CheatsOpener {
   cheatsClosed(): void;
@@ -27,7 +22,6 @@ export interface CheatsOpener {
 const CHEATS_WORDS: CheatsCardWords = {
   back: TEXT.achievements.back,
   close: DEV_TEXT.cheats.close,
-  groupDescription: DEV_TEXT.cheats.groupDescription,
   invulnerable: DEV_TEXT.invulnerable,
   invulnerableNote: DEV_TEXT.invulnerableNote,
   state: TEXT.settings.state,
@@ -36,7 +30,8 @@ const CHEATS_WORDS: CheatsCardWords = {
   unlockAllZones: DEV_TEXT.unlockAllZones,
 };
 
-// Every cheat is run-only. Closing returns to the same invoking Menu or Pause.
+// Unlocks save like normal play and Invincibility is a device setting. Closing returns to the
+// same invoking Menu or Pause.
 export class CheatsScene extends Scene {
   private opener = "pause";
   private closed = false;
@@ -116,7 +111,6 @@ export class CheatsScene extends Scene {
     if (!this.acceptsActions()) {
       return;
     }
-    startCheatSession();
     setInvulnerability(!invulnerabilityEnabled());
     this.render();
   }
@@ -125,7 +119,6 @@ export class CheatsScene extends Scene {
     if (!this.acceptsActions() || this.cheats === undefined) {
       return;
     }
-    startCheatSession();
     if (action === "unlockAllPowerUps") {
       unlockAllPowerUps();
       this.cheats.status.textContent = DEV_TEXT.results.unlockAllPowerUps;

@@ -12,6 +12,7 @@ const ZONE = ZONE_MAP.destinations[0]!.id;
 const OTHER = ZONE_MAP.destinations[1]!.id;
 const AT_MAP: Progress = {
   activeSkill: null,
+  allZonesUnlocked: false,
   at: "map",
   completed: [],
   openingSeen: true,

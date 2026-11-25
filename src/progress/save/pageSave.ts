@@ -19,7 +19,7 @@ import {
   zoneEndingAt,
 } from "../achievements.ts";
 import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks.ts";
-import { eligibleSkills, resolveActiveSkill, SKILL_IDS, type SkillOverrides } from "../skills.ts";
+import { resolveActiveSkill, SKILL_IDS } from "../skills.ts";
 import { type PlayTipId, type QueuedTip, seenTip } from "../tips.ts";
 import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT, achievementsStore } from "./achievements.ts";
 import {
@@ -43,28 +43,10 @@ import {
 
 export { type Progress } from "./progress.ts";
 
-// The page's cheat session, which each call that asks it takes first: the skill overrides enable
-// skills beside the owned ones, Unlock all power-ups owns every skill, and a session's active
-// skill may be a selection held for the page.
-export interface SaveSession {
-  readonly development: () => boolean;
-  readonly powerUpsUnlocked: () => boolean;
-  readonly skillOverrides: () => SkillOverrides;
-}
-
 const storage = localSaveStorage();
 const format = progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS)));
 const store = saveStore(storage, PROGRESS_KEYS, format);
 let progress: Progress = BEGINNING;
-// The progress as last written: progress itself, except during a cheat session, whose changes
-// stay in progress only (holdSave).
-let stored: Progress = BEGINNING;
-// Whether a cheat session holds the save: nothing is written, earned or announced until
-// releaseSave puts back the save as it was.
-let held = false;
-// A developer session's selection of an enabled skill it does not own, or none after turning that
-// selection off, held for the page.
-let temporarySelection: SkillId | null | undefined;
 // The first-time tips triggered and not shown yet, in trigger order. They are not saved; a tip is
 // saved as seen once it starts.
 let tips: QueuedTip[] = [];
@@ -139,6 +121,7 @@ async function probeStoredGame(
   const canReset =
     (player.status === "loaded" &&
       (player.save.at === "map" ||
+        player.save.allZonesUnlocked ||
         player.save.openingSeen ||
         player.save.skills.length > 0 ||
         player.save.seenTips.length > 0)) ||
@@ -161,15 +144,14 @@ export async function resetSaveAvailable(
 
 // Reads the stored progress into savedProgress. Where a newer version wrote any store, it writes
 // nothing, not even an older store's upgrade, and returns "newer" before the session begins.
-export async function loadProgress(session: SaveSession): Promise<SaveAge> {
+export async function loadProgress(): Promise<SaveAge> {
   const [loaded, earned] = await Promise.all([store.load(), achievements.load()]);
   const statsStatus = await stats.load(loaded.status !== "newer" && earned.status !== "newer");
   if ([loaded.status, statsStatus, earned.status].includes("newer")) {
     return "newer";
   }
   progress = loaded.save;
-  stored = progress;
-  if (activeSkill(session) === "speedy") {
+  if (activeSkill() === "speedy") {
     stats.useSkill();
   }
   earnedIds = earned.save.earned;
@@ -183,9 +165,6 @@ export async function loadProgress(session: SaveSession): Promise<SaveAge> {
 function judgeAchievements(
   scopes: readonly (readonly [AchievementScope, Partial<AchievementFacts>])[],
 ): void {
-  if (held) {
-    return;
-  }
   const profile = { skillUsed: stats.skillUsed(), skills: progress.skills };
   const found = new Set(
     scopes.flatMap(([scope, facts]) => earnedAt(earnedIds, scope, { ...profile, ...facts })),
@@ -201,14 +180,13 @@ function judgeAchievements(
 // What a live step did for the records: the characters whose pursuit it ended in an escape, and
 // whether it used a skill (zoneStepRecord).
 export function recordStageStepAchievements(
-  session: SaveSession,
   stage: string,
   step: { readonly escaped: readonly string[]; readonly skillUsed: boolean },
 ): void {
   if (!STAGES.has(stage)) {
     return;
   }
-  if (step.skillUsed || activeSkill(session) === "speedy") {
+  if (step.skillUsed || activeSkill() === "speedy") {
     stats.useSkill();
   }
   const bosses = [
@@ -219,9 +197,6 @@ export function recordStageStepAchievements(
 
 // The next unlock notice to show unless blocked, marked announced as it starts.
 export function nextAchievementNotice(blocked: () => boolean): AchievementId | undefined {
-  if (held) {
-    return undefined;
-  }
   const id = notices.takeWhen(blocked);
   if (id !== undefined) {
     void inFlight(achievements.announced(id));
@@ -242,10 +217,10 @@ export function achievementCard(): AchievementEntry[] {
 export function beginZoneVisit(zone: string): void {
   stats.beginVisit(zone);
 }
-export function beginStageRun(session: SaveSession, stage: string): void {
+export function beginStageRun(stage: string): void {
   if (STAGES.has(stage)) {
     if (progress.at === "beginning") {
-      writeStand(session, stage);
+      writeStand(stage);
     }
     stats.beginRun(stage);
     if (stage === ZONE_MAP.start) {
@@ -321,69 +296,54 @@ export function resetWholeRunStats(): void {
   void stats.flush();
 }
 
-// The owned skills: every skill while Unlock all power-ups holds, otherwise the saved ones.
-export function savedSkills(session: SaveSession): readonly SkillId[] {
-  return session.powerUpsUnlocked() ? SKILL_IDS : progress.skills;
+export function savedSkills(): readonly SkillId[] {
+  return progress.skills;
 }
 
-// The selected skill while it is eligible, or none. A developer session's temporary selection
-// holds while its override stays enabled; then the saved selection applies again. Turning a
-// temporary selection off holds none until the next selection.
-export function activeSkill(session: SaveSession): SkillId | null {
-  const eligible = eligibleSkills(session.skillOverrides(), savedSkills(session));
-  const saved = resolveActiveSkill(eligible, progress.activeSkill);
-  if (!session.development() || temporarySelection === undefined) {
-    return saved;
-  }
-  if (temporarySelection === null) {
-    return null;
-  }
-  temporarySelection = resolveActiveSkill(eligible, temporarySelection) ?? undefined;
-  return temporarySelection ?? saved;
+// The selected skill while it is owned, or none.
+export function activeSkill(): SkillId | null {
+  return resolveActiveSkill(progress.skills, progress.activeSkill);
 }
 
-// Selects an eligible skill, or with null turns the selection off. An unchanged or ineligible
-// selection is rejected.
-export function selectActiveSkill(session: SaveSession, skill: SkillId | null): boolean {
-  const eligible = eligibleSkills(session.skillOverrides(), savedSkills(session));
-  const current = activeSkill(session);
-  if ((skill !== null && !eligible.includes(skill)) || current === skill) {
+// Selects an owned skill, or with null turns the selection off. An unchanged or unowned selection
+// is rejected.
+export function selectActiveSkill(skill: SkillId | null): boolean {
+  if ((skill !== null && !progress.skills.includes(skill)) || activeSkill() === skill) {
     return false;
   }
-  if (skill === null) {
-    if (current === temporarySelection) {
-      temporarySelection = null;
-    } else {
-      temporarySelection = undefined;
-      write(session, { ...progress, activeSkill: null });
-    }
-  } else if (!savedSkills(session).includes(skill)) {
-    temporarySelection = skill;
-    if (skill === "speedy") {
-      stats.useSkill();
-    }
-  } else {
-    temporarySelection = undefined;
-    write(session, { ...progress, activeSkill: skill });
-  }
+  write({ ...progress, activeSkill: skill });
   return true;
 }
 
-export function grantSkill(session: SaveSession, skill: SkillId): boolean {
+// Saves ownership of skill, with its tips and achievements: a power-up pickup's grant.
+export function grantSkill(skill: SkillId): boolean {
   const granted = withGrantedSkill(progress, skill);
   if (granted === progress) {
     return false;
   }
   const effects = skillGrantEffects(earnedIds, stats.skillUsed(), granted);
-  write(session, granted);
+  write(granted);
   queueGrantTips(skill);
-  if (!held && effects.awarded.length > 0) {
+  if (effects.awarded.length > 0) {
     earnedIds = [...earnedIds, ...effects.awarded];
     notices.push(effects.awarded);
     void inFlight(achievements.award(effects.awarded));
   }
   return true;
 }
+
+// Unlock all power-ups: grants each skill not owned yet, as a pickup does.
+export function grantAllSkills(): void {
+  SKILL_IDS.forEach((skill) => grantSkill(skill));
+}
+
+// Unlock all zones: every zone and stage opens on the map, none of them completed.
+export function unlockAllZones(): void {
+  if (!progress.allZonesUnlocked) {
+    write({ ...progress, allZonesUnlocked: true });
+  }
+}
+
 // The saved progress, or the beginning.
 export function savedProgress(): Progress {
   return progress;
@@ -395,8 +355,8 @@ export function savedMap(): { readonly completed: readonly string[]; readonly st
   return mapProgress(ZONE_MAP, progress);
 }
 
-export function saveOpeningSeen(session: SaveSession): void {
-  write(session, { ...progress, openingSeen: true });
+export function saveOpeningSeen(): void {
+  write({ ...progress, openingSeen: true });
 }
 
 // The saved recent middle chunks, as a field to keep in the next map progress.
@@ -417,29 +377,26 @@ export function recentStageChunks(stage: string): readonly string[] {
 
 // A fresh entry of a catalogued stage, after assembly, with its plan's middle chunk ids: the
 // stage's destination remembers them as its newest entry.
-export function recordStageChunks(
-  session: SaveSession,
-  stage: string,
-  middle: readonly string[],
-): void {
+export function recordStageChunks(stage: string, middle: readonly string[]): void {
   const zone = ZONE_MAP.destinations.find(({ stages }) => stages.includes(stage))?.id;
   if (zone === undefined || progress.at !== "map") {
     return;
   }
-  write(session, withRecentMiddleChunks(zone, middle, progress));
+  write(withRecentMiddleChunks(zone, middle, progress));
 }
 
 export function seenZoneIntros(): readonly string[] {
   return progress.at === "map" ? progress.seenZoneIntros : [];
 }
 
-export function saveZoneIntro(session: SaveSession, zone: string): void {
+export function saveZoneIntro(zone: string): void {
   const seen = seenZoneIntros();
   if (seen.includes(zone)) {
     return;
   }
-  write(session, {
+  write({
     activeSkill: progress.activeSkill,
+    allZonesUnlocked: progress.allZonesUnlocked,
     at: "map",
     ...savedMap(),
     openingSeen: progress.openingSeen,
@@ -451,16 +408,17 @@ export function saveZoneIntro(session: SaveSession, zone: string): void {
 }
 
 // Map browsing updates an existing game; only actual stage entry starts a new one.
-export function saveStand(session: SaveSession, stand: string): void {
+export function saveStand(stand: string): void {
   void flushStats();
   if (progress.at !== "beginning") {
-    writeStand(session, stand);
+    writeStand(stand);
   }
 }
 
-function writeStand(session: SaveSession, stand: string): void {
-  write(session, {
+function writeStand(stand: string): void {
+  write({
     activeSkill: progress.activeSkill,
+    allZonesUnlocked: progress.allZonesUnlocked,
     at: "map",
     completed: savedMap().completed,
     openingSeen: progress.openingSeen,
@@ -473,10 +431,11 @@ function writeStand(session: SaveSession, stand: string): void {
 }
 
 // He has completed the zone at node: it opens the map past it, and he stands on it.
-export function saveCompleted(session: SaveSession, node: string): void {
+export function saveCompleted(node: string): void {
   const { completed } = savedMap();
-  write(session, {
+  write({
     activeSkill: progress.activeSkill,
+    allZonesUnlocked: progress.allZonesUnlocked,
     at: "map",
     completed: completed.includes(node) ? completed : [...completed, node],
     openingSeen: progress.openingSeen,
@@ -488,36 +447,16 @@ export function saveCompleted(session: SaveSession, node: string): void {
   });
 }
 
-function write(session: SaveSession, next: Progress): void {
+function write(next: Progress): void {
   progress = next;
-  if (activeSkill(session) === "speedy") {
+  if (activeSkill() === "speedy") {
     stats.useSkill();
   }
-  if (!held) {
-    stored = next;
-    void persist(next);
-  }
+  void persist(next);
 }
 
 function persist(next: Progress): Promise<StoreSaveResult> {
   return inFlight(store.save(next));
-}
-
-// Starts holding the save for a cheat session: what changed so far is written, and from now on
-// progress, statistics and achievements change in memory only.
-export function holdSave(): void {
-  held = true;
-  stats.hold();
-}
-
-// Ends a cheat session's hold: progress and statistics are back as they were when it began, apart
-// from what a tool wrote since, with no tip queued and no temporary selection.
-export function releaseSave(): void {
-  held = false;
-  progress = stored;
-  tips = [];
-  temporarySelection = undefined;
-  stats.release();
 }
 
 // Reset save: progress, statistics and achievements go back to a new game's, each written, and
@@ -535,9 +474,7 @@ export async function resetSave(): Promise<StoreSaveResult> {
     return { reason: "there is no stored game to reset", status: "invalid" };
   }
   tips = [];
-  temporarySelection = undefined;
   progress = BEGINNING;
-  stored = BEGINNING;
   earnedIds = [];
   notices = new CelebrationQueue<AchievementId>();
   const earned = saveStore(localSaveStorage(), ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT);
@@ -553,10 +490,10 @@ export async function resetSave(): Promise<StoreSaveResult> {
 
 // Restart: progress goes back to the beginning, with no tip seen, and the map opens on the first
 // zone with nothing completed. Only progress is cleared.
-export function clearProgress(session: SaveSession): void {
+export function clearProgress(): void {
   void flushStats();
   tips = [];
-  write(session, BEGINNING);
+  write(BEGINNING);
 }
 
 // Queues tip behind the triggered ones unless it has shown this playthrough or is queued, the
@@ -584,11 +521,11 @@ export function triggerTips(ids: readonly PlayTipId[]): void {
 
 // The next triggered tip to show unless blocked, once every queued unlock notice has shown,
 // saved as seen as it starts.
-export function nextTip(session: SaveSession, blocked: () => boolean): QueuedTip | undefined {
+export function nextTip(blocked: () => boolean): QueuedTip | undefined {
   if (tips.length === 0 || notices.pending().length > 0 || blocked()) {
     return undefined;
   }
   const tip = tips.shift()!;
-  write(session, { ...progress, seenTips: [...progress.seenTips, seenTip(tip)] });
+  write({ ...progress, seenTips: [...progress.seenTips, seenTip(tip)] });
   return tip;
 }

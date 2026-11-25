@@ -1,10 +1,12 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
+import { SKILL_IDS } from "../progress/index.ts";
 import type { ZoneState } from "../rules/zone.ts";
 
 const PROGRESS_KEY = "chibis-way-home.save";
 const ACHIEVEMENTS_KEY = "chibis-way-home.achievements";
+const INVINCIBILITY_KEY = "chibis-way-home.invincibility";
 const REDUCED_MOTION_KEY = "chibis-way-home.reduced-motion";
 
 afterEach(() => {
@@ -29,97 +31,87 @@ const page = async () => ({
 
 const stages = ZONE_MAP.destinations.flatMap((zone) => zone.stages);
 
-// Returning to the start screen ends the session, so Continue loads the save from before it.
-it("writes nothing during a cheat session and restores the pre-cheat save when it ends", async () => {
-  const values = storage();
-  const { mode, save } = await page();
-  await save.loadProgress();
-  save.beginZoneVisit(ZONE_MAP.destinations[0]!.id);
-  save.beginStageRun(ZONE_MAP.start);
-  save.recordActiveStageStep(
-    ZONE_MAP.start,
-    3,
-    { steps: 0 } as ZoneState,
-    { steps: 1 } as ZoneState,
-  );
-  await save.flushStats();
-  const before = { progress: save.savedProgress(), stats: save.wholeRunStats() };
-  const stored = new Map(values);
-
-  save.startCheatSession();
-  mode.unlockAllPowerUps();
-  mode.unlockAllZones();
-  expect(save.activeSkill()).toBeNull();
-  expect(save.grantSkill("dash")).toBe(true);
-  expect(save.selectActiveSkill("dash")).toBe(true);
-  save.recordActiveStageStep(
-    ZONE_MAP.start,
-    2,
-    { steps: 1 } as ZoneState,
-    { death: {}, steps: 2 } as ZoneState,
-  );
-  save.saveCompleted(ZONE_MAP.start);
-  save.saveStand(stages[1]!);
-  save.completeStageRun(ZONE_MAP.start);
-  await save.flushStats();
-  expect(save.savedMap().completed).toContain(ZONE_MAP.start);
-  expect(save.mapFullyOpen()).toBe(true);
-  expect(values).toEqual(stored);
-
-  save.endCheatSession();
-  expect({
-    open: save.mapFullyOpen(),
-    progress: save.savedProgress(),
-    session: mode.isDevelopmentSession(),
-    skills: save.savedSkills(),
-    stats: save.wholeRunStats(),
-  }).toEqual({
-    open: false,
-    progress: before.progress,
-    session: false,
-    skills: [],
-    stats: before.stats,
-  });
-  save.saveCompleted(ZONE_MAP.start);
-  await save.flushStats();
-  expect(JSON.parse(values.get(PROGRESS_KEY)!).completed).toEqual([ZONE_MAP.start]);
-});
-
-it("applies cheats chosen before play to the play that follows; a reload has none", async () => {
+// A fresh page module stands in for returning to Start: nothing there restores or discards.
+it("saves cheats chosen before play and the cheated play that follows, kept for Continue", async () => {
   const values = storage();
   const first = await page();
   await first.save.loadProgress();
-  first.save.startCheatSession();
+  first.save.unlockAllPowerUps();
+  first.save.unlockAllZones();
   first.mode.setInvulnerability(true);
-  first.mode.setSkillOverride(true, "speedy");
-  first.save.saveOpeningSeen();
   first.save.beginZoneVisit(ZONE_MAP.destinations[0]!.id);
   first.save.beginStageRun(ZONE_MAP.start);
+  first.save.recordActiveStageStep(
+    ZONE_MAP.start,
+    2,
+    { steps: 0 } as ZoneState,
+    { death: {}, steps: 1 } as ZoneState,
+  );
+  first.save.completeStageRun(ZONE_MAP.start);
+  first.save.saveCompleted(ZONE_MAP.start);
+  first.save.saveStand(stages[1]!);
   await first.save.flushStats();
-  expect(first.mode.invulnerabilityEnabled()).toBe(true);
-  expect(first.save.activeSkill()).toBeNull();
-  expect(values.size).toBe(0);
+  const before = first.save.wholeRunStats();
+  expect(before.deaths).toBe(1);
+  expect(JSON.parse(values.get(PROGRESS_KEY)!)).toMatchObject({
+    allZonesUnlocked: true,
+    completed: [ZONE_MAP.start],
+    skills: SKILL_IDS,
+    stand: stages[1],
+  });
 
   vi.resetModules();
   const reloaded = await page();
   await reloaded.save.loadProgress();
   expect({
     invulnerable: reloaded.mode.invulnerabilityEnabled(),
-    overrides: reloaded.mode.developmentSkillOverrides(),
-    progress: reloaded.save.savedProgress().at,
-    session: reloaded.mode.isDevelopmentSession(),
-    stored: values.size,
+    map: reloaded.save.savedMap(),
+    open: reloaded.save.mapFullyOpen(),
+    skills: reloaded.save.savedSkills(),
+    stats: reloaded.save.wholeRunStats(),
   }).toEqual({
-    invulnerable: false,
-    overrides: {},
+    invulnerable: true,
+    map: { completed: [ZONE_MAP.start], stand: stages[1] },
+    open: true,
+    skills: SKILL_IDS,
+    stats: before,
+  });
+});
+
+it("returns to a new save on Restart and keeps Invincibility on", async () => {
+  const values = storage();
+  const first = await page();
+  await first.save.loadProgress();
+  first.save.unlockAllPowerUps();
+  first.save.unlockAllZones();
+  first.mode.setInvulnerability(true);
+  first.save.clearProgress();
+  first.save.resetWholeRunStats();
+  expect([first.save.savedSkills(), first.save.mapFullyOpen()]).toEqual([[], false]);
+
+  vi.resetModules();
+  const reloaded = await page();
+  await reloaded.save.loadProgress();
+  expect({
+    invulnerable: reloaded.mode.invulnerabilityEnabled(),
+    open: reloaded.save.mapFullyOpen(),
+    progress: reloaded.save.savedProgress().at,
+    skills: reloaded.save.savedSkills(),
+    stored: JSON.parse(values.get(PROGRESS_KEY)!).allZonesUnlocked,
+  }).toEqual({
+    invulnerable: true,
+    open: false,
     progress: "beginning",
-    session: false,
-    stored: 0,
+    skills: [],
+    stored: false,
   });
 });
 
 it("resets progress, statistics and achievements and keeps device settings", async () => {
-  const values = storage([[REDUCED_MOTION_KEY, "on"]]);
+  const values = storage([
+    [INVINCIBILITY_KEY, "on"],
+    [REDUCED_MOTION_KEY, "on"],
+  ]);
   const first = await page();
   await first.save.loadProgress();
   first.save.beginZoneVisit(ZONE_MAP.destinations[0]!.id);
@@ -130,9 +122,8 @@ it("resets progress, statistics and achievements and keeps device settings", asy
     { steps: 0 } as ZoneState,
     { death: {}, steps: 1 } as ZoneState,
   );
-  ["dash", "doubleJump", "speedy"].forEach((skill) =>
-    first.save.grantSkill(skill as "dash" | "doubleJump" | "speedy"),
-  );
+  first.save.unlockAllPowerUps();
+  first.save.unlockAllZones();
   first.save.saveCompleted(ZONE_MAP.start);
   await first.save.flushStats();
   await new Promise((resolve) => {
@@ -146,12 +137,16 @@ it("resets progress, statistics and achievements and keeps device settings", asy
   await reloaded.save.loadProgress();
   expect({
     earned: reloaded.save.achievementCard().filter(({ earned }) => earned),
+    invulnerable: reloaded.mode.invulnerabilityEnabled(),
+    open: reloaded.save.mapFullyOpen(),
     progress: reloaded.save.savedProgress().at,
     reducedMotion: values.get(REDUCED_MOTION_KEY),
     skills: reloaded.save.savedSkills(),
     stats: reloaded.save.wholeRunStats(),
   }).toEqual({
     earned: [],
+    invulnerable: true,
+    open: false,
     progress: "beginning",
     reducedMotion: "on",
     skills: [],

@@ -49,6 +49,7 @@ const FORMAT = progressFormat(MAP, ZONE_KEYS, new Set());
 const stored = (fields: object, version = PROGRESS_VERSION) =>
   JSON.stringify({
     activeSkill: null,
+    allZonesUnlocked: false,
     openingSeen: false,
     seenTips: [],
     seenZoneIntros: [],
@@ -58,6 +59,7 @@ const stored = (fields: object, version = PROGRESS_VERSION) =>
   });
 const at = (stand: string, completed: string[] = []): Progress => ({
   activeSkill: null,
+  allZonesUnlocked: false,
   at: "map",
   completed,
   openingSeen: false,
@@ -76,6 +78,8 @@ describe("progressFormat", () => {
     ],
     ["owned skills with none selected", { ...BEGINNING, skills: ["dash", "speedy"] }],
     ["acknowledged beginning", { ...BEGINNING, openingSeen: true, skills: [] }],
+    ["every zone unlocked from the beginning", { ...BEGINNING, allZonesUnlocked: true }],
+    ["a stand only Unlock all zones opens", { ...at("built"), allZonesUnlocked: true } as Progress],
     ["some tips seen", { ...at("start"), seenTips: ["controls", "powerUp:dash"] } as Progress],
     [
       "every tip seen",
@@ -106,6 +110,7 @@ describe("progressFormat", () => {
     ["unowned active selection", stored({ activeSkill: "dash", at: "beginning" })],
     ["unknown active selection", stored({ activeSkill: "fly", at: "beginning" })],
     ["missing skills", stored({ at: "beginning", skills: undefined })],
+    ["missing zone unlock", stored({ allZonesUnlocked: undefined, at: "beginning" })],
     ["unknown skill", stored({ activeSkill: "dash", at: "beginning", skills: ["dash", "fly"] })],
     ["duplicate skill", stored({ activeSkill: "dash", at: "beginning", skills: ["dash", "dash"] })],
     [
@@ -205,6 +210,7 @@ describe("built cityscape progress", () => {
     ({ completed, stand, unlocked }) => {
       const progress = {
         activeSkill: null,
+        allZonesUnlocked: false,
         at: "map" as const,
         completed,
         openingSeen: true,
