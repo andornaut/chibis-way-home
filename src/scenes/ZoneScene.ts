@@ -87,17 +87,13 @@ import {
 import { SKILL_PROFILES, skillTuning, stageExit, wholeRunSummary } from "../progress/index.ts";
 import { startWakeLock, stopWakeLock } from "../pwa/index.ts";
 import { deathSupport } from "../rules/death.ts";
-import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams.ts";
+import { SEED_LIMIT } from "../rules/pageParams.ts";
 import { currentScreen } from "../rules/perception.ts";
 import { createStageBarks } from "../rules/stageBarks.ts";
 import { planStage } from "../rules/stagePlans.ts";
-import {
-  askedStagePreview,
-  type StagePreview,
-  stagePreviewPlan,
-  stagePreviewScroll,
-} from "../rules/stagePreview.ts";
+import { type StagePreview, stagePreviewScroll } from "../rules/stagePreview.ts";
 import { stageProgress } from "../rules/stageProgress.ts";
+import { type StageEntry, type StageEntryContext, stageRequest } from "../rules/stageRequest.ts";
 import { zoneLayout } from "../rules/tiles.ts";
 import {
   activateBehaviour,
@@ -202,6 +198,14 @@ function newSeed(): number {
   return Math.floor(Math.random() * SEED_LIMIT);
 }
 
+// What a stage entry is read against: the scene supplies the entropy and the saved recent chunks.
+const ENTRY: StageEntryContext = {
+  entropy: newSeed,
+  map: ZONE_MAP,
+  recent: (stage) => recentStageChunks(stage),
+  recipes: Object.keys(RECIPES),
+};
+
 // What every zone's instances are resolved against.
 const CATALOGUE = { archetypes: ARCHETYPES, characters: CHARACTERS };
 
@@ -258,6 +262,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // Drawn as the start screen's backdrop rather than played.
   private backdrop = false;
   private preview: StagePreview | undefined;
+  // The stage entry being played (stageRequest).
+  private entry!: StageEntry;
   // The hit boxes art's sprites declare, by art key.
   private hitboxes: Readonly<Record<string, ArtHitbox>> = {};
   private manifest!: ArtManifest;
@@ -301,16 +307,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // opening stage. An unknown ?zone= key or a malformed ?assembly= or ?seed= throws to the crash
   // screen. data.backdrop: the start screen's backdrop instead (holdStill).
   init(data: ZoneData): void {
-    const { search } = window.location;
-    this.preview = askedStagePreview(
-      [
-        ...ZONE_MAP.nodes
-          .filter((node) => node.kind === "zone" && node.zone !== undefined)
-          .map((node) => node.id),
-        ...Object.keys(RECIPES),
-      ],
-      search,
-    );
+    this.entry = stageRequest(ENTRY, window.location.search, data);
+    this.preview = this.entry.preview;
     this.loading = true;
     this.hud = undefined;
     this.touchVisuals = undefined;
@@ -318,10 +316,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.backdrop = data.backdrop === true;
     this.mapNode = data.node;
     this.continueVisit = data.continueVisit === true;
-    this.trial = askedRecipe(Object.keys(RECIPES), search);
-    // Report a malformed seed now rather than at the first assembly or motion draw.
-    askedSeed("assembly", search);
-    askedSeed("seed", search);
+    this.trial = this.entry.trial;
     // Everything one run of the zone changes starts afresh: the scene object is reused.
     this.objects = undefined;
     this.heldKeys.clear();
@@ -456,33 +451,15 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       sheet: (key) => this.sheet(key),
       warning: this.bossWarning,
     });
-    const node = this.mapNode;
-    const seed =
-      this.preview?.assemblySeed ?? askedSeed("assembly", window.location.search) ?? newSeed();
-    const opening = { node: ZONE_MAP.start };
-    if (this.preview) {
-      this.loadPlan(stagePreviewPlan(STAGE_CONTEXT, seed, this.preview.key));
-      this.freezePreview(this.preview);
+    const { mode, preview } = this.entry;
+    this.startStage();
+    if (preview) {
+      this.freezePreview(preview);
       return;
     }
-    if (this.backdrop) {
-      this.loadPlan(planStage(STAGE_CONTEXT, { avoid: [], seed, target: opening }).plan);
+    if (mode === "backdrop") {
       this.holdStill();
       return;
-    }
-    // An assembled zone is assembled afresh each time he enters it, unless ?assembly=<n> fixes
-    // the seed.
-    if (node !== undefined) {
-      const { middle, plan } = planStage(STAGE_CONTEXT, {
-        avoid: recentStageChunks(node),
-        seed,
-        target: { node },
-      });
-      this.loadPlan(plan);
-      recordStageChunks(node, middle);
-    } else {
-      const target = this.trial === undefined ? opening : { recipe: this.trial };
-      this.loadPlan(planStage(STAGE_CONTEXT, { avoid: [], seed, target }).plan);
     }
 
     this.createHud();
@@ -1393,9 +1370,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (this.trial !== undefined && !turnedBack) {
       completeRunLinkStage(this.stageKey());
     }
-    const seed = askedSeed("assembly", window.location.search) ?? newSeed();
-    const target = this.trial === undefined ? { node: ZONE_MAP.start } : { recipe: this.trial };
-    this.loadPlan(planStage(STAGE_CONTEXT, { avoid: [], seed, target }).plan);
+    // A stage outside the map is entered again: the same request with a fresh assembly seed.
+    this.entry = stageRequest(ENTRY, window.location.search, { backdrop: this.backdrop });
+    this.startStage();
     this.drawObjects();
     this.drawBird();
     const camera = this.cameras.main;
@@ -1404,6 +1381,18 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.hold = undefined;
       this.openIntroduction();
     });
+  }
+
+  // Plans the stage the entry asks for and starts it, assembled afresh each time he enters it
+  // unless ?assembly=<n> fixes the seed. A map entry's destination then remembers the plan's
+  // middle chunks.
+  private startStage(): void {
+    const { record, request } = this.entry;
+    const { middle, plan } = planStage(STAGE_CONTEXT, request);
+    this.loadPlan(plan);
+    if (record !== undefined) {
+      recordStageChunks(record, middle);
+    }
   }
 
   // Starts plan from its start. Each load draws a fresh motion seed, so the random motion differs
@@ -1420,7 +1409,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.manifest.tilesets.map(({ key }) => [key, this.cache.json.get(key) as Tileset]),
     );
     this.layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, this.hitboxes, tilesets, new Set(), plan);
-    const seed = this.preview?.motionSeed ?? askedSeed("seed", window.location.search) ?? newSeed();
+    const seed = this.entry.motionSeed ?? ENTRY.entropy();
     this.zone = startZone(this.movementTuning(), this.layout, seed);
     this.story =
       this.preview || this.backdrop
