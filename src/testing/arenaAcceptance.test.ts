@@ -10,6 +10,12 @@ import {
   missedTargets,
 } from "./arenaAcceptance.ts";
 import { summariseArenaEvidence } from "./arenaCertify.ts";
+import {
+  ACCEPTANCE_CONNECTORS,
+  connectorCases,
+  missedConnectorTargets,
+} from "./connectorAcceptance.ts";
+import type { ConnectorRoute } from "./connectorRoute.ts";
 import { EVADE_SEEDS, EVADE_SLOWED, EVADE_STARTS, type EvadeRun } from "./evade.ts";
 
 const RUNS = EVADE_SEEDS.length * EVADE_STARTS.length;
@@ -32,11 +38,37 @@ it("batches exactly the arenas the certified lists admit", () => {
   );
 });
 
-it("lists failures only for batched arenas and named targets", () => {
-  for (const { arena, target } of ACCEPTANCE_FAILURES) {
-    expect(ACCEPTANCE_ARENAS).toContain(arena);
+it("lists failures only for batched subjects and named targets", () => {
+  for (const { subject, target } of ACCEPTANCE_FAILURES) {
+    expect([...ACCEPTANCE_ARENAS, ...ACCEPTANCE_CONNECTORS]).toContain(subject);
     expect(Object.keys(ACCEPTANCE_TARGETS)).toContain(target);
   }
+});
+
+it("crosses every batched connector in at least one zone that lists it", () => {
+  const crossed = new Set(connectorCases(ACCEPTANCE_CONNECTORS).map(({ connector }) => connector));
+  expect([...crossed].sort()).toEqual([...ACCEPTANCE_CONNECTORS].sort());
+});
+
+it.each<[string, Partial<ConnectorRoute>]>([
+  ["a death", { death: { reason: "hazard" } as ConnectorRoute["death"] }],
+  ["an air jump", { airJumped: true }],
+  ["a gate it never passed", { passedGate: false }],
+  ["no clear", { cleared: false }],
+])("misses ordinary-route on %s", (_, change) => {
+  const route: ConnectorRoute = {
+    airJumped: false,
+    cleared: true,
+    death: undefined,
+    gate: true,
+    index: 1,
+    passedGate: true,
+    ticks: 1,
+    x: 0,
+    y: 0,
+  };
+  expect(missedConnectorTargets(route)).toEqual([]);
+  expect(missedConnectorTargets({ ...route, ...change })).toEqual(["ordinary-route"]);
 });
 
 it.each<[AcceptanceTarget, ReturnType<typeof evidence>]>([
@@ -50,18 +82,19 @@ it.each<[AcceptanceTarget, ReturnType<typeof evidence>]>([
   expect(missedTargets({ evidence: falling })).toContain(target);
 });
 
-it("fails an unlisted miss, a listed failure now met and a missing arena", () => {
-  const met = ACCEPTANCE_ARENAS.map((arena) => ({ arena, missed: [] }));
-  expect(acceptanceProblems([], met)).toEqual([]);
+it("fails an unlisted miss, a listed failure now met and a missing subject", () => {
+  const subjects = [...ACCEPTANCE_ARENAS, ...ACCEPTANCE_CONNECTORS];
+  const met = subjects.map((subject) => ({ missed: [], subject }));
+  expect(acceptanceProblems(subjects, [], met)).toEqual([]);
   const [first, ...rest] = met;
   const missed = [{ ...first!, missed: ["slowed" as const] }, ...rest];
-  expect(acceptanceProblems([], missed)).toEqual([
-    `${first!.arena} misses slowed: ${ACCEPTANCE_TARGETS.slowed}`,
+  expect(acceptanceProblems(subjects, [], missed)).toEqual([
+    `${first!.subject} misses slowed: ${ACCEPTANCE_TARGETS.slowed}`,
   ]);
-  const listed = [{ arena: first!.arena, cause: "fixture", target: "slowed" as const }];
-  expect(acceptanceProblems(listed, missed)).toEqual([]);
-  expect(acceptanceProblems(listed, met)).toEqual([
-    `${first!.arena} now meets slowed; remove its acceptance failure`,
+  const listed = [{ cause: "fixture", subject: first!.subject, target: "slowed" as const }];
+  expect(acceptanceProblems(subjects, listed, missed)).toEqual([]);
+  expect(acceptanceProblems(subjects, listed, met)).toEqual([
+    `${first!.subject} now meets slowed; remove its acceptance failure`,
   ]);
-  expect(acceptanceProblems([], rest)).toHaveLength(1);
+  expect(acceptanceProblems(subjects, [], rest)).toHaveLength(1);
 });

@@ -1,6 +1,6 @@
 // The proofs the certification CLI and the acceptance batch run: arena, current-list and
-// selected-pair certification, the arena approach traces and the acceptance targets. Tests import
-// the harness modules directly.
+// selected-pair certification, the arena approach traces, the connector routes and the
+// acceptance targets. Tests import the harness modules directly.
 export {
   ACCEPTANCE_ARENAS,
   ACCEPTANCE_FAILURES,
@@ -16,6 +16,12 @@ export {
   verifyArenas,
   zoneArenas,
 } from "./arenaCertify.ts";
+export {
+  ACCEPTANCE_CONNECTORS,
+  connectorCases,
+  missedConnectorTargets,
+} from "./connectorAcceptance.ts";
+export { connectorRoute } from "./connectorRoute.ts";
 export {
   completeCurrentListProposal,
   type CurrentListResult,

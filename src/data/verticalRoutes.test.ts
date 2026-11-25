@@ -15,6 +15,7 @@ import {
   type ZoneState,
 } from "../rules/zone/zone.ts";
 import { surfaceAt, zoneSurfaces } from "../sim/zoneWalk.ts";
+import { connectorRoute } from "../testing/connectorRoute.ts";
 import { ORDINARY } from "../testing/encounterLayouts.ts";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
@@ -617,112 +618,13 @@ const ORDINARY_CONNECTORS = [
 it.each(ORDINARY_CONNECTORS)(
   "clears %s in %s within 600 ordinary ticks, passing a gate only when it hangs clear and is not falling",
   (id, theme) => {
-    const chunk = CHUNKS[id]!;
-    const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, theme, 2, [id]);
-    const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
-    const area = layout.areas.main!;
-    // The floors Chibi may stand on, left to right: every full-depth solid but a red pit floor.
-    const floors = chunk.solids.filter(
-      (solid) =>
-        solid.row + solid.rows === chunk.rows &&
-        !chunk.objects.some(
-          (object) =>
-            object.role === "edge-top" && object.col === solid.col && object.row === solid.row - 1,
-        ),
-    );
-    const guardIndex = area.objects.findIndex(
-      ({ behaviour, collision }) => collision === "hazard" && behaviour !== undefined,
-    );
-    const guard = area.objects[guardIndex];
-    // Whether Chibi at x on the gate's floor has yet to leave the gate's columns behind.
-    const underGate = (
-      gate: NonNullable<typeof guard>,
-      floor: (typeof floors)[number],
-      x: number,
-    ) =>
-      gate.origin.x >= floor.col * TILE &&
-      gate.origin.x < (floor.col + floor.cols) * TILE &&
-      x < gate.origin.x + gate.width;
-    let zone: ZoneState = startZone(ORDINARY, layout, 1);
-    let index = 1;
-    let jumpAt: number | undefined;
-    let passed = false;
-    // The gate's height on the tick before, to tell a rising gate from a falling one.
-    let observed: { readonly step: number; readonly y: number } | undefined;
-    let ticks = 0;
-    for (; ticks < 600 && !zone.death && !zone.cleared; ticks++) {
-      const target = floors[index];
-      const feet = zone.bird.y + ORDINARY.height;
-      const support = floors.find(
-        (solid) =>
-          Math.abs(feet - solid.row * TILE) < 0.01 &&
-          solid.col * TILE <= zone.bird.x &&
-          (solid.col + solid.cols) * TILE > zone.bird.x,
-      );
-      let move: -1 | 0 | 1 = 1;
-      if (
-        target &&
-        zone.bird.grounded &&
-        Math.abs(feet - target.row * TILE) < 0.01 &&
-        zone.bird.x >= target.col * TILE
-      ) {
-        index++;
-        jumpAt = undefined;
-      } else if (
-        target &&
-        zone.bird.grounded &&
-        feet > target.row * TILE &&
-        // Chibi walks under a gate and jumps only once clear of it.
-        !(guard && support && underGate(guard, support, zone.bird.x))
-      ) {
-        // A jump that fell short is released for a tick, then taken again.
-        jumpAt =
-          jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS >= ORDINARY.jumpRiseTime
-            ? undefined
-            : (jumpAt ?? ticks);
-      }
-      let held = jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS < ORDINARY.jumpRiseTime;
-      if (guard && support && !passed && zone.bird.grounded) {
-        const supportRight = (support.col + support.cols) * TILE;
-        const hold = Math.min(guard.origin.x, supportRight) - ORDINARY.width - TILE;
-        const braking = zone.bird.vx ** 2 / (2 * ORDINARY.brakeAccel);
-        if (
-          guard.origin.x - supportRight <= ORDINARY.width + TILE &&
-          guard.origin.x >= support.col * TILE &&
-          zone.bird.x + braking >= hold
-        ) {
-          move = 0;
-          held = false;
-          jumpAt = undefined;
-          // The gate is clear while it hangs a tile above Chibi's head and is not coming down.
-          const gateY = zone.objects[guardIndex]!.y;
-          if (
-            gateY + guard.height <= zone.bird.y - TILE &&
-            gateY <= (zone.steps === observed?.step ? observed.y : Infinity)
-          ) {
-            passed = true;
-            move = 1;
-          }
-        }
-      }
-      if (guard) {
-        observed = { step: zone.steps + 1, y: zone.objects[guardIndex]!.y };
-      }
-      zone = stepZone(
-        SKILL_PROFILES,
-        ORDINARY,
-        layout,
-        STEP_SECONDS,
-        { jumpHeld: held, move, useHeld: false },
-        zone,
-      );
-      expect(zone.bird.airJumpUsed).toBe(false);
-    }
-    const witness = JSON.stringify({ id, index, theme, ticks, x: zone.bird.x, y: zone.bird.y });
-    expect(zone.death, witness).toBeUndefined();
-    expect(zone.cleared, witness).toBe(true);
-    expect(passed).toBe(guard !== undefined);
-    console.info("Ordinary connector ticks", { id, theme, ticks });
+    const route = connectorRoute(theme, id);
+    const witness = JSON.stringify({ id, theme, ...route });
+    expect(route.death, witness).toBeUndefined();
+    expect(route.cleared, witness).toBe(true);
+    expect(route.airJumped, witness).toBe(false);
+    expect(route.passedGate).toBe(route.gate);
+    console.info("Ordinary connector ticks", { id, theme, ticks: route.ticks });
   },
 );
 
