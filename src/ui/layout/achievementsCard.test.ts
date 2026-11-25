@@ -1,4 +1,4 @@
-import { arrangeActions } from "@andornaut/game-kit/runtime/ui/actionGroup";
+import { ACTION_GAPS, arrangeActions } from "@andornaut/game-kit/runtime/ui/actionGroup";
 import { placeModalFrame } from "@andornaut/game-kit/runtime/ui/modalFrame";
 import { arrangePager, pagerSize } from "@andornaut/game-kit/runtime/ui/pager";
 import { expect, it } from "vitest";
@@ -71,27 +71,24 @@ it("keeps the page count the card gap from Previous's and Next's faces", () => {
   });
 });
 
-it("stacks the centred pager above a centred Back in the footer", () => {
+it("centres the pager in the one-row footer with Back at its right edge", () => {
   const pager = pagerSize(PAGER);
-  const footer = arrangeActions({ axis: "stack", middle: pager, variant: "footer", width: ROOM }, [
+  const footer = arrangeActions({ middle: pager, variant: "footer", width: ROOM }, [
     { key: "back", role: "primary", size: BACK },
   ]);
   const [back] = footer.actions;
   if (back === undefined || back.hidden || footer.middle === undefined) {
     throw new Error("The footer places the pager and Back");
   }
-  const centre = (rect: { readonly width: number; readonly x: number }) => rect.x + rect.width / 2;
   expect({
-    back: centre(back.face),
-    gap: back.face.y - (footer.middle.y + footer.middle.height),
+    axis: footer.axis,
+    backRight: back.face.x + back.face.width,
     height: footer.group.height,
-    pager: centre(footer.middle),
-  }).toEqual({
-    back: ROOM / 2,
-    gap: CARD_CONTENT.gap,
-    height: ACHIEVEMENTS_FOOTER_HEIGHT,
-    pager: ROOM / 2,
-  });
+    pager: footer.middle.x + footer.middle.width / 2,
+  }).toEqual({ axis: "row", backRight: ROOM, height: ACHIEVEMENTS_FOOTER_HEIGHT, pager: ROOM / 2 });
+  expect(back.face.x - (footer.middle.x + footer.middle.width)).toBeGreaterThanOrEqual(
+    ACTION_GAPS.standard.row,
+  );
 });
 
 it("shows as many rows as fit the view less the screen margin, without scrolling", () => {
@@ -100,11 +97,14 @@ it("shows as many rows as fit the view less the screen margin, without scrolling
   expect({
     fits: frame(rows).card.height <= most,
     perPage: achievementsPerPage(),
+    rows,
     scrolls: frame(rows).scrolls,
     tallerScrolls: frame(rows + 1).scrolls,
   }).toEqual({
     fits: true,
     perPage: rows * ACHIEVEMENTS_CARD.columns,
+    // The one-row footer leaves room for three rows of entries.
+    rows: 3,
     scrolls: false,
     tallerScrolls: true,
   });

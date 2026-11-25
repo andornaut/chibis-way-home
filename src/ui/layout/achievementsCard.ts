@@ -1,4 +1,3 @@
-import { ACTION_GAPS } from "@andornaut/game-kit/runtime/ui/actionGroup";
 import type { LayoutValues } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import {
@@ -13,7 +12,7 @@ import { FONT_METRICS } from "./fontRoles.ts";
 
 // The Achievements card's geometry in base px (src/ui/dom/achievements.css lays it out): on the
 // card's frame, two columns of entries filled down each column then across, a page at a time,
-// over a footer that stacks Previous, the page count and Next above Back.
+// over a one-row footer: Previous, the page count and Next centred, and Back at its right edge.
 
 // One entry's height: its title line and its description's lines, each a body line box.
 const ENTRY_HEIGHT = FONT_METRICS.body.lineHeight * (1 + ACHIEVEMENTS_CARD.descriptionLines);
@@ -22,8 +21,8 @@ const ENTRY_HEIGHT = FONT_METRICS.body.lineHeight * (1 + ACHIEVEMENTS_CARD.descr
 // list starts.
 const HEADER = CARD_CLOSE.hit.y + CARD_CLOSE.hit.height + CARD_CONTENT.gap;
 
-// The footer: the pager and Back, each a text button's height, the stacked gap apart.
-export const ACHIEVEMENTS_FOOTER_HEIGHT = 2 * TEXT_BUTTON.height + ACTION_GAPS.standard.stack;
+// The footer: the pager and Back in one row, a text button's height.
+export const ACHIEVEMENTS_FOOTER_HEIGHT = TEXT_BUTTON.height;
 
 // The list's height at rows rows.
 export function achievementsListHeight(rows: number): number {

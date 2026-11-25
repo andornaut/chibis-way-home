@@ -11,8 +11,9 @@ import { createCardFrame, TEXT_BUTTON_APPEARANCE, textButton } from "./card.ts";
 import { registerLayout, rendered } from "./layout.ts";
 
 // The Achievements card in the HTML UI (achievements.css) on the card frame: its title, a list
-// of every entry, a page of them at a time, and a footer that stacks the pager (Previous, the
-// page count and Next) above Back. The keyboard's focus moves through Previous, Next, Back and
+// of every entry, a page of them at a time, and a one-row footer with the pager (Previous, the
+// page count and Next) centred and Back at its right edge, this card's exception to a centred
+// sole footer action. The keyboard's focus moves through Previous, Next, Back and
 // the close X in that order.
 
 // One entry's words and state: its progress is a locked entry's count, where it has one.
@@ -121,12 +122,10 @@ export function createAchievementsCard(
   setTextButtonRole(false, pager.previous.element);
   setTextButtonRole(false, pager.next.element);
   const back = textButton(document, words.back, true);
-  // The footer's middle slot, which a stacked footer puts first: the pager, at its measured size.
+  // The footer's middle slot, centred in the row: the pager, at its measured size.
   const footer: {
-    readonly axis: "stack";
     middle: { readonly element: HTMLElement; readonly size: ButtonSize };
   } = {
-    axis: "stack",
     middle: { element: pager.element, size: { height: TEXT_BUTTON.height, width: 1 } },
   };
   frame.frame.footer.element.append(pager.element);
