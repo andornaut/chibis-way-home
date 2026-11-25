@@ -4,7 +4,6 @@ import { type ActionsView, createActions } from "./actions.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";
 import { type CardFrame, createCardFrame } from "./cardFrame.ts";
 
-export { setCardWidth } from "./cardElements.ts";
 export { type CardFrame, closeButton, createCardFrame } from "./cardFrame.ts";
 
 // A modal card of words in the HTML UI (cardFrame.ts): its title, optional text and its actions

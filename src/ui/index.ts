@@ -44,12 +44,7 @@ export {
   showAchievementsPage,
 } from "./dom/achievements.ts";
 export { createSkillActionHelp } from "./dom/actionHelp.ts";
-export {
-  BUTTON_FACE_INSETS,
-  BUTTON_TOKENS,
-  setTextButtonSizing,
-  type TextButtonSizing,
-} from "./dom/buttonLayout.ts";
+export { BUTTON_FACE_INSETS, BUTTON_TOKENS } from "./dom/buttonLayout.ts";
 export { type CardView, createCard, createMessageCard } from "./dom/card.ts";
 export {
   type CelebrationControl,
@@ -80,15 +75,6 @@ export {
 } from "./dom/dialogue.ts";
 export { mountFpsCounter } from "./dom/fpsCounter.ts";
 export { createUiLayer, loadUiFonts, UI_DIMMED, UI_LAYOUT, type UiLayer } from "./dom/layer.ts";
-export {
-  createUiLayoutPorts,
-  mountUiLayout,
-  type UiButtonProps,
-  type UiLayoutNode,
-  type UiLayoutSchema,
-  type UiNativeProps,
-  type UiTextProps,
-} from "./dom/layoutTree.ts";
 export {
   createMap,
   type DestinationLook,

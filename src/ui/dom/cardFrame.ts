@@ -1,6 +1,7 @@
 import type { ModalFrameLayout } from "@andornaut/game-kit/runtime/ui/modalFrame";
 import {
   createModalFrame,
+  type DomModalFrameContext,
   type ModalFrameView,
 } from "@andornaut/game-kit/runtime/web/ui/dom/modalFrame";
 
@@ -48,6 +49,38 @@ const CLOSEABLE_BODY_OUTSET = hitMargin({
   x: 0,
   y: 0,
 });
+
+// What the kit's frame places a card from: its context, its title's insets and how far the
+// body's first press area reaches above the body.
+export function cardFramePlacement(card: {
+  readonly close: boolean;
+  readonly content?: Rect;
+  readonly family: CardWidth;
+  readonly titled: boolean;
+}): {
+  readonly bodyOutset?: number;
+  readonly context: DomModalFrameContext;
+  readonly title: { readonly inkOffset?: number; readonly inset: number };
+} {
+  return {
+    ...(card.close ? { bodyOutset: CLOSEABLE_BODY_OUTSET } : {}),
+    context: {
+      ...(card.close ? { close: CLOSE } : {}),
+      content: card.content ?? VIEW,
+      families: CARD_WIDTH,
+      family: card.family,
+      gap: CARD_CONTENT.gap,
+      margin: CARD_SCREEN_MARGIN,
+      padding: CARD_CONTENT.padding,
+    },
+    title: card.titled
+      ? {
+          inkOffset: card.close ? CLOSEABLE_TITLE_INK_OFFSET : TITLE_INK_OFFSET,
+          inset: TITLE_INSET,
+        }
+      : { inset: CARD_CONTENT.padding / 2 },
+  };
+}
 
 export interface CardFrameOptions {
   // A card the player must answer rather than one they may browse past.
@@ -138,40 +171,30 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
     if (!rendered(frame.element)) {
       return undefined;
     }
-    const titled = options.title !== undefined;
-    return frame.layout(
-      {
-        ...(close === undefined ? {} : { close: CLOSE }),
-        content: options.content ?? VIEW,
-        families: CARD_WIDTH,
-        family,
-        gap: CARD_CONTENT.gap,
-        margin: CARD_SCREEN_MARGIN,
-        padding: CARD_CONTENT.padding,
-      },
-      {
-        ...(close === undefined ? {} : { bodyOutset: CLOSEABLE_BODY_OUTSET, close }),
-        ...(footer === undefined
-          ? {}
-          : {
-              footer: {
-                actions: measuredActions(frame.footer, footer.actions),
-                ...(footer.context === undefined
-                  ? {}
-                  : {
-                      context:
-                        typeof footer.context === "function" ? footer.context() : footer.context,
-                    }),
-              },
-            }),
-        title: titled
-          ? {
-              inkOffset: close === undefined ? TITLE_INK_OFFSET : CLOSEABLE_TITLE_INK_OFFSET,
-              inset: TITLE_INSET,
-            }
-          : { inset: CARD_CONTENT.padding / 2 },
-      },
-    ).frame;
+    const placement = cardFramePlacement({
+      close: close !== undefined,
+      ...(options.content === undefined ? {} : { content: options.content }),
+      family,
+      titled: options.title !== undefined,
+    });
+    return frame.layout(placement.context, {
+      ...(placement.bodyOutset === undefined ? {} : { bodyOutset: placement.bodyOutset }),
+      ...(close === undefined ? {} : { close }),
+      ...(footer === undefined
+        ? {}
+        : {
+            footer: {
+              actions: measuredActions(frame.footer, footer.actions),
+              ...(footer.context === undefined
+                ? {}
+                : {
+                    context:
+                      typeof footer.context === "function" ? footer.context() : footer.context,
+                  }),
+            },
+          }),
+      title: placement.title,
+    }).frame;
   };
   registerLayout(layout, frame.card);
   return {

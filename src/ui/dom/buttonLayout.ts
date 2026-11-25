@@ -7,8 +7,6 @@ import {
 
 import { TEXT_BUTTON } from "../../data/layout.ts";
 
-export type TextButtonSizing = "authored" | "standard";
-
 export const BUTTON_TOKENS = {
   standard: {
     height: TEXT_BUTTON.height,
@@ -25,7 +23,7 @@ export const BUTTON_FACE_INSETS = {
   top: 0,
 } as const;
 
-// Shared minima are inherited; authored rectangles opt out without copying a size token.
+// Shared minima are inherited from the layer.
 export function setButtonLayoutDefaults(root: HTMLElement): void {
   setButtonSize(BUTTON_TOKENS, "standard", root);
   setButtonFrame({ faceInsets: BUTTON_FACE_INSETS }, root);
@@ -36,13 +34,6 @@ export function setTextButtonRole(primary: boolean, button: HTMLButtonElement): 
     primary ? "primary" : "secondary",
     button.querySelector<HTMLElement>(".ui-text-button-face")!,
   );
-}
-
-// Authored rectangles keep their existing fixed face and target geometry.
-export function setTextButtonSizing(sizing: TextButtonSizing, button: HTMLButtonElement): void {
-  button
-    .querySelector(".ui-text-button-face")!
-    .toggleAttribute("data-ui-authored-size", sizing === "authored");
 }
 
 // Native rounded borders remain the skin's geometry, including its existing padding compensation.

@@ -160,11 +160,6 @@
   white-space: nowrap;
 }
 
-.ui-text-button-face[data-ui-authored-size] {
-  min-width: 0;
-  min-height: 0;
-}
-
 .ui-text-button[data-pressed] .ui-text-button-face {
   --ui-frame-image: var(--ui-button-pressed-image);
   --ui-frame-slice: var(--ui-button-pressed-slice);

@@ -163,9 +163,7 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
       ) as Record<SkillId, string>,
     });
     this.view = view;
-    // CLEANUP (added 2026-11-25): drop the cast once the UI layer's menuEntry takes the entry's
-    // element, the action group that holds the button.
-    const unmountEntry = sceneDomUi(this)?.menuEntry(view.entry as HTMLButtonElement);
+    const unmountEntry = sceneDomUi(this)?.menuEntry(view.entry);
     this.events.once("shutdown", () => {
       this.live = false;
       this.menuGeneration++;

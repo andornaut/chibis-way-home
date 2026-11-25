@@ -68,7 +68,8 @@ export interface UiLayer {
   dispose(): void;
   // Places the view for the canvas's fit, the canvas's top-left offset in the layer in CSS px.
   fit(canvasAt: Point, fit: RenderFit): void;
-  menuEntry(button: HTMLButtonElement): () => void;
+  // Mounts the global menu entry, over every scene view, and returns its removal.
+  menuEntry(entry: HTMLElement): () => void;
   // Mounts view as order's layer, above lower orders, and returns its removal.
   mount(order: number, view: HTMLElement): () => void;
   // Sets the dimmed skin: the custom properties (applySkin's) set on what a modal dims.
@@ -333,14 +334,14 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
       refreshTextButtonFrames(element);
       layoutWithin(element);
     },
-    menuEntry(button) {
+    menuEntry(entry) {
       if (entryView.childElementCount !== 0) {
         throw new Error("The global menu entry is already registered");
       }
-      entryView.append(button);
+      entryView.append(entry);
       return () => {
-        disposeGameButtons(button);
-        button.remove();
+        disposeGameButtons(entry);
+        entry.remove();
       };
     },
     modals,

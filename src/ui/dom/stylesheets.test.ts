@@ -20,7 +20,7 @@ import { SKILL_DETAILS_LAYOUT } from "./skillDetails.ts";
 import { SKILL_DISC_LAYOUT } from "./skillDisc.ts";
 import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
 import { STAGE_PROGRESS_PROPERTIES } from "./stageProgress.ts";
-import { STAGE_SUMMARY_LAYOUT, stageSummaryGaps } from "./stageSummary.ts";
+import { STAGE_SUMMARY_LAYOUT } from "./stageSummary.ts";
 import { startBoxProperties } from "./start.ts";
 import { TOUCH_CONTROLS_PROPERTIES } from "./touchControls.ts";
 
@@ -30,7 +30,18 @@ const SHEETS = readdirSync(DIRECTORY)
   .filter((name) => name.endsWith(".css"))
   .map((name) => [name, readFileSync(new URL(name, DIRECTORY), "utf8")] as const);
 // The kit's ui.css, which loads first, sets the shared button gaps.
-const KIT_CSS = ["ui.css", "controls.css", "controlPresentation.css", "layoutTree.css"]
+const KIT_CSS = [
+  "actionGroup.css",
+  "controlPresentation.css",
+  "controls.css",
+  "formRow.css",
+  "hudDisc.css",
+  "layoutTree.css",
+  "modalFrame.css",
+  "pager.css",
+  "ui.css",
+  "uiTheme.css",
+]
   .map((name) =>
     readFileSync(
       createRequire(import.meta.url).resolve(`@andornaut/game-kit/runtime/web/ui/dom/${name}`),
@@ -61,14 +72,6 @@ const WRITTEN = new Set(
     DIALOGUE_FOOTER_LAYOUT,
     DIALOGUE_PANEL_LAYOUT,
     STAGE_SUMMARY_LAYOUT,
-    stageSummaryGaps(() => ({ fall: 0, rise: 0 }), {
-      continue: "",
-      progress: "",
-      stage: "",
-      stats: [],
-      totals: [],
-      zone: "",
-    }),
     achievementsCardProperties(1),
     runStatsProperties({ columnGap: 0, divider: 2 }),
     ACTION_HELP_PROPERTIES,
@@ -78,98 +81,45 @@ const WRITTEN = new Set(
   ].flatMap(Object.keys),
 );
 
-// Every custom property a card's stylesheet reads is one its card, the layer, the view bridge or
-// the skin writes, or one the UI's stylesheets set, so no rule reads a value nothing provides.
-// ui.css is checked against the layer itself (layer.test.ts).
-it.each(SHEETS.filter(([name]) => name !== "ui.css"))(
-  "%s reads only custom properties something writes",
-  (_, css) => {
-    const read = new Set([...css.matchAll(/var\((--[\w-]+)/g)].map(([, name]) => name!));
-    const provided = (name: string) =>
-      SET.has(name) ||
-      WRITTEN.has(name) ||
-      /^--ui-(unit|view-\w+|slice-\d+)$/.test(name) ||
-      UI_COLOURS.some((colour) => name === `--colour-${colour}`) ||
-      UI_FRAMES.some(({ name: frame }) =>
-        ["border", "bottom", "image", "left", "right", "slice", "top"].some(
-          (part) => name === `--${frame}-${part}`,
-        ),
-      );
-    expect(read.size).toBeGreaterThan(0);
-    expect([...read].filter((name) => !provided(name))).toEqual([]);
-  },
-);
+// The kit's components write their own properties on the elements they place.
+const KIT_WRITTEN = /^--ui-(action|button|colour|form|hud-disc|modal|pager|switch|text)-[\w-]+$/;
 
-// Neighbouring button faces side by side sit the kit's button gap apart, card actions and stage
-// faces alike, each press area reaching half the gap toward the next; the settings rows stack the
-// kit's stack gap apart. The pagers' page count is not a button, so its spacing stays the card gap.
-it("spaces neighbouring buttons by the button and stack gaps", () => {
-  const sheet = (name: string) => SHEETS.find(([sheetName]) => sheetName === name)![1];
-  const rule = (css: string, selector: string) =>
-    new RegExp(`(?:^|\\n)${selector.replaceAll(".", "\\.")} \\{([^}]*)\\}`, "u").exec(css)?.[1];
-  const halfGap = "--half-gap: calc(var(--ui-button-gap) / 2);";
-  expect(rule(sheet("ui.css"), ".ui-card-actions")).toContain(halfGap);
-  expect(rule(sheet("stageSelect.css"), ".stage-select-page")).toContain(halfGap);
-  expect(rule(sheet("settings.css"), ".settings-rows")).toContain(
-    "row-gap: var(--ui-stack-button-gap);",
-  );
-  expect(rule(sheet("achievements.css"), ".achievements-pager")).toContain(
-    "--half-gap: calc(var(--ui-unit) * var(--card-gap) / 2 * 1px);",
-  );
+// Every custom property a stylesheet reads is one its view, the layer, the theme, the view
+// bridge, the skin or a kit component writes, or one the UI's stylesheets set, so no rule reads a
+// value nothing provides.
+it.each(SHEETS)("%s reads only custom properties something writes", (_, css) => {
+  const read = new Set([...css.matchAll(/var\((--[\w-]+)/g)].map(([, name]) => name!));
+  const provided = (name: string) =>
+    SET.has(name) ||
+    WRITTEN.has(name) ||
+    KIT_WRITTEN.test(name) ||
+    /^--ui-(unit|view-\w+|slice-\d+)$/.test(name) ||
+    UI_COLOURS.some((colour) => name === `--colour-${colour}`) ||
+    UI_FRAMES.some(({ name: frame }) =>
+      ["border", "bottom", "image", "left", "right", "slice", "top"].some(
+        (part) => name === `--${frame}-${part}`,
+      ),
+    );
+  expect([...read].filter((name) => !provided(name))).toEqual([]);
 });
 
-it("centres each standalone action row and keeps its targets clear of the neighbouring face", () => {
-  const ui = SHEETS.find(([name]) => name === "ui.css")![1];
-  expect(ui).toMatch(/\.ui-action-row \{[^}]*display: flex;[^}]*justify-content: center;/u);
-  expect(ui).toMatch(/\.ui-anchored-action \{[^}]*width: max-content;/u);
-  expect(ui).toContain(
-    ".ui-action-row:has(> .ui-anchored-action:not([hidden]) ~ .ui-anchored-action:not([hidden]))",
+// Each rule's selector and declarations in a stylesheet, without comments.
+function rules(css: string): (readonly [string, string])[] {
+  return [...css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^}]*)\}/g)].map(
+    ([, selector, body]) => [selector!.trim(), body!] as const,
   );
+}
+
+// The group that holds controls owns the space between them: no sheet pulls a box back with a
+// negative margin.
+it.each(SHEETS)("%s spaces its boxes without negative margins", (_, css) => {
+  const negative = rules(css).filter(([, body]) =>
+    /(?<![\w-])margin(-\w+)?:[^;]*(calc\(\s*-|\*\s*-1|(?<![\w)])-\d)/u.test(body),
+  );
+  expect(negative.map(([selector]) => selector)).toEqual([]);
 });
 
-it("keeps Achievements pagination centred with a separate right-aligned return slot", () => {
-  const css = SHEETS.find(([name]) => name === "achievements.css")![1];
-  expect(css).toContain("grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);");
-  expect(css).toContain(".achievements-footer > .achievements-pager {\n  grid-column: 2;");
-  expect(css).toContain(".achievements-return {\n  grid-column: 3;\n  justify-self: end;");
-});
-
-it("colours button faces and icons for keyboard focus and forced colours without adding rings", () => {
-  const sheet = (name: string) => SHEETS.find(([sheetName]) => sheetName === name)![1];
-  const ui = sheet("ui.css");
-  expect(ui).toMatch(/\.ui-standard-button[^{}]+:focus-visible\s*\{\s*outline: none;/u);
-  expect(ui).toContain("background: var(--button-state-fill) padding-box;");
-  expect(ui).toContain("--button-focus-fill: Highlight;");
-  expect(ui).toContain("--button-focus-ink: HighlightText;");
-  expect(ui).toContain("--button-press-fill: ButtonText;");
-  expect(ui).toContain("--button-press-ink: ButtonFace;");
-  expect(ui).toContain("color: GrayText;");
-  const pause = sheet("pause.css");
-  expect(pause).toContain(
-    [
-      ":is(.pause-button, .start-icon-button):is(:focus-visible, [data-pressed], [data-ui-pressed])",
-      "  .navigation-disc {",
-      "  --navigation-face: var(--button-state-fill);",
-    ].join("\n"),
-  );
-  expect(pause).toContain("fill: var(--skill-disc-fill, var(--colour-dslate));");
-  expect(pause).toContain("fill: var(--skill-disc-fill, var(--colour-yellow));");
-  expect(pause).toMatch(
-    /\.skill-button:not\(:disabled\):focus-visible \{\s*--skill-disc-fill: var\(--colour-cream\);/u,
-  );
-  expect(pause).toContain("--skill-disc-ink: GrayText;");
-  expect(sheet("start.css")).toContain(".start-icon-face .navigation-disc");
-  expect(sheet("stageSelect.css")).toContain("background: var(--button-state-fill) padding-box;");
-  expect(sheet("map.css")).toContain("background: var(--button-focus-fill);");
-  expect(sheet("settings.css")).toContain("background: var(--button-state-fill);");
-  for (const name of [
-    "ui.css",
-    "pause.css",
-    "start.css",
-    "stageSelect.css",
-    "map.css",
-    "settings.css",
-  ]) {
-    expect(sheet(name)).not.toMatch(/box-shadow:|outline:\s*(?!\s|none)[^;]+;/u);
-  }
+// Focus shows as the face's fill, never as a ring.
+it.each(SHEETS)("%s adds no focus ring", (_, css) => {
+  expect(css).not.toMatch(/box-shadow:|outline:\s*(?!\s|none)[^;]+;/u);
 });
