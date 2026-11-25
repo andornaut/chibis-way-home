@@ -1,4 +1,4 @@
-import { type AgentSample, type AgentTick, centre } from "../ai/agentTrace.ts";
+import { type AgentSample, type AgentTick, centre } from "../ai/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { DodgeName } from "../data/types/index.ts";

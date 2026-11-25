@@ -1,4 +1,4 @@
-import type { Property } from "../ai/agentProperties.ts";
+import type { Property } from "../ai/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import { DOG_BEHAVIOUR } from "../data/behaviours.ts";
 import { CHARACTERS } from "../data/characters.ts";

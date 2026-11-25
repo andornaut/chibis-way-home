@@ -1,7 +1,7 @@
 import { randomStream } from "@andornaut/game-kit/runtime/random";
 import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
-import { namedStreams } from "../ai/randomStreams.ts";
+import { namedStreams } from "../ai/index.ts";
 import {
   collisionCandidates,
   contactFrameAt,

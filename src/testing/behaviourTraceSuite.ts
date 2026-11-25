@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 import { afterAll, describe, expect, it } from "vitest";
 
-import { traceRecorder } from "../ai/trace.ts";
+import { traceRecorder } from "../ai/index.ts";
 import { BIRD_FRAME } from "../assets/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import { BIRD } from "../data/bird.ts";

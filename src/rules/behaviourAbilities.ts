@@ -1,6 +1,6 @@
 import type { TraversalSafety } from "@andornaut/game-kit/runtime/terrain/traversal";
 
-import type { Ability, AbilityResult, AbilityTable } from "../ai/ability.ts";
+import type { Ability, AbilityResult, AbilityTable } from "../ai/index.ts";
 import { EDGE } from "../core/index.ts";
 import type { BehaviourMotion, ObjectLayout, Point } from "../data/types/index.ts";
 import type { BehaviourState } from "./behaviour.ts";

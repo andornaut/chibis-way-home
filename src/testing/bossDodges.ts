@@ -1,5 +1,4 @@
-import { tellStarts } from "../ai/agentProperties.ts";
-import type { AgentSample } from "../ai/agentTrace.ts";
+import { type AgentSample, tellStarts } from "../ai/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, BossFairness, DodgeName, ZoneLayout } from "../data/types/index.ts";
 import type { ZoneInput, ZoneState } from "../rules/zone.ts";

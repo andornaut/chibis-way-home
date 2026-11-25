@@ -4,7 +4,7 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 
-import { traceRecorder } from "../ai/trace.ts";
+import { traceRecorder } from "../ai/index.ts";
 import { BIRD_FRAME } from "../assets/index.ts";
 import { ARCHETYPES } from "../data/archetypes.ts";
 import { ARENAS } from "../data/arenas/index.ts";

@@ -1,7 +1,12 @@
 import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
-import type { AgentSample, AgentTick } from "../ai/agentTrace.ts";
-import { simulate, type SimulationController, type SimulationModel } from "../ai/simulation.ts";
+import {
+  type AgentSample,
+  type AgentTick,
+  simulate,
+  type SimulationController,
+  type SimulationModel,
+} from "../ai/index.ts";
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import { BOSS_CHARACTERS } from "../data/achievements.ts";
 import type {

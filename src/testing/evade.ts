@@ -45,8 +45,7 @@ import {
   pathTo,
 } from "@andornaut/game-kit/runtime/terrain/movementMap";
 
-import { type AgentSample, centre } from "../ai/agentTrace.ts";
-import { traceRecorder } from "../ai/trace.ts";
+import { type AgentSample, centre, traceRecorder } from "../ai/index.ts";
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import { ARENA_COUNTERS } from "../data/arenas/index.ts";
 import { BOSS_FAIRNESS } from "../data/bossFairness.ts";

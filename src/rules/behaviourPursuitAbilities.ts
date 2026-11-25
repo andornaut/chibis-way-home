@@ -1,4 +1,4 @@
-import type { Ability } from "../ai/ability.ts";
+import type { Ability } from "../ai/index.ts";
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import type { Point, Rect } from "../data/types/index.ts";
 import type { BehaviourState } from "./behaviour.ts";

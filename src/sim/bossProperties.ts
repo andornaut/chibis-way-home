@@ -1,9 +1,12 @@
 import { insetRect, rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import {
+  type AgentSample,
+  type AgentTick,
   attackCadence,
   boundedStep,
   cancelledTellKeepsCooldown,
+  centre,
   cooldownHonoured,
   escapeAtDistance,
   everyTick,
@@ -18,8 +21,7 @@ import {
   tellResolves,
   tellStarts,
   travelBounded,
-} from "../ai/agentProperties.ts";
-import { type AgentSample, type AgentTick, centre } from "../ai/agentTrace.ts";
+} from "../ai/index.ts";
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import { ATTACK_ENGAGEMENT_RANGE } from "../data/behaviours.ts";
 import { BOSS_FAIRNESS } from "../data/bossFairness.ts";

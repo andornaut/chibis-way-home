@@ -3,7 +3,7 @@
 // evade playtest, in its stage's theme only.
 import { readFileSync } from "node:fs";
 
-import { traceRecorder } from "../ai/trace.ts";
+import { traceRecorder } from "../ai/index.ts";
 import { BIRD_FRAME } from "../assets/index.ts";
 import { ARENAS } from "../data/arenas/index.ts";
 import { BIRD } from "../data/bird.ts";

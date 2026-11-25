@@ -1,4 +1,4 @@
-import type { RandomStreams } from "../ai/randomStreams.ts";
+import type { RandomStreams } from "../ai/index.ts";
 import type { BirdTuning, DialogueLine, ObjectLayout, Point } from "../data/types/index.ts";
 import {
   actBehaviour,

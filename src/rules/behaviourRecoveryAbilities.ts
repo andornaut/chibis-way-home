@@ -1,4 +1,4 @@
-import { type Ability, abilityFor, type AbilityTable } from "../ai/ability.ts";
+import { type Ability, abilityFor, type AbilityTable } from "../ai/index.ts";
 import type { ObjectLayout, Point } from "../data/types/index.ts";
 import type { BehaviourState, BehaviourStep } from "./behaviour.ts";
 import { animateSegments } from "./behaviourAnimation.ts";

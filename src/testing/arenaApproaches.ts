@@ -1,7 +1,7 @@
 import { createReadStream, readFileSync } from "node:fs";
 import { createInterface } from "node:readline";
 
-import { traceRecorder } from "../ai/trace.ts";
+import { traceRecorder } from "../ai/index.ts";
 import { BIRD } from "../data/bird.ts";
 import type {
   ArenaApproachPolicy,
