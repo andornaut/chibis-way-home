@@ -1,53 +1,16 @@
-/* The stage picker card (stageSelect.ts), on ui.css's closeable card and its close X. Its
-   geometry is STAGE_SELECT_LAYOUT (src/ui/layout/stageSelectCard.ts), in base px from the card's
-   outer edges; the card's content box starts inside art's frame, whose edge is --card-edge. */
+/* The stage picker card (stageSelect.ts), on the card frame. Its geometry is STAGE_SELECT_LAYOUT
+   (src/ui/layout/stageSelectCard.ts), in base px. */
 
-.stage-select {
-  gap: 0;
-}
-
-/* One line in its line box, as far below the frame as the stages' tops balance. */
-.stage-select-title {
-  margin: calc(var(--ui-unit) * var(--stage-title-top) * 1px - var(--card-edge)) 0 0;
-  text-box: normal;
-}
-
-/* A page's faces side by side, the kit's button gap apart. Each face's button is its press area,
-   reaching --stage-face-hit past the face and half the gap toward the next face, so neighbouring
-   areas meet midway. */
+/* A page's faces: an action group, which places each face and gives it its press area. The row
+   is as wide as the card's content before the group first places it, and starts below the
+   header so the faces' press areas clear the close X's press target by the card gap. */
 .stage-select-page {
-  --hit: calc(var(--ui-unit) * var(--stage-face-hit) * 1px);
-  --half-gap: calc(var(--ui-button-gap) / 2);
-
-  display: flex;
-  margin: calc(
-      var(--ui-unit) *
-        (
-          var(--stage-body-top) - var(--stage-title-top) - var(--heading-line) -
-            var(--stage-face-hit)
-        ) *
-        1px
-    )
-    calc(-1 * var(--hit)) calc(-1 * var(--hit));
-}
-
-.stage-select-page[hidden] {
-  display: none;
+  width: calc(var(--ui-unit) * var(--stage-row-width) * 1px);
+  margin-top: calc(var(--ui-unit) * var(--stage-row-inset) * 1px);
 }
 
 .stage-select-stage {
   display: block;
-  padding: var(--hit);
-  font: inherit;
-  color: inherit;
-}
-
-.stage-select-stage:not(:first-child) {
-  padding-left: var(--half-gap);
-}
-
-.stage-select-stage:not(:last-child) {
-  padding-right: var(--half-gap);
 }
 
 .stage-select-face {
@@ -59,7 +22,8 @@
 
 /* Art's frame under the face's content: ui-button, ui-button-primary for the latest stage, and
    the flat disabled ui-button, which has no lip, for a locked one, which never shows pressed
-   (the shared action binding). */
+   (the shared action binding). The states are this sheet's: ui.css binds the text button's to
+   its 48px label face, and its primary class also orders an action group. */
 .stage-select-frame {
   --ui-frame-image: var(--ui-button-image);
   --ui-frame-slice: var(--ui-button-slice);
@@ -106,9 +70,6 @@
   top: calc(var(--ui-unit) * var(--stage-number-top) * 1px);
   right: calc(var(--ui-unit) * var(--stage-inset) * 1px);
   height: calc(var(--ui-unit) * var(--stage-number-height) * 1px);
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 400;
-  line-height: calc(var(--ui-unit) * var(--stage-number-height) * 1px);
   white-space: nowrap;
 }
 
@@ -136,9 +97,6 @@
   justify-content: center;
   width: calc(var(--ui-unit) * var(--stage-preview-width) * 1px);
   height: calc(var(--ui-unit) * var(--stage-name-height) * 1px);
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 700;
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
   text-align: center;
 }
 
@@ -147,18 +105,19 @@
 }
 
 .stage-select-stage[data-look="primary"] [data-ui-refusal-label] {
-  color: var(--colour-white);
+  color: var(--ui-colour-button-primary-text);
 }
 
-/* A locked stage: its content centred on the whole lipless face, half the lip lower, and dark
-   slate labels, as on a disabled text button, with the screenshot multiplied by grey and faded. */
+/* A locked stage: its content centred on the whole lipless face, half the lip lower, and labels
+   in the disabled text colour, as on a disabled text button, with the screenshot multiplied by
+   grey and faded. */
 .stage-select-stage[data-look="locked"]
   :is(.stage-select-number, .stage-select-preview, .stage-select-name) {
   translate: 0 calc(var(--ui-unit) * var(--button-lip) / 2 * 1px);
 }
 
 .stage-select-stage[data-look="locked"] [data-ui-refusal-label] {
-  color: var(--colour-dslate);
+  color: var(--ui-colour-button-disabled-text);
 }
 
 .stage-select-stage[data-look="locked"] .stage-select-preview {
@@ -173,25 +132,17 @@
   mix-blend-mode: multiply;
 }
 
-/* Previous, the page count and Next, clear of the faces' press areas. Each button fits its label
-   and its press area reaches --button-hit past its face on every
-   side. */
+/* Previous, the page count and Next, below the faces so both rows' press areas stay the card
+   gap apart. The page count is as wide as its text until the pager first places it. */
 .stage-select-pager {
-  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
-  --half-gap: var(--hit);
-
-  display: grid;
-  grid-template-columns: max-content auto max-content;
-  align-items: center;
-  margin-top: calc(var(--ui-unit) * (var(--card-gap) + var(--stage-face-hit)) * 1px);
+  margin-top: calc(var(--ui-unit) * var(--stage-pager-inset) * 1px);
 }
 
-.stage-select-count {
-  margin: 0 calc(var(--ui-unit) * var(--card-gap) / 2 * 1px);
-  white-space: nowrap;
-  text-box: trim-both cap alphabetic;
+.stage-select-pager > .ui-pager-count:not(.ui-action) {
+  width: max-content;
 }
 
+/* Focus and press fill the face inside its frame and colour its labels, as on a text button. */
 .stage-select-stage:not([aria-disabled="true"]):is(:focus-visible, [data-pressed])
   .stage-select-frame {
   border-image-slice: var(--ui-frame-slice);

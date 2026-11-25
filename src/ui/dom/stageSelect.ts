@@ -1,48 +1,28 @@
 import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPresentation";
-import type { ButtonView } from "@andornaut/game-kit/runtime/web/ui/dom/button";
+import type { PagerState } from "@andornaut/game-kit/runtime/ui/pager";
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
+import type { PagerView } from "@andornaut/game-kit/runtime/web/ui/dom/pager";
 
-import { createGameButton } from "../input/actionBinding.ts";
-import { STAGE_SELECT_LAYOUT, STAGE_SELECT_WIDTH } from "../layout/stageSelectCard.ts";
+import { CONTROL_REFUSAL } from "../../data/feedback.ts";
+import { createGamePager, type GameAction } from "../input/actionBinding.ts";
+import {
+  STAGE_FACE,
+  STAGE_ROW_WIDTH,
+  STAGE_SELECT_LAYOUT,
+  STAGE_SELECT_WIDTH,
+} from "../layout/stageSelectCard.ts";
+import { createActions } from "./actions.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";
-import { closeButton, setCardWidth } from "./card.ts";
+import { createCardFrame } from "./card.ts";
+import { registerLayout, rendered } from "./layout.ts";
 
-interface StagePagerActions {
-  readonly available: (step: -1 | 1) => boolean;
-  readonly refuse: (control: HTMLButtonElement) => void;
-}
-
-function createStagePageButton(
-  document: Document,
-  actions: StagePagerActions,
-  step: -1 | 1,
-  label: string,
-): ButtonView {
-  const button = createGameButton(
-    document,
-    {
-      className: "ui-text-button",
-      contentClassName: "ui-text-button-label",
-      face: { className: "ui-text-button-face ui-frame ui-control-button" },
-    },
-    { kind: "text", label },
-    {
-      getState: () => ({
-        availability: { kind: actions.available(step) ? "available" : "pointer-refusal" },
-      }),
-      onPointerRefusal: () => actions.refuse(button.element),
-    },
-  );
-  button.face.querySelector<HTMLElement>(".ui-text-button-label")!.dataset.uiRefusalLabel = "";
-  setTextButtonRole(false, button.element);
-  return button;
-}
-
-// The stage picker card in the HTML UI (stageSelect.css): the destination's name, the close X,
-// one row of stage faces per page, of which one shows, and on a paged card Previous, the page
-// count and Next. Each face is a button holding its number, its screenshot and its name, in art's
-// ui-button, or ui-button-primary for the latest stage, or the locked look; a locked stage is
-// aria-disabled, outside the Tab order and described as locked.
+// The stage picker card in the HTML UI (stageSelect.css) on the card frame: the destination's
+// name, one row of stage faces per page, of which one shows, on a paged card the pager
+// (Previous, the page count and Next), and the close X, last in the focus order. Each face is a
+// button holding its number, its screenshot and its name, in art's ui-button, or
+// ui-button-primary for the latest stage, or the locked look; a locked stage is aria-disabled,
+// outside the Tab order and described as locked. A pager button with no page to turn to refuses
+// a press and leaves the Tab order.
 
 export type StageLook = "locked" | "normal" | "primary";
 
@@ -63,15 +43,25 @@ export interface StageSelectWords {
   readonly title: string;
 }
 
+// The pager's page, its count's words, its guard and its step, from the scene.
+export interface StagePaging {
+  readonly active: () => boolean;
+  readonly countText: (state: PagerState) => string;
+  readonly reducedMotion: () => boolean;
+  readonly state: () => PagerState;
+  readonly step: (direction: -1 | 1) => void;
+}
+
 export interface StageSelectView {
   readonly backdrop: HTMLElement;
   readonly close: HTMLButtonElement;
   // Each stage's screenshot, whose source the caller sets.
   readonly previews: ReadonlyMap<string, HTMLImageElement>;
-  // The page count, a polite live region, on a paged card.
-  readonly count: HTMLElement | undefined;
   readonly dialog: HTMLElement;
-  readonly pager: { readonly next: ButtonView; readonly previous: ButtonView } | undefined;
+  // Previous, the page count (a polite live region) and Next, on a paged card.
+  readonly pager: PagerView | undefined;
+  // Previous and Next as the actions the scene binds; none on a card of one page.
+  readonly pagerActions: readonly GameAction[];
   // Each page's row of faces.
   readonly pages: readonly HTMLElement[];
   readonly root: HTMLElement;
@@ -80,12 +70,22 @@ export interface StageSelectView {
 
 const ID = "stage-select";
 
+// CLEANUP (added 2026-11-25): read the cue from src/ui/dom/refusal.ts once it exports it.
+// The refusal cue a pager button with no page to turn to plays, the one refuseControl plays.
+const REFUSAL_CUE = {
+  shake: CONTROL_REFUSAL.shake,
+  shakeMs: CONTROL_REFUSAL.shakeMs,
+  shakeShape: "yoyo",
+  stepMs: CONTROL_REFUSAL.flashMs,
+  steps: CONTROL_REFUSAL.flashes,
+} as const;
+
 // The card for words and the catalogue's stages, perPage to a page, every page hidden.
 export function createStageSelect(
   document: Document,
   words: StageSelectWords,
   perPage: number,
-  pagerActions: StagePagerActions,
+  paging: StagePaging,
   stages: readonly StageFace[],
 ): StageSelectView {
   const element = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
@@ -93,58 +93,87 @@ export function createStageSelect(
     created.className = className;
     return created;
   };
-  const root = element("div", "ui-card-scene");
-  writeLayoutProperties(STAGE_SELECT_LAYOUT, root);
-  const backdrop = element("div", "ui-backdrop");
-  const view = element("div", "ui-view ui-card-view");
-  const dialog = element("section", "ui-card ui-card-closeable ui-frame stage-select");
-  setCardWidth(STAGE_SELECT_WIDTH, dialog);
-  dialog.id = ID;
-  dialog.setAttribute("role", "dialog");
-  dialog.setAttribute("aria-labelledby", `${ID}-title`);
-  const title = element("h2", "ui-card-title stage-select-title");
-  title.id = `${ID}-title`;
-  title.textContent = words.title;
+  const frame = createCardFrame(document, {
+    className: "stage-select",
+    close: words.close,
+    id: ID,
+    title: words.title,
+    width: STAGE_SELECT_WIDTH,
+  });
+  writeLayoutProperties(STAGE_SELECT_LAYOUT, frame.root);
   const locked = element("span", "");
   locked.id = `${ID}-locked`;
   locked.hidden = true;
   locked.textContent = words.locked;
-  const close = closeButton(document, words.close);
   const buttons = new Map<string, HTMLButtonElement>();
   const previews = new Map<string, HTMLImageElement>();
+  // A page's faces in catalogue order: a row group of fixed-size faces, the button gap apart.
   const pages = Array.from({ length: Math.ceil(stages.length / perPage) }, (_, index) => {
-    const page = element("div", "stage-select-page");
-    page.hidden = true;
-    page.append(
-      ...stages.slice(index * perPage, (index + 1) * perPage).map((stage) => {
+    const page = createActions(
+      document,
+      stages.slice(index * perPage, (index + 1) * perPage).map((stage) => {
         const button = stageButton(element, `${ID}-locked`, words.locked, stage);
         buttons.set(stage.id, button);
         previews.set(stage.id, button.querySelector("img")!);
         return button;
       }),
-    );
+      {
+        className: "stage-select-page",
+        context: { axis: "row" },
+        size: () => STAGE_FACE,
+        width: STAGE_ROW_WIDTH,
+      },
+    ).element;
+    page.hidden = true;
     return page;
   });
-  dialog.append(title, close, ...pages, locked);
-  let pager: StageSelectView["pager"];
-  let count: HTMLElement | undefined;
+  frame.content.append(...pages);
+  let pager: PagerView | undefined;
+  let pagerActions: readonly GameAction[] = [];
   if (pages.length > 1) {
     if (words.pager === undefined) {
       throw new Error("A paged stage picker requires pager labels");
     }
-    pager = {
-      next: createStagePageButton(document, pagerActions, 1, words.pager.next),
-      previous: createStagePageButton(document, pagerActions, -1, words.pager.previous),
-    };
-    count = element("p", "stage-select-count ui-text-body");
-    count.setAttribute("aria-live", "polite");
-    const row = element("div", "stage-select-pager");
-    row.append(pager.previous.element, count, pager.next.element);
-    dialog.append(row);
+    const created = createGamePager(document, {
+      active: paging.active,
+      appearance: {
+        className: "ui-text-button",
+        contentClassName: "ui-text-button-label",
+        face: { className: "ui-text-button-face ui-frame ui-control-button" },
+        layout: "caller",
+      },
+      className: "stage-select-pager",
+      countText: paging.countText,
+      labels: words.pager,
+      refusal: { cue: REFUSAL_CUE, reducedMotion: paging.reducedMotion },
+      state: paging.state,
+      step: paging.step,
+    });
+    const view = created.view;
+    view.count.classList.add("ui-text-body");
+    setTextButtonRole(false, view.previous.element);
+    setTextButtonRole(false, view.next.element);
+    frame.content.append(view.element);
+    registerLayout(() => {
+      if (rendered(frame.content)) {
+        view.arrange({ width: STAGE_ROW_WIDTH });
+      }
+    }, view.element);
+    pager = view;
+    pagerActions = created.actions;
   }
-  view.append(dialog);
-  root.append(backdrop, view);
-  return { backdrop, close, count, dialog, pager, pages, previews, root, stages: buttons };
+  frame.content.append(locked);
+  return {
+    backdrop: frame.backdrop,
+    close: frame.close!,
+    dialog: frame.dialog,
+    pager,
+    pagerActions,
+    pages,
+    previews,
+    root: frame.root,
+    stages: buttons,
+  };
 }
 
 function stageButton(
@@ -169,7 +198,7 @@ function stageButton(
     button.tabIndex = -1;
   }
   const face = element("span", "stage-select-face");
-  const number = element("span", "stage-select-number");
+  const number = element("span", "stage-select-number ui-text-stage-number");
   number.dataset.uiRefusalLabel = "";
   number.textContent = stage.number;
   const preview = element("span", "stage-select-preview");
@@ -177,7 +206,7 @@ function stageButton(
   image.alt = "";
   image.draggable = false;
   preview.append(image);
-  const name = element("span", "stage-select-name");
+  const name = element("span", "stage-select-name ui-text-label");
   const text = element("span", "stage-select-name-text");
   text.dataset.uiRefusalLabel = "";
   text.textContent = stage.name;

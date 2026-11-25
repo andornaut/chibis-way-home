@@ -166,11 +166,7 @@ export {
 export { MAP_ACTIONS, type MapAction, mapKeyAction } from "./input/mapInput.ts";
 export { isMouseMovementKey, listenMouseMovement } from "./input/mouseMovement.ts";
 export { stagePickerKey } from "./input/stageSelectInput.ts";
-export {
-  achievementsCardProperties,
-  achievementsListTop,
-  achievementsPerPage,
-} from "./layout/achievementsCard.ts";
+export { achievementsCardProperties, achievementsPerPage } from "./layout/achievementsCard.ts";
 export { ACTION_HELP } from "./layout/actionHelp.ts";
 export { buttonFace, type ButtonFaceState } from "./layout/buttonLabel.ts";
 export {

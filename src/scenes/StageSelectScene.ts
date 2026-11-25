@@ -1,4 +1,5 @@
 import { invokeControl } from "@andornaut/game-kit/runtime/ui/controlPresentation";
+import { pagerState } from "@andornaut/game-kit/runtime/ui/pager";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
@@ -44,8 +45,9 @@ const PLANS = new Set(Object.keys(RECIPES));
 // button. A press that lands on a stage and lifts on it plays it; a locked stage stays shown,
 // takes no focus and refuses with the refusal cue. Nothing starts focused: Tab or an arrow
 // focuses the latest stage first, then steps through the unlocked stages (turning to their page),
-// the page buttons that can turn and the close X; Enter and Space press the focused one. Escape,
-// back, the close X and a tap outside the card close it. The card is HTML in the UI layer
+// the page buttons that can turn and the close X; Enter and Space press the focused one. A page
+// button with no page to turn to leaves the Tab order and refuses a press with the same cue (the
+// kit's pager). Escape, back, the close X and a tap outside the card close it. The card is HTML in the UI layer
 // (src/ui/dom/stageSelect.ts), shown once the map's dim is ready.
 export class StageSelectScene extends Scene {
   private stages: readonly string[] = [];
@@ -104,12 +106,14 @@ export class StageSelectScene extends Scene {
       },
       STAGES_PER_PAGE,
       {
-        available: (step) => this.pageKeys().includes(step === -1 ? "previousPage" : "nextPage"),
-        refuse: (control) => {
-          if (!this.finished && modalInput(this).accepts()) {
-            this.refuse(control);
-          }
-        },
+        active: () => !this.finished && modalInput(this).accepts(),
+        countText: ({ page, pages }) =>
+          TEXT.map.stagePages.page
+            .replace("{page}", String(page + 1))
+            .replace("{pages}", String(pages)),
+        reducedMotion: () => reducedMotion(window),
+        state: () => pagerState(this.page, this.pages),
+        step: (direction) => this.activate({ kind: "page", step: direction }),
       },
       this.stages.map((id, index) => this.face(id, index)),
     );
@@ -146,18 +150,7 @@ export class StageSelectScene extends Scene {
             // The departing layer must not focus another target through its compatibility mouse events.
             preventTouchMouseDefault: () => !this.finished && input.accepts(),
           },
-          ...(view.pager === undefined
-            ? []
-            : [
-                {
-                  activate: () => this.activate({ kind: "page", step: -1 }),
-                  element: view.pager.previous.element,
-                },
-                {
-                  activate: () => this.activate({ kind: "page", step: 1 }),
-                  element: view.pager.next.element,
-                },
-              ]),
+          ...view.pagerActions,
           { activate: () => this.back(), element: view.backdrop },
         ],
         view.root,
@@ -221,13 +214,7 @@ export class StageSelectScene extends Scene {
     view.pages.forEach((page, index) => {
       page.hidden = index !== this.page;
     });
-    view.pager?.previous.refresh();
-    view.pager?.next.refresh();
-    if (view.count) {
-      view.count.textContent = TEXT.map.stagePages.page
-        .replace("{page}", String(this.page + 1))
-        .replace("{pages}", String(this.pages));
-    }
+    view.pager?.refresh();
     if (this.closeModal === undefined) {
       return;
     }

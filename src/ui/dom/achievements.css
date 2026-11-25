@@ -1,22 +1,5 @@
-/* The Achievements card (achievements.ts), on ui.css's .ui-card: lengths are base px times
+/* The Achievements card (achievements.ts), on the card frame: lengths are base px times
    --ui-unit, from the layout properties achievementsCardProperties writes on the card's view. */
-
-/* From the frame's inner top edge to the first entry title's cap top, with the title's cap height
-   midway, clear of the close X's press area on each side. */
-.achievements-header {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  height: calc(var(--ui-unit) * var(--achievements-header) * 1px);
-  margin-bottom: calc(var(--ui-unit) * -1 * (var(--card-gap) + var(--achievements-cap-top)) * 1px);
-  padding: 0 calc(var(--ui-unit) * (var(--close-reserve) - var(--card-padding)) * 1px);
-}
-
-.achievements-header .ui-card-title {
-  margin-bottom: 0;
-}
 
 /* The page's entries filled down each column then across, in as many rows as the first page
    fills, so every page keeps the card's size. */
@@ -39,19 +22,19 @@
   text-align: start;
 }
 
-/* The icon centred on the title's line, the text beside it; an earned entry in ink, a locked one
-   in dslate, both holding 4.5:1 on the card's lgrey. */
+/* The icon centred on the title's line, the text beside it; an earned entry in the primary text
+   colour, a locked one in the secondary, both holding 4.5:1 on the card's lgrey. */
 .achievements-entry {
   display: grid;
   grid-template-columns: calc(var(--ui-unit) * var(--achievements-icon) * 1px) 1fr;
   align-items: start;
   column-gap: calc(var(--ui-unit) * var(--achievements-icon-gap) * 1px);
   min-width: 0;
-  color: var(--colour-dslate);
+  color: var(--ui-colour-text-secondary);
 }
 
 .achievements-entry[data-earned] {
-  color: var(--colour-ink);
+  color: var(--ui-colour-text-primary);
 }
 
 .achievements-entry[hidden] {
@@ -79,48 +62,17 @@
   white-space: nowrap;
 }
 
-.achievements-title {
-  font-weight: 700;
-}
-
 .achievements-description {
   margin: 0;
 }
 
-/* Previous and Next as content-width text buttons with the page count between them, a card gap from each
-   face (they are not neighbouring buttons, so the button gap does not apply), their press areas
-   reaching --button-hit past their faces. */
-.achievements-pager {
-  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
-  --half-gap: calc(var(--ui-unit) * var(--card-gap) / 2 * 1px);
-
-  display: grid;
-  grid-template-columns: max-content auto max-content;
-  align-items: center;
-  column-gap: var(--half-gap);
-  margin: calc(-1 * var(--hit));
+/* The footer always shows, so its parts have boxes to measure before the frame first places
+   them. */
+.achievements-card > .ui-modal-footer {
+  display: block;
 }
 
-.achievements-page {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-/* The pager stays centred while the return action occupies the footer's right edge. */
-.achievements-footer {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  align-self: stretch;
-  column-gap: var(--ui-button-gap);
-}
-
-.achievements-footer > .achievements-pager {
-  grid-column: 2;
-}
-
-.achievements-return {
-  grid-column: 3;
-  justify-self: end;
+/* The page count is as wide as its text until the pager first places it. */
+.achievements-pager > .ui-pager-count:not(.ui-action) {
+  width: max-content;
 }

@@ -23,10 +23,6 @@ vi.mock("../ui/input/actionBinding.ts", async (original) => {
   const actual = await original<typeof import("../ui/input/actionBinding.ts")>();
   return { ...actual, bindGameActions: vi.fn(actual.bindGameActions) };
 });
-vi.mock("../ui/input/actionBinding.ts", async (original) => {
-  const actual = await original<typeof import("../ui/input/actionBinding.ts")>();
-  return { ...actual, bindGameActions: vi.fn(actual.bindGameActions) };
-});
 vi.mock("./save.ts", () => ({
   mapFullyOpen: () => false,
   savedMap: () => ({ completed: COMPLETED }),
@@ -318,31 +314,61 @@ describe("refusals", () => {
       pointer("pointerup", control);
       control.dispatchEvent(new MouseEvent("click", { bubbles: true, detail: 1 }));
     };
-    expect(next.disabled).toBe(false);
-    expect(next.tabIndex).toBe(-1);
-    expect(next.getAttribute("aria-disabled")).toBe("true");
-    expect(next.getAttribute("aria-description")).toBeNull();
-    expect(next.getAttribute("aria-describedby")).toBeNull();
+    const refusing = (control: HTMLButtonElement) => control.hasAttribute("data-ui-refusal-shake");
+    const cue = CONTROL_REFUSAL.flashMs * CONTROL_REFUSAL.flashes;
+    expect({
+      description: next.getAttribute("aria-description"),
+      disabled: next.disabled,
+      tabIndex: next.tabIndex,
+      unavailable: next.getAttribute("aria-disabled"),
+    }).toEqual({ description: null, disabled: false, tabIndex: -1, unavailable: "true" });
     next.click();
-    expect(refuseControl).not.toHaveBeenCalled();
+    expect(refusing(next)).toBe(false);
     pointer("pointerdown", next);
+    expect(next.hasAttribute("data-pressed")).toBe(false);
     vi.advanceTimersByTime(TOUCH.actionHoldMilliseconds);
-    expect(refuseControl).toHaveBeenCalledExactlyOnceWith(false, next);
+    expect(refusing(next)).toBe(true);
     release(next);
-    expect(refuseControl).toHaveBeenCalledOnce();
-    expect(at().page).toEqual(APARTMENT.stages.slice(3));
+    vi.advanceTimersByTime(cue);
+    expect({ page: at().page, refusing: refusing(next) }).toEqual({
+      page: APARTMENT.stages.slice(3),
+      refusing: false,
+    });
 
     pointer("pointerdown", previous);
     release(previous);
-    expect(at().page).toEqual(APARTMENT.stages.slice(0, 3));
-    expect(next.getAttribute("aria-disabled")).toBeNull();
-    expect(next.tabIndex).toBe(0);
-    expect(previous.tabIndex).toBe(-1);
+    expect({
+      nextTabIndex: next.tabIndex,
+      nextUnavailable: next.getAttribute("aria-disabled"),
+      page: at().page,
+      previousTabIndex: previous.tabIndex,
+    }).toEqual({
+      nextTabIndex: 0,
+      nextUnavailable: null,
+      page: APARTMENT.stages.slice(0, 3),
+      previousTabIndex: -1,
+    });
     pointer("pointerdown", previous);
     release(previous);
-    expect(refuseControl).toHaveBeenCalledTimes(2);
-    expect(refuseControl).toHaveBeenLastCalledWith(false, previous);
-    expect(at().page).toEqual(APARTMENT.stages.slice(0, 3));
+    expect({ page: at().page, refusing: refusing(previous) }).toEqual({
+      page: APARTMENT.stages.slice(0, 3),
+      refusing: true,
+    });
+  });
+
+  it("holds steady red on a refused page button under the Reduced motion setting", async () => {
+    setReducedMotion(window, true);
+    const { button } = await openPicker();
+    const next = button(TEXT.map.stagePages.next);
+    for (const type of ["pointerdown", "pointerup"]) {
+      next.dispatchEvent(
+        new PointerEvent(type, { bubbles: true, button: 0, isPrimary: true, pointerId: 1 }),
+      );
+    }
+    expect({
+      red: next.hasAttribute("data-ui-refusal-red"),
+      shake: next.hasAttribute("data-ui-refusal-shake"),
+    }).toEqual({ red: true, shake: false });
   });
 
   it("ignores presses and keys while a modal covers it", async () => {
@@ -370,6 +396,23 @@ describe("refusals", () => {
     expect(stage(residential).hasAttribute("data-ui-refusal-shake")).toBe(false);
     expect(stageSelected).not.toHaveBeenCalled();
     expect(stageSelectionClosed).not.toHaveBeenCalled();
+  });
+});
+
+it("orders the Tab stops: the unlocked stages, the page button that can turn, the close X last", async () => {
+  const { dialog } = await openPicker();
+  const name = (control: Element) => control.getAttribute("aria-label") ?? control.textContent;
+  const controls = [...dialog.querySelectorAll("button")];
+  expect({
+    last: name(controls.at(-1)!),
+    stops: controls.filter(({ tabIndex }) => tabIndex >= 0).map(name),
+  }).toEqual({
+    last: TEXT.map.stageClose,
+    stops: [
+      ...[lobby, restaurant, pool, spa].map(stageName),
+      TEXT.map.stagePages.previous,
+      TEXT.map.stageClose,
+    ],
   });
 });
 

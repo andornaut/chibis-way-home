@@ -1,12 +1,19 @@
+import type { ButtonSize } from "@andornaut/game-kit/runtime/ui/buttonLayout";
+import { pagerSize, type PagerState } from "@andornaut/game-kit/runtime/ui/pager";
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
+import type { PagerView } from "@andornaut/game-kit/runtime/web/ui/dom/pager";
 
+import { TEXT_BUTTON } from "../../data/layout.ts";
+import { createGamePager, type GameAction } from "../input/actionBinding.ts";
 import { achievementsCardProperties } from "../layout/achievementsCard.ts";
-import { closeButton, setCardWidth, textButton } from "./card.ts";
+import { setTextButtonRole } from "./buttonLayout.ts";
+import { createCardFrame, textButton } from "./card.ts";
+import { registerLayout, rendered } from "./layout.ts";
 
-// The Achievements card in the HTML UI (achievements.css, on ui.css's .ui-card): its title, a
-// list of every entry, a page of them at a time, Previous, the page count and Next, and the close
-// X. The close X comes last in the card, so the keyboard's focus moves through Previous, Next and
-// Back and the close X in that order.
+// The Achievements card in the HTML UI (achievements.css) on the card frame: its title, a list
+// of every entry, a page of them at a time, and a footer that stacks the pager (Previous, the
+// page count and Next) above Back. The keyboard's focus moves through Previous, Next, Back and
+// the close X in that order.
 
 // One entry's words and state: its progress is a locked entry's count, where it has one.
 export interface AchievementsCardEntry {
@@ -26,6 +33,14 @@ export interface AchievementsCardWords {
   readonly unlocked: string;
 }
 
+// The pager's page, its count's words, its guard and its step, from the scene.
+export interface AchievementsPager {
+  readonly active: () => boolean;
+  readonly countText: (state: PagerState) => string;
+  readonly state: () => PagerState;
+  readonly step: (direction: -1 | 1) => void;
+}
+
 export type AchievementsTarget = "back" | "close" | "next" | "previous";
 
 export interface AchievementsCardView {
@@ -35,7 +50,9 @@ export interface AchievementsCardView {
   readonly dialog: HTMLElement;
   // Each entry's list item and icon, in entry order.
   readonly entries: readonly { readonly icon: HTMLImageElement; readonly item: HTMLElement }[];
-  readonly pageCount: HTMLElement;
+  readonly pager: PagerView;
+  // Previous and Next as the actions the scene binds.
+  readonly pagerActions: readonly GameAction[];
   // The scene's view, which the UI layer mounts.
   readonly root: HTMLElement;
 }
@@ -46,6 +63,7 @@ export function createAchievementsCard(
   document: Document,
   id: string,
   words: AchievementsCardWords,
+  paging: AchievementsPager,
   entries: readonly AchievementsCardEntry[],
 ): AchievementsCardView {
   const element = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
@@ -62,20 +80,15 @@ export function createAchievementsCard(
     created.textContent = value;
     return created;
   };
-  const root = element("div", "ui-card-scene");
-  writeLayoutProperties(achievementsCardProperties(entries.length), root);
-  const backdrop = element("div", "ui-backdrop");
-  const view = element("div", "ui-view ui-card-view");
-  const dialog = element("section", "ui-card ui-frame ui-card-closeable achievements-card");
-  // Two entry columns.
-  setCardWidth("large", dialog);
-  dialog.id = id;
-  dialog.setAttribute("role", "dialog");
-  dialog.setAttribute("aria-labelledby", `${id}-title`);
-  const header = element("div", "achievements-header");
-  const title = text("h2", "ui-card-title", words.title);
-  title.id = `${id}-title`;
-  header.append(title);
+  // Two entry columns take the large width family.
+  const frame = createCardFrame(document, {
+    className: "achievements-card",
+    close: words.close,
+    id,
+    title: words.title,
+    width: "large",
+  });
+  writeLayoutProperties(achievementsCardProperties(entries.length), frame.root);
   const list = element("ul", "achievements-list ui-text-body");
   const shown = entries.map((entry) => {
     const item = element("li", "achievements-entry");
@@ -83,7 +96,7 @@ export function createAchievementsCard(
     const icon = element("img", "achievements-icon");
     icon.alt = entry.earned ? words.unlocked : words.locked;
     const heading = element("p", "achievements-heading");
-    heading.append(text("span", "achievements-title", entry.title));
+    heading.append(text("span", "achievements-title ui-text-label", entry.title));
     if (entry.progress !== undefined) {
       heading.append(text("span", "achievements-progress", entry.progress));
     }
@@ -93,41 +106,73 @@ export function createAchievementsCard(
     return { icon, item };
   });
   list.append(...shown.map(({ item }) => item));
-  const pager = element("div", "achievements-pager");
-  const pageCount = element("p", "achievements-page ui-text-body");
-  pageCount.setAttribute("aria-live", "polite");
-  const buttons = {
-    back: textButton(document, words.back, true),
-    close: closeButton(document, words.close),
-    next: textButton(document, words.next),
-    previous: textButton(document, words.previous),
+  frame.content.append(list);
+  const { actions, view: pager } = createGamePager(document, {
+    active: paging.active,
+    appearance: {
+      className: "ui-text-button",
+      contentClassName: "ui-text-button-label",
+      face: { className: "ui-text-button-face ui-frame ui-control-button" },
+      layout: "caller",
+    },
+    className: "achievements-pager",
+    countText: paging.countText,
+    labels: { next: words.next, previous: words.previous },
+    state: paging.state,
+    step: paging.step,
+  });
+  pager.count.classList.add("ui-text-body");
+  setTextButtonRole(false, pager.previous.element);
+  setTextButtonRole(false, pager.next.element);
+  const back = textButton(document, words.back, true);
+  // The footer's middle slot, which a stacked footer puts first: the pager, at its measured size.
+  const footer: {
+    readonly axis: "stack";
+    middle: { readonly element: HTMLElement; readonly size: ButtonSize };
+  } = {
+    axis: "stack",
+    middle: { element: pager.element, size: { height: TEXT_BUTTON.height, width: 1 } },
   };
-  pager.append(buttons.previous, pageCount, buttons.next);
-  const footer = element("div", "achievements-footer");
-  const back = element("div", "ui-card-actions achievements-return");
-  back.append(buttons.back);
-  footer.append(pager, back);
-  dialog.append(header, list, footer, buttons.close);
-  view.append(dialog);
-  root.append(backdrop, view);
-  return { backdrop, buttons, dialog, entries: shown, pageCount, root };
+  frame.frame.footer.element.append(pager.element);
+  frame.setFooter([back], footer);
+  // The pager's parts in its own box, then the card around it.
+  registerLayout(() => {
+    if (!rendered(frame.frame.element)) {
+      return;
+    }
+    const sizes = pager.measure();
+    const size = pagerSize(sizes);
+    pager.arrange({ sizes, width: size.width });
+    footer.middle = { element: pager.element, size };
+    frame.layout();
+  }, pager.element);
+  return {
+    backdrop: frame.backdrop,
+    buttons: {
+      back,
+      close: frame.close!,
+      next: pager.next.element,
+      previous: pager.previous.element,
+    },
+    dialog: frame.dialog,
+    entries: shown,
+    pager,
+    pagerActions: actions,
+    root: frame.root,
+  };
 }
 
-// Shows page's entries, perPage to a page, its count as countText, and Previous and Next enabled
-// where there is a page before or after it. No button keeps a pressed look across the change.
+// Shows page's entries, perPage to a page, and the pager as the page leaves it. No button keeps
+// a pressed look across the change.
 export function showAchievementsPage(
-  page: { readonly countText: string; readonly page: number; readonly perPage: number },
+  page: { readonly page: number; readonly perPage: number },
   view: AchievementsCardView,
 ): void {
-  const { countText, perPage } = page;
-  const pages = Math.ceil(view.entries.length / perPage);
   view.entries.forEach(({ item }, index) => {
-    item.hidden = Math.floor(index / perPage) !== page.page;
+    item.hidden = Math.floor(index / page.perPage) !== page.page;
   });
-  view.buttons.previous.disabled = page.page === 0;
-  view.buttons.next.disabled = page.page + 1 >= pages;
+  view.pager.refresh();
   for (const button of Object.values(view.buttons)) {
     delete button.dataset.pressed;
   }
-  view.pageCount.textContent = countText;
 }

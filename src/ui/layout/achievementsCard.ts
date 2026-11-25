@@ -1,39 +1,46 @@
+import { ACTION_GAPS } from "@andornaut/game-kit/runtime/ui/actionGroup";
 import type { LayoutValues } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import { ACHIEVEMENTS_CARD, CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
+import {
+  ACHIEVEMENTS_CARD,
+  CARD_CONTENT,
+  CARD_SCREEN_MARGIN,
+  TEXT_BUTTON,
+} from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { CARD_CLOSE } from "./cardClose.ts";
-import { capTop, FONT_METRICS, UI_FONT_FACE } from "./fontRoles.ts";
+import { FONT_METRICS } from "./fontRoles.ts";
+import { hitMargin } from "./hitAreas.ts";
 
-// The Achievements card's geometry in base px (src/ui/dom/achievements.css lays it out): its
-// title over two columns of entries filled down each column then across, a page at a time, and
-// Previous, the page count and Next below them.
+// The Achievements card's geometry in base px (src/ui/dom/achievements.css lays it out): on the
+// card's frame, two columns of entries filled down each column then across, a page at a time,
+// over a footer that stacks Previous, the page count and Next above Back.
 
 // One entry's height: its title line and its description's lines, each a body line box.
 const ENTRY_HEIGHT = FONT_METRICS.body.lineHeight * (1 + ACHIEVEMENTS_CARD.descriptionLines);
 
-// The close X's press area, at the card's top right.
-const CLOSE_HIT = CARD_CLOSE.hit;
+// A closeable card's header (cardFrame.ts): it ends where a text button's press area would clear
+// the close X's press target by the gap.
+const HEADER =
+  CARD_CLOSE.hit.y +
+  CARD_CLOSE.hit.height +
+  CARD_CONTENT.gap +
+  hitMargin({ height: TEXT_BUTTON.height, width: TEXT_BUTTON.height, x: 0, y: 0 });
 
-// The top of the list's first line below the card's top edge. The title's cap height sits midway
-// between the frame's inner top edge and the first entry title's cap top, as far from each as the
-// card's padding inside the frame, unless the list must start lower to keep the gap below the
-// close X's press area; the title then moves down to stay midway.
-export function achievementsListTop(): number {
-  const { frameBorder, gap, padding } = CARD_CONTENT;
-  const balanced =
-    frameBorder +
-    2 * (padding - frameBorder) +
-    UI_FONT_FACE.capHeight * FONT_METRICS.mainHeading.size -
-    capTop(FONT_METRICS.body);
-  return Math.max(balanced, CLOSE_HIT.y + CLOSE_HIT.height + gap);
+// The footer: the pager and Back, each a text button's height, the stacked gap apart.
+export const ACHIEVEMENTS_FOOTER_HEIGHT = 2 * TEXT_BUTTON.height + ACTION_GAPS.standard.stack;
+
+// The list's height at rows rows.
+export function achievementsListHeight(rows: number): number {
+  return rows * ENTRY_HEIGHT + Math.max(0, rows - 1) * CARD_CONTENT.gap;
 }
 
-// How many entries one page holds: two columns of as many rows as fit the view between the
-// card's title and its pager.
+// How many entries one page holds: two columns of as many rows as fit a card no taller than the
+// view less the screen margin above and below, between its header and its footer.
 export function achievementsPerPage(): number {
   const { gap, padding } = CARD_CONTENT;
-  const room = SCREEN.height - achievementsListTop() - gap - TEXT_BUTTON.height - padding;
+  const room =
+    SCREEN.height - 2 * CARD_SCREEN_MARGIN - HEADER - gap - ACHIEVEMENTS_FOOTER_HEIGHT - padding;
   const rows = Math.floor((room + gap) / (ENTRY_HEIGHT + gap));
   if (rows < 1) {
     throw new Error("No achievement row fits the view");
@@ -41,22 +48,23 @@ export function achievementsPerPage(): number {
   return rows * ACHIEVEMENTS_CARD.columns;
 }
 
-// The layout properties achievements.css reads for a card of count entries: every page keeps the
-// rows the first page fills, so the card keeps its size from page to page.
+// The rows a card of count entries shows: every page keeps the rows the first page fills, so the
+// card keeps its size from page to page.
+export function achievementsRows(count: number): number {
+  return Math.ceil(Math.min(achievementsPerPage(), count) / ACHIEVEMENTS_CARD.columns);
+}
+
+// The layout properties achievements.css reads for a card of count entries.
 export function achievementsCardProperties(count: number): LayoutValues {
-  const { frameBorder, gap, padding } = CARD_CONTENT;
-  const perPage = achievementsPerPage();
+  const { gap, padding } = CARD_CONTENT;
   return {
-    "--achievements-cap-top": capTop(FONT_METRICS.body),
     "--achievements-column-gap": padding,
     "--achievements-column-width": ACHIEVEMENTS_CARD.columnWidth,
     "--achievements-columns": ACHIEVEMENTS_CARD.columns,
     "--achievements-entry-height": ENTRY_HEIGHT,
-    // From the frame's inner top edge to the first entry title's cap top.
-    "--achievements-header": achievementsListTop() + capTop(FONT_METRICS.body) - frameBorder,
     "--achievements-icon": ACHIEVEMENTS_CARD.icon,
     "--achievements-icon-gap": gap,
     "--achievements-row-gap": gap,
-    "--achievements-rows": Math.ceil(Math.min(perPage, count) / ACHIEVEMENTS_CARD.columns),
+    "--achievements-rows": achievementsRows(count),
   };
 }

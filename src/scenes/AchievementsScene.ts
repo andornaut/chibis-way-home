@@ -1,3 +1,4 @@
+import { pagerState } from "@andornaut/game-kit/runtime/ui/pager";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { focusTargets } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 import { Scene } from "phaser";
@@ -26,8 +27,6 @@ export interface AchievementsData {
   readonly opener: string;
 }
 
-type Target = "back" | "close" | "next" | "previous";
-const TARGETS: readonly Target[] = ["back", "close", "next", "previous"];
 const ICON = "icon-achievement";
 
 // The Achievements card over the scene that opened it: every achievement in tier order, none
@@ -38,13 +37,15 @@ const ICON = "icon-achievement";
 // the dim of the scenes under it and the entries' icons are ready: a control acts when a press
 // lands on it and lifts on it; Tab and the arrows move the keyboard's focus, which starts on the
 // card itself, through the enabled pager buttons and the close X, and Enter and Space press the
-// focused one (the kit's modalLayer). Changing pages invalidates held presses, and moves the
-// focus off a pager button the change disables to the first enabled control. The opener passes
-// this scene back.
+// focused one (the kit's modalLayer). The pager (the kit's) steps a page under this scene's
+// guard and disables a step with no page to turn to. Changing pages invalidates held presses, and
+// moves the focus off a pager button the change disables to the first enabled control. The opener
+// passes this scene back.
 export class AchievementsScene extends Scene {
   private opener = "";
   private page = 0;
   private perPage = 1;
+  private entryCount = 0;
   private closed = false;
   private card: AchievementsCardView | undefined;
   private closeModal: (() => void) | undefined;
@@ -65,10 +66,18 @@ export class AchievementsScene extends Scene {
     const words = TEXT.achievements;
     const entries = achievementCard();
     this.perPage = achievementsPerPage();
+    this.entryCount = entries.length;
     const card = createAchievementsCard(
       document,
       "achievements-card",
       { ...words, ...words.pages, title: words.cardTitle },
+      {
+        active: () => this.acceptsActions(),
+        countText: ({ page, pages }) =>
+          words.pages.page.replace("{page}", String(page + 1)).replace("{pages}", String(pages)),
+        state: () => pagerState(this.page, this.pages()),
+        step: (direction) => this.step(direction),
+      },
       entries.map(({ earned, id, progress }) => ({
         ...words.entries[id],
         earned,
@@ -101,11 +110,12 @@ export class AchievementsScene extends Scene {
         input,
         guard,
         [
-          ...TARGETS.map((target) => ({
-            activate: () => this.act(target),
+          ...(["back", "close"] as const).map((target) => ({
+            activate: () => this.back(),
             element: card.buttons[target],
-            ...((target === "back" || target === "close") && dismiss),
+            ...dismiss,
           })),
+          ...card.pagerActions,
           { activate: () => this.back(), element: card.backdrop, ...dismiss },
         ],
         card.root,
@@ -146,16 +156,14 @@ export class AchievementsScene extends Scene {
     (this.scene.get(this.opener) as Scene & AchievementsOpener).achievementsClosed();
   }
 
-  private act(target: Target): void {
-    if (!this.acceptsActions()) {
-      return;
-    }
-    if (target === "back" || target === "close") {
-      this.back();
-      return;
-    }
-    const page = this.page + (target === "next" ? 1 : -1);
-    if (page < 0 || page * this.perPage >= (this.card?.entries.length ?? 0)) {
+  private pages(): number {
+    return Math.max(1, Math.ceil(this.entryCount / this.perPage));
+  }
+
+  // The pager's step to the page before or after this one.
+  private step(direction: -1 | 1): void {
+    const page = this.page + direction;
+    if (!this.acceptsActions() || page < 0 || page >= this.pages()) {
       return;
     }
     this.page = page;
@@ -170,17 +178,7 @@ export class AchievementsScene extends Scene {
       return;
     }
     const focused = card.root.ownerDocument.activeElement;
-    const pages = Math.ceil(card.entries.length / this.perPage);
-    showAchievementsPage(
-      {
-        countText: TEXT.achievements.pages.page
-          .replace("{page}", String(this.page + 1))
-          .replace("{pages}", String(pages)),
-        page: this.page,
-        perPage: this.perPage,
-      },
-      card,
-    );
+    showAchievementsPage({ page: this.page, perPage: this.perPage }, card);
     if (focused instanceof HTMLButtonElement && focused.disabled) {
       const target = focusTargets(card.dialog)[0];
       if (target !== undefined) {

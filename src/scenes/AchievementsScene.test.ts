@@ -95,7 +95,7 @@ async function openCard() {
   const shown = () =>
     [...dialog.querySelectorAll<HTMLElement>("li")]
       .filter(({ hidden }) => !hidden)
-      .map((item) => item.querySelector(".achievements-title")?.textContent);
+      .map((item) => item.querySelector("p")?.firstElementChild?.textContent);
   const focused = () =>
     document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.textContent;
   return { achievementsClosed, button, dialog, events, focused, key, scene, shown, stop };
@@ -342,15 +342,30 @@ it("never shows the card when the scene shuts down before its dim is ready", asy
   expect(document.querySelector("[role=dialog]")).toBeNull();
 });
 
-it("returns to the same opener through the bottom-right primary Back action once", async () => {
-  const { achievementsClosed, button, dialog, scene, stop } = await openCard();
-  const back = button(WORDS.back);
-  expect(back.classList.contains("ui-text-button-primary")).toBe(true);
-  expect(back.closest(".achievements-return")?.parentElement?.className).toBe(
-    "achievements-footer",
-  );
-  expect(dialog.querySelector(".achievements-footer .achievements-pager")).not.toBeNull();
-  back.click();
+it("orders its controls Previous, the polite page count, Next, Back and the close X", async () => {
+  const { button, dialog } = await openCard();
+  const { next, previous } = WORDS.pages;
+  const count = dialog.querySelector("[aria-live=polite]")!;
+  const order = (first: Element, second: Element) =>
+    (first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+  expect({
+    buttons: [...dialog.querySelectorAll("button")].map(
+      (element) => element.getAttribute("aria-label") ?? element.textContent,
+    ),
+    countAfterPrevious: order(button(previous), count),
+    countBeforeNext: order(count, button(next)),
+    role: dialog.getAttribute("role"),
+  }).toEqual({
+    buttons: [previous, next, WORDS.back, WORDS.close],
+    countAfterPrevious: true,
+    countBeforeNext: true,
+    role: "dialog",
+  });
+});
+
+it("returns to the same opener through Back once", async () => {
+  const { achievementsClosed, button, scene, stop } = await openCard();
+  button(WORDS.back).click();
   scene.back();
   expect(achievementsClosed).toHaveBeenCalledOnce();
   expect(stop).toHaveBeenCalledExactlyOnceWith();
