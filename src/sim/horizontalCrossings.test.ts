@@ -6,10 +6,10 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { Rect } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { zonePlanOf } from "../rules/assemble.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { standsOn, startZone, stepZone, type ZoneState } from "../rules/zone.ts";
-import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { zonePlanOf } from "../rules/stage/assemble.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
+import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
+import { standsOn, startZone, stepZone, type ZoneState } from "../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 
 const ids = [

@@ -4,9 +4,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BIRD_FRAME } from "../../assets/index.ts";
 import { BIRD } from "../../data/bird.ts";
-import { activeStepSeconds } from "../../rules/death.ts";
-import { zoneLayout } from "../../rules/tiles.ts";
-import { startZone, stepZone, type ZoneState } from "../../rules/zone.ts";
+import { zoneLayout } from "../../rules/stage/tiles.ts";
+import { activeStepSeconds } from "../../rules/zone/death.ts";
+import { startZone, stepZone, type ZoneState } from "../../rules/zone/zone.ts";
 import { SKILL_PROFILES } from "../skills.ts";
 import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats.ts";
 

@@ -2,17 +2,17 @@ import { STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, ZoneDeath, ZoneLayout } from "../data/types/index.ts";
 import { proximityDialogue } from "../presentation/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { birdBox } from "../rules/bird.ts";
-import { stageProgress } from "../rules/stageProgress.ts";
+import { birdBox } from "../rules/bird/index.ts";
 import {
   activateBehaviour,
   areaOf,
   retryZone,
+  stageProgress,
   startZone,
   stepZone,
   type ZoneInput,
   type ZoneState,
-} from "../rules/zone.ts";
+} from "../rules/zone/index.ts";
 import {
   botInput,
   type BotPolicy,

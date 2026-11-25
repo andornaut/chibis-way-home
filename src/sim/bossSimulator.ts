@@ -18,20 +18,19 @@ import type {
   ZoneLayout,
 } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { contactBox, nodeOf } from "../rules/behaviourTrack.ts";
-import { birdBox, startBird } from "../rules/bird.ts";
-import { clockPresent } from "../rules/effectiveCollision.ts";
-import { supportContact } from "../rules/flyLanding.ts";
+import { birdBox, startBird } from "../rules/bird/index.ts";
+import { clockPresent, contactBox, nodeOf, supportContact } from "../rules/boss/index.ts";
 import {
   activateBehaviour,
   areaOf,
+  presentTerrain,
   retryZone,
   startZone,
   stepZoneBodies,
+  supportPresent,
   type ZoneInput,
   type ZoneState,
-} from "../rules/zone.ts";
-import { presentTerrain, supportPresent } from "../rules/zoneCrumbling.ts";
+} from "../rules/zone/index.ts";
 import { botInput, type BotPolicy, type BotSkill, newBot, prepareSensors } from "./bot.ts";
 
 // The six bosses by character, in character order, with the names gameplay uses for them.

@@ -8,11 +8,15 @@ import type {
   Rect,
   ZoneLayout,
 } from "../data/types/index.ts";
-import { type BehaviourState, contactBox } from "../rules/behaviour.ts";
-import { type BirdState, ordinaryHorizontalVelocity } from "../rules/bird.ts";
-import { effectiveHazardPhase, validateHazardPhases } from "../rules/effectiveCollision.ts";
-import { timedHazardRect } from "../rules/timedHazard.ts";
-import type { ZoneState } from "../rules/zone.ts";
+import { type BirdState, ordinaryHorizontalVelocity } from "../rules/bird/index.ts";
+import {
+  type BehaviourState,
+  contactBox,
+  effectiveHazardPhase,
+  timedHazardRect,
+  validateHazardPhases,
+} from "../rules/boss/index.ts";
+import type { ZoneState } from "../rules/zone/index.ts";
 import type { Surface } from "../sim/zoneWalk.ts";
 
 export const REQUIRED_ROUTE_CONTROLLER = "required-route-intent-v3";

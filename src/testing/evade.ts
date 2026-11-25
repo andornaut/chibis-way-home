@@ -60,32 +60,32 @@ import type {
   ZoneLayout,
 } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import type { BehaviourObserver } from "../rules/behaviourObserver.ts";
 import {
   birdBox,
   type BirdState,
   ordinaryHorizontalVelocity,
   startBird,
   stepBird,
-} from "../rules/bird.ts";
+} from "../rules/bird/index.ts";
 import {
   airMask,
+  type BehaviourObserver,
   BOSS_JUMP_SCRIPTS,
   bossMovementProfiles,
+  currentScreen,
   flightMap,
   groundMap,
   groundMask,
   type MapSupport,
   type MapTerrain,
-} from "../rules/movementMaps.ts";
-import { currentScreen } from "../rules/perception.ts";
+} from "../rules/boss/index.ts";
 import {
   startZone,
   stepZone,
   stepZoneObserved,
   type ZoneInput,
   type ZoneState,
-} from "../rules/zone.ts";
+} from "../rules/zone/index.ts";
 import { activateAll, bossSample, type BossTick, supportWorld } from "../sim/bossSimulator.ts";
 import { ALLOW, hitboxAt, standingAt } from "../sim/pathOut.ts";
 import { zoneTraceLine } from "../sim/zoneTrace.ts";

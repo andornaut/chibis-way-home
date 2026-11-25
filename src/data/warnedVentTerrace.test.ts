@@ -3,12 +3,18 @@ import { expect, it } from "vitest";
 import { BIRD_FRAME } from "../assets/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { zonePlanOf } from "../rules/assemble.ts";
-import { effectiveCollision, effectiveHazardPhase } from "../rules/effectiveCollision.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { timedHazardRect } from "../rules/timedHazard.ts";
-import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
-import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { effectiveCollision, effectiveHazardPhase } from "../rules/boss/effectiveCollision.ts";
+import { timedHazardRect } from "../rules/boss/timedHazard.ts";
+import { zonePlanOf } from "../rules/stage/assemble.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
+import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
+import {
+  retryZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import { BIRD } from "./bird.ts";
 import { CHUNKS } from "./chunks.ts";

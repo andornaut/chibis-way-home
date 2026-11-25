@@ -3,7 +3,7 @@ import { Scene, Scenes } from "phaser";
 import { BARK_DURATION_SECONDS, SPEAKERS } from "../data/dialogues.ts";
 import { TEXT } from "../data/text.ts";
 import type { DialogueLine } from "../data/types/index.ts";
-import type { ZoneBark } from "../rules/zone.ts";
+import type { ZoneBark } from "../rules/zone/index.ts";
 import {
   createStatusPanel,
   type DialogueParagraph,

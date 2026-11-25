@@ -1,5 +1,5 @@
 import type { ObjectLayout } from "../data/types/index.ts";
-import type { BehaviourState } from "../rules/behaviour.ts";
+import type { BehaviourState } from "../rules/boss/index.ts";
 
 export function behaviourPose(
   object: ObjectLayout,

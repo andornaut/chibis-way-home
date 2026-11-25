@@ -22,13 +22,17 @@ import type {
   ZoneRecipe,
 } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
-import type { ChunkLibrary } from "../rules/assemble.ts";
-import { chunkProblems } from "../rules/chunk.ts";
-import { bindElement } from "../rules/elementBinding.ts";
-import { ENCOUNTER_ROLES } from "../rules/modules.ts";
-import { groundMask, type MapSupport } from "../rules/movementMaps.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { arenaChunks, CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans.ts";
+import { groundMask, type MapSupport } from "../rules/boss/index.ts";
+import {
+  arenaChunks,
+  bindElement,
+  CHUNK_LIBRARY,
+  type ChunkLibrary,
+  chunkProblems,
+  ENCOUNTER_ROLES,
+  zoneLayout,
+  zoneOfTheme,
+} from "../rules/stage/index.ts";
 import { ALLOW, chibiMap, type Encounter, pathOutEncounter, standingAt } from "../sim/pathOut.ts";
 import { ARENA_SAMPLES } from "./arenaSamples.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";

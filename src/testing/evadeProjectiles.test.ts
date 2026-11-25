@@ -4,9 +4,9 @@ import { ARCHETYPES } from "../data/archetypes.ts";
 import { FERRET_BEHAVIOUR, GOOSE_BEHAVIOUR, PIGEON_BEHAVIOUR } from "../data/behaviours.ts";
 import { TILE } from "../data/screen.ts";
 import type { BehaviourAction, BehaviourPlan, ObjectLayout } from "../data/types/index.ts";
-import { layoutBehaviour } from "../rules/behaviour.ts";
-import { objectLayout } from "../rules/tiles.ts";
-import type { Transient } from "../rules/transients.ts";
+import { layoutBehaviour } from "../rules/boss/behaviour.ts";
+import type { Transient } from "../rules/boss/transients.ts";
+import { objectLayout } from "../rules/stage/tiles.ts";
 import {
   observeProjectiles,
   projectileGravityModels,

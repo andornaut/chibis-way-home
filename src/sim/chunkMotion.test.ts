@@ -7,10 +7,10 @@ import { CHUNKS } from "../data/chunks.ts";
 import { TILE } from "../data/screen.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { themesOf, zonePlanOf } from "../rules/assemble.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { standsOn, startZone, stepZone } from "../rules/zone.ts";
-import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { themesOf, zonePlanOf } from "../rules/stage/assemble.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
+import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
+import { standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 
 const CASES = ["compound-lift-shuttle", "compound-return-shuttle"] as const;

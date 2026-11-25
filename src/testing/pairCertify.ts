@@ -30,17 +30,22 @@ import type {
 import { ZONE_FRAMES } from "../data/zoneFrames.ts";
 import { RECIPES } from "../data/zones.ts";
 import {
+  arenaChunks,
   assembleZone,
+  CHUNK_LIBRARY,
   type ChunkLibrary,
+  chunkProblems,
+  composePair,
   eligibleChunks,
+  ENCOUNTER_ROLES,
+  moduleProblems,
+  pairProblems,
   recipeChunkPool,
   themesOf,
-} from "../rules/assemble.ts";
-import { chunkProblems } from "../rules/chunk.ts";
-import { composePair, ENCOUNTER_ROLES, moduleProblems, pairProblems } from "../rules/modules.ts";
-import { withRoomBuildings } from "../rules/roomBuildings.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { arenaChunks, CHUNK_LIBRARY, zoneOfTheme } from "../rules/zonePlans.ts";
+  withRoomBuildings,
+  zoneLayout,
+  zoneOfTheme,
+} from "../rules/stage/index.ts";
 import { nodeArt, preparedPlan } from "../sim/catalogue.ts";
 import { NO_DISABLED_EDGES, pathOut, pathOutEncounter } from "../sim/pathOut.ts";
 import type { RunResult } from "../sim/simulate.ts";
@@ -474,7 +479,7 @@ export function dataHash(
 
 const FIXTURE_DIRS = [
   new URL("../sim/fixtures/behaviourTraces/", import.meta.url),
-  new URL("../rules/fixtures/", import.meta.url),
+  new URL("../rules/boss/fixtures/", import.meta.url),
 ];
 
 // The hash of what the proofs' outcomes rest on: the behaviour trace fixtures, the game-kit

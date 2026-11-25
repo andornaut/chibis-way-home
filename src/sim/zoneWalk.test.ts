@@ -10,9 +10,9 @@ import { REACH } from "../data/reach.ts";
 import { TILE } from "../data/screen.ts";
 import type { ZonePlan } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { zonePlanOf } from "../rules/assemble.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { startZone, stepZone } from "../rules/zone.ts";
+import { zonePlanOf } from "../rules/stage/assemble.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
+import { startZone, stepZone } from "../rules/zone/zone.ts";
 import { WINDMILL_FIXTURE_CATALOGUE, WINDMILL_FIXTURE_LIBRARY } from "../testing/chunks.ts";
 import { CATALOGUE, HITBOXES, TILESETS, WALK_MS, walkSuite } from "../testing/walkSuite.ts";
 import { TEST_ZONES } from "../testing/zones.ts";
@@ -282,7 +282,7 @@ describe("walk transition cache", () => {
   it("preserves mover-course search results and ordered states with fewer physics calls", async () => {
     async function run(cached: boolean) {
       vi.resetModules();
-      const engine = await import("../rules/zone.ts");
+      const engine = await import("../rules/zone/zone.ts");
       const calls = vi.spyOn(engine, "stepZone");
       const trace = createHash("sha256");
       let transitions = 0;

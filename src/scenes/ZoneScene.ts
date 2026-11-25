@@ -86,35 +86,38 @@ import {
 } from "../presentation/index.ts";
 import { SKILL_PROFILES, skillTuning, stageExit, wholeRunSummary } from "../progress/index.ts";
 import { startWakeLock, stopWakeLock } from "../pwa/index.ts";
-import { deathSupport } from "../rules/death.ts";
-import { SEED_LIMIT } from "../rules/pageParams.ts";
-import { currentScreen } from "../rules/perception.ts";
-import { createStageBarks } from "../rules/stageBarks.ts";
-import { planStage } from "../rules/stagePlans.ts";
-import { type StagePreview, stagePreviewScroll } from "../rules/stagePreview.ts";
-import { stageProgress } from "../rules/stageProgress.ts";
-import { type StageEntry, type StageEntryContext, stageRequest } from "../rules/stageRequest.ts";
-import { zoneLayout } from "../rules/tiles.ts";
+import { currentScreen } from "../rules/boss/index.ts";
+import {
+  createStageBarks,
+  planStage,
+  SEED_LIMIT,
+  STAGE_CONTEXT,
+  type StageEntry,
+  type StageEntryContext,
+  type StagePreview,
+  stagePreviewScroll,
+  stageRequest,
+  zoneLayout,
+} from "../rules/stage/index.ts";
 import {
   activateBehaviour,
   areaOf,
+  deathSupport,
   enterArea,
+  introductionForRun,
   leaveRoom,
   retryZone,
   roomOf,
+  stageProgress,
   startZone,
   stepZone,
   type ZoneBark,
-  type ZoneState,
-} from "../rules/zone.ts";
-import {
-  introductionForRun,
   type ZoneDepartureTarget,
   zoneExitFlow,
+  type ZoneState,
   type ZoneStory,
   zoneStoryForStage,
-} from "../rules/zoneFlow.ts";
-import { STAGE_CONTEXT } from "../rules/zonePlans.ts";
+} from "../rules/zone/index.ts";
 import { type Tileset } from "../stage/index.ts";
 import {
   buttonHeld,

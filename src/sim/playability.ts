@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 import type { Archetype, Character, Instance, StageRecipe, ZonePlan } from "../data/types/index.ts";
-import type { ChunkLibrary } from "../rules/assemble.ts";
+import type { ChunkLibrary } from "../rules/stage/index.ts";
 export interface PlayabilityContext {
   readonly archetypes: Readonly<Record<string, Archetype>>;
   readonly catalogue: readonly {

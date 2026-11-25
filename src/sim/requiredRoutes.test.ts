@@ -7,8 +7,8 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { Instance, TerrainRect, TilePoint, ZonePlan } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { startZone, stepZone, type ZoneInput } from "../rules/zone.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
+import { startZone, stepZone, type ZoneInput } from "../rules/zone/zone.ts";
 import { CATALOGUE } from "../testing/walkSuite.ts";
 import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions.ts";
 import { surfaceAt, walkRequiredRoutes, walkZone } from "./zoneWalk.ts";
@@ -192,7 +192,7 @@ it.each([
 it("preserves fresh grounded interval evidence and moving-state traces with cached transitions", async () => {
   async function run(cached: boolean) {
     vi.resetModules();
-    const engine = await import("../rules/zone.ts");
+    const engine = await import("../rules/zone/zone.ts");
     const calls = vi.spyOn(engine, "stepZone");
     const trace = createHash("sha256");
     let transitions = 0;

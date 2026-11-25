@@ -5,7 +5,7 @@ import { ARCHETYPES } from "../data/archetypes.ts";
 import { CHARACTERS } from "../data/characters.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { RECIPES } from "../data/zones.ts";
-import { CHUNK_LIBRARY, zonePlanFor } from "../rules/zonePlans.ts";
+import { CHUNK_LIBRARY, zonePlanFor } from "../rules/stage/index.ts";
 import { choiceOption, parseOptions, runMain, UsageError } from "./command.ts";
 import { assessPlayability, formatPlayabilityMarkdown } from "./playability.ts";
 const HELP = `node src/sim/playabilityCli.ts --seeds 1,7 --source COMMIT [--format json|markdown] [--out FILE]

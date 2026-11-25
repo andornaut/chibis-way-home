@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { BIRD_FRAME } from "../assets/index.ts";
 import { TILE } from "../data/screen.ts";
 import { APARTMENT_SPAWN_ROW } from "../data/zone6.ts";
-import { zoneLayout } from "../rules/tiles.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
 import { ALL_CHUNKS } from "./chunks.ts";
 import { CHUNK_WALK_EQUIVALENTS, chunkWalkPhysics, chunkWalkPlan } from "./chunkWalkCases.ts";
 import { FILLED_CHUNK_SLOTS, REQUIRED_CHUNK_ROUTES } from "./requiredRoutes.ts";

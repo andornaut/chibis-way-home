@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 
 import { STEP_SECONDS, sweptContact } from "../core/index.ts";
-import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird.ts";
-import { startZone, type ZoneInput } from "../rules/zone.ts";
+import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird/bird.ts";
+import { startZone, type ZoneInput } from "../rules/zone/zone.ts";
 import { bossSample } from "../sim/bossSimulator.ts";
 import { arenaLayout, gameArenaCase } from "./arenas.ts";
 import { ARENA_SAMPLES } from "./arenaSamples.ts";

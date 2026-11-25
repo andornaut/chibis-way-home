@@ -6,7 +6,7 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { AreaLayout, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { startZone, stepZone } from "../rules/zone.ts";
+import { startZone, stepZone } from "../rules/zone/zone.ts";
 import { walkRequiredRoutes } from "./zoneWalk.ts";
 
 const tuning = { ...BIRD, doubleJump: false };

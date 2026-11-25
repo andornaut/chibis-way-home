@@ -12,10 +12,9 @@ import type {
   ZoneDeath,
   ZoneLayout,
 } from "../data/types/index.ts";
-import { contactBox } from "../rules/behaviour.ts";
-import { birdBox } from "../rules/bird.ts";
-import { isBoss } from "../rules/bossDefeat.ts";
-import type { ZoneInput, ZoneState } from "../rules/zone.ts";
+import { birdBox } from "../rules/bird/index.ts";
+import { contactBox, isBoss } from "../rules/boss/index.ts";
+import type { ZoneInput, ZoneState } from "../rules/zone/index.ts";
 import type { NavigationDiagnostic } from "./bot.ts";
 import type { SimulationConfig, SimulationProvenance, SimulationSeeds } from "./simulate.ts";
 

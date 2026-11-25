@@ -3,9 +3,7 @@ import { CHUNKS, EXTERIOR_DEPTH_ALIASES, WOODLAND_DEPTH_ALIASES } from "../data/
 import { ROOMS } from "../data/rooms.ts";
 import { TILE } from "../data/screen.ts";
 import type { ChunkPlan, ModuleRouteProfile } from "../data/types/index.ts";
-import { type ChunkLibrary, themesOf } from "../rules/assemble.ts";
-import { bindElement } from "../rules/elementBinding.ts";
-import { objectLayout } from "../rules/tiles.ts";
+import { bindElement, type ChunkLibrary, objectLayout, themesOf } from "../rules/stage/index.ts";
 import { hasDynamicMotion } from "../sim/behaviourBounds.ts";
 import type { WalkRouteTarget } from "../sim/zoneWalk.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";

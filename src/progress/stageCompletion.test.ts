@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ZoneMap } from "../data/types/index.ts";
-import { zoneExitFlow, zoneStoryForStage } from "../rules/zoneFlow.ts";
+import { zoneExitFlow, zoneStoryForStage } from "../rules/zone/zoneFlow.ts";
 import { DESTINATION_FIXTURE as MAP } from "../testing/mapDestinations.ts";
 import { stageCompletion, stageExit } from "./stageCompletion.ts";
 

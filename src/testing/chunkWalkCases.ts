@@ -8,9 +8,13 @@ import type {
   ZoneLayout,
   ZonePlan,
 } from "../data/types/index.ts";
-import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble.ts";
-import { applyStageGeometry } from "../rules/stageGeometry.ts";
-import { zoneLayout } from "../rules/tiles.ts";
+import {
+  applyStageGeometry,
+  type ChunkLibrary,
+  themesOf,
+  zoneLayout,
+  zonePlanOf,
+} from "../rules/stage/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 import { type ALL_CHUNKS, ALL_RECIPES } from "./chunks.ts";
 

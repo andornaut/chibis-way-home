@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from "vitest";
 
 import type { ChunkPlan, Instance } from "../data/types/index.ts";
-import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
 
 afterEach(() => {
   vi.doUnmock("../data/archetypes.ts");

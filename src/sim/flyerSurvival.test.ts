@@ -1,13 +1,13 @@
 import { expect, it, vi } from "vitest";
 
 import type { ZoneLayout } from "../data/types/index.ts";
-import type * as Zone from "../rules/zone.ts";
+import type * as Zone from "../rules/zone/zone.ts";
 import { stageTraceScenarios } from "../testing/behaviourTraceSuite.ts";
 
 // Every flying boss that dies during a stepped tick.
 const deaths = vi.hoisted(() => [] as string[]);
 
-vi.mock("../rules/zone.ts", async (original) => {
+vi.mock("../rules/zone/zone.ts", async (original) => {
   const actual = await original<typeof Zone>();
   return {
     ...actual,

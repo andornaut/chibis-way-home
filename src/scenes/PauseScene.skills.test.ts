@@ -50,7 +50,7 @@ import { SKILL_GESTURE } from "../data/skills.ts";
 import { TEXT } from "../data/text.ts";
 import type { SkillId } from "../data/types/index.ts";
 import { SKILL_IDS } from "../progress/index.ts";
-import { type BirdState, startBird } from "../rules/bird.ts";
+import { type BirdState, startBird } from "../rules/bird/bird.ts";
 import {
   createUiLayer,
   setTouchSettingShown,

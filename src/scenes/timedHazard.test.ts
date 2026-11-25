@@ -6,19 +6,19 @@ import { BIRD } from "../data/bird.ts";
 import { HAZARD_PHASE_STYLE } from "../data/hazardPhaseStyle.ts";
 import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours.ts";
 import type { Archetype, ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
-import { startBehaviour } from "../rules/behaviour.ts";
-import { startBird } from "../rules/bird.ts";
-import { effectiveCollision } from "../rules/effectiveCollision.ts";
-import { stepBehaviour } from "../rules/encounter.ts";
-import { objectLayout } from "../rules/tiles.ts";
-import { timedHazardRect } from "../rules/timedHazard.ts";
+import { startBird } from "../rules/bird/bird.ts";
+import { startBehaviour } from "../rules/boss/behaviour.ts";
+import { effectiveCollision } from "../rules/boss/effectiveCollision.ts";
+import { stepBehaviour } from "../rules/boss/encounter.ts";
+import { timedHazardRect } from "../rules/boss/timedHazard.ts";
+import { objectLayout } from "../rules/stage/tiles.ts";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
 import type { ArtManifest } from "../assets/index.ts";
-import type { ZoneState } from "../rules/zone.ts";
+import type { ZoneState } from "../rules/zone/zone.ts";
 import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 const colour = (name: string) =>

@@ -4,7 +4,7 @@ import { BIRD_FRAME } from "../assets/index.ts";
 import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { TilePoint, ZoneLayout, ZonePlan } from "../data/types/index.ts";
-import { zoneLayout } from "../rules/tiles.ts";
+import { zoneLayout } from "../rules/stage/index.ts";
 import {
   crosses,
   type RequiredRouteWalk,

@@ -6,7 +6,7 @@ import {
   stageTraceScenarios,
 } from "../testing/behaviourTraceSuite.ts";
 
-vi.mock("../rules/zone.ts", async (original) =>
+vi.mock("../rules/zone/zone.ts", async (original) =>
   (await import("../testing/behaviourTraceHook.ts")).tracedZone(await original()),
 );
 

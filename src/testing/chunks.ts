@@ -34,9 +34,8 @@ import type {
   ThemePlan,
   ZoneRecipe,
 } from "../data/types/index.ts";
-import type { ChunkLibrary } from "../rules/assemble.ts";
-import { pendulumAngle } from "../rules/orbit.ts";
-import { CHUNK_LIBRARY, STAGE_RECIPES } from "../rules/zonePlans.ts";
+import { pendulumAngle } from "../rules/bird/index.ts";
+import { CHUNK_LIBRARY, type ChunkLibrary, STAGE_RECIPES } from "../rules/stage/index.ts";
 
 // Ground from col, cols wide, its top at row, down to the bottom row.
 const ground = (col: number, cols: number, row: number): TerrainRect => ({

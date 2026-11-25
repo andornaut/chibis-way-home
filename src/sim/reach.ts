@@ -13,8 +13,8 @@ import type {
   ZonePlan,
 } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { tileRect, zoneLayout } from "../rules/tiles.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
+import { tileRect, zoneLayout } from "../rules/stage/index.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/index.ts";
 
 export type Reach = keyof Reaches;
 

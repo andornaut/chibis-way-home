@@ -12,7 +12,7 @@ vi.mock("./pairCertify.ts", async (original) => {
 import { STEP_SECONDS } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { Instance, Rect, TerrainRect } from "../data/types/index.ts";
-import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird.ts";
+import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird/bird.ts";
 import { proveArena } from "./arenaCertify.ts";
 import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas.ts";
 import { ARENA_SAMPLES } from "./arenaSamples.ts";

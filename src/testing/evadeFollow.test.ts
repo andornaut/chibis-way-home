@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { Point, Rect, TerrainRect } from "../data/types/index.ts";
-import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird.ts";
+import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird/bird.ts";
 import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas.ts";
 import { ARENA_SAMPLES } from "./arenaSamples.ts";
 import { ORDINARY } from "./encounterLayouts.ts";

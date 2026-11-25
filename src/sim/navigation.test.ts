@@ -7,8 +7,8 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { orbitPosition } from "../rules/orbit.ts";
-import { retryZone, startZone, stepZone } from "../rules/zone.ts";
+import { orbitPosition } from "../rules/bird/orbit.ts";
+import { retryZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import { registerNavigationDockCase } from "../testing/navigationDockSuite.ts";
 import { botInput, DIAGNOSTIC_SKILL, navigationCounters, newBot, prepareSensors } from "./bot.ts";
 import {

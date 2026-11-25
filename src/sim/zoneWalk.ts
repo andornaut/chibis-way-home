@@ -11,8 +11,7 @@ import type {
   ZoneLayout,
 } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { startBird, stepBird } from "../rules/bird.ts";
-import { orbitBounds } from "../rules/orbit.ts";
+import { orbitBounds, startBird, stepBird } from "../rules/bird/index.ts";
 import {
   activateBehaviour,
   areaOf,
@@ -22,7 +21,7 @@ import {
   stepZone as stepActualZone,
   type ZoneInput,
   type ZoneState,
-} from "../rules/zone.ts";
+} from "../rules/zone/index.ts";
 import {
   type BehaviourBoundsContext,
   emissionBounds,

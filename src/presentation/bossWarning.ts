@@ -1,6 +1,6 @@
 import type { BossWarningTuning } from "../data/bossWarning.ts";
 import type { PixelRun, SpriteContact } from "../data/types/index.ts";
-import type { BehaviourState } from "../rules/behaviour.ts";
+import type { BehaviourState } from "../rules/boss/index.ts";
 
 export type { BossWarningTuning } from "../data/bossWarning.ts";
 

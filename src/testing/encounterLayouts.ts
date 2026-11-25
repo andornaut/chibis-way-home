@@ -3,11 +3,15 @@ import { BIRD } from "../data/bird.ts";
 import { OUTDOOR_LIFT_ASCENT_TRANSIT } from "../data/forcedTransit.ts";
 import { TILE } from "../data/screen.ts";
 import type { BirdTuning, Instance, ZoneLayout } from "../data/types/index.ts";
-import { type ChunkLibrary, themesOf, zonePlanOf } from "../rules/assemble.ts";
-import { startBird } from "../rules/bird.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import type { ZoneInput, ZoneState } from "../rules/zone.ts";
-import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { startBird } from "../rules/bird/index.ts";
+import {
+  CHUNK_LIBRARY,
+  type ChunkLibrary,
+  themesOf,
+  zoneLayout,
+  zonePlanOf,
+} from "../rules/stage/index.ts";
+import type { ZoneInput, ZoneState } from "../rules/zone/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 
 // Chibi without skills.

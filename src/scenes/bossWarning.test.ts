@@ -6,7 +6,7 @@ import { expect, it, vi } from "vitest";
 import palette from "../../public/art/palette.json" with { type: "json" };
 import { BOSS_WARNING } from "../data/bossWarning.ts";
 import type { SpriteContact } from "../data/types/index.ts";
-import type { BehaviourState } from "../rules/behaviour.ts";
+import type { BehaviourState } from "../rules/boss/behaviour.ts";
 import { mountBossWarning } from "./bossWarning.ts";
 
 it("outlines the actual frame with origin, flip and scale, clears only a drawn outline, disposes once", () => {

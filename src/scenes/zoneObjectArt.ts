@@ -43,17 +43,17 @@ import {
   scenerySpriteFrame,
   tetherLine,
 } from "../presentation/index.ts";
-import type { BehaviourState } from "../rules/behaviour.ts";
-import { removalProgress } from "../rules/bossDefeat.ts";
+import { forcePulseVolume } from "../rules/bird/index.ts";
 import {
+  type BehaviourState,
   effectiveGustPhase,
   effectiveHazardPhase,
   effectiveSupportPhase,
-} from "../rules/effectiveCollision.ts";
-import { forcePulseVolume } from "../rules/force.ts";
-import { phaseFollowerTag } from "../rules/phaseSource.ts";
-import { timedHazardRect } from "../rules/timedHazard.ts";
-import { areaOf, type ZoneState } from "../rules/zone.ts";
+  phaseFollowerTag,
+  removalProgress,
+  timedHazardRect,
+} from "../rules/boss/index.ts";
+import { areaOf, type ZoneState } from "../rules/zone/index.ts";
 import { sceneryParallax, type Tileset, worldScenery } from "../stage/index.ts";
 import { reducedMotion } from "../ui/index.ts";
 import { backdropBottomFrame } from "./backdropBottomFrame.ts";

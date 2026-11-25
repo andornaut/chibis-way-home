@@ -16,9 +16,13 @@ import { CHARACTERS } from "../data/characters.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { TILE } from "../data/screen.ts";
 import type { SpriteSilhouettes, ZonePlan } from "../data/types/index.ts";
-import { planStage, recipeKey, stageTarget } from "../rules/stagePlans.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { STAGE_CONTEXT } from "../rules/zonePlans.ts";
+import {
+  planStage,
+  recipeKey,
+  STAGE_CONTEXT,
+  stageTarget,
+  zoneLayout,
+} from "../rules/stage/index.ts";
 import type { Tileset } from "../stage/index.ts";
 import { type PreparedStage, prepareStage } from "./simulate.ts";
 

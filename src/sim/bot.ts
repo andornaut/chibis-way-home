@@ -3,10 +3,9 @@ import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
 import { EDGE, rectAt, STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";
-import { contactBox } from "../rules/behaviour.ts";
-import { ordinaryJumpReleaseTargetHeight } from "../rules/bird.ts";
-import { transientBox } from "../rules/transients.ts";
-import type { ZoneInput, ZoneState } from "../rules/zone.ts";
+import { ordinaryJumpReleaseTargetHeight } from "../rules/bird/index.ts";
+import { contactBox, transientBox } from "../rules/boss/index.ts";
+import type { ZoneInput, ZoneState } from "../rules/zone/index.ts";
 import { hasDynamicMotion } from "./behaviourBounds.ts";
 import {
   type NavigationConfig,

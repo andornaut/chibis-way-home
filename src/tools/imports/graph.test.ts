@@ -52,7 +52,9 @@ it("reads static, type-only, re-exported, dynamic and import-type specifiers", (
     { text: "./later.ts", typeOnly: false },
     { text: "./shape.ts", typeOnly: true },
   ]);
-  expect(resolveSpecifier("src/rules/zone.ts", "../core/index.ts")).toBe("src/core/index.ts");
+  expect(resolveSpecifier("src/rules/zone/zone.ts", "../../core/index.ts")).toBe(
+    "src/core/index.ts",
+  );
   expect(resolveSpecifier("src/ui/dom/map.ts", "./map.css")).toBe("src/ui/dom/map.css");
 });
 
@@ -74,9 +76,11 @@ it("finds a direct, a longer and a self cycle and passes a chain", () => {
 
 it("fails an import sideways, upward or into a group no layer places, outside the tests", () => {
   const edges = [
-    edge("src/rules/zone.ts", "src/core/index.ts"),
-    edge("src/rules/zone.ts", "src/rules/bird.ts"),
-    edge("src/rules/zone.ts", "src/progress/index.ts"),
+    edge("src/rules/zone/zone.ts", "src/core/index.ts"),
+    edge("src/rules/zone/zone.ts", "src/rules/bird/index.ts"),
+    edge("src/rules/zone/zone.ts", "src/rules/zone/death.ts"),
+    edge("src/rules/zone/zone.ts", "src/progress/index.ts"),
+    edge("src/rules/bird/bird.ts", "src/rules/zone/index.ts"),
     edge("src/core/step.ts", "src/scenes/save.ts"),
     edge("src/core/step.ts", "src/unknown/thing.ts"),
     edge("src/core/step.test.ts", "src/scenes/save.ts"),
@@ -85,7 +89,8 @@ it("fails an import sideways, upward or into a group no layer places, outside th
   expect(directionFindings(edges)).toEqual([
     "src/core/step.ts -> src/scenes/save.ts",
     "src/core/step.ts -> src/unknown/thing.ts",
-    "src/rules/zone.ts -> src/progress/index.ts",
+    "src/rules/bird/bird.ts -> src/rules/zone/index.ts",
+    "src/rules/zone/zone.ts -> src/progress/index.ts",
   ]);
   expect(unplacedGroups(["src/core/step.ts", "src/unknown/thing.ts", "src/stray.ts"])).toEqual([
     "stray.ts",
@@ -102,8 +107,13 @@ it("fails a reach past another group's entry, except into data and from the test
     edge("src/scenes/MapScene.test.ts", "src/ui/dom/map.ts"),
     edge("src/ui/dom/map.ts", "src/ui/layout/map.ts"),
     edge("src/play.ts", "src/main.ts"),
+    edge("src/rules/zone/zone.ts", "src/rules/boss/behaviour.ts"),
+    edge("src/rules/zone/zone.ts", "src/rules/zone/death.ts"),
   ];
-  expect(entryFindings(edges)).toEqual(["scenes -> src/ui/dom/map.ts"]);
+  expect(entryFindings(edges)).toEqual([
+    "rules/zone -> src/rules/boss/behaviour.ts",
+    "scenes -> src/ui/dom/map.ts",
+  ]);
 });
 
 it("names each new finding, each known violation that no longer exists and a misordered list", () => {
@@ -116,23 +126,23 @@ it("names each new finding, each known violation that no longer exists and a mis
 });
 
 it("fails a cycle at run time or across bands and allows a type-only one inside a band", () => {
-  const modules = ["src/rules/a.ts", "src/rules/b.ts"];
+  const modules = ["src/rules/zone/a.ts", "src/rules/zone/b.ts"];
   const typed = [edge(modules[0]!, modules[1]!), edge(modules[1]!, modules[0]!, true)];
   expect(graphProblems(NONE, modules, typed)).toEqual([]);
   const run = typed.map((each) => ({ ...each, typeOnly: false }));
   expect(graphProblems(NONE, modules, run)).toEqual([
-    "import cycle at run time: src/rules/a.ts, src/rules/b.ts",
+    "import cycle at run time: src/rules/zone/a.ts, src/rules/zone/b.ts",
   ]);
-  const across = ["src/rules/a.ts", "src/scenes/b.ts"];
-  const upward = "src/rules/a.ts -> src/scenes/b.ts";
+  const across = ["src/rules/zone/a.ts", "src/scenes/b.ts"];
+  const upward = "src/rules/zone/a.ts -> src/scenes/b.ts";
   expect(
     graphProblems({ ...NONE, direction: [upward] }, across, [
       edge(across[0]!, across[1]!, true),
       edge(across[1]!, across[0]!),
     ]),
   ).toEqual([
-    "import past an entry: rules -> src/scenes/b.ts",
-    "import past an entry: scenes -> src/rules/a.ts",
-    "import cycle across bands: src/rules/a.ts, src/scenes/b.ts",
+    "import past an entry: rules/zone -> src/scenes/b.ts",
+    "import past an entry: scenes -> src/rules/zone/a.ts",
+    "import cycle across bands: src/rules/zone/a.ts, src/scenes/b.ts",
   ]);
 });

@@ -2,7 +2,7 @@ import type { Scene } from "phaser";
 
 import type { AirJumpCueTuning, Rect } from "../data/types/index.ts";
 import { type AirJumpCue, airJumpCue, stepAirJumpCue } from "../presentation/index.ts";
-import type { BirdState } from "../rules/bird.ts";
+import type { BirdState } from "../rules/bird/index.ts";
 
 export function mountAirJumpCue(
   tuning: AirJumpCueTuning,

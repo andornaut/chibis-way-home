@@ -9,11 +9,11 @@ import { createOrbitHazardChunks } from "../data/orbitHazardChunks.ts";
 import { TILE, ZONE_ROWS } from "../data/screen.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { contactBox } from "../rules/behaviour.ts";
-import { birdBox } from "../rules/bird.ts";
-import { orbitPosition } from "../rules/orbit.ts";
-import { areaLayout } from "../rules/tiles.ts";
-import { standsOn, startZone, stepZone } from "../rules/zone.ts";
+import { birdBox } from "../rules/bird/bird.ts";
+import { orbitPosition } from "../rules/bird/orbit.ts";
+import { contactBox } from "../rules/boss/behaviour.ts";
+import { areaLayout } from "../rules/stage/tiles.ts";
+import { standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
 import { TILESETS } from "../testing/walkSuite.ts";
 
 const chunks = createOrbitHazardChunks("test");

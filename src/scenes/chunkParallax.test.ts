@@ -13,7 +13,7 @@ vi.mock("phaser", () => ({
 
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
-import type { ZoneState } from "../rules/zone.ts";
+import type { ZoneState } from "../rules/zone/zone.ts";
 import { createZoneObjectArt } from "./zoneObjectArt.ts";
 import { ZoneScene } from "./ZoneScene.ts";
 

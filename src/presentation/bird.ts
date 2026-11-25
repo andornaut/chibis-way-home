@@ -3,7 +3,7 @@ import { type AsepriteSheet, sheetTags, tagMs } from "@andornaut/game-kit/runtim
 import birdSheet from "../../public/art/sprites/bird.json" with { type: "json" };
 import { EDGE } from "../core/index.ts";
 import type { BirdTuning, Point, Size } from "../data/types/index.ts";
-import { birdFrameRect, type BirdState } from "../rules/bird.ts";
+import { birdFrameRect, type BirdState } from "../rules/bird/index.ts";
 import { airJumpStarted } from "./airJumpCue.ts";
 
 type BirdTag = "dash" | "double-jump" | "flutter" | "idle" | "jump" | "land" | "walk";

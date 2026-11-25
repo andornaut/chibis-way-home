@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ZoneState } from "../rules/zone.ts";
+import type { ZoneState } from "../rules/zone/zone.ts";
 import { developmentStep } from "./step.ts";
 
 describe("developer contact protection", () => {

@@ -1,7 +1,10 @@
 import type { ObjectLayout, Point, Rect } from "../data/types/index.ts";
-import type { BehaviourWorld } from "../rules/behaviourReach.ts";
-import { targetVisible } from "../rules/perception.ts";
-import { type Transient, transientBox } from "../rules/transients.ts";
+import {
+  type BehaviourWorld,
+  targetVisible,
+  type Transient,
+  transientBox,
+} from "../rules/boss/index.ts";
 
 export interface ObservedProjectile {
   readonly emitter: number;

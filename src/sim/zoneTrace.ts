@@ -1,6 +1,6 @@
 import { canonicalTrace } from "../ai/index.ts";
 import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
-import type { ZoneState } from "../rules/zone.ts";
+import type { ZoneState } from "../rules/zone/index.ts";
 
 const NAMES = new WeakMap<ZoneLayout, Map<object, string>>();
 

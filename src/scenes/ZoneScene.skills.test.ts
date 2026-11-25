@@ -11,8 +11,8 @@ import { SKILLS } from "../data/skills.ts";
 import { TOUCH } from "../data/touch.ts";
 import type { SkillId } from "../data/types/index.ts";
 import { SKILL_IDS } from "../progress/index.ts";
-import { startBird } from "../rules/bird.ts";
-import * as engine from "../rules/zone.ts";
+import { startBird } from "../rules/bird/bird.ts";
+import * as engine from "../rules/zone/zone.ts";
 import {
   canvasSize,
   type HeldTouch,

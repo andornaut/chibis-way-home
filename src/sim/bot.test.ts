@@ -4,10 +4,10 @@ import { BIRD_FRAME } from "../assets/index.ts";
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import { BIRD } from "../data/bird.ts";
 import type { BehaviourMotion, ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
-import { ordinaryJumpReleaseTargetHeight, startBird, stepBird } from "../rules/bird.ts";
-import { orbitPosition } from "../rules/orbit.ts";
-import type { Transient } from "../rules/transients.ts";
-import { startZone } from "../rules/zone.ts";
+import { ordinaryJumpReleaseTargetHeight, startBird, stepBird } from "../rules/bird/bird.ts";
+import { orbitPosition } from "../rules/bird/orbit.ts";
+import type { Transient } from "../rules/boss/transients.ts";
+import { startZone } from "../rules/zone/zone.ts";
 import { emissionBounds } from "./behaviourBounds.ts";
 import {
   adaptiveJumpHoldTicks,

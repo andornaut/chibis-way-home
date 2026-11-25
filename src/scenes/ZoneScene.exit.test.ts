@@ -5,7 +5,7 @@ import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { DIALOGUES, ZONE_DIALOGUES } from "../data/dialogues.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { stageExit } from "../progress/index.ts";
-import { zoneStoryForStage } from "../rules/zoneFlow.ts";
+import { zoneStoryForStage } from "../rules/zone/zoneFlow.ts";
 
 const save = vi.hoisted(() => ({
   completeRunLinkStage: vi.fn(),

@@ -5,7 +5,7 @@ import type {
   Point,
   Rect,
 } from "../data/types/index.ts";
-import { pendulumCycleSeconds } from "../rules/orbit.ts";
+import { pendulumCycleSeconds } from "../rules/bird/index.ts";
 
 export function hasDynamicBehaviour(pattern: BehaviourPlan): boolean {
   return Object.values(pattern.states).some(

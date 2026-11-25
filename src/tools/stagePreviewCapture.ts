@@ -15,16 +15,16 @@ import { STAGE_PREVIEW } from "../data/layout.ts";
 import { SCREEN, TILE } from "../data/screen.ts";
 import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
 import type { Point } from "../data/types/index.ts";
-import { currentScreen } from "../rules/perception.ts";
+import { currentScreen } from "../rules/boss/index.ts";
 import {
   askedStagePreview,
+  STAGE_CONTEXT,
   type StagePreview,
   stagePreviewPlan,
   stagePreviewScroll,
-} from "../rules/stagePreview.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { areaOf, enterArea, startZone } from "../rules/zone.ts";
-import { STAGE_CONTEXT } from "../rules/zonePlans.ts";
+  zoneLayout,
+} from "../rules/stage/index.ts";
+import { areaOf, enterArea, startZone } from "../rules/zone/index.ts";
 import { nodeArt } from "../sim/catalogue.ts";
 
 export interface CaptureFile {

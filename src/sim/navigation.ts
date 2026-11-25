@@ -2,8 +2,8 @@ import { STEP_SECONDS } from "../core/index.ts";
 import { SCREEN, TILE } from "../data/screen.ts";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { contactBox } from "../rules/behaviour.ts";
-import { stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
+import { contactBox } from "../rules/boss/index.ts";
+import { stepZone, type ZoneInput, type ZoneState } from "../rules/zone/index.ts";
 import { legacyPlannerJumpHeight } from "./plannerEstimates.ts";
 export interface NavigationConfig {
   readonly profile: "quick" | "validation";

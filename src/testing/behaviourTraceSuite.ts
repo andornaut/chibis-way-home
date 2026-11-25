@@ -9,14 +9,14 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { zoneLayout } from "../rules/tiles.ts";
+import { zoneLayout } from "../rules/stage/index.ts";
 import {
   activateBehaviour,
   retryZone,
   startZone,
   stepZone,
   type ZoneState,
-} from "../rules/zone.ts";
+} from "../rules/zone/index.ts";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_DEFAULTS } from "../sim/bot.ts";
 import { stageLoader } from "../sim/catalogue.ts";
 import { type RunResult, simulateStage } from "../sim/simulate.ts";

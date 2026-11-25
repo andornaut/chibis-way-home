@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { ARENAS } from "../data/arenas/index.ts";
 import type { ChunkArena } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
-import { assembleZone } from "../rules/assemble.ts";
-import { STAGE_RECIPES } from "../rules/zonePlans.ts";
+import { assembleZone } from "../rules/stage/assemble.ts";
+import { STAGE_RECIPES } from "../rules/stage/zonePlans.ts";
 import {
   arenaCoverage,
   arenaLayout,

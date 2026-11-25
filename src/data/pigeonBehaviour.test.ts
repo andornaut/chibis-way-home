@@ -1,18 +1,18 @@
 import { expect, it } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams.ts";
+import { birdBox, startBird, stepBird } from "../rules/bird/bird.ts";
 import {
   type BehaviourState,
   contactBox,
   layoutBehaviour,
   startBehaviour,
-} from "../rules/behaviour.ts";
-import { INITIAL_SCORER_STATE } from "../rules/behaviourScorer.ts";
-import { birdBox, startBird, stepBird } from "../rules/bird.ts";
-import { stepBehaviour } from "../rules/encounter.ts";
-import { supportedLanding } from "../rules/flyLanding.ts";
-import { targetVisible } from "../rules/perception.ts";
-import { objectLayout } from "../rules/tiles.ts";
+} from "../rules/boss/behaviour.ts";
+import { INITIAL_SCORER_STATE } from "../rules/boss/behaviourScorer.ts";
+import { stepBehaviour } from "../rules/boss/encounter.ts";
+import { supportedLanding } from "../rules/boss/flyLanding.ts";
+import { targetVisible } from "../rules/boss/perception.ts";
+import { objectLayout } from "../rules/stage/tiles.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import {
   BEAR_BEHAVIOUR,

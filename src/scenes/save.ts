@@ -3,10 +3,14 @@ import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/local
 import type { Rect, ZoneLayout } from "../data/types/index.ts";
 import type { Progress } from "../progress/index.ts";
 import { createPageSave, type PageSave, type SaveAge } from "../progress/save/pageSave.ts";
-import { activeStepSeconds } from "../rules/death.ts";
-import { areaOf, type ZoneState } from "../rules/zone.ts";
-import { zoneStepRecord } from "../rules/zoneRecords.ts";
-import { stepTips, tipsInView } from "../rules/zoneTips.ts";
+import {
+  activeStepSeconds,
+  areaOf,
+  stepTips,
+  tipsInView,
+  type ZoneState,
+  zoneStepRecord,
+} from "../rules/zone/index.ts";
 
 export type { Progress };
 

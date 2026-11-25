@@ -39,7 +39,6 @@ import type {
   Rect,
   ZoneLayout,
 } from "../data/types/index.ts";
-import { traversalContext } from "../rules/behaviourTraversal.ts";
 import {
   airMask,
   BOSS_JUMP_SCRIPTS,
@@ -52,7 +51,8 @@ import {
   type MapSupport,
   type MapTerrain,
   mapTerrain,
-} from "../rules/movementMaps.ts";
+  traversalContext,
+} from "../rules/boss/index.ts";
 
 type GroundMotion = Extract<BehaviourMotion, { mode: "ground" }>;
 

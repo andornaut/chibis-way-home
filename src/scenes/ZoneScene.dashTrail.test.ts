@@ -3,9 +3,9 @@ import { afterEach, expect, it, vi } from "vitest";
 import { type ArtManifest, BIRD_FRAME } from "../assets/index.ts";
 import { BIRD } from "../data/bird.ts";
 import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
-import { startBird } from "../rules/bird.ts";
-import type { SceneryPlaybackState } from "../rules/sceneryPlayback.ts";
-import type { ZoneState } from "../rules/zone.ts";
+import { startBird } from "../rules/bird/bird.ts";
+import type { SceneryPlaybackState } from "../rules/bird/sceneryPlayback.ts";
+import type { ZoneState } from "../rules/zone/zone.ts";
 
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true) }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));

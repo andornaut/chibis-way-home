@@ -8,9 +8,9 @@ import { RACCOON_BEHAVIOUR } from "../data/behaviours.ts";
 import { TILE } from "../data/screen.ts";
 import type { BehaviourCondition, BehaviourPlan, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { layoutBehaviour } from "../rules/behaviour.ts";
-import { retryZone, stepZone } from "../rules/zone.ts";
-import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { layoutBehaviour } from "../rules/boss/behaviour.ts";
+import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
+import { retryZone, stepZone } from "../rules/zone/zone.ts";
 import { BOSS_SCENARIOS } from "../testing/bossScenarios.ts";
 import {
   chunkLayout,

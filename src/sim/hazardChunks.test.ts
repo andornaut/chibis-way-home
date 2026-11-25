@@ -7,11 +7,11 @@ import { createHazardChunks } from "../data/hazardChunks.ts";
 import { TILE } from "../data/screen.ts";
 import type { TilePoint } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { zonePlanOf } from "../rules/assemble.ts";
-import { chunkProblems } from "../rules/chunk.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
-import { CHUNK_LIBRARY } from "../rules/zonePlans.ts";
+import { zonePlanOf } from "../rules/stage/assemble.ts";
+import { chunkProblems } from "../rules/stage/chunk.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
+import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 
 const chunks = createHazardChunks("street");

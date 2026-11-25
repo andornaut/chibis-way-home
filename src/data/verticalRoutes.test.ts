@@ -3,11 +3,17 @@ import { expect, it } from "vitest";
 import { BIRD_FRAME } from "../assets/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { assembleZone, zonePlanOf } from "../rules/assemble.ts";
-import { chunkProblems } from "../rules/chunk.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { standsOn, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
-import { CHUNK_LIBRARY, zonePlanFor } from "../rules/zonePlans.ts";
+import { assembleZone, zonePlanOf } from "../rules/stage/assemble.ts";
+import { chunkProblems } from "../rules/stage/chunk.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
+import { CHUNK_LIBRARY, zonePlanFor } from "../rules/stage/zonePlans.ts";
+import {
+  standsOn,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../rules/zone/zone.ts";
 import { surfaceAt, zoneSurfaces } from "../sim/zoneWalk.ts";
 import { ORDINARY } from "../testing/encounterLayouts.ts";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";

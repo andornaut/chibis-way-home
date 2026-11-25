@@ -36,7 +36,7 @@ vi.mock("../ui/dialogue/conversation.ts", async (importOriginal) => ({
   ]),
 }));
 
-import { createStageBarks } from "../rules/stageBarks.ts";
+import { createStageBarks } from "../rules/stage/stageBarks.ts";
 import { modalInput } from "./modalInput.ts";
 import { ZoneBarkScene } from "./ZoneBarkScene.ts";
 

@@ -2,8 +2,8 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
 import { RECIPES } from "../data/zones.ts";
-import { planStage } from "../rules/stagePlans.ts";
-import { STAGE_CONTEXT } from "../rules/zonePlans.ts";
+import { planStage } from "../rules/stage/stagePlans.ts";
+import { STAGE_CONTEXT } from "../rules/stage/zonePlans.ts";
 
 const save = vi.hoisted(() => ({
   recentStageChunks: vi.fn((): readonly (readonly string[])[] => []),

@@ -6,7 +6,7 @@ import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
-import type { ZoneState } from "../rules/zone.ts";
+import type { ZoneState } from "../rules/zone/zone.ts";
 import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 it("places animated scenery behind actors, crops it before rendering and ignores camera movement for facing", () => {

@@ -6,7 +6,6 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { ObjectLayout, Rect } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
-import { planMapLeg } from "../rules/behaviourMapPursuit.ts";
 import {
   BOSS_JUMP_SCRIPTS,
   bossMovementProfiles,
@@ -14,8 +13,9 @@ import {
   groundMap,
   type MapTerrain,
   mapTerrain,
+  planMapLeg,
   pursuitGroundMap,
-} from "../rules/movementMaps.ts";
+} from "../rules/boss/index.ts";
 import { stageLoader } from "./catalogue.ts";
 import { parseOptions, runMain, UsageError } from "./command.ts";
 

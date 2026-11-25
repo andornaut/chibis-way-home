@@ -8,7 +8,7 @@ import {
   bossMovementProfiles,
   groundMap,
   groundMask,
-} from "../rules/movementMaps.ts";
+} from "../rules/boss/movementMaps.ts";
 import { arenaLayout, sampleArenaCase } from "../testing/arenas.ts";
 import { ORDINARY } from "../testing/encounterLayouts.ts";
 import {

@@ -2,7 +2,7 @@ import { type AgentSample, type AgentTick, centre } from "../ai/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { DodgeName } from "../data/types/index.ts";
-import type { ZoneInput } from "../rules/zone.ts";
+import type { ZoneInput } from "../rules/zone/index.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
 
 // Scripted dodges for the dodge-witness check (src/testing/bossDodges.ts). A script starts the

@@ -10,8 +10,12 @@ import { expect, it } from "vitest";
 
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import type { Point, Rect } from "../data/types/index.ts";
-import { birdBox, startBird, stepBird } from "../rules/bird.ts";
-import { chibiMovementProfile, type MapSupport, type MapTerrain } from "../rules/movementMaps.ts";
+import { birdBox, startBird, stepBird } from "../rules/bird/bird.ts";
+import {
+  chibiMovementProfile,
+  type MapSupport,
+  type MapTerrain,
+} from "../rules/boss/movementMaps.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
 import {
   completedGoalHold,

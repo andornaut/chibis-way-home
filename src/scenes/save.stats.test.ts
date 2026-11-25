@@ -6,8 +6,8 @@ import { BIRD } from "../data/bird.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { SKILL_PROFILES, STATS_VERSION } from "../progress/index.ts";
 import { createPageSave } from "../progress/save/pageSave.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import { startZone, stepZone } from "../rules/zone.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
+import { startZone, stepZone } from "../rules/zone/zone.ts";
 import { createSave } from "./save.ts";
 
 // A page save of its own over the stubbed localStorage.

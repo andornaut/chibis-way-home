@@ -3,8 +3,8 @@ import { expect, it } from "vitest";
 import { CERTIFIED_LISTS } from "../data/certified/index.ts";
 import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules/index.ts";
 import { ZONE_FRAMES } from "../data/zoneFrames.ts";
-import { certifiedChunks } from "../rules/modules.ts";
-import { STAGE_RECIPES } from "../rules/zonePlans.ts";
+import { certifiedChunks } from "../rules/stage/modules.ts";
+import { STAGE_RECIPES } from "../rules/stage/zonePlans.ts";
 import { certifiedPool, certifiedPoolsPlugin } from "./certifiedPools.ts";
 
 it("keeps runtime pool fields and declared approaches while preserving composition", () => {

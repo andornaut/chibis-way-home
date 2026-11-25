@@ -2,9 +2,9 @@ import type { MapEdge } from "@andornaut/game-kit/runtime/terrain/movementMap";
 
 import { EDGE } from "../core/index.ts";
 import type { BirdTuning, Point } from "../data/types/index.ts";
-import { ordinaryHorizontalVelocity } from "../rules/bird.ts";
-import type { MapSupport } from "../rules/movementMaps.ts";
-import type { ZoneInput } from "../rules/zone.ts";
+import { ordinaryHorizontalVelocity } from "../rules/bird/index.ts";
+import type { MapSupport } from "../rules/boss/index.ts";
+import type { ZoneInput } from "../rules/zone/index.ts";
 
 export type LaunchMove = -1 | 0 | 1;
 type LaunchState = { readonly vx: number; readonly x: number };

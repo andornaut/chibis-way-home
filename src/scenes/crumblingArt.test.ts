@@ -4,14 +4,14 @@ import { expect, it, vi } from "vitest";
 
 import type { ArtManifest } from "../assets/index.ts";
 import type { AreaLayout, ObjectLayout, ZoneLayout } from "../data/types/index.ts";
-import { initialCrumblingWorld } from "../rules/crumbling.ts";
-import type { ZoneCrumblingWorld } from "../rules/zoneCrumbling.ts";
+import { initialCrumblingWorld } from "../rules/bird/crumbling.ts";
+import type { ZoneCrumblingWorld } from "../rules/zone/zoneCrumbling.ts";
 import type { Tileset } from "../stage/index.ts";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
 
-import type { ZoneState } from "../rules/zone.ts";
+import type { ZoneState } from "../rules/zone/zone.ts";
 import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 const tileset = JSON.parse(

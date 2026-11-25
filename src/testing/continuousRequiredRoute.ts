@@ -2,7 +2,7 @@ import { STEP_SECONDS } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
+import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/index.ts";
 import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "../sim/bot.ts";
 import {
   requiredRouteObservation,

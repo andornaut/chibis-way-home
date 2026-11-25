@@ -1,7 +1,7 @@
 import { EDGE, sweptContact } from "../core/index.ts";
 import type { BirdTuning, Rect } from "../data/types/index.ts";
-import { birdBox, type BirdState, stepBird } from "../rules/bird.ts";
-import type { ZoneInput } from "../rules/zone.ts";
+import { birdBox, type BirdState, stepBird } from "../rules/bird/index.ts";
+import type { ZoneInput } from "../rules/zone/index.ts";
 import type { ObservedProjectile, ProjectileObservation } from "./evadeProjectiles.ts";
 
 export interface ProjectileFrame {

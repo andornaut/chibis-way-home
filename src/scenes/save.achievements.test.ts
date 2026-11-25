@@ -5,8 +5,8 @@ import { ACHIEVEMENTS } from "../data/achievements.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import { createPageSave } from "../progress/save/pageSave.ts";
-import type { BehaviourState } from "../rules/behaviour.ts";
-import type { ZoneState } from "../rules/zone.ts";
+import type { BehaviourState } from "../rules/boss/behaviour.ts";
+import type { ZoneState } from "../rules/zone/zone.ts";
 import { createSave } from "./save.ts";
 
 // A page save of its own over the stubbed localStorage.

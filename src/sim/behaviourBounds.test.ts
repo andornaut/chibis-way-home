@@ -10,12 +10,12 @@ import { createOrbitHazardChunks } from "../data/orbitHazardChunks.ts";
 import { TILE } from "../data/screen.ts";
 import type { BehaviourMotion, BehaviourPlan } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { startBehaviour } from "../rules/behaviour.ts";
-import { startBird } from "../rules/bird.ts";
-import { stepBehaviour } from "../rules/encounter.ts";
-import { orbitBounds } from "../rules/orbit.ts";
-import { areaLayout, objectLayout } from "../rules/tiles.ts";
-import { startZone, stepZone } from "../rules/zone.ts";
+import { startBird } from "../rules/bird/bird.ts";
+import { orbitBounds } from "../rules/bird/orbit.ts";
+import { startBehaviour } from "../rules/boss/behaviour.ts";
+import { stepBehaviour } from "../rules/boss/encounter.ts";
+import { areaLayout, objectLayout } from "../rules/stage/tiles.ts";
+import { startZone, stepZone } from "../rules/zone/zone.ts";
 import type { Tileset } from "../stage/index.ts";
 import {
   behaviourCycleSeconds,

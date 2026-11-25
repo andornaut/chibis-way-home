@@ -4,9 +4,9 @@ import { BIRD_FRAME } from "../assets/index.ts";
 import { EDGE } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { Instance, TerrainRect, ZonePlan } from "../data/types/index.ts";
-import { zoneLayout } from "../rules/tiles.ts";
-import * as zoneRules from "../rules/zone.ts";
-import { startZone } from "../rules/zone.ts";
+import { zoneLayout } from "../rules/stage/tiles.ts";
+import * as zoneRules from "../rules/zone/zone.ts";
+import { startZone } from "../rules/zone/zone.ts";
 import { botInput, DIAGNOSTIC_SKILL, newBot, prepareSensors } from "../sim/bot.ts";
 import {
   requiredRouteObservation,

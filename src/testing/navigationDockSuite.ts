@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import { STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { enterArea, stepZone } from "../rules/zone.ts";
+import { enterArea, stepZone } from "../rules/zone/index.ts";
 import { newBot } from "../sim/bot.ts";
 import capturedDock from "../sim/fixtures/sharedDock.json" with { type: "json" };
 import {

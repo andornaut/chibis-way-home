@@ -4,8 +4,8 @@ import { DOG_BEHAVIOUR } from "../data/behaviours.ts";
 import { CHARACTERS } from "../data/characters.ts";
 import { TILE } from "../data/screen.ts";
 import type { AntagonistKind, Instance, ObjectLayout, ZoneLayout } from "../data/types/index.ts";
-import { startBird } from "../rules/bird.ts";
-import type { ZoneInput } from "../rules/zone.ts";
+import { startBird } from "../rules/bird/index.ts";
+import type { ZoneInput } from "../rules/zone/index.ts";
 import {
   committedHold,
   crossesAfterSettle,

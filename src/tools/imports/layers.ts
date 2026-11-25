@@ -1,4 +1,5 @@
-// Where each module of src/ sits. A group is a folder of src/ or a file directly in it.
+// Where each module of src/ sits. A group is a folder of src/, a file directly in it, or an area:
+// a subfolder of a folder that NESTED_GROUPS names.
 // CLEANUP (added 2026-11-25): remove when the known-violations table is empty and ESLint guards
 // the layers (cwh-0310).
 
@@ -13,7 +14,10 @@ export type Layer = { readonly band: string; readonly groups: readonly string[] 
 export const LAYERS: readonly Layer[] = [
   { band: "Foundation", groups: ["data"] },
   { band: "Foundation", groups: ["ai", "buildLabel.ts", "camera", "core", "stage"] },
-  { band: "Model", groups: ["assets", "rules"] },
+  { band: "Model", groups: ["assets", "rules/bird"] },
+  { band: "Model", groups: ["rules/boss"] },
+  { band: "Model", groups: ["rules/stage"] },
+  { band: "Model", groups: ["rules/zone"] },
   { band: "Saving", groups: ["progress"] },
   { band: "Presentation", groups: ["presentation", "ui"] },
   { band: "Platform", groups: ["crash", "dev"] },
@@ -29,9 +33,15 @@ export const LAYERS: readonly Layer[] = [
 /** The groups whose every module is its own entry: one table to a file. */
 export const OPEN_GROUPS: readonly string[] = ["data"];
 
+/** The folders of src/ split into areas: each subfolder is a group with its own entry. */
+export const NESTED_GROUPS: readonly string[] = ["rules"];
+
 /** The group of a path under src/. */
 export function groupOf(path: string): string {
-  return path.split("/")[1] ?? "";
+  const [, folder = "", area, ...rest] = path.split("/");
+  return NESTED_GROUPS.includes(folder) && area !== undefined && rest.length > 0
+    ? `${folder}/${area}`
+    : folder;
 }
 
 /** The index in LAYERS of a path under src/, or -1 for a module no layer places. */

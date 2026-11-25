@@ -3,8 +3,8 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { STEP_MS, STEP_SECONDS } from "../core/index.ts";
 import { BIRD } from "../data/bird.ts";
-import { startBird, stepBird } from "../rules/bird.ts";
-import * as engine from "../rules/zone.ts";
+import { startBird, stepBird } from "../rules/bird/bird.ts";
+import * as engine from "../rules/zone/zone.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));

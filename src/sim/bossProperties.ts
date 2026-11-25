@@ -27,7 +27,7 @@ import { ATTACK_ENGAGEMENT_RANGE } from "../data/behaviours.ts";
 import { BOSS_FAIRNESS } from "../data/bossFairness.ts";
 import { TILE } from "../data/screen.ts";
 import type { BehaviourPlan, Rect, ZoneLayout } from "../data/types/index.ts";
-import { contactBox } from "../rules/behaviourTrack.ts";
+import { contactBox } from "../rules/boss/index.ts";
 import { BOSSES, type BossTick } from "./bossSimulator.ts";
 
 // Boss rules from gameplay/design.md as checks over a boss trace. Thresholds are read from the
