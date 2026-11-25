@@ -163,6 +163,9 @@ function scored(
 }
 const ENGAGEMENT = { kind: "nearby", range: ATTACK_ENGAGEMENT_RANGE } as const;
 
+// Every charge's gate: room for its rush to move toward Chibi from here.
+const CHARGE_GATE: readonly BehaviourCondition[] = [{ kind: "track-moves", state: "rush" }];
+
 // The engaged ground state: the scorer chooses among its attacks and moves.
 function chaseNode(chase: GroundChase, attacks: readonly BehaviourTransition[]): BehaviourNode {
   return {
@@ -181,6 +184,9 @@ function chaseNode(chase: GroundChase, attacks: readonly BehaviourTransition[]):
 interface AttackSequence {
   readonly committed: readonly string[];
   readonly finished: readonly { readonly from: string; readonly to: string }[];
+  // Conditions added after attack-ready to every scored transition into the sequence's tells.
+  // An unscored one, such as the wander state's opening, stays outside them.
+  readonly gate?: readonly BehaviourCondition[];
   readonly id: string;
   // Continuing tells inside the committed sequence, entered without attack-ready.
   readonly retells?: Readonly<Record<string, number>>;
@@ -210,7 +216,11 @@ const ANTICIPATION_ANIMATION = "anticipate-lift";
 
 function attackProfile(plan: BehaviourPlan, sequences: readonly AttackSequence[]): BehaviourPlan {
   const states: Record<string, BehaviourNode> = { ...plan.states };
-  const tells = new Set(sequences.flatMap(({ tells }) => Object.keys(tells)));
+  const gates = new Map(
+    sequences.flatMap(({ gate = [], tells }) =>
+      Object.keys(tells).map((key) => [key, gate] as const),
+    ),
+  );
   for (const sequence of sequences) {
     for (const [key, seconds] of Object.entries(sequence.tells)) {
       states[key] = tellNode({ id: sequence.id, phase: "tell" }, states[key]!, seconds);
@@ -250,11 +260,19 @@ function attackProfile(plan: BehaviourPlan, sequences: readonly AttackSequence[]
   for (const [key, node] of Object.entries(states)) {
     states[key] = {
       ...node,
-      transitions: node.transitions.map((transition) =>
-        tells.has(transition.to)
-          ? { ...transition, when: [...transition.when, { kind: "attack-ready" }] }
-          : transition,
-      ),
+      transitions: node.transitions.map((transition) => {
+        const gate = gates.get(transition.to);
+        return gate
+          ? {
+              ...transition,
+              when: [
+                ...transition.when,
+                { kind: "attack-ready" },
+                ...(transition.score ? gate : []),
+              ],
+            }
+          : transition;
+      }),
     };
   }
   return {
@@ -497,6 +515,7 @@ export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
     {
       committed: ["rush", "rest"],
       finished: [{ from: "rest", to: "pursuit" }],
+      gate: CHARGE_GATE,
       id: "charge",
       tells: { crouch: ATTACK_ANTICIPATION_SECONDS },
     },
@@ -569,6 +588,7 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
     {
       committed: ["rush", "rest"],
       finished: [{ from: "rest", to: "pursuit" }],
+      gate: CHARGE_GATE,
       id: "charge",
       tells: { crouch: ATTACK_ANTICIPATION_SECONDS },
     },
@@ -636,6 +656,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
     {
       committed: ["rush", "slide", "rest"],
       finished: [{ from: "rest", to: "pursuit" }],
+      gate: CHARGE_GATE,
       id: "charge",
       tells: { warn: ATTACK_ANTICIPATION_SECONDS },
     },
@@ -793,6 +814,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
         { from: "return-ground", to: "pursuit" },
         { from: "recharge", to: "pursuit" },
       ],
+      gate: CHARGE_GATE,
       id: "charge",
       retells: { recharge: KIWI_RETELL_SECONDS },
       tells: { "prepare-charge": ATTACK_ANTICIPATION_SECONDS },
@@ -891,6 +913,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
     {
       committed: ["rush"],
       finished: [{ from: "rush", to: "pursuit" }],
+      gate: CHARGE_GATE,
       id: "charge",
       tells: { "prepare-charge": ATTACK_ANTICIPATION_SECONDS },
     },

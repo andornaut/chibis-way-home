@@ -8,6 +8,7 @@ import { nodeOf } from "./behaviourTrack.ts";
 // - condition: one of the transition's `when` conditions other than its range does not hold.
 // - cooldown: the cooldown after a completed attack is running.
 // - engagement: Chibi is outside the transition's `nearby` range.
+// - no-room: the attack's rush, entered from here facing Chibi, cannot move.
 // - outside-sequence: a continuing tell without its own attack under way.
 // - pause-clearance: a scored attack within the tell clearance after a chase pause.
 // - tell-cancel-pause: the pause after the plan's consecutive cancelled tells is running.
@@ -16,6 +17,7 @@ export type AttackGateRefusal =
   | "condition"
   | "cooldown"
   | "engagement"
+  | "no-room"
   | "outside-sequence"
   | "pause-clearance"
   | "tell-cancel-pause";
@@ -31,6 +33,15 @@ const ADMITTED: AttackGateResult = { admitted: true };
 
 function refused(reason: AttackGateRefusal): AttackGateResult {
   return { admitted: false, reason };
+}
+
+// The refusal a failed `when` condition gives, by its kind.
+function unmet(condition: BehaviourCondition): AttackGateRefusal {
+  return condition.kind === "nearby"
+    ? "engagement"
+    : condition.kind === "track-moves"
+      ? "no-room"
+      : "condition";
 }
 
 function unready(state: BehaviourAttackState): AttackGateRefusal {
@@ -73,7 +84,7 @@ export function attackGate(
         return refused(unready(state));
       }
     } else if (!matches(condition)) {
-      return refused(condition.kind === "nearby" ? "engagement" : "condition");
+      return refused(unmet(condition));
     }
   }
   return ADMITTED;

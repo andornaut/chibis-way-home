@@ -47,7 +47,7 @@ export function createBehaviourObservations({
       work.set(observation.metric, amount);
     } else if (observation.kind === "pursuit") {
       lastPursuit = observation;
-    } else {
+    } else if (observation.kind === "choice") {
       lastChoice = observation;
     }
     recordedEvents++;

@@ -7,6 +7,7 @@ import type {
   BehaviourCondition,
   BehaviourNode,
   BehaviourPlan,
+  BehaviourTransition,
   BirdTuning,
   DialogueLine,
   HazardPhase,
@@ -14,7 +15,7 @@ import type {
   Point,
   Rect,
 } from "../data/types/index.ts";
-import { attackGate } from "./attackGate.ts";
+import { attackGate, type AttackGateResult } from "./attackGate.ts";
 import {
   BEHAVIOUR_ABILITIES,
   type BehaviourAbilityParams,
@@ -48,7 +49,7 @@ import {
   wanderStep,
 } from "./behaviourInterludes.ts";
 import { type BehaviourMapPursuitState, mapCovers, mapReachable } from "./behaviourMapPursuit.ts";
-import { recordBehaviourWork } from "./behaviourObserver.ts";
+import { type BehaviourObservationContext, recordBehaviourWork } from "./behaviourObserver.ts";
 import { type BehaviourPerception, perceiveBehaviour } from "./behaviourPerception.ts";
 import { pursuitKinds } from "./behaviourProfile.ts";
 import {
@@ -543,6 +544,20 @@ function matches(
     const end = trackEndpoint(object, heading, entered);
     return trackReach(object, world, at, entered, heading, end) === end;
   }
+  if (condition.kind === "track-moves") {
+    const node = nodeOf(object, condition.state);
+    if (node.motion.kind !== "move" || node.motion.speed <= 0) {
+      return false;
+    }
+    const axis = node.track?.axis ?? object.behaviour?.axis ?? "x";
+    const size = axis === "x" ? "width" : "height";
+    const facing = bird[axis] + tuning[size] / 2 < at[axis] + object[size] / 2 ? -1 : 1;
+    const entered = enterState(perception, object, at, condition.state, { ...state, facing });
+    const heading = travelHeading(node.motion, entered);
+    const desired =
+      travelLimit(node.motion, entered, heading) ?? trackEndpoint(object, heading, entered);
+    return (trackReach(object, world, at, entered, heading, desired) - at[axis]) * heading > EDGE;
+  }
   if (condition.kind === "reachable" || condition.kind === "lost-target") {
     // A mapped ground pursuer paces where no path reaches Chibi instead of losing him.
     const entry = state.pursuit?.phase === "engaged" ? world.groundMap : undefined;
@@ -589,6 +604,27 @@ function matches(
       hers.y + hers.height / 2 - at.y - object.height / 2,
     ) <= condition.range
   );
+}
+
+// Whether the gate admitted a transition. A refused transition into a tell is recorded with its
+// reason, so every tell can be checked against its gate; the record never changes the step.
+function admitted(
+  observation: BehaviourObservationContext | undefined,
+  object: ObjectLayout,
+  state: BehaviourState,
+  transition: BehaviourTransition,
+  result: AttackGateResult,
+): boolean {
+  if (!result.admitted && observation && nodeOf(object, transition.to).attack?.phase === "tell") {
+    observation.observer.record({
+      kind: "gate",
+      ...(observation.metadata && { metadata: observation.metadata }),
+      reason: result.reason,
+      state: state.stateKey,
+      to: transition.to,
+    });
+  }
+  return result.admitted;
 }
 
 function hopY(object: ObjectLayout, world: BehaviourWorld, at: Point, desired: number): number {
@@ -1172,15 +1208,21 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
                 );
               })())) &&
           !(supportMotion && !supported && nodeOf(object, to).attack?.phase === "completed") &&
-          attackGate(
-            (condition) =>
-              condition.kind === "arrived" && supportMotion
-                ? supported
-                : matches(supportPerception, object, current, next, condition),
+          admitted(
+            world.observation,
             object,
             next,
             { to, when },
-          ).admitted,
+            attackGate(
+              (condition) =>
+                condition.kind === "arrived" && supportMotion
+                  ? supported
+                  : matches(supportPerception, object, current, next, condition),
+              object,
+              next,
+              { to, when },
+            ),
+          ),
       );
   if (transition) {
     if (instant.has(next.stateKey)) {
@@ -1249,12 +1291,18 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
       (transition) =>
         transition.score &&
         instant.size === 0 &&
-        attackGate(
-          (condition) => matches(supportPerception, object, current, next, condition),
+        admitted(
+          world.observation,
           object,
           next,
           transition,
-        ).admitted,
+          attackGate(
+            (condition) => matches(supportPerception, object, current, next, condition),
+            object,
+            next,
+            transition,
+          ),
+        ),
     );
     if (capture || gated.length > 0) {
       if (!world.decisions) {

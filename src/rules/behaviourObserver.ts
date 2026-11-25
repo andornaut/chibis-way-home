@@ -1,6 +1,7 @@
 import type { ScoreDecision } from "@andornaut/game-kit/runtime/ai/utility";
 
 import type { Point, Rect } from "../data/types/index.ts";
+import type { AttackGateRefusal } from "./attackGate.ts";
 import type {
   BehaviourScorerState,
   BossScorerChoice,
@@ -77,6 +78,15 @@ export interface BehaviourChoiceObservation extends BehaviourObservationBase {
   readonly state: string;
 }
 
+// A transition into a tell that the attack gate refused. Admissions are not recorded: the tell
+// itself shows them.
+export interface BehaviourGateObservation extends BehaviourObservationBase {
+  readonly kind: "gate";
+  readonly reason: AttackGateRefusal;
+  readonly state: string;
+  readonly to: string;
+}
+
 export interface BehaviourWorkObservation extends BehaviourObservationBase {
   readonly amount: number;
   readonly kind: "work";
@@ -84,7 +94,10 @@ export interface BehaviourWorkObservation extends BehaviourObservationBase {
 }
 
 export type BehaviourObservation =
-  BehaviourChoiceObservation | BehaviourPursuitObservation | BehaviourWorkObservation;
+  | BehaviourChoiceObservation
+  | BehaviourGateObservation
+  | BehaviourPursuitObservation
+  | BehaviourWorkObservation;
 
 export interface BehaviourObserverFailure {
   readonly eventKind: BehaviourObservation["kind"];
@@ -129,6 +142,15 @@ function copyObservation(observation: BehaviourObservation): BehaviourObservatio
       kind: observation.kind,
       ...(metadata && { metadata }),
       metric: observation.metric,
+    });
+  }
+  if (observation.kind === "gate") {
+    return Object.freeze({
+      kind: observation.kind,
+      ...(metadata && { metadata }),
+      reason: observation.reason,
+      state: observation.state,
+      to: observation.to,
     });
   }
   if (observation.kind === "choice") {

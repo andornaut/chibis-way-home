@@ -43,7 +43,7 @@ it("reads the charge, the pounce and the opening from Archie's plan", () => {
   expect(tell).toEqual({ id: tell.id, phase: "tell" });
   expect(opening.to).toBe(charge.to);
   expect(opening.score).toBeUndefined();
-  expect(charge.when.map(({ kind }) => kind)).toEqual(["nearby", "attack-ready"]);
+  expect(charge.when.map(({ kind }) => kind)).toEqual(["nearby", "attack-ready", "track-moves"]);
   expect(pounce.when.map(({ kind }) => kind)).toEqual(["nearby", "line-of-sight", "attack-ready"]);
   expect(opening.when.map(({ kind }) => kind)).toEqual(["visible", "attack-ready"]);
 });
@@ -80,6 +80,10 @@ describe("the scored charge", () => {
 
   it("is refused for engagement outside its range", () => {
     expect(attackGate(except("nearby"), archie, {}, charge)).toEqual(refusal("engagement"));
+  });
+
+  it("is refused for no-room when its rush cannot move", () => {
+    expect(attackGate(except("track-moves"), archie, {}, charge)).toEqual(refusal("no-room"));
   });
 
   it("refuses the pounce for condition without a line of sight", () => {

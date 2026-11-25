@@ -396,6 +396,12 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
             }
             return condition;
           }
+          if (condition.kind === "track-moves") {
+            if (plan.states[condition.state]?.motion.kind !== "move") {
+              throw new Error(`Invalid track move condition in ${key}`);
+            }
+            return condition;
+          }
           if (condition.kind === "flight-approach-direction") {
             if (![-1, 1].includes(condition.direction)) {
               throw new Error(`Invalid flight approach direction in ${key}`);

@@ -52,6 +52,9 @@ export type BehaviourCondition =
   // The current track travel, turned toward Chibi, can advance at least distance tiles before
   // its end, terrain or the edge of its support stops it.
   | { readonly kind: "track-room"; readonly distance: number }
+  // The named track move, entered from here facing Chibi, can advance before its end, terrain
+  // or the edge of its support stops it.
+  | { readonly kind: "track-moves"; readonly state: string }
   // The inner condition does not hold; its placement rules still apply.
   | { readonly kind: "not"; readonly condition: BehaviourCondition }
   | {
