@@ -7,7 +7,7 @@ import { CONTROL_REFUSAL } from "../../data/feedback.ts";
 // (marked data-ui-refusal-label) and its own colour flash red, flashes steps of flashMs. With
 // reduced motion it holds red for the same time and does not move. Faces must not draw in
 // currentColor, which turns red too.
-const CUE = {
+export const REFUSAL_CUE = {
   shake: CONTROL_REFUSAL.shake,
   shakeMs: CONTROL_REFUSAL.shakeMs,
   shakeShape: "yoyo",
@@ -25,5 +25,5 @@ export function refusing(element: HTMLElement): boolean {
 // Plays the cue on element unless it is already playing there, and returns a function that stops
 // it at once.
 export function refuseControl(reducedMotion: boolean, element: HTMLElement): () => void {
-  return refusing(element) ? () => undefined : refuse(CUE, reducedMotion, element);
+  return refusing(element) ? () => undefined : refuse(REFUSAL_CUE, reducedMotion, element);
 }

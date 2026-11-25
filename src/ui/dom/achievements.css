@@ -66,12 +66,6 @@
   margin: 0;
 }
 
-/* The footer always shows, so its parts have boxes to measure before the frame first places
-   them. */
-.achievements-card > .ui-modal-footer {
-  display: block;
-}
-
 /* The page count is as wide as its text until the pager first places it. */
 .achievements-pager > .ui-pager-count:not(.ui-action) {
   width: max-content;

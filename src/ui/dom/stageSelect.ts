@@ -3,7 +3,6 @@ import type { PagerState } from "@andornaut/game-kit/runtime/ui/pager";
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import type { PagerView } from "@andornaut/game-kit/runtime/web/ui/dom/pager";
 
-import { CONTROL_REFUSAL } from "../../data/feedback.ts";
 import { createGamePager, type GameAction } from "../input/actionBinding.ts";
 import {
   STAGE_FACE,
@@ -13,8 +12,9 @@ import {
 } from "../layout/stageSelectCard.ts";
 import { createActions } from "./actions.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";
-import { createCardFrame } from "./card.ts";
+import { createCardFrame, TEXT_BUTTON_APPEARANCE } from "./card.ts";
 import { registerLayout, rendered } from "./layout.ts";
+import { REFUSAL_CUE } from "./refusal.ts";
 
 // The stage picker card in the HTML UI (stageSelect.css) on the card frame: the destination's
 // name, one row of stage faces per page, of which one shows, on a paged card the pager
@@ -69,16 +69,6 @@ export interface StageSelectView {
 }
 
 const ID = "stage-select";
-
-// CLEANUP (added 2026-11-25): read the cue from src/ui/dom/refusal.ts once it exports it.
-// The refusal cue a pager button with no page to turn to plays, the one refuseControl plays.
-const REFUSAL_CUE = {
-  shake: CONTROL_REFUSAL.shake,
-  shakeMs: CONTROL_REFUSAL.shakeMs,
-  shakeShape: "yoyo",
-  stepMs: CONTROL_REFUSAL.flashMs,
-  steps: CONTROL_REFUSAL.flashes,
-} as const;
 
 // The card for words and the catalogue's stages, perPage to a page, every page hidden.
 export function createStageSelect(
@@ -136,12 +126,7 @@ export function createStageSelect(
     }
     const created = createGamePager(document, {
       active: paging.active,
-      appearance: {
-        className: "ui-text-button",
-        contentClassName: "ui-text-button-label",
-        face: { className: "ui-text-button-face ui-frame ui-control-button" },
-        layout: "caller",
-      },
+      appearance: TEXT_BUTTON_APPEARANCE,
       className: "stage-select-pager",
       countText: paging.countText,
       labels: words.pager,

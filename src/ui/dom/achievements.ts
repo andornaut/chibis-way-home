@@ -7,7 +7,7 @@ import { TEXT_BUTTON } from "../../data/layout.ts";
 import { createGamePager, type GameAction } from "../input/actionBinding.ts";
 import { achievementsCardProperties } from "../layout/achievementsCard.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";
-import { createCardFrame, textButton } from "./card.ts";
+import { createCardFrame, TEXT_BUTTON_APPEARANCE, textButton } from "./card.ts";
 import { registerLayout, rendered } from "./layout.ts";
 
 // The Achievements card in the HTML UI (achievements.css) on the card frame: its title, a list
@@ -109,12 +109,7 @@ export function createAchievementsCard(
   frame.content.append(list);
   const { actions, view: pager } = createGamePager(document, {
     active: paging.active,
-    appearance: {
-      className: "ui-text-button",
-      contentClassName: "ui-text-button-label",
-      face: { className: "ui-text-button-face ui-frame ui-control-button" },
-      layout: "caller",
-    },
+    appearance: TEXT_BUTTON_APPEARANCE,
     className: "achievements-pager",
     countText: paging.countText,
     labels: { next: words.next, previous: words.previous },

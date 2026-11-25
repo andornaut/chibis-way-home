@@ -6,6 +6,7 @@ import {
 
 import { CARD_CONTENT, CARD_SCREEN_MARGIN, CARD_WIDTH, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
+import type { Rect } from "../../data/types/index.ts";
 import { createGameButton } from "../input/actionBinding.ts";
 import type { CardWidth } from "../layout/contentCard.ts";
 import { hitMargin } from "../layout/hitAreas.ts";
@@ -55,6 +56,8 @@ export interface CardFrameOptions {
   readonly className?: string;
   // The close X's accessible name, for a card with one.
   readonly close?: string;
+  // The rect of the play view the card is centred in; the whole view by default.
+  readonly content?: Rect;
   // Text the card is described by, as its content's first paragraph.
   readonly description?: string;
   readonly id: string;
@@ -79,7 +82,10 @@ export interface CardFrame {
   // Measures and places the card; undefined while it is not rendered.
   layout(): ModalFrameLayout | undefined;
   // Pins actions, in their focus order, in the card's footer below its scrolling body.
-  setFooter(actions: readonly HTMLElement[], context?: ActionsContext): void;
+  setFooter(
+    actions: readonly HTMLElement[],
+    context?: ActionsContext | (() => ActionsContext),
+  ): void;
   setWidth(width: CardWidth): void;
 }
 
@@ -123,7 +129,11 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
   }
   let family = options.width;
   let footer:
-    { readonly actions: readonly HTMLElement[]; readonly context?: ActionsContext } | undefined;
+    | {
+        readonly actions: readonly HTMLElement[];
+        readonly context?: ActionsContext | (() => ActionsContext);
+      }
+    | undefined;
   const layout = () => {
     if (!rendered(frame.element)) {
       return undefined;
@@ -132,7 +142,7 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
     return frame.layout(
       {
         ...(close === undefined ? {} : { close: CLOSE }),
-        content: VIEW,
+        content: options.content ?? VIEW,
         families: CARD_WIDTH,
         family,
         gap: CARD_CONTENT.gap,
@@ -146,7 +156,12 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
           : {
               footer: {
                 actions: measuredActions(frame.footer, footer.actions),
-                ...(footer.context === undefined ? {} : { context: footer.context }),
+                ...(footer.context === undefined
+                  ? {}
+                  : {
+                      context:
+                        typeof footer.context === "function" ? footer.context() : footer.context,
+                    }),
               },
             }),
         title: titled
@@ -169,6 +184,8 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
     root,
     setFooter(actions, context) {
       frame.footer.element.append(...actions);
+      // The footer shows from now on, so its actions have boxes to measure.
+      frame.card.setAttribute("data-ui-modal-footer", "");
       footer = { actions, ...(context === undefined ? {} : { context }) };
       layout();
     },

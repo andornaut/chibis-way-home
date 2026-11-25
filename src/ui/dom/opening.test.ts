@@ -6,8 +6,8 @@ import { TEXT_BUTTON } from "../../data/layout.ts";
 import { OPENING } from "../../data/opening.ts";
 import { TEXT } from "../../data/text.ts";
 import { hitMargin } from "../layout/hitAreas.ts";
-import { actionRole } from "./actions.ts";
-import { createOpeningView, openingActionsWidth, showOpeningCaption } from "./opening.ts";
+import { actionRole, rowWidth } from "./actions.ts";
+import { createOpeningView, showOpeningCaption } from "./opening.ts";
 
 const WORDS = { ...TEXT.dialogue, name: TEXT.opening.name };
 const face = (width: number) => ({ height: TEXT_BUTTON.height, width });
@@ -65,9 +65,9 @@ it("announces each caption as plain text without measuring during playback", () 
 it("shows Skip on the left and Continue on the right, 16 px apart, in a group as wide as both", () => {
   const gap = ACTION_GAPS.standard.row;
   const margin = hitMargin({ ...face(TEXT_BUTTON.height), x: 0, y: 0 });
-  const width = openingActionsWidth([120, 72]);
+  const width = rowWidth(undefined, [120, 72]);
   expect(width).toBe(120 + TEXT_BUTTON.gap + 72);
-  expect(openingActionsWidth([120])).toBe(120);
+  expect(rowWidth(undefined, [120])).toBe(120);
   // Focus order: Continue, then Skip.
   const arrangement = arrangeActions({ axis: "row", width }, [
     { key: "continue", role: "primary", size: face(120) },

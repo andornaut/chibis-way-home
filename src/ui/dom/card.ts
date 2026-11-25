@@ -41,15 +41,22 @@ export interface CardView<Key extends string> {
   readonly root: HTMLElement;
 }
 
+// The secondary text button's classes, for a kit component that builds its own buttons.
+export const TEXT_BUTTON_APPEARANCE = {
+  className: "ui-text-button",
+  contentClassName: "ui-text-button-label",
+  face: { className: "ui-text-button-face ui-frame ui-control-button" },
+  layout: "caller",
+} as const;
+
 // A text button: its box is its face, art's frame with the label; the group that holds it gives
 // it its press area.
 export function textButton(document: Document, label: string, primary = false): HTMLButtonElement {
   const { element: button } = createGameButton(
     document,
     {
+      ...TEXT_BUTTON_APPEARANCE,
       className: primary ? "ui-text-button ui-text-button-primary" : "ui-text-button",
-      contentClassName: "ui-text-button-label",
-      face: { className: "ui-text-button-face ui-frame ui-control-button" },
     },
     { kind: "text", label },
   );

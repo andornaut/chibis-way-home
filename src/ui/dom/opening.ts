@@ -1,14 +1,11 @@
-import { ACTION_GAPS } from "@andornaut/game-kit/runtime/ui/actionGroup";
-import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
 import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { CARD_CONTENT, PLAY_MARK, TEXT_BUTTON } from "../../data/layout.ts";
-import { type ActionsView, measuredActions } from "./actions.ts";
+import { type ActionsView, createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
-import { registerLayout, rendered } from "./layout.ts";
 
 export type OpeningAction = "continue" | "skip";
 
@@ -33,37 +30,6 @@ export interface OpeningWords {
   // The screen's accessible name.
   readonly name: string;
   readonly skip: string;
-}
-
-// The width of a row of faces side by side, the standard gap apart.
-export function openingActionsWidth(widths: readonly number[]): number {
-  return (
-    widths.reduce((sum, width) => sum + width, 0) +
-    Math.max(0, widths.length - 1) * ACTION_GAPS.standard.row
-  );
-}
-
-// A row group exactly as wide as its faces and gaps, so the footer's layout anchors it.
-function contentActions(
-  document: Document,
-  className: string,
-  elements: readonly HTMLElement[],
-): ActionsView {
-  const group = createActionGroup(document, { className });
-  group.element.append(...elements);
-  const arrange = () => {
-    if (!rendered(group.element.parentElement ?? group.element)) {
-      return undefined;
-    }
-    const actions = measuredActions(group, elements);
-    const shown = actions.filter(({ element }) => !element.hidden);
-    return group.arrange(
-      { axis: "row", width: openingActionsWidth(shown.map(({ size }) => size.width)) },
-      actions,
-    );
-  };
-  registerLayout(arrange, group.element);
-  return { arrange, element: group.element, group };
 }
 
 // The footer holds the caption and, at its right, the action row sized to its faces. Continue
@@ -92,7 +58,10 @@ export function createOpeningView(document: Document, words: OpeningWords): Open
   const mark = document.createElement("img");
   mark.alt = "";
   buttons.continue.querySelector(".ui-text-button-label")!.prepend(mark);
-  const actions = contentActions(document, "opening-actions", [buttons.continue, buttons.skip]);
+  const actions = createActions(document, [buttons.continue, buttons.skip], {
+    className: "opening-actions",
+    width: "content",
+  });
   footer.append(caption, actions.element);
   view.append(footer);
   root.append(backdrop, view);

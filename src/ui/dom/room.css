@@ -48,12 +48,6 @@
   right: calc(var(--ui-unit) * var(--room-leave-right) * 1px);
 }
 
-/* CLEANUP (added 2026-11-25): remove once createCardFrame centres the gift card in its content
-   option (room.ts). */
-.room-scene .ui-modal-frame {
-  top: calc(var(--ui-unit) * var(--room-gift-shift) * 1px);
-}
-
 /* The disc beside the description, a gap apart, both centred on the body's height. */
 .room-skill-body {
   display: flex;

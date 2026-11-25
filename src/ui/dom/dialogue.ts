@@ -1,5 +1,3 @@
-import { ACTION_GAPS } from "@andornaut/game-kit/runtime/ui/actionGroup";
-import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
 import {
   type LayoutValues,
   writeLayoutProperties,
@@ -15,9 +13,8 @@ import {
   DIALOGUE_SCREEN,
   dialogueSpeakerLayout,
 } from "../layout/dialogueScreen.ts";
-import { type ActionsView, measuredActions } from "./actions.ts";
+import { createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
-import { registerLayout, rendered } from "./layout.ts";
 import { textRole } from "./theme.ts";
 
 // The dialogue panel in the HTML UI (dialogue.css, on ui.css): art's ui-dialogue-box at the
@@ -133,32 +130,6 @@ export function showPanelParagraph(panel: DialoguePanelView, paragraph: PanelPar
   }
 }
 
-// A row of actions on the kit's action group, as wide as its shown faces and the gaps between
-// them, so CSS places it by an edge or centres it. elements are in their focus order; the
-// arrangement shows a primary action last. Each press area reaches the hit margin past its face
-// and half the gap toward a neighbour.
-export function createActionRow(
-  document: Document,
-  className: string,
-  elements: readonly HTMLElement[],
-): ActionsView {
-  const group = createActionGroup(document, { className });
-  group.element.append(...elements);
-  const arrange = () => {
-    if (!rendered(group.element.parentElement ?? group.element)) {
-      return undefined;
-    }
-    const actions = measuredActions(group, elements);
-    const shown = actions.filter((action) => !action.element.hidden);
-    const width =
-      shown.reduce((sum, { size }) => sum + size.width, 0) +
-      Math.max(0, shown.length - 1) * ACTION_GAPS.standard.row;
-    return group.arrange({ axis: "row", width }, actions);
-  };
-  registerLayout(arrange, group.element);
-  return { arrange, element: group.element, group };
-}
-
 export interface DialogueWords {
   readonly continue: string;
   // The conversation's accessible name.
@@ -210,10 +181,10 @@ export function createDialogueView(
   };
   buttons.continue.dataset.control = "continue";
   buttons.skip.dataset.control = "skip";
-  const { element: footer } = createActionRow(document, "dialogue-footer", [
-    buttons.continue,
-    buttons.skip,
-  ]);
+  const { element: footer } = createActions(document, [buttons.continue, buttons.skip], {
+    className: "dialogue-footer",
+    width: "content",
+  });
   footer.toggleAttribute("data-departure", departure);
   dialog.append(panel.element, footer);
   view.append(preview, dialog);

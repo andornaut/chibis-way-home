@@ -1,4 +1,8 @@
-import type { ActionArrangement } from "@andornaut/game-kit/runtime/ui/actionGroup";
+import {
+  ACTION_GAPS,
+  type ActionArrangement,
+  type ActionGapSelection,
+} from "@andornaut/game-kit/runtime/ui/actionGroup";
 import type { ButtonRole, ButtonSize } from "@andornaut/game-kit/runtime/ui/buttonLayout";
 import {
   type ActionGroupView,
@@ -44,6 +48,12 @@ export function measuredActions(
   }));
 }
 
+// A row's width: its faces and the gaps between them.
+export function rowWidth(gap: ActionGapSelection | undefined, widths: readonly number[]): number {
+  const between = typeof gap === "object" ? gap.row : ACTION_GAPS[gap ?? "standard"].row;
+  return widths.reduce((sum, width) => sum + width, 0) + Math.max(0, widths.length - 1) * between;
+}
+
 // The group's room across, in base px: its parent's content width.
 function room(element: HTMLElement): number {
   const parent = element.parentElement!;
@@ -64,7 +74,8 @@ export function createActions(
     readonly className?: string;
     readonly context?: ActionsContext | (() => ActionsContext);
     readonly size?: () => ButtonSize | undefined;
-    readonly width?: number;
+    // The room across in base px; "content" makes a row exactly as wide as its faces and gaps.
+    readonly width?: number | "content";
   } = {},
 ): ActionsView {
   const group = createActionGroup(
@@ -80,9 +91,20 @@ export function createActions(
     const shown = [...group.element.children].filter(
       (child): child is HTMLElement => child !== context?.middle?.element,
     ) as HTMLElement[];
+    const actions = measuredActions(group, shown, options.size?.());
     return group.arrange(
-      { ...context, width: options.width ?? room(group.element) },
-      measuredActions(group, shown, options.size?.()),
+      {
+        ...context,
+        ...(options.width === "content" ? { axis: "row" as const } : {}),
+        width:
+          options.width === "content"
+            ? rowWidth(
+                context?.gap,
+                actions.filter(({ element }) => !element.hidden).map(({ size }) => size.width),
+              )
+            : (options.width ?? room(group.element)),
+      },
+      actions,
     );
   };
   registerLayout(arrange, group.element);

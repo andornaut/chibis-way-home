@@ -13,14 +13,12 @@ import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";
 import { createActions } from "./actions.ts";
 import { createCardFrame, textButton } from "./card.ts";
 import {
-  createActionRow,
   createDialoguePanel,
   DIALOGUE_PANEL_LAYOUT,
   type DialoguePanelView,
   type PanelParagraph,
   showPanelParagraph,
 } from "./dialogue.ts";
-import { registerLayout } from "./layout.ts";
 import { createSkillDisc } from "./skillDisc.ts";
 
 // A room's text and controls in the HTML UI (room.css, on ui.css). An ordinary room shows its
@@ -102,7 +100,10 @@ export function createRoomView(
     const title = make("h1", "room-name ui-text-heading");
     title.id = "room-title";
     title.textContent = words.name;
-    view.append(title, createActionRow(document, "room-leave", [leave]).element);
+    view.append(
+      title,
+      createActions(document, [leave], { className: "room-leave", width: "content" }).element,
+    );
     root.append(view);
     return { glyph: undefined, leave, panel: undefined, root };
   }
@@ -130,16 +131,6 @@ export function createRoomView(
   description.append(...createActionHelp(document, colours, words, gift.description));
   body.append(disc.element, description);
   frame.content.append(body);
-  // CLEANUP (added 2026-11-25): remove this shift, --room-gift-shift and its rule in room.css once
-  // createCardFrame centres the card in its content option; until then the frame centres it in
-  // the whole view and the shift moves it to its place in ROOM_GIFT_CONTENT.
-  registerLayout(() => {
-    const card = frame.layout()?.card;
-    if (card !== undefined) {
-      const y = ROOM_GIFT_CONTENT.y + Math.floor((ROOM_GIFT_CONTENT.height - card.height) / 2);
-      writeLayoutProperties({ "--room-gift-shift": y - card.y }, frame.root);
-    }
-  }, frame.root);
   const footer = make("div", "room-footer");
   footer.append(createActions(document, [leave]).element);
   view.append(panel.element, footer);
