@@ -6,7 +6,7 @@ import { BIRD_FRAME } from "../../assets/index.ts";
 import { BIRD } from "../../data/bird.ts";
 import { zoneLayout } from "../../rules/stage/tiles.ts";
 import { activeStepSeconds } from "../../rules/zone/death.ts";
-import { startZone, stepZone, type ZoneState } from "../../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone, type ZoneState } from "../../rules/zone/zone.ts";
 import { SKILL_PROFILES } from "../skills.ts";
 import { stageStatsStore, STATS_VERSION, statsFormat } from "./stats.ts";
 
@@ -179,7 +179,7 @@ const LAYOUT = zoneLayout(12, BIRD_FRAME, { archetypes: {}, characters: {} }, {}
 });
 const INPUT = { jumpHeld: false, move: 0 as const, useHeld: false };
 const INITIAL = startZone(BIRD, LAYOUT, 1);
-const ACTIVE = stepZone(SKILL_PROFILES, BIRD, LAYOUT, 0.1, INPUT, INITIAL);
+const ACTIVE = stepZone(preparedZone(LAYOUT), SKILL_PROFILES, BIRD, LAYOUT, 0.1, INPUT, INITIAL);
 
 describe("active-step time", () => {
   it.each<[string, ZoneState, ZoneState, number]>([

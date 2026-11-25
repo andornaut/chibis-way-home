@@ -20,7 +20,7 @@ import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { chunksLayout, ORDINARY } from "../../testing/encounterLayouts.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
-import { startZone, stepZone, stepZoneObserved } from "../zone/zone.ts";
+import { preparedZone, startZone, stepZone, stepZoneObserved } from "../zone/zone.ts";
 import { type BehaviourState, startBehaviour } from "./behaviour.ts";
 import { mapReachable, mapRecoveryGoal, planMapLeg } from "./behaviourMapPursuit.ts";
 import {
@@ -274,9 +274,18 @@ it("keeps ordinary and observed short step traces identical, including receiver 
   let observed = initial;
   let failed = initial;
   for (let tick = 0; tick < 2; tick++) {
-    const next = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, plain);
+    const next = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      ORDINARY,
+      layout,
+      STEP_SECONDS,
+      input,
+      plain,
+    );
     const captured = stepZoneObserved(
       observations.observer,
+      preparedZone(layout),
       SKILL_PROFILES,
       ORDINARY,
       layout,
@@ -286,6 +295,7 @@ it("keeps ordinary and observed short step traces identical, including receiver 
     );
     const broken = stepZoneObserved(
       failing,
+      preparedZone(layout),
       SKILL_PROFILES,
       ORDINARY,
       layout,
@@ -314,6 +324,7 @@ it("does not observe a simulation tick when a terminal zone holds", () => {
   expect(
     stepZoneObserved(
       observations.observer,
+      preparedZone(layout),
       SKILL_PROFILES,
       ORDINARY,
       layout,

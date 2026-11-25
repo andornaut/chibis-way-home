@@ -9,7 +9,13 @@ import { themesOf } from "../../rules/stage/assemble.ts";
 import { composePair } from "../../rules/stage/modules.ts";
 import { zoneLayout } from "../../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../../rules/stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../../rules/zone/zone.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/art.ts";
 import { chunkThemePlan } from "../../testing/chunkWalkCases.ts";
 import { BIRD } from "../bird.ts";
@@ -61,7 +67,7 @@ const NEAR_RIGHT = (nearBank!.col + nearBank!.cols) * TILE;
 const FAR_LEFT = farBank!.col * TILE;
 const STRIP_X = LEFT.objects[0]!.col * TILE;
 const stepZ = (zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const rimRect = (zone: ZoneState): Rect => ({
   ...zone.objects[f.chandelier]!,
   height: rim.height,

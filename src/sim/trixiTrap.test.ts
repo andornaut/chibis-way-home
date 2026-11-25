@@ -6,7 +6,13 @@ import { TILE } from "../data/screen.ts";
 import type { BossScorerInput } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { startBird } from "../rules/bird/index.ts";
-import { activateBehaviour, startZone, stepZone, type ZoneState } from "../rules/zone/index.ts";
+import {
+  activateBehaviour,
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneState,
+} from "../rules/zone/index.ts";
 import { arenaLayout, sampleArenaCase } from "../testing/arenas.ts";
 import { ORDINARY } from "../testing/encounterLayouts.ts";
 
@@ -54,7 +60,15 @@ it("lays Trixi's trap on her floor for a still Chibi on the nook's step inside h
   let tell: ReturnType<typeof gaps> | undefined;
   let tick = 0;
   for (; tick < TICKS && !zone.death; tick++) {
-    zone = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, STILL, zone);
+    zone = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      ORDINARY,
+      layout,
+      STEP_SECONDS,
+      STILL,
+      zone,
+    );
     if (tell === undefined && zone.behaviours[index]!.stateKey === tellKey) {
       tell = gaps(zone);
       expect(zone.objects[index]!.y + trixi.height).toBe(FLOOR);

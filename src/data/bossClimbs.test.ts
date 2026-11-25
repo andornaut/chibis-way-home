@@ -16,7 +16,7 @@ import { zonePlanOf } from "../rules/stage/assemble.ts";
 import { chunkProblems } from "../rules/stage/chunk.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
-import { standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
 import { stepBehaviour } from "../testing/behaviourStep.ts";
 import { withInstances } from "../testing/encounterLayouts.ts";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";
@@ -294,6 +294,7 @@ it.each(connectedRoutes)(
         }
       }
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         ordinary,
         layout,
@@ -366,7 +367,15 @@ it("transfer gate completes both ferry tracks and the perpendicular gate cycle",
   const ranges = indices.map(() => ({ max: -Infinity, min: Infinity, states: new Set<string>() }));
   let zone = startZone(ordinary, layout, 1);
   for (let tick = 0; tick < 960; tick++) {
-    zone = stepZone(SKILL_PROFILES, ordinary, layout, STEP_SECONDS, idle, zone);
+    zone = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      ordinary,
+      layout,
+      STEP_SECONDS,
+      idle,
+      zone,
+    );
     expect(zone.death).toBeUndefined();
     indices.forEach((index, cursor) => {
       const coordinate = index === gate ? zone.objects[index]!.y : zone.objects[index]!.x;
@@ -478,6 +487,7 @@ it("ordinary transfer gate route boards, observes, crosses the gate and rides th
             : false;
     const previous = zone.bird.x;
     zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       ordinary,
       layout,
@@ -534,6 +544,7 @@ it("transfer gate missed near boarding recovers on a ledge and reboards normally
           ? 1
           : -1;
     zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       ordinary,
       layout,

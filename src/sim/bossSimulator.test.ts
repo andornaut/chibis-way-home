@@ -7,7 +7,7 @@ import type { BehaviourCondition, BehaviourPlan, ZoneLayout } from "../data/type
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { layoutBehaviour } from "../rules/boss/behaviour.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
-import { retryZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, retryZone, stepZone } from "../rules/zone/zone.ts";
 import { BOSS_SCENARIOS } from "../testing/bossScenarios.ts";
 import {
   chunkLayout,
@@ -40,7 +40,15 @@ function zoneRun(scenario: BossScenario): BossTick[] {
       ORDINARY,
       scenario.place,
       tick + 1,
-      stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, controller(tick, zone), zone),
+      stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        ORDINARY,
+        layout,
+        STEP_SECONDS,
+        controller(tick, zone),
+        zone,
+      ),
     );
     if (next !== zone) {
       ticks.push(bossSample(ORDINARY, layout, tick, next));

@@ -106,6 +106,7 @@ import {
   enterArea,
   introductionForRun,
   leaveRoom,
+  preparedZone,
   retryZone,
   roomOf,
   stageProgress,
@@ -796,6 +797,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.zone = developmentStep(
         invulnerabilityEnabled(),
         stepZone(
+          preparedZone(this.layout),
           SKILL_PROFILES,
           this.movementTuning(),
           this.layout,

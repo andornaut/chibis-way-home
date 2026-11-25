@@ -22,7 +22,7 @@ import { SKILL_PROFILES } from "../../progress/index.ts";
 import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
-import { startZone, stepZone } from "../zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../zone/zone.ts";
 import { type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
 import { INITIAL_SCORER_STATE } from "./behaviourScorer.ts";
 
@@ -247,6 +247,7 @@ it.each(["walk", "rush"] as const)(
           },
         };
         const next = stepZone(
+          preparedZone(layout),
           SKILL_PROFILES,
           BIRD,
           layout,

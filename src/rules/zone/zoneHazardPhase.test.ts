@@ -9,7 +9,7 @@ import { SKILL_PROFILES } from "../../progress/index.ts";
 import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { effectiveHazardPhase } from "../boss/effectiveCollision.ts";
 import { objectLayout } from "../stage/tiles.ts";
-import { retryZone, startZone, stepZone } from "./zone.ts";
+import { preparedZone, retryZone, startZone, stepZone } from "./zone.ts";
 
 const floor = { height: 40, width: 600, x: 0, y: 300 };
 const archetype: Archetype = {
@@ -106,7 +106,15 @@ it.each([
     start.behaviours[0]!,
   ).state;
   const state = { ...start, behaviours: [clock], seconds };
-  const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, state);
+  const next = stepZone(
+    preparedZone(layout),
+    SKILL_PROFILES,
+    BIRD,
+    layout,
+    STEP_SECONDS,
+    still,
+    state,
+  );
   expect(next.death !== undefined).toBe(lethal);
   if (lethal) {
     expect(next.death?.contact).toEqual({ index: 0, kind: "object" });
@@ -122,11 +130,23 @@ it("retries the same layout with its nonlethal initial clock and freezes a dead 
     ...start,
     behaviours: [{ ...start.behaviours[0]!, elapsed: 0, stateKey: "active" }],
   };
-  const dead = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, active);
+  const dead = stepZone(
+    preparedZone(layout),
+    SKILL_PROFILES,
+    BIRD,
+    layout,
+    STEP_SECONDS,
+    still,
+    active,
+  );
   expect(dead.death).toBeDefined();
-  expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, dead)).toBe(dead);
+  expect(
+    stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, dead),
+  ).toBe(dead);
   const retry = retryZone(BIRD, layout, dead);
   expect(effectiveHazardPhase(vent, retry.behaviours[0])).toBe("inactive");
   expect(retry.behaviours[0]?.elapsed).toBe(0);
-  expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, retry).death).toBeUndefined();
+  expect(
+    stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, retry).death,
+  ).toBeUndefined();
 });

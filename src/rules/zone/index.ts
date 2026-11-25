@@ -7,6 +7,7 @@ export {
   areaOf,
   enterArea,
   leaveRoom,
+  preparedZone,
   retryZone,
   roomOf,
   standsOn,

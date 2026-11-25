@@ -243,13 +243,13 @@ it("retains default inputs and the complete result through a mocked native step"
       witnesses: [],
     });
     expect(step).toHaveBeenCalledOnce();
-    expect(step.mock.calls[0]?.[4]).toEqual({ jumpHeld: true, move: 1, useHeld: false });
+    expect(step.mock.calls[0]?.[5]).toEqual({ jumpHeld: true, move: 1, useHeld: false });
     const gap = createGroundedGapController(ORDINARY, layout());
     expect(controlledRequiredRoute(gap.controller, layout(), [])).toEqual({
       ...result,
       controller: GROUNDED_GAP_CONTROLLER,
     });
-    expect(step.mock.calls[1]?.[4]).toEqual(step.mock.calls[0]?.[4]);
+    expect(step.mock.calls[1]?.[5]).toEqual(step.mock.calls[0]?.[5]);
     expect(gap.decisions).toMatchObject([
       {
         appliedTick: 1,
@@ -389,8 +389,8 @@ it("records an owned decision without changing the selected input or route resul
     const expected = controlledRequiredRoute(silent, layout(), targets);
     const observed = createGroundedGapController(ORDINARY, layout());
     expect(controlledRequiredRoute(observed.controller, layout(), targets)).toEqual(expected);
-    expect(step.mock.calls[0]?.[4]).toEqual({ jumpHeld: false, move: 1, useHeld: false });
-    expect(step.mock.calls[1]?.[4]).toEqual(step.mock.calls[0]?.[4]);
+    expect(step.mock.calls[0]?.[5]).toEqual({ jumpHeld: false, move: 1, useHeld: false });
+    expect(step.mock.calls[1]?.[5]).toEqual(step.mock.calls[0]?.[5]);
     expect(plain.decisions).toEqual([]);
     expect(observed.decisions).toMatchObject([
       {

@@ -5,7 +5,7 @@ import { BIRD } from "../../data/bird.ts";
 import type { Archetype, Character, Rect, ZonePlan } from "../../data/types/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import type { Tileset } from "../../stage/index.ts";
-import { startZone, stepZone } from "../zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../zone/zone.ts";
 import { type Catalogue, zoneLayout } from "./tiles.ts";
 
 const TILE = 12;
@@ -101,6 +101,7 @@ describe.each(EDGES)("shared $art", ({ art, box, cols, rows }) => {
             : { x: x + hitbox.width - overlap, y: y + hitbox.height - 1 };
     const state = { ...start, bird: { ...start.bird, ...at } };
     const next = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,

@@ -30,7 +30,14 @@ import { phaseFollowerTag } from "../boss/phaseSource.ts";
 import { timedHazardRect } from "../boss/timedHazard.ts";
 import { type ChunkLibrary, zonePlanOf } from "../stage/assemble.ts";
 import { areaLayout, zoneLayout } from "../stage/tiles.ts";
-import { retryZone, startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import {
+  preparedZone,
+  retryZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "./zone.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;
@@ -59,7 +66,7 @@ const overlapsStrip = ({ rect }: Fixture, zone: ZoneState) =>
   zone.bird.x + ordinary.width > rect.x &&
   zone.bird.y + ordinary.height > rect.y;
 const step = (f: Fixture, zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const toward = (zone: ZoneState, goal: number): ZoneInput => ({
   ...idle,
   move: Math.abs(goal - zone.bird.x) <= 2 ? 0 : goal > zone.bird.x ? 1 : -1,

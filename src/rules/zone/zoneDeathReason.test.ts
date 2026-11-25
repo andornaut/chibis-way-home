@@ -8,7 +8,14 @@ import type { ZoneLayout } from "../../data/types/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { arenaLayout, gameArenaCase } from "../../testing/arenas.ts";
 import { contactBox } from "../boss/behaviourTrack.ts";
-import { activateBehaviour, startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import {
+  activateBehaviour,
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "./zone.ts";
 
 const STILL: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
 const CHARACTERS = Object.values(BOSS_CHARACTERS).sort();
@@ -40,7 +47,7 @@ function encounter(character: string) {
 }
 
 const step = (layout: ZoneLayout, zone: ZoneState) =>
-  stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, STILL, zone);
+  stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, STILL, zone);
 
 describe("death reason", () => {
   it.each(CHARACTERS)("reports %s's body as boss contact", (character) => {

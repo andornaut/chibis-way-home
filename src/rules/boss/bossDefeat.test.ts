@@ -8,6 +8,7 @@ import { chunksLayout, ORDINARY, withInstances } from "../../testing/encounterLa
 import { startBird } from "../bird/bird.ts";
 import {
   activateBehaviour,
+  preparedZone,
   retryZone,
   startZone,
   stepZone,
@@ -51,7 +52,15 @@ function run(f: Fixture, start: ZoneState, ticks: number) {
   const barks: ZoneState["barks"][number][] = [];
   let zone = start;
   for (let tick = 0; tick < ticks && !zone.death; tick++) {
-    zone = stepZone(SKILL_PROFILES, ORDINARY, f.layout, STEP_SECONDS, STILL, zone);
+    zone = stepZone(
+      preparedZone(f.layout),
+      SKILL_PROFILES,
+      ORDINARY,
+      f.layout,
+      STEP_SECONDS,
+      STILL,
+      zone,
+    );
     barks.push(...zone.barks);
   }
   return { barks, zone };

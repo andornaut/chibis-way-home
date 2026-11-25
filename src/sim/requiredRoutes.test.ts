@@ -8,7 +8,7 @@ import { TILE } from "../data/screen.ts";
 import type { Instance, TerrainRect, TilePoint, ZonePlan } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
-import { startZone, stepZone, type ZoneInput } from "../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone, type ZoneInput } from "../rules/zone/zone.ts";
 import { CATALOGUE } from "../testing/walkSuite.ts";
 import { type WalkStep, walkTransitions as memoizeTransitions } from "./walkTransitions.ts";
 import { surfaceAt, walkRequiredRoutes, walkZone } from "./zoneWalk.ts";
@@ -268,6 +268,7 @@ it("records an alive airborne engine exit before landing without inventing requi
   let actual = startZone(BIRD, layout, 1);
   for (let tick = 0; tick < 120 && !actual.cleared && !actual.death; tick++) {
     actual = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,

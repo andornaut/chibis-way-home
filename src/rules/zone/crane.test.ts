@@ -20,7 +20,7 @@ import { effectiveCollision } from "../boss/effectiveCollision.ts";
 import { mapTerrain } from "../boss/movementMaps.ts";
 import { type ChunkLibrary, zonePlanOf } from "../stage/assemble.ts";
 import { areaLayout, zoneLayout } from "../stage/tiles.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import { preparedZone, startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;
@@ -77,7 +77,7 @@ function fixture(behaviour?: typeof GANTRY_BEHAVIOUR, archetype?: "solid") {
 
 type Fixture = ReturnType<typeof fixture>;
 const step = (f: Fixture, zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const craneAt = (f: Fixture, zone: ZoneState) => zone.objects[f.crane]!;
 // The container's x at a dock, within the float drift of its travel.
 const docked = (x: number, dock: number) => Math.abs(x - dock) < 0.01;

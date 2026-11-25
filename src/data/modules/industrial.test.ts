@@ -8,7 +8,13 @@ import { themesOf } from "../../rules/stage/assemble.ts";
 import { composePair } from "../../rules/stage/modules.ts";
 import { zoneLayout } from "../../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../../rules/stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../../rules/zone/zone.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/art.ts";
 import { chunkThemePlan } from "../../testing/chunkWalkCases.ts";
 import { BIRD } from "../bird.ts";
@@ -54,7 +60,7 @@ const DOCK_X = container.origin.x;
 const FAR_X = DOCK_X + GANTRY_DISTANCE * TILE;
 const STRIP_X = LEFT.objects[0]!.col * TILE;
 const step = (zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const craneX = (zone: ZoneState) => zone.objects[f.crane]!.x;
 const docked = (x: number, dock: number) => Math.abs(x - dock) < 0.01;
 const lidCentre = (zone: ZoneState) => craneX(zone) + (container.width - ordinary.width) / 2;

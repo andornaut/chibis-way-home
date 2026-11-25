@@ -6,7 +6,7 @@ import { BIRD } from "../../data/bird.ts";
 import type { ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../../data/types/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { assembleZone } from "../../testing/stageAssembly.ts";
-import { startZone, stepZone } from "../zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../zone/zone.ts";
 import { type ChunkLibrary } from "./assemble.ts";
 import { chunkProblems, recipeProblems } from "./chunk.ts";
 import { zoneLayout } from "./tiles.ts";
@@ -89,7 +89,7 @@ describe("authored floor height and exit geometry", () => {
     });
     const initial = startZone(BIRD, layout, 1);
     expect(initial.bird.y + BIRD.height).toBe(840);
-    const cleared = stepZone(SKILL_PROFILES, BIRD, layout, 0, idle, {
+    const cleared = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, 0, idle, {
       ...initial,
       bird: { ...initial.bird, x: 1560, y: 228 },
     });
@@ -97,10 +97,14 @@ describe("authored floor height and exit geometry", () => {
     expect(cleared.area).toBe(initial.area);
     expect(cleared.attempt).toBe(initial.attempt);
     const atEdge = { ...initial, bird: { ...initial.bird, x: 2150, y: 228 } };
-    expect(stepZone(SKILL_PROFILES, BIRD, layout, 0, idle, atEdge).cleared).toBe(false);
+    expect(
+      stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, 0, idle, atEdge).cleared,
+    ).toBe(false);
     const ordinary = { ...layout };
     delete ordinary.stageExit;
-    expect(stepZone(SKILL_PROFILES, BIRD, ordinary, 0, idle, atEdge).cleared).toBe(true);
+    expect(
+      stepZone(preparedZone(ordinary), SKILL_PROFILES, BIRD, ordinary, 0, idle, atEdge).cleared,
+    ).toBe(true);
   });
   it("lets the automatic exit win over a room Use on the same frame", () => {
     const plan = assembleZone(library, 1, "fixture", recipe);
@@ -115,6 +119,7 @@ describe("authored floor height and exit geometry", () => {
     });
     const initial = startZone(BIRD, layout, 1);
     const result = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,

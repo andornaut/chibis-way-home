@@ -8,6 +8,7 @@ import { chunkProblems } from "../rules/stage/chunk.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY, zonePlanFor } from "../rules/stage/zonePlans.ts";
 import {
+  preparedZone,
   standsOn,
   startZone,
   stepZone,
@@ -151,7 +152,15 @@ it.each([
         };
       }
     }
-    zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, control, zone);
+    zone = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      control,
+      zone,
+    );
     highest = Math.min(highest, zone.bird.y);
   }
   expect(zone.death).toBeUndefined();
@@ -304,6 +313,7 @@ it.each([
       held = jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime;
     }
     zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       tuning,
       layout,
@@ -421,6 +431,7 @@ it("boards, rides and leaves the upper bank ferry from the actual approach phase
       held = jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime;
     }
     zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -580,6 +591,7 @@ it.each(["woodland-timed-descent", "woodland-deep-ascent"])(
         }
       }
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -727,6 +739,7 @@ it.each(["apartment-floor-start", "apartment-penthouse-start"])(
         const brake = (zone.bird.vx * Math.abs(zone.bird.vx)) / (2 * BIRD.brakeAccel);
         const move: -1 | 0 | 1 = Math.abs(dx - brake) < 1 ? 0 : dx - brake > 0 ? 1 : -1;
         zone = stepZone(
+          preparedZone(layout),
           SKILL_PROFILES,
           BIRD,
           layout,
@@ -819,6 +832,7 @@ it.each(["city-boundary-steps", "outdoor-surface-return"])(
       }
       const before = zone;
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         ordinary,
         layout,

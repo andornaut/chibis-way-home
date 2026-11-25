@@ -30,7 +30,7 @@ import { type ChunkLibrary, zonePlanOf } from "../stage/assemble.ts";
 import { gustPlacementProblems } from "../stage/gustPlacement.ts";
 import { areaLayout, zoneLayout } from "../stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import { preparedZone, startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;
@@ -62,7 +62,7 @@ type Fixture = ReturnType<typeof fixture>;
 const stateOf = (f: Fixture, zone: ZoneState) =>
   zone.behaviours[f.emitter]?.stateKey ?? f.area.objects[f.emitter]!.behaviour!.initial;
 const step = (f: Fixture, zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const toward = (zone: ZoneState, goal: number): ZoneInput => ({
   ...idle,
   move: Math.abs(goal - zone.bird.x) <= 2 ? 0 : goal > zone.bird.x ? 1 : -1,

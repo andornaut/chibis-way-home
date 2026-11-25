@@ -23,6 +23,7 @@ import { clockPresent, contactBox, nodeOf, supportContact } from "../rules/boss/
 import {
   activateBehaviour,
   areaOf,
+  preparedZone,
   presentTerrain,
   retryZone,
   startZone,
@@ -270,7 +271,8 @@ export function bossModel(
         tuning,
         place,
         ++stepped,
-        stepZoneBodies(SKILL_PROFILES, tuning, layout, seconds, input, zone).zone,
+        stepZoneBodies(preparedZone(layout), SKILL_PROFILES, tuning, layout, seconds, input, zone)
+          .zone,
       ),
   };
 }

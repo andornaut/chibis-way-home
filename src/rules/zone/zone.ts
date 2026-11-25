@@ -73,7 +73,6 @@ import {
   hazardOccupancy,
   isBoss,
   type PreparedZone,
-  preparedZone,
   prepareZone,
   recordBehaviourWork,
   settleEncounter,
@@ -99,6 +98,7 @@ import {
 } from "./forcedTransitForecast.ts";
 import { ordinaryTransitControl } from "./forcedTransitProfile.ts";
 export { standsOn } from "../bird/index.ts";
+export { preparedZone } from "../boss/index.ts";
 import { validateWalkEntries } from "../stage/index.ts";
 import {
   clockedSupportPrediction,
@@ -690,6 +690,7 @@ interface ZoneBodyStep {
 
 // Requires a live zone: no death, door, clear or turn back.
 export function stepZoneBodies(
+  prepared: PreparedZone,
   skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -699,7 +700,7 @@ export function stepZoneBodies(
 ): ZoneBodyStep {
   return stepZoneBodiesInternal(
     undefined,
-    preparedZone(layout),
+    prepared,
     skillProfiles,
     tuning,
     layout,
@@ -1676,8 +1677,10 @@ function silhouetteContactOf(
 // Use with his drawn frame over a door sets `door` (doorAt), and the zone holds still until
 // leaveRoom.
 // skillProfiles holds the bird tuning under each skill selection (SKILL_PROFILES in progress);
-// only a tuning among them admits ordinary forced-transit control.
+// only a tuning among them admits ordinary forced-transit control. prepared holds the pursuit
+// maps zone start built (prepareZone); the step reads no cache of its own.
 export function stepZone(
+  prepared: PreparedZone,
   skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -1685,21 +1688,13 @@ export function stepZone(
   input: ZoneInput,
   zone: ZoneState,
 ): ZoneState {
-  return stepZoneInternal(
-    undefined,
-    preparedZone(layout),
-    skillProfiles,
-    tuning,
-    layout,
-    seconds,
-    input,
-    zone,
-  );
+  return stepZoneInternal(undefined, prepared, skillProfiles, tuning, layout, seconds, input, zone);
 }
 
 // Diagnostic callers observe the same step without adding observers to saved or input state.
 export function stepZoneObserved(
   observer: BehaviourObserver,
+  prepared: PreparedZone,
   skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -1707,16 +1702,7 @@ export function stepZoneObserved(
   input: ZoneInput,
   zone: ZoneState,
 ): ZoneState {
-  return stepZoneInternal(
-    observer,
-    preparedZone(layout),
-    skillProfiles,
-    tuning,
-    layout,
-    seconds,
-    input,
-    zone,
-  );
+  return stepZoneInternal(observer, prepared, skillProfiles, tuning, layout, seconds, input, zone);
 }
 
 function stepZoneInternal(

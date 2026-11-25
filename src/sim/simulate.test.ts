@@ -10,7 +10,7 @@ import { SKILL_PROFILES } from "../progress/index.ts";
 import { isBoss } from "../rules/boss/bossDefeat.ts";
 import { stageProgress } from "../rules/zone/stageProgress.ts";
 import * as zoneRules from "../rules/zone/zone.ts";
-import { startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import { chunkLayout } from "../testing/encounterLayouts.ts";
 import * as botRules from "./bot.ts";
 import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_VALIDATION } from "./bot.ts";
@@ -65,6 +65,7 @@ describe("bounded stage simulation", () => {
     let steps = 0;
     while (!actual.cleared && steps < config.maxSteps) {
       actual = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -84,7 +85,7 @@ describe("bounded stage simulation", () => {
   it("reports successful attempt time excluding failed time retained in the run total", () => {
     let ticks = 0;
     const stepping = vi.spyOn(zoneRules, "stepZone").mockImplementation((...args) => {
-      const state = args[5];
+      const state = args[6];
       ticks++;
       return {
         ...state,
@@ -445,7 +446,7 @@ it("retains the run prediction budget across retry reseeding", () => {
     .mockReturnValue({ budgetExhaustions: 0, candidateRollouts: 1, decisions: 1, physicsSteps: 3 });
   const step = vi.spyOn(zoneRules, "stepZone").mockImplementation((...args) => {
     ticks++;
-    const state = args[5];
+    const state = args[6];
     return {
       ...state,
       cleared: ticks === 2,
@@ -651,7 +652,7 @@ describe("whole-stage input witnesses", () => {
     const stepping = vi.spyOn(zoneRules, "stepZone").mockImplementation((...args) => {
       if (inject) {
         inject = false;
-        const state = args[5];
+        const state = args[6];
         return {
           ...state,
           death: {
@@ -735,7 +736,7 @@ describe("explicit validation profile and actual failure memory", () => {
     const step = vi.spyOn(zoneRules, "stepZone").mockImplementation((...args) => {
       if (inject) {
         inject = false;
-        const state = args[5];
+        const state = args[6];
         return {
           ...state,
           death: {
@@ -889,6 +890,7 @@ describe("bounded actionable stall snapshots", () => {
       },
     };
     const zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,

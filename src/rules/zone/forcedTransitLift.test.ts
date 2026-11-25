@@ -10,7 +10,7 @@ import { startBird } from "../bird/bird.ts";
 import { type ChunkLibrary, themesOf, zonePlanOf } from "../stage/assemble.ts";
 import { zoneLayout } from "../stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import { preparedZone, startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
 
 const STILL: ZoneInput = { jumpHeld: false, move: 0, useHeld: false };
 
@@ -51,7 +51,7 @@ it("protects a lower-dock boarding through the lift's forced window until safe g
   state = { ...state, bird: startBird(BIRD, { x: lower.x + 24, y: lower.y }) };
   const until = (input: ZoneInput, done: (state: ZoneState) => boolean, check = () => {}) => {
     for (let tick = 0; tick < 2000 && !done(state); tick++) {
-      state = stepZone(SKILL_PROFILES, BIRD, layout, 1 / 120, input, state);
+      state = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, 1 / 120, input, state);
       check();
     }
     expect(done(state)).toBe(true);
@@ -92,7 +92,7 @@ it("protects a lower-dock boarding through the lift's forced window until safe g
   );
   expect(state.bird.y + BIRD.height).toBe(lower.y);
   // Observation reads the state the step starts from.
-  state = stepZone(SKILL_PROFILES, BIRD, layout, 1 / 120, STILL, state);
+  state = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, 1 / 120, STILL, state);
   expect(state.forcedTransit).toEqual({
     attackWindow: "allowed",
     boardingAdmissions: [{ group, id: "lower" }],

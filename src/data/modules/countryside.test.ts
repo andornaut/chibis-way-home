@@ -8,7 +8,13 @@ import { zonePlanOf } from "../../rules/stage/assemble.ts";
 import { composePair } from "../../rules/stage/modules.ts";
 import { zoneLayout } from "../../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../../rules/stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../../rules/zone/zone.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite.ts";
 import { BIRD } from "../bird.ts";
 import { WINDMILL_SAILS } from "../obstacleTuning.ts";
@@ -52,7 +58,7 @@ function fixture() {
 
 type Fixture = ReturnType<typeof fixture>;
 const step = (f: Fixture, zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const centre = (rect: { height: number; width: number; x: number; y: number }) => ({
   x: rect.x + rect.width / 2,
   y: rect.y + rect.height / 2,

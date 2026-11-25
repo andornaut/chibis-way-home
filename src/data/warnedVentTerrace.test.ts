@@ -9,6 +9,7 @@ import { zonePlanOf } from "../rules/stage/assemble.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
 import {
+  preparedZone,
   retryZone,
   startZone,
   stepZone,
@@ -118,6 +119,7 @@ it("warned vent terrace approach observes from a refuge, crosses an inactive win
           ? rightGoal
           : exitGoal;
     zone = stepZone(
+      preparedZone(f.layout),
       SKILL_PROFILES,
       ordinary,
       f.layout,
@@ -150,6 +152,7 @@ it("warned vent kills a crossing that meets its active phase and retries from th
     // Stand inside the vent from the warning onward instead of returning to refuge.
     const goal = sheltered && phaseOf(f, zone) !== "inactive" ? f.rect.x : f.refuges.left.min;
     zone = stepZone(
+      preparedZone(f.layout),
       SKILL_PROFILES,
       ordinary,
       f.layout,
@@ -197,6 +200,7 @@ it("warned vent warning leaves time to retreat to the near refuge and cross the 
     const goal =
       stage === "commit" ? f.rect.x + f.rect.width / 2 : stage === "cross" ? rightGoal : leftGoal;
     zone = stepZone(
+      preparedZone(f.layout),
       SKILL_PROFILES,
       ordinary,
       f.layout,

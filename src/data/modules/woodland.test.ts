@@ -8,7 +8,13 @@ import { zonePlanOf } from "../../rules/stage/assemble.ts";
 import { composePair } from "../../rules/stage/modules.ts";
 import { zoneLayout } from "../../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../../rules/stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../../rules/zone/zone.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../../testing/walkSuite.ts";
 import { BIRD } from "../bird.ts";
 import { CHUNK_RULES } from "../chunks.ts";
@@ -45,7 +51,7 @@ function fixture() {
 
 type Fixture = ReturnType<typeof fixture>;
 const step = (f: Fixture, zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const stateOf = (f: Fixture, zone: ZoneState) =>
   zone.behaviours[f.emitter]?.stateKey ?? f.area.objects[f.emitter]!.behaviour!.initial;
 // A module tile in the composed chunk's pixels, the ravine filling the right half.

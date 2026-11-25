@@ -10,7 +10,7 @@ import { startBird } from "../bird/bird.ts";
 import { zonePlanOf } from "../stage/assemble.ts";
 import { zoneLayout } from "../stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../stage/zonePlans.ts";
-import { activateBehaviour, startZone, stepZone } from "./zone.ts";
+import { activateBehaviour, preparedZone, startZone, stepZone } from "./zone.ts";
 
 // Chibi stands beside a boss on its own floor, so Bini's growl pushes him and Fert's parcels and
 // Pebble's droppings spawn. Trixi rushes a still Chibi beside her before she lays a trap.
@@ -38,7 +38,7 @@ function effects(id: string, theme: string, offset: number): number {
   };
   let count = 0;
   for (let tick = 0; tick < 900 && !zone.death; tick++) {
-    zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, STILL, zone);
+    zone = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, STILL, zone);
     count += zone.pulses.length + zone.transients.length;
   }
   return count;

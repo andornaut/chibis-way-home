@@ -80,6 +80,7 @@ import {
   type MapTerrain,
 } from "../rules/boss/index.ts";
 import {
+  preparedZone,
   startZone,
   stepZone,
   stepZoneObserved,
@@ -945,9 +946,10 @@ export function stepEvade(
   input: ZoneInput,
   zone: ZoneState,
 ): ZoneState {
+  const maps = preparedZone(layout);
   return observer
-    ? stepZoneObserved(observer, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone)
-    : stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
+    ? stepZoneObserved(observer, maps, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone)
+    : stepZone(maps, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
 }
 
 // The layout with every boss removed, for the boss-free walk.

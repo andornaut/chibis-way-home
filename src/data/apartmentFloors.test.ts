@@ -13,7 +13,13 @@ import { zonePlanOf } from "../rules/stage/assemble.ts";
 import { chunkProblems, recipeProblems } from "../rules/stage/chunk.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/zone.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../rules/zone/zone.ts";
 import { assembleZone } from "../testing/stageAssembly.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import { BIRD } from "./bird.ts";
@@ -54,7 +60,15 @@ function stepUntil(
     };
   }
   for (let tick = 0; tick < 600 && !zone.death && !zone.turnedBack && !done(zone); tick++) {
-    zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, control(zone, tick), zone);
+    zone = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      control(zone, tick),
+      zone,
+    );
   }
   return zone;
 }

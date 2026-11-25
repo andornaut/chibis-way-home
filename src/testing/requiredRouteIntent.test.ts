@@ -7,7 +7,7 @@ import { TILE } from "../data/screen.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { startBird } from "../rules/bird/bird.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
-import { startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "../sim/bot.ts";
 import { type Surface, surfaceAt, zoneSurfaces } from "../sim/zoneWalk.ts";
 import { CATALOGUE } from "./art.ts";
@@ -564,6 +564,7 @@ it.each([0, 48])("bounds native grounded acceleration and full crossing from vx=
       ),
     ).toMatchObject({ kind: "cross" });
     zone = stepZone(
+      preparedZone(fixture.layout),
       SKILL_PROFILES,
       ORDINARY,
       fixture.layout,

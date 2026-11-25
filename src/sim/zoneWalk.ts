@@ -16,6 +16,7 @@ import {
   activateBehaviour,
   areaOf,
   enterArea,
+  preparedZone,
   standsOn,
   startZone,
   stepZone as stepActualZone,
@@ -62,7 +63,8 @@ function physicalStep(
     BEHAVIOUR_INDICES.set(area, indices);
   }
   const active = indices.reduce((state, index) => activateBehaviour(index, state), zone);
-  const next = stepActualZone(SKILL_PROFILES, tuning, layout, seconds, input, active);
+  const maps = preparedZone(layout);
+  const next = stepActualZone(maps, SKILL_PROFILES, tuning, layout, seconds, input, active);
   if (next !== active) {
     WALK_STEP_HOOKS.get(layout)?.(layout, seconds, active, next);
   }

@@ -12,7 +12,7 @@ import type {
 import { chunkBackdropSpan } from "../../presentation/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { assembleZone } from "../../testing/stageAssembly.ts";
-import { enterArea, retryZone, startZone, stepZone } from "../zone/zone.ts";
+import { enterArea, preparedZone, retryZone, startZone, stepZone } from "../zone/zone.ts";
 import { type ChunkLibrary } from "./assemble.ts";
 import { withBackgroundSections } from "./backgroundSections.ts";
 import { objectLayout, zoneLayout } from "./tiles.ts";
@@ -405,6 +405,7 @@ it.each(["linear", "hop"] as const)(
     right = { ...right, bird: { ...right.bird, x: 200 } };
     for (let tick = 0; tick < 3; tick++) {
       left = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -413,6 +414,7 @@ it.each(["linear", "hop"] as const)(
         left,
       );
       right = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -462,6 +464,7 @@ it("activates finite fauna only on actual view, freezes under room covers and re
   );
   const initial = startZone(BIRD, layout, 1);
   const unseen = stepZone(
+    preparedZone(layout),
     SKILL_PROFILES,
     BIRD,
     layout,
@@ -472,6 +475,7 @@ it("activates finite fauna only on actual view, freezes under room covers and re
   expect(unseen.sceneryPlayback![index]).toEqual({ elapsedSeconds: 0, status: "waiting" });
   expect(unseen.objects[index]).toEqual(initial.objects[index]);
   const visible = stepZone(
+    preparedZone(layout),
     SKILL_PROFILES,
     BIRD,
     layout,
@@ -484,6 +488,7 @@ it("activates finite fauna only on actual view, freezes under room covers and re
   const covered = { ...visible, door: 0 };
   expect(
     stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,

@@ -9,7 +9,13 @@ import { timedHazardRect } from "../rules/boss/timedHazard.ts";
 import { composePair } from "../rules/stage/modules.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/zone.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/art.ts";
 import { chunkThemePlan } from "../testing/chunkWalkCases.ts";
 import { BIRD } from "./bird.ts";
@@ -65,7 +71,7 @@ const overlapsStrip = ({ rect }: Fixture, zone: ZoneState) =>
   zone.bird.x + ordinary.width > rect.x &&
   zone.bird.y + ordinary.height > rect.y;
 const step = (f: Fixture, zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 // Toward goal, jumping where the terrain ahead rises above his feet.
 function toward(f: Fixture, zone: ZoneState, goal: number, jump: { until: number }, tick: number) {
   const move: ZoneInput["move"] =

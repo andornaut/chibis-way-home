@@ -23,7 +23,7 @@ import { birdBox, startBird } from "../bird/bird.ts";
 import { zonePlanOf } from "../stage/assemble.ts";
 import { objectLayout, zoneLayout } from "../stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../stage/zonePlans.ts";
-import { activateBehaviour, startZone, stepZone } from "../zone/zone.ts";
+import { activateBehaviour, preparedZone, startZone, stepZone } from "../zone/zone.ts";
 import { type BehaviourState, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import type { BehaviourPlatformFrame, BehaviourWorld } from "./behaviourReach.ts";
 import { moveIntent, openingScorerState } from "./behaviourScorer.ts";
@@ -1716,6 +1716,7 @@ it("executes a prepared production traversal over the pier in Archie's arena", (
   vi.mocked(findTraversal).mockClear();
   for (let tick = 0; tick < 600; tick++) {
     zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       ordinary,
       layout,

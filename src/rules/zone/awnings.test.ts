@@ -24,7 +24,7 @@ import {
 } from "../boss/movementMaps.ts";
 import { zonePlanOf } from "../stage/assemble.ts";
 import { areaLayout, zoneLayout } from "../stage/tiles.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import { preparedZone, startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
 import { clockedSupportPrediction } from "./zoneCrumbling.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
@@ -60,7 +60,7 @@ const stateOf = (f: Fixture, zone: ZoneState, awning: number) =>
   zone.behaviours[f.awnings[awning]!]?.stateKey ??
   f.area.objects[f.awnings[awning]!]!.behaviour!.initial;
 const step = (f: Fixture, zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const toward = (zone: ZoneState, goal: number): ZoneInput => ({
   ...idle,
   move: Math.abs(goal - zone.bird.x) <= 2 ? 0 : goal > zone.bird.x ? 1 : -1,

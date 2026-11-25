@@ -2,7 +2,13 @@ import { STEP_SECONDS } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/index.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../rules/zone/index.ts";
 import {
   botInput,
   DIAGNOSTIC_SKILL,
@@ -295,7 +301,8 @@ export function controlledRequiredRoute<
     const input =
       controlled?.input ?? botInput(ORDINARY, sensors, layout, DIAGNOSTIC_SKILL, policy, zone, bot);
     const before = zone;
-    zone = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
+    const maps = preparedZone(layout);
+    zone = stepZone(maps, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
     ticks++;
     controller?.decision?.({
       appliedTick: ticks,

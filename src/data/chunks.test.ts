@@ -11,7 +11,7 @@ import { ASSEMBLED_AREA, themesOf, zonePlanOf } from "../rules/stage/assemble.ts
 import { chunkProblems, recipeProblems } from "../rules/stage/chunk.ts";
 import { bindElement } from "../rules/stage/elementBinding.ts";
 import { resolveNames, zoneLayout } from "../rules/stage/tiles.ts";
-import { standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
 import type { Tileset } from "../stage/index.ts";
 import { ALL_CHUNKS, ALL_RECIPES, ALL_THEMES, FIXTURE_LIBRARY } from "../testing/chunks.ts";
 import { assembleZone } from "../testing/stageAssembly.ts";
@@ -406,6 +406,7 @@ it("bounds the wide reachable fixture with an ordinary running jump", () => {
       jumped ||=
         !zone.bird.grounded && zone.bird.coyoteLeft > 0 && zone.bird.coyoteLeft <= 2 * STEP_SECONDS;
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,

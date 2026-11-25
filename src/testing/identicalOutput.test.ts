@@ -9,7 +9,13 @@ import { SKILL_PROFILES } from "../progress/index.ts";
 import { type BehaviourObservation, createBehaviourObserver } from "../rules/boss/index.ts";
 import { planStage, requirePlanned } from "../rules/stage/stagePlans.ts";
 import { STAGE_CONTEXT } from "../rules/stage/zonePlans.ts";
-import { retryZone, stepZone, stepZoneObserved, type ZoneState } from "../rules/zone/zone.ts";
+import {
+  preparedZone,
+  retryZone,
+  stepZone,
+  stepZoneObserved,
+  type ZoneState,
+} from "../rules/zone/zone.ts";
 import { activateAll, type BossScenario, bossStart, placeChibi } from "../sim/bossSimulator.ts";
 import { BOSS_SCENARIOS } from "./bossScenarios.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
@@ -69,8 +75,17 @@ function encounterDigest(scenario: BossScenario, observed: boolean): string {
     zone = zone.death ? activateAll(retryZone(ORDINARY, layout, zone)) : zone;
     const input = controller(tick, zone);
     const stepped = observed
-      ? stepZoneObserved(observer, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone)
-      : stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
+      ? stepZoneObserved(
+          observer,
+          preparedZone(layout),
+          SKILL_PROFILES,
+          ORDINARY,
+          layout,
+          STEP_SECONDS,
+          input,
+          zone,
+        )
+      : stepZone(preparedZone(layout), SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
     zone = placeChibi(ORDINARY, scenario.place, tick + 1, stepped);
     parts.push(canonical({ ...zone, tracks: undefined }));
   }

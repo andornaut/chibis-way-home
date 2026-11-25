@@ -24,6 +24,7 @@ import {
   enterArea,
   leaveRoom,
   objectStep,
+  preparedZone,
   retryZone,
   roomOf,
   standsOn,
@@ -108,6 +109,7 @@ function run(
   const states = [state];
   for (let step = 0; step < Math.round(seconds / STEP); step++) {
     state = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -156,6 +158,7 @@ describe("mandatory ride admission", () => {
     });
     const layout = zone(area([carrier], { entries: { start: { x: 104, y: 200 } } }));
     const initial = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -164,7 +167,7 @@ describe("mandatory ride admission", () => {
       startZone(BIRD, layout, SEED),
     );
     expect(initial.bird.grounded).toBe(true);
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...initial,
       forcedTransit: { attackWindow: "allowed", episode, evidence: "certified" },
     });
@@ -192,6 +195,7 @@ describe("mandatory ride admission", () => {
       }),
     );
     const initial = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -200,7 +204,7 @@ describe("mandatory ride admission", () => {
       startZone(BIRD, layout, SEED),
     );
     expect(initial.bird.grounded).toBe(true);
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...initial,
       forcedTransit: {
         attackWindow: "allowed",
@@ -228,6 +232,7 @@ describe("mandatory ride admission", () => {
       }),
     );
     const initial = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -236,7 +241,7 @@ describe("mandatory ride admission", () => {
       startZone(BIRD, layout, SEED),
     );
     expect(initial.bird.grounded).toBe(true);
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...initial,
       forcedTransit: {
         attackWindow: "deferred",
@@ -266,6 +271,7 @@ describe("mandatory ride admission", () => {
     const base = area([carrier, ledge], { entries: { start: { x: 410, y: 200 } } });
     const layout = zone({ ...base, crumbling: crumblingDefinitions(base) });
     const initial = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -276,7 +282,7 @@ describe("mandatory ride admission", () => {
     expect(initial.bird.grounded).toBe(true);
     expect(standsOn(BIRD, initial.bird, { height: 12, width: 72, x: 400, y: 200 })).toBe(true);
     const forced = { ...episode, phase: "forced" as const };
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...initial,
       crumbling: {
         ...initial.crumbling!,
@@ -318,6 +324,7 @@ describe("mandatory ride admission", () => {
       ),
     );
     const initial = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -326,7 +333,7 @@ describe("mandatory ride admission", () => {
       startZone(BIRD, layout, SEED),
     );
     expect(initial.bird.grounded).toBe(true);
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...initial,
       forcedTransit: { attackWindow: "allowed", episode, evidence: "certified" },
     });
@@ -341,6 +348,7 @@ describe("mandatory ride admission", () => {
       }),
     );
     const initial = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -349,6 +357,7 @@ describe("mandatory ride admission", () => {
       startZone(BIRD, layout, SEED),
     );
     const dashing = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -365,7 +374,7 @@ describe("mandatory ride admission", () => {
     );
     expect(dashing.bird.grounded).toBe(true);
     expect(dashing.bird.dash?.remainingSeconds).toBeGreaterThan(0);
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, dashing);
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, dashing);
     expect(next.forcedTransit).toMatchObject({ attackWindow: "deferred", evidence: "unknown" });
     expect(next.bird.dash?.remainingSeconds).toBeGreaterThan(0);
   });
@@ -388,12 +397,20 @@ describe("mandatory ride admission", () => {
     );
     let initial = startZone(BIRD, layout, SEED);
     for (let tick = 0; tick < 86; tick++) {
-      initial = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, initial);
+      initial = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, initial);
     }
     const forecast = initial.forcedTransitForecast!;
     expect(forecast).toBeDefined();
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, initial);
-    const afterTwo = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, next);
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, initial);
+    const afterTwo = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP,
+      STILL,
+      next,
+    );
     expect(forecast.afterOneSeconds).toBe(initial.seconds + STEP);
     expect(forecast.afterTwoSeconds).toBe(afterTwo.seconds);
     expect(forecast.afterOne).toEqual({ ...next.objects[0], height: 12, width: 72 });
@@ -487,6 +504,7 @@ describe("mandatory ride admission", () => {
       ),
     );
     const initial = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -495,7 +513,7 @@ describe("mandatory ride admission", () => {
       startZone(BIRD, layout, SEED),
     );
     expect(initial.forcedTransitForecast).toBeUndefined();
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...initial,
       forcedTransit: {
         attackWindow: "deferred",
@@ -517,12 +535,20 @@ describe("mandatory ride admission", () => {
         solids: [{ height: 40, width: 96, x: 0, y: 300 }],
       }),
     );
-    let state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
-    state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
+    let state = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP,
+      STILL,
+      startZone(BIRD, layout, SEED),
+    );
+    state = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
     expect(state.forcedTransit?.boardingAdmissions).toEqual([{ group: transit.group, id: "near" }]);
     let partial = false;
     for (let tick = 0; tick < 30 && !state.forcedTransit?.episode; tick++) {
-      state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, RIGHT, state);
+      state = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, RIGHT, state);
       if (state.bird.x > 72 && state.bird.x + BIRD.width <= 108) {
         partial = true;
         expect(state.forcedTransit?.boardingAdmissions).toEqual([
@@ -549,13 +575,37 @@ describe("mandatory ride admission", () => {
         { entries: { start: { x: 111.2, y: 200 } } },
       ),
     );
-    let state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    let state = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP,
+      STILL,
+      startZone(BIRD, layout, SEED),
+    );
     for (let tick = 0; tick < 120; tick++) {
-      state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, { ...STILL, jumpHeld: true }, state);
+      state = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP,
+        { ...STILL, jumpHeld: true },
+        state,
+      );
     }
     expect(state.bird.grounded).toBe(true);
     for (let tick = 0; tick < 30 && state.bird.x > 76.3; tick++) {
-      state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, { ...LEFT, jumpHeld: true }, state);
+      state = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP,
+        { ...LEFT, jumpHeld: true },
+        state,
+      );
     }
     expect(state.bird.grounded).toBe(true);
     expect(state.bird.jumpHeld).toBe(true);
@@ -578,9 +628,18 @@ describe("mandatory ride admission", () => {
     expect(body.releasedBody!.coyoteLeft).toBeGreaterThan(0);
     expect(body.takeoff.y).toBe(body.releasedBody!.y);
     expect(body.takeoff.y + BIRD.height).toBeGreaterThan(forecast.afterTwo.y);
-    const released = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
+    const released = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP,
+      STILL,
+      state,
+    );
     expect(released.bird).toEqual(body.releasedBody);
     const jumped = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -608,9 +667,17 @@ describe("mandatory ride admission", () => {
         { entries: { start: { x: 124, y: 200 } } },
       ),
     );
-    let state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    let state = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP,
+      STILL,
+      startZone(BIRD, layout, SEED),
+    );
     for (let tick = 0; tick < 10; tick++) {
-      state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
+      state = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
     }
     const forecast = state.forcedTransitForecast!;
     const body = forcedTransitTakeoffBody(
@@ -633,6 +700,7 @@ describe("mandatory ride admission", () => {
       let peak = Infinity;
       for (let tick = 0; tick < 60; tick++) {
         jumped = stepZone(
+          preparedZone(layout),
           SKILL_PROFILES,
           BIRD,
           layout,
@@ -665,12 +733,36 @@ describe("mandatory ride admission", () => {
         solids: [{ height: 840, width: 72, x: 408, y: 600 }],
       }),
     );
-    let state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, startZone(BIRD, layout, SEED));
+    let state = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP,
+      STILL,
+      startZone(BIRD, layout, SEED),
+    );
     for (let tick = 0; tick < 120; tick++) {
-      state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, { ...STILL, jumpHeld: true }, state);
+      state = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP,
+        { ...STILL, jumpHeld: true },
+        state,
+      );
     }
     for (let tick = 0; tick < 6; tick++) {
-      state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, { ...RIGHT, jumpHeld: true }, state);
+      state = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP,
+        { ...RIGHT, jumpHeld: true },
+        state,
+      );
     }
     expect(state.bird.grounded).toBe(true);
     expect(state.bird.x).toBeCloseTo(383.4, 8);
@@ -690,9 +782,18 @@ describe("mandatory ride admission", () => {
     expect(body.releasedBody?.x).toBe(384);
     expect(body.releasedBody?.vx).toBe(0);
     expect(body.releasedBody?.grounded).toBe(true);
-    const released = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
+    const released = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP,
+      STILL,
+      state,
+    );
     expect(released.bird).toEqual(body.releasedBody);
     const jumped = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -735,7 +836,7 @@ describe("behaviour encounters", () => {
     expect(initial.behaviours[0]?.active).toBe(false);
     const active = activateBehaviour(0, initial);
     expect(active.behaviours[0]?.active).toBe(true);
-    const dead = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    const dead = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...active,
       bird: { ...active.bird, x: patrol.origin.x, y: patrol.origin.y },
     });
@@ -751,7 +852,7 @@ describe("behaviour encounters", () => {
     if (!charge) {
       throw new Error("Missing fixture behaviour");
     }
-    const result = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    const result = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...initial,
       behaviours: [{ ...charge, stateKey }],
       bird: { ...initial.bird, x: patrol.origin.x, y: patrol.origin.y },
@@ -766,7 +867,7 @@ describe("behaviour encounters", () => {
     if (!charge) {
       throw new Error("Missing fixture behaviour");
     }
-    const result = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    const result = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...initial,
       behaviours: [{ ...charge, stateKey: "burst" }],
     });
@@ -783,7 +884,7 @@ describe("behaviour encounters", () => {
     const layout = zone(area([lift], { entries: { start: { x: 100, y: 260 } } }));
     const initial = startZone(BIRD, layout, SEED);
     expect(zoneSurfaces(BIRD, layout).some((surface) => surface.mover === 0)).toBe(true);
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, 0.1, STILL, initial);
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, 0.1, STILL, initial);
     expect(next.objects[0]?.y).toBe(257);
     expect(next.bird.y + BIRD.height).toBe(257);
     expect(next.restarts).toBe(0);
@@ -821,7 +922,9 @@ describe("restarts", () => {
     if (!dead) {
       throw new Error("Fixture did not reach death");
     }
-    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP, RIGHT, dead)).toBe(dead);
+    expect(stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, RIGHT, dead)).toBe(
+      dead,
+    );
     expect(dead.attempt).toBe(0);
     expect(dead.seconds).toBeGreaterThan(0);
     expect(dead.death?.position).toEqual({ x: dead.bird.x, y: dead.bird.y });
@@ -964,14 +1067,18 @@ describe("clearing", () => {
     ["his box ending at the last column's left edge", exitX, false],
   ])("standing still with %s: cleared %s", (_, right, cleared) => {
     const layout = zone(area([]));
-    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, at(right)).cleared).toBe(cleared);
+    expect(
+      stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, at(right)).cleared,
+    ).toBe(cleared);
   });
 
   it("clears at any height, in the air above the last column", () => {
     const layout = zone(area([]));
     const high = at(exitX + 1);
     const state = { ...high, bird: { ...high.bird, grounded: false, y: 20 } };
-    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, state).cleared).toBe(true);
+    expect(
+      stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, state).cleared,
+    ).toBe(true);
   });
 
   it("runs right to the edge, clears, and then holds still", () => {
@@ -993,7 +1100,15 @@ describe("turning back", () => {
     ["his box reaching back past the first column's right edge", backX - 1, true],
     ["his box starting at the first column's right edge", backX, false],
   ])("standing still with %s: turned back %s", (_, left, turnedBack) => {
-    const next = stepZone(SKILL_PROFILES, BIRD, zone(area([])), STEP, STILL, at(left));
+    const next = stepZone(
+      preparedZone(zone(area([]))),
+      SKILL_PROFILES,
+      BIRD,
+      zone(area([])),
+      STEP,
+      STILL,
+      at(left),
+    );
     expect({ cleared: next.cleared, turnedBack: next.turnedBack }).toEqual({
       cleared: false,
       turnedBack,
@@ -1102,7 +1217,15 @@ describe("doors", () => {
       inside.objects,
       inside.seconds,
     ]);
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, { ...STILL, useHeld: true }, back);
+    const next = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP,
+      { ...STILL, useHeld: true },
+      back,
+    );
     expect([next.door, next.seconds]).toEqual([undefined, inside.seconds + STEP]);
   });
 });
@@ -1169,7 +1292,7 @@ describe("random motion", () => {
     });
     const xs: number[] = [];
     for (let step = 0; step < 600; step++) {
-      state = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
+      state = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
       xs.push(state.objects[0]?.x ?? 0);
     }
     return xs;
@@ -1219,10 +1342,19 @@ describe("entry-created world state", () => {
     });
     const layout = zone(area([emitter]));
     const initial = startZone(BIRD, layout, SEED);
-    const inactive = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, initial);
+    const inactive = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP,
+      STILL,
+      initial,
+    );
     expect(inactive.transients).toEqual([]);
     expect(inactive.pulses).toEqual([]);
     const active = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -1232,17 +1364,21 @@ describe("entry-created world state", () => {
     );
     expect(active.transients).toHaveLength(1);
     expect(active.pulses).toHaveLength(1);
-    const next = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, active);
+    const next = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, active);
     expect(next.transients[0]?.id).toBe(active.transients[0]?.id);
     expect(next.nextTransientId).toBe(1);
     const held = { ...next, door: 0 };
-    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, held)).toBe(held);
-    const dead = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, {
+    expect(stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, held)).toBe(
+      held,
+    );
+    const dead = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, {
       ...next,
       bird: { ...next.bird, x: 500, y: 280 },
     });
     expect(dead.death?.reason).toBe("hazard");
-    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, dead)).toBe(dead);
+    expect(stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, dead)).toBe(
+      dead,
+    );
     const reset = retryZone(BIRD, layout, dead);
     expect(reset.transients).toEqual([]);
     expect(reset.pulses).toEqual([]);
@@ -1259,6 +1395,6 @@ it("retains supplied track positions when a static layout object uses a differen
   const layout = zone(area([block]));
   const initial = startZone(BIRD, layout, SEED);
   const state = { ...initial, tracks: [{ at: () => ({ x: 50, y: 0 }) }] };
-  const stepped = stepZone(SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
+  const stepped = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP, STILL, state);
   expect(stepped.objects[0]).toEqual({ x: 350, y: 250 });
 });

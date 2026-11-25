@@ -8,7 +8,7 @@ import { artKind, lookTiles } from "../presentation/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { resolveNames, zoneLayout } from "../rules/stage/tiles.ts";
 import { zonePlanFor } from "../rules/stage/zonePlans.ts";
-import { startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import { HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import { TEST_ZONES } from "../testing/zones.ts";
 import { ARCHETYPES } from "./archetypes.ts";
@@ -206,6 +206,7 @@ const turnsBackWithin = (seconds: number, plan: ZonePlan) => {
   let zone = startZone(BIRD, layout, 1);
   for (let step = 0; step < Math.round(seconds / STEP_SECONDS) && !zone.turnedBack; step++) {
     zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,

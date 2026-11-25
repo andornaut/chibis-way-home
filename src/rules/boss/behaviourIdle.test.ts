@@ -21,7 +21,7 @@ import { withAnticipationContact } from "../../testing/behaviours.ts";
 import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { birdBox, startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
-import { retryZone, startZone, stepZone } from "../zone/zone.ts";
+import { preparedZone, retryZone, startZone, stepZone } from "../zone/zone.ts";
 import { type BehaviourState, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import { advanceIdleRecovery, observeIdle, planIdleRecovery } from "./behaviourIdle.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
@@ -368,6 +368,7 @@ it("clears the active watchdog and verified route on a real death retry", () => 
   };
   const initial = startZone(BIRD, layout, 1);
   const dead = stepZone(
+    preparedZone(layout),
     SKILL_PROFILES,
     BIRD,
     layout,

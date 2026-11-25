@@ -64,23 +64,25 @@ it.each<SkillId | null>([null, "dash", "doubleJump", "speedy"])(
     } as engine.ZoneState;
     const step = vi
       .spyOn(engine, "stepZone")
-      .mockImplementation((_skillProfiles, _tuning, _layout, _seconds, _input, state) => ({
-        ...state,
-        death: {
-          position: { x: 0, y: 0 },
-          reason: "fall",
-          support: undefined,
-          velocity: { x: 0, y: 0 },
-        },
-        steps: state.steps + 1,
-      }));
+      .mockImplementation(
+        (_prepared, _skillProfiles, _tuning, _layout, _seconds, _input, state) => ({
+          ...state,
+          death: {
+            position: { x: 0, y: 0 },
+            reason: "fall",
+            support: undefined,
+            velocity: { x: 0, y: 0 },
+          },
+          steps: state.steps + 1,
+        }),
+      );
     const scene = Object.assign(new ZoneScene(), {
       beginDeath(this: { dying: unknown }) {
         this.dying = {};
       },
       clock: frameSteps({ maxFrameMs: 100, stepMs: STEP_MS }, 0, startStepClock).clock,
       drawDeath: vi.fn(),
-      layout: {},
+      layout: { areas: {} },
       loading: false,
       openProximityDialogue: () => false,
       stageKey: () => "stage",
@@ -88,7 +90,7 @@ it.each<SkillId | null>([null, "dash", "doubleJump", "speedy"])(
     }) as unknown as { update(time: number): void };
     scene.update(STEP_MS * 2);
     expect(step).toHaveBeenCalledOnce();
-    const profile = step.mock.calls[0]![1];
+    const profile = step.mock.calls[0]![2];
     expect(profile.doubleJump).toBe(selected === "doubleJump");
     expect(profile.dash).toEqual(selected === "dash" ? BIRD.dash : undefined);
     expect(profile.walkSpeed).toBe(

@@ -9,7 +9,7 @@ import { SKILL_PROFILES } from "../progress/index.ts";
 import { zonePlanOf } from "../rules/stage/assemble.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
-import { standsOn, startZone, stepZone, type ZoneState } from "../rules/zone/zone.ts";
+import { preparedZone, standsOn, startZone, stepZone, type ZoneState } from "../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 
 const ids = [
@@ -71,6 +71,7 @@ function noOrdinaryBypass(id: string): void {
     jumped ||=
       !zone.bird.grounded && zone.bird.coyoteLeft > 0 && zone.bird.coyoteLeft <= 2 * STEP_SECONDS;
     zone = stepZone(
+      preparedZone(banks),
       SKILL_PROFILES,
       BIRD,
       banks,
@@ -122,6 +123,7 @@ describe.each(ids)("short horizontal crossing %s", (id) => {
           : BIRD.jumpRiseTime;
       const before = zone.bird.x;
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -172,7 +174,7 @@ describe.each(ids)("short horizontal crossing %s", (id) => {
       pausedFar = false;
     let previous = zone.objects[index]!.x;
     for (let tick = 0; tick < ticks; tick++) {
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, idle, zone);
+      zone = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, idle, zone);
       expect(zone.death).toBeUndefined();
       const x = zone.objects[index]!.x;
       xs.push(x);

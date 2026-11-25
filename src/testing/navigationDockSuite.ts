@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 import { STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { enterArea, stepZone } from "../rules/zone/index.ts";
+import { enterArea, preparedZone, stepZone } from "../rules/zone/index.ts";
 import {
   NAVIGATION_DEFAULTS,
   NAVIGATION_VALIDATION,
@@ -66,6 +66,7 @@ export function registerNavigationDockCase(): void {
     for (const [ticks, move, jumpHeld] of approach) {
       for (let tick = 0; tick < ticks; tick++) {
         zone = stepZone(
+          preparedZone(layout),
           SKILL_PROFILES,
           tuning,
           layout,
@@ -91,6 +92,7 @@ export function registerNavigationDockCase(): void {
     for (const [ticks, move, jumpHeld] of dockApproach) {
       for (let tick = 0; tick < ticks; tick++) {
         unsafe = stepZone(
+          preparedZone(layout),
           SKILL_PROFILES,
           tuning,
           layout,
@@ -113,10 +115,19 @@ export function registerNavigationDockCase(): void {
     expect(decision.chosenAction).not.toBe("approach");
     const queued = [input, ...bot.navigation!.queue];
     for (input of queued) {
-      zone = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        tuning,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     for (let tick = 0; tick < NAVIGATION_DEFAULTS.replanTicks; tick++) {
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         tuning,
         layout,

@@ -6,7 +6,7 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { AreaLayout, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
-import { startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import { walkRequiredRoutes } from "./zoneWalk.ts";
 
 const tuning = { ...BIRD, doubleJump: false };
@@ -47,6 +47,7 @@ function playedAreas(layout: ZoneLayout, direction: -1 | 1): string[] {
   const visited = new Set([zone.area]);
   for (let ticks = 0; ticks < 400 && !zone.cleared; ticks++) {
     zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       tuning,
       layout,

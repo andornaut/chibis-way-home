@@ -11,7 +11,13 @@ import { zonePlanOf } from "../rules/stage/assemble.ts";
 import { chunkProblems } from "../rules/stage/chunk.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/zone.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 
 const chunks = createHazardChunks("street");
@@ -43,7 +49,15 @@ function run(
     },
   };
   for (let tick = 0; tick < 600 && !zone.death && !zone.turnedBack && !finished(zone); tick++) {
-    zone = stepZone(SKILL_PROFILES, ordinary, layout, STEP_SECONDS, control(zone, tick), zone);
+    zone = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      ordinary,
+      layout,
+      STEP_SECONDS,
+      control(zone, tick),
+      zone,
+    );
   }
   return { layout, zone };
 }

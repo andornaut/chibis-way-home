@@ -25,7 +25,7 @@ import { SKILL_PROFILES } from "../../progress/index.ts";
 import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
-import { retryZone, startZone, stepZone } from "../zone/zone.ts";
+import { preparedZone, retryZone, startZone, stepZone } from "../zone/zone.ts";
 import { type BehaviourState, contactBox, layoutBehaviour, startBehaviour } from "./behaviour.ts";
 import { type BehaviourWorld, flightContactApproach } from "./behaviourReach.ts";
 import { flyLandingPath, flyLandingRoute, landingWorldAt, supportedLanding } from "./flyLanding.ts";
@@ -333,15 +333,33 @@ describe("persistent pursuit", () => {
     };
     const input = { jumpHeld: false, move: 0, useHeld: false } as const;
     const start = startZone(BIRD, layout, 1);
-    const seen = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, start);
+    const seen = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      input,
+      start,
+    );
     expect(seen.barks).toEqual([
       { ...object.behaviour!.spotted, owner: { area: "main", attempt: 0, objectIndex: 1 } },
     ]);
-    const fled = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, seen);
+    const fled = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      input,
+      seen,
+    );
     expect(fled.barks).toEqual([
       { ...escaped, owner: { area: "main", attempt: 0, objectIndex: 1 } },
     ]);
-    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, fled).barks).toEqual([]);
+    expect(
+      stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, fled).barks,
+    ).toEqual([]);
     const retry = retryZone(BIRD, layout, {
       ...fled,
       death: {
@@ -352,7 +370,10 @@ describe("persistent pursuit", () => {
       },
     });
     expect(retry.behaviours[1]?.pursuit).toBeUndefined();
-    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, retry).barks).toEqual([
+    expect(
+      stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, retry)
+        .barks,
+    ).toEqual([
       { ...object.behaviour!.spotted, owner: { area: "main", attempt: 1, objectIndex: 1 } },
     ]);
   });

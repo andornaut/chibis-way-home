@@ -8,7 +8,7 @@ import { TILE } from "../data/screen.ts";
 import type { ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { orbitPosition } from "../rules/bird/orbit.ts";
-import { retryZone, startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, retryZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import { registerNavigationDockCase } from "../testing/navigationDockSuite.ts";
 import { botInput, DIAGNOSTIC_SKILL, navigationCounters, newBot, prepareSensors } from "./bot.ts";
 import {
@@ -97,7 +97,7 @@ function traverse(layout: ZoneLayout, maxTicks = 300) {
       zone,
       bot,
     );
-    zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+    zone = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
     if (zone.bird.grounded) {
       landings.push(zone.bird.y + BIRD.height);
     }
@@ -169,7 +169,15 @@ describe("targeted support recovery", () => {
           "retreat-to-support",
         );
       }
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
       lowestX = Math.min(lowestX, zone.bird.x);
       if (tick > 24 && zone.bird.grounded) {
         break;
@@ -341,6 +349,7 @@ describe("bounded real-rule navigation", () => {
       bot = newBot(1);
     let zone = startZone(BIRD, layout, 1);
     zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -349,7 +358,7 @@ describe("bounded real-rule navigation", () => {
       zone,
     );
     const input = plannedInput(BIRD, layout, undefined, 1, zone, bot);
-    zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+    zone = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
     const decisions = navigationCounters(bot).decisions;
     plannedInput(
       BIRD,
@@ -375,6 +384,7 @@ describe("bounded real-rule navigation", () => {
     expect(rememberNavigationFailure(zone, bot).deaths).toHaveLength(0);
     for (let count = 0; count < 17; count++) {
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -494,6 +504,7 @@ describe("bounded real-rule navigation", () => {
     const bot = newBot(1);
     let firstDecision: ReturnType<typeof navigationSnapshot>;
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -506,7 +517,15 @@ describe("bounded real-rule navigation", () => {
       if (tick === 0) {
         firstDecision = navigationSnapshot(bot);
       }
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
@@ -565,6 +584,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -580,7 +600,15 @@ describe("bounded real-rule navigation", () => {
         firstDecision = navigationSnapshot(bot);
       }
       usedGroundEscape ||= input.move === -1 && !input.jumpHeld && zone.bird.grounded;
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
@@ -651,6 +679,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -695,7 +724,15 @@ describe("bounded real-rule navigation", () => {
       }
       usedFollowup ||= followupAt !== undefined && zone.steps >= followupAt && input.jumpHeld;
       usedGroundEscape ||= input.move === -1 && !input.jumpHeld && zone.bird.grounded;
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
@@ -758,6 +795,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -769,7 +807,15 @@ describe("bounded real-rule navigation", () => {
     for (let tick = 0; tick < 900 && !zone.cleared && !zone.death; tick++) {
       const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
       unsafeRoofTarget ||= navigationSnapshot(bot)?.waypoint?.y === roof;
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(unsafeRoofTarget).toBe(false);
     expect(zone.death).toBeUndefined();
@@ -842,6 +888,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -851,7 +898,15 @@ describe("bounded real-rule navigation", () => {
     );
     for (let tick = 0; tick < 1200 && !zone.cleared && !zone.death; tick++) {
       const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
@@ -903,6 +958,7 @@ describe("bounded real-rule navigation", () => {
       };
       const bot = newBot(1);
       let zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -914,7 +970,15 @@ describe("bounded real-rule navigation", () => {
       for (let tick = 0; tick < 1200 && !zone.cleared && !zone.death; tick++) {
         const input = plannedInput(BIRD, layout, NAVIGATION_VALIDATION, 1, zone, bot);
         backed ||= input.move === -1 && input.jumpHeld;
-        zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+        zone = stepZone(
+          preparedZone(layout),
+          SKILL_PROFILES,
+          BIRD,
+          layout,
+          STEP_SECONDS,
+          input,
+          zone,
+        );
       }
       expect(backed).toBe(true);
       expect(zone.death).toBeUndefined();
@@ -982,6 +1046,7 @@ describe("bounded real-rule navigation", () => {
     let zone = startZone(BIRD, layout, 1);
     for (let tick = 0; tick < 967; tick++) {
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -1001,7 +1066,15 @@ describe("bounded real-rule navigation", () => {
         zone.bird.x + BIRD.width > at.x &&
         zone.bird.x < at.x + deck.width;
       const ended = navigationSnapshot(bot)?.cacheRemaining === 0;
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
       const after = zone.objects[0]!;
       if (
         ended &&
@@ -1061,6 +1134,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -1070,6 +1144,7 @@ describe("bounded real-rule navigation", () => {
     );
     for (let tick = 0; tick < 1200 && !zone.cleared && !zone.death; tick++) {
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -1142,6 +1217,7 @@ describe("bounded real-rule navigation", () => {
     let zone = startZone(BIRD, layout, 1);
     for (let tick = 0; tick < 420; tick++) {
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -1170,7 +1246,15 @@ describe("bounded real-rule navigation", () => {
               zone.bird.x + BIRD.width > at.x &&
               zone.bird.x < at.x + 72,
           );
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(zone.death).toBeUndefined();
     expect(brakedOnDock).toBe(true);
@@ -1209,6 +1293,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -1222,7 +1307,15 @@ describe("bounded real-rule navigation", () => {
       if (tick === 0) {
         first = navigationSnapshot(bot);
       }
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
@@ -1285,6 +1378,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -1318,7 +1412,15 @@ describe("bounded real-rule navigation", () => {
           (candidate.executionSteps ?? candidate.physicsSteps) < candidate.physicsSteps &&
           candidate.rejection === null,
       );
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
@@ -1355,6 +1457,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -1369,7 +1472,15 @@ describe("bounded real-rule navigation", () => {
       if (tick === 0) {
         first = navigationSnapshot(bot);
       }
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
       reverseLanding ||=
         zone.bird.grounded && zone.bird.x < 560 && zone.bird.y + BIRD.height === 420;
     }
@@ -1438,6 +1549,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       tuning,
       layout,
@@ -1451,7 +1563,15 @@ describe("bounded real-rule navigation", () => {
       if (tick === 0) {
         first = navigationSnapshot(bot);
       }
-      zone = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        tuning,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(zone.death).toBeUndefined();
     expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
@@ -1545,6 +1665,7 @@ describe("bounded real-rule navigation", () => {
       },
     };
     const initial = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -1591,6 +1712,7 @@ describe("bounded real-rule navigation", () => {
         },
       };
       const initial = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         tuning,
         layout,
@@ -1611,7 +1733,15 @@ describe("bounded real-rule navigation", () => {
       let zone = initial;
       for (let tick = 0; tick < 480 && !zone.cleared && !zone.death; tick++) {
         const input = plannedInput(tuning, layout, undefined, 1, zone, bot);
-        zone = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, zone);
+        zone = stepZone(
+          preparedZone(layout),
+          SKILL_PROFILES,
+          tuning,
+          layout,
+          STEP_SECONDS,
+          input,
+          zone,
+        );
       }
       expect(zone.death).toBeUndefined();
       expect(zone.cleared, JSON.stringify(navigationSnapshot(bot))).toBe(true);
@@ -1645,6 +1775,7 @@ describe("bounded real-rule navigation", () => {
       },
     };
     const initial = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -1720,6 +1851,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       tuning,
       layout,
@@ -1738,7 +1870,15 @@ describe("bounded real-rule navigation", () => {
         ).toBe("death");
       }
       inputs.push(input);
-      zone = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        tuning,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
     }
     expect(inputs.slice(0, 24).every((input) => input.move === 0 && !input.jumpHeld)).toBe(true);
     expect(inputs[24]!.jumpHeld).toBe(true);
@@ -1772,6 +1912,7 @@ describe("bounded real-rule navigation", () => {
     };
     const bot = newBot(1);
     let zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       tuning,
       layout,
@@ -1785,7 +1926,15 @@ describe("bounded real-rule navigation", () => {
       if (tick === 0) {
         expect(navigationSnapshot(bot)!.chosenAction).toBe("brake-full");
       }
-      zone = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        tuning,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
       if (zone.bird.grounded && zone.bird.y + tuning.height === 192) {
         landed = true;
         break;
@@ -1814,6 +1963,7 @@ describe("bounded real-rule navigation", () => {
       },
     };
     const initial = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -1865,6 +2015,7 @@ describe("bounded real-rule navigation", () => {
     const bot = newBot(1);
     for (let tick = 0; tick < 600 && !zone.cleared && !zone.death; tick++) {
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -1892,6 +2043,7 @@ describe("bounded real-rule navigation", () => {
       NAVIGATION_VALIDATION,
       1,
       stepZone(
+        preparedZone(blocked),
         SKILL_PROFILES,
         BIRD,
         blocked,
@@ -1935,6 +2087,7 @@ describe("bounded real-rule navigation", () => {
       areas: { main: { ...base.areas.main!, objects: [host, child], width: 1200 } },
     };
     const zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -1962,7 +2115,7 @@ describe("bounded real-rule navigation", () => {
     expect(first.chosenAction).toBeTruthy();
     expect(first).not.toHaveProperty("states");
     expect(first).not.toHaveProperty("tuning");
-    zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
+    zone = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, zone);
     plannedInput(BIRD, layout, undefined, 1, zone, bot);
     const cached = navigationSnapshot(bot)!;
     expect(cached.reason).toBe("cache-reused");

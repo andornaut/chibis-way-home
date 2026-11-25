@@ -6,7 +6,7 @@ import { BIRD } from "../data/bird.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { SKILL_PROFILES, STATS_VERSION } from "../progress/index.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
-import { startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import { createPageSave } from "../save/index.ts";
 import { createSave } from "./save.ts";
 
@@ -27,7 +27,7 @@ const LAYOUT = zoneLayout(12, BIRD_FRAME, { archetypes: {}, characters: {} }, {}
 });
 const INPUT = { jumpHeld: false, move: 0 as const, useHeld: false };
 const INITIAL = startZone(BIRD, LAYOUT, 1);
-const ACTIVE = stepZone(SKILL_PROFILES, BIRD, LAYOUT, 0.1, INPUT, INITIAL);
+const ACTIVE = stepZone(preparedZone(LAYOUT), SKILL_PROFILES, BIRD, LAYOUT, 0.1, INPUT, INITIAL);
 
 afterEach(() => {
   vi.unstubAllGlobals();

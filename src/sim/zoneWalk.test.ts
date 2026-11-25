@@ -12,7 +12,7 @@ import type { ZonePlan } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { zonePlanOf } from "../rules/stage/assemble.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
-import { startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import { WINDMILL_FIXTURE_CATALOGUE, WINDMILL_FIXTURE_LIBRARY } from "../testing/chunks.ts";
 import { CATALOGUE, HITBOXES, TILESETS, WALK_MS, walkSuite } from "../testing/walkSuite.ts";
 import { TEST_ZONES } from "../testing/zones.ts";
@@ -241,9 +241,19 @@ describe("walk transition prerequisites", () => {
     const state = frozen(startZone(BIRD, layout, 42));
     const input = frozen({ jumpHeld: true, move: 1 as const, useHeld: false });
     const original = JSON.stringify(state);
-    const first = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, state);
+    const first = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      input,
+      state,
+    );
     state.tracks[0]!.at(20);
-    expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, state)).toEqual(first);
+    expect(
+      stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, state),
+    ).toEqual(first);
     expect(JSON.stringify(state)).toBe(original);
     expect(first).not.toBe(state);
     expect(first.objects[0]).not.toEqual(state.objects[0]);
@@ -256,7 +266,7 @@ describe("walk transition cache", () => {
       zoneLayout(TILE, BIRD_FRAME, CATALOGUE, {}, {}, new Set(), transitionCourse()),
     );
     const step = vi.fn<WalkStep>((input, state) =>
-      stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, state),
+      stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, input, state),
     );
     const advance = memoizeTransitions(step);
     const input = frozen({ jumpHeld: false, move: 1 as const, useHeld: false });

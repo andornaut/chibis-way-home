@@ -13,7 +13,7 @@ import { birdBox } from "../rules/bird/bird.ts";
 import { orbitPosition } from "../rules/bird/orbit.ts";
 import { contactBox } from "../rules/boss/behaviour.ts";
 import { areaLayout } from "../rules/stage/tiles.ts";
-import { standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
 import { TILESETS } from "../testing/walkSuite.ts";
 
 const chunks = createOrbitHazardChunks("test");
@@ -60,7 +60,7 @@ describe.each(Object.keys(chunks))("orbital chunk %s", (id) => {
       farPause = 0;
     const far = host.origin[axis] + (axis === "y" ? -host.motion.distance : host.motion.distance);
     for (let tick = 0; tick <= ticks; tick++) {
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, idle, zone);
+      zone = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, idle, zone);
       expect(zone.death).toBeUndefined();
       const at = zone.objects[0]!,
         value = at[axis];
@@ -161,6 +161,7 @@ describe.each(Object.keys(chunks))("orbital chunk %s", (id) => {
       }
       const before = zone.bird;
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -213,7 +214,7 @@ it("attributes a four-pixel orbital arc contact that the endpoint chord misses",
   };
   const initial = startZone(BIRD, layout, 1),
     child = layout.areas.main!.objects[1]!;
-  const caught = stepZone(SKILL_PROFILES, BIRD, layout, 0.5, idle, initial);
+  const caught = stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, 0.5, idle, initial);
   expect(
     sweptContact(
       birdBox(BIRD, initial.bird),

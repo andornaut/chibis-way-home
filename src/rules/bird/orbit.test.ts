@@ -13,7 +13,7 @@ import type {
 } from "../../data/types/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { areaLayout } from "../stage/tiles.ts";
-import { retryZone, startZone, stepZone } from "../zone/zone.ts";
+import { preparedZone, retryZone, startZone, stepZone } from "../zone/zone.ts";
 import { motionTrack } from "./motion.ts";
 import {
   namespaceOrbitInstances,
@@ -140,7 +140,7 @@ describe("instance-local orbit relationships", () => {
     ]) {
       const stage = layout(objects);
       const start = startZone(BIRD, stage, 1);
-      const stepped = stepZone(SKILL_PROFILES, BIRD, stage, 0.5, idle, start);
+      const stepped = stepZone(preparedZone(stage), SKILL_PROFILES, BIRD, stage, 0.5, idle, start);
       const area = stage.areas.main!;
       const index = area.objects.findIndex(({ orbit }) => orbit);
       const follower = area.objects[index]!;
@@ -182,7 +182,15 @@ describe("instance-local orbit relationships", () => {
       y: 26,
     });
     const stage = layout([follower, vertical]);
-    const zone = stepZone(SKILL_PROFILES, BIRD, stage, 0.5, idle, startZone(BIRD, stage, 1));
+    const zone = stepZone(
+      preparedZone(stage),
+      SKILL_PROFILES,
+      BIRD,
+      stage,
+      0.5,
+      idle,
+      startZone(BIRD, stage, 1),
+    );
     expect(zone.objects[1]!.y).toBeLessThan(stage.areas.main!.objects[1]!.origin.y);
     expect(zone.objects[0]).toEqual(
       orbitPosition(
@@ -287,6 +295,7 @@ describe("continuous orbital contact", () => {
     });
     const curved = stage(0, 9.5);
     const caught = stepZone(
+      preparedZone(curved),
       SKILL_PROFILES,
       tuning,
       curved,
@@ -302,7 +311,15 @@ describe("continuous orbital contact", () => {
     });
     const chord = stage(0, -0.5);
     expect(
-      stepZone(SKILL_PROFILES, tuning, chord, Math.PI, idle, startZone(tuning, chord, 1)).death,
+      stepZone(
+        preparedZone(chord),
+        SKILL_PROFILES,
+        tuning,
+        chord,
+        Math.PI,
+        idle,
+        startZone(tuning, chord, 1),
+      ).death,
     ).toBeUndefined();
   });
   it("composes the arc with the bird's continuous motion", () => {

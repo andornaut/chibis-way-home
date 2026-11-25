@@ -13,7 +13,7 @@ import type {
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { defeatBoss } from "../boss/bossDefeat.ts";
 import { objectLayout } from "../stage/tiles.ts";
-import { leaveRoom, startZone, stepZone, type ZoneState } from "./zone.ts";
+import { leaveRoom, preparedZone, startZone, stepZone, type ZoneState } from "./zone.ts";
 
 const archetype: Archetype = {
   collision: "hazard",
@@ -106,6 +106,7 @@ const escapeBarks = (zone: ZoneState) => zone.barks.filter(({ line }) => line ==
 // The boss engaged, with Chibi on the refuge in front of the door.
 function engaged(): ZoneState {
   const zone = stepZone(
+    preparedZone(layout),
     SKILL_PROFILES,
     BIRD,
     layout,
@@ -126,6 +127,7 @@ const fled = (zone: ZoneState, falls: boolean): ZoneState => ({
 describe("zone escapes", () => {
   it("reports a distance escape with its bark", () => {
     const zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -139,7 +141,15 @@ describe("zone escapes", () => {
   });
 
   it("credits no escape on a death step", () => {
-    const zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, fled(engaged(), true));
+    const zone = stepZone(
+      preparedZone(layout),
+      SKILL_PROFILES,
+      BIRD,
+      layout,
+      STEP_SECONDS,
+      still,
+      fled(engaged(), true),
+    );
     expect(zone.death?.reason).toBe("fall");
     expect(zone.behaviours[BOSS]?.pursuit?.phase).toBe("escaped");
     expect(zone.escapes).toEqual([]);
@@ -147,6 +157,7 @@ describe("zone escapes", () => {
 
   it("ends pursuit as an escape when Chibi enters a room door, without an escape bark", () => {
     const entered = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,
@@ -160,7 +171,15 @@ describe("zone escapes", () => {
     expect(escapeBarks(entered)).toEqual([]);
     let zone = leaveRoom(entered);
     for (let step = 0; step < 30; step++) {
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, still, zone);
+      zone = stepZone(
+        preparedZone(layout),
+        SKILL_PROFILES,
+        BIRD,
+        layout,
+        STEP_SECONDS,
+        still,
+        zone,
+      );
       expect(escapeBarks(zone)).toEqual([]);
       expect(zone.escapes.filter(({ cause }) => cause === "door")).toEqual([]);
     }
@@ -175,6 +194,7 @@ describe("zone escapes", () => {
       ),
     };
     const entered = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       BIRD,
       layout,

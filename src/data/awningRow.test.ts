@@ -6,7 +6,13 @@ import { SKILL_PROFILES } from "../progress/index.ts";
 import { effectiveCollision } from "../rules/boss/effectiveCollision.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/zone.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  type ZoneInput,
+  type ZoneState,
+} from "../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/art.ts";
 import { chunkThemePlan } from "../testing/chunkWalkCases.ts";
 import { BIRD } from "./bird.ts";
@@ -60,7 +66,7 @@ const stateOf = (f: Fixture, zone: ZoneState, awning: number) =>
   zone.behaviours[f.awnings[awning]!]?.stateKey ??
   f.area.objects[f.awnings[awning]!]!.behaviour!.initial;
 const step = (f: Fixture, zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const feet = (zone: ZoneState) => zone.bird.y + ordinary.height;
 const centre = (f: Fixture, awning: number) => {
   const object = f.area.objects[f.awnings[awning]!]!;

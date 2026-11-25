@@ -13,7 +13,7 @@ import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { startBird } from "../bird/bird.ts";
 import { startBehaviour } from "../boss/behaviour.ts";
 import { objectLayout } from "../stage/tiles.ts";
-import { startZone, stepZone } from "./zone.ts";
+import { preparedZone, startZone, stepZone } from "./zone.ts";
 
 const contact: SpriteContact = {
   frame: { height: 4, width: 8 },
@@ -221,6 +221,7 @@ it.each([
   };
   const initial = startZone(BIRD, layout, 1);
   const next = stepZone(
+    preparedZone(layout),
     SKILL_PROFILES,
     BIRD,
     layout,

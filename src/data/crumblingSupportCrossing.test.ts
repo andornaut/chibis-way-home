@@ -10,6 +10,7 @@ import { zonePlanOf } from "../rules/stage/assemble.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
 import {
+  preparedZone,
   retryZone,
   startZone,
   stepZone,
@@ -94,6 +95,7 @@ it("crumbling support warns on landing, gives an ordinary jump to the far bank, 
     // Chibi waits on the far bank through removal and restoration before leaving.
     const waiting = banked !== undefined && restoredAt === undefined;
     zone = stepZone(
+      preparedZone(f.layout),
       SKILL_PROFILES,
       ordinary,
       f.layout,
@@ -168,6 +170,7 @@ it("crumbling support drops a waiting Chibi into the pit and Retry restores it i
   for (let tick = 0; tick < TICK_LIMIT && zone.death === undefined; tick++) {
     const waiting = onLedge(f, zone);
     zone = stepZone(
+      preparedZone(f.layout),
       SKILL_PROFILES,
       ordinary,
       f.layout,

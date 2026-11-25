@@ -6,6 +6,7 @@ import { birdBox } from "../rules/bird/index.ts";
 import {
   activateBehaviour,
   areaOf,
+  preparedZone,
   retryZone,
   stageProgress,
   startZone,
@@ -468,7 +469,8 @@ function executeStage(
     lastInput = input;
     lastMove = input.move;
     const before = zone;
-    zone = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, zone);
+    const maps = preparedZone(layout);
+    zone = stepZone(maps, SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, zone);
     steps++;
     onStep?.(steps);
     attemptTick++;

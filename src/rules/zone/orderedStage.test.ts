@@ -7,7 +7,7 @@ import type { AreaLayout, ZoneLayout } from "../../data/types/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { validateZoneLinks } from "../stage/zoneLinks.ts";
 import { stageProgress } from "./stageProgress.ts";
-import { enterArea, retryZone, startZone, stepZone } from "./zone.ts";
+import { enterArea, preparedZone, retryZone, startZone, stepZone } from "./zone.ts";
 
 const STILL = { jumpHeld: false, move: 0 as const, useHeld: false };
 function area(width: number, walkLinks: AreaLayout["walkLinks"]): AreaLayout {
@@ -60,6 +60,7 @@ describe("ordered stage core", () => {
       }
       const x = side === "left" ? source.backX - 1 : source.exitX - BIRD.width + 1;
       const next = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -80,7 +81,10 @@ describe("ordered stage core", () => {
         expect(next.seconds).toBe(0);
         expect(next.bird.jumpHeld).toBe(true);
         expect(next.useHeld).toBe(true);
-        expect(stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, STILL, next).area).toBe(target);
+        expect(
+          stepZone(preparedZone(layout), SKILL_PROFILES, BIRD, layout, STEP_SECONDS, STILL, next)
+            .area,
+        ).toBe(target);
       }
     },
   );

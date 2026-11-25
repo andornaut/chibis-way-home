@@ -7,7 +7,7 @@ import type { AreaLayout, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { createBehaviourObserver } from "../rules/boss/behaviourObserver.ts";
 import { groundMask, mapTerrain } from "../rules/boss/movementMaps.ts";
-import { startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import { ALLOW, chibiMap } from "../sim/pathOut.ts";
 import { zoneTraceLine } from "../sim/zoneTrace.ts";
 import { gameArenaCase } from "./arenas.ts";
@@ -26,7 +26,15 @@ it("keeps the actual advance state and trace identical for absent, observed and 
   const failing = createBehaviourObserver(() => {
     throw new Error("Receiver unavailable");
   });
-  const plain = stepZone(SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, initial);
+  const plain = stepZone(
+    preparedZone(layout),
+    SKILL_PROFILES,
+    ORDINARY,
+    layout,
+    STEP_SECONDS,
+    input,
+    initial,
+  );
   const absent = stepEvade(undefined, layout, input, initial);
   const observed = stepEvade(observations.observer, layout, input, initial);
   const failed = stepEvade(failing, layout, input, initial);

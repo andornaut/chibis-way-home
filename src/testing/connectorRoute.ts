@@ -4,7 +4,7 @@ import { CHUNKS } from "../data/chunks.ts";
 import { TILE } from "../data/screen.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { CHUNK_LIBRARY, zoneLayout, zonePlanOf } from "../rules/stage/index.ts";
-import { startZone, stepZone, type ZoneState } from "../rules/zone/index.ts";
+import { preparedZone, startZone, stepZone, type ZoneState } from "../rules/zone/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
 
@@ -119,6 +119,7 @@ export function connectorRoute(theme: string, id: string): ConnectorRoute {
       observed = { step: zone.steps + 1, y: zone.objects[guardIndex]!.y };
     }
     zone = stepZone(
+      preparedZone(layout),
       SKILL_PROFILES,
       ORDINARY,
       layout,

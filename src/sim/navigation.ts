@@ -3,7 +3,7 @@ import { SCREEN, TILE } from "../data/screen.ts";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { contactBox } from "../rules/boss/index.ts";
-import { stepZone, type ZoneInput, type ZoneState } from "../rules/zone/index.ts";
+import { preparedZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/index.ts";
 import { legacyPlannerJumpHeight } from "./plannerEstimates.ts";
 export interface NavigationConfig {
   readonly profile: "quick" | "validation";
@@ -1106,7 +1106,8 @@ export function plannedInput(
             : IDLE;
       inputs.push(input);
       states.push(predicted);
-      predicted = stepZone(SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, predicted);
+      const maps = preparedZone(layout);
+      predicted = stepZone(maps, SKILL_PROFILES, tuning, layout, STEP_SECONDS, input, predicted);
       navigation.counters.physicsSteps++;
       jumped ||= input.jumpHeld && predicted.bird.vy < 0;
       if (predicted.death || predicted.turnedBack) {

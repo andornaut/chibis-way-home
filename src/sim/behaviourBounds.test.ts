@@ -14,7 +14,7 @@ import { startBird } from "../rules/bird/bird.ts";
 import { orbitBounds } from "../rules/bird/orbit.ts";
 import { startBehaviour } from "../rules/boss/behaviour.ts";
 import { areaLayout, objectLayout } from "../rules/stage/tiles.ts";
-import { startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, startZone, stepZone } from "../rules/zone/zone.ts";
 import type { Tileset } from "../stage/index.ts";
 import { stepBehaviour } from "../testing/behaviourStep.ts";
 import {
@@ -262,6 +262,7 @@ describe("orbital motion envelopes", () => {
         expect(at.y).toBeGreaterThanOrEqual(bounds.y - 1e-8);
         expect(at.y + child.height).toBeLessThanOrEqual(bounds.y + bounds.height + 1e-8);
         zone = stepZone(
+          preparedZone(layout),
           SKILL_PROFILES,
           BIRD,
           layout,

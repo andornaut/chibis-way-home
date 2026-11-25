@@ -38,7 +38,7 @@ import { type ChunkLibrary, zonePlanOf } from "../stage/assemble.ts";
 import { areaLayout, zoneLayout } from "../stage/tiles.ts";
 import { windmillPlacementProblems } from "../stage/windmillPlacement.ts";
 import { CHUNK_LIBRARY } from "../stage/zonePlans.ts";
-import { startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
+import { preparedZone, startZone, stepZone, type ZoneInput, type ZoneState } from "./zone.ts";
 
 const ordinary = { ...BIRD, doubleJump: false };
 delete ordinary.dash;
@@ -84,7 +84,7 @@ function fixture(
 
 type Fixture = ReturnType<typeof fixture>;
 const step = (f: Fixture, zone: ZoneState, input: ZoneInput) =>
-  stepZone(SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
+  stepZone(preparedZone(f.layout), SKILL_PROFILES, ordinary, f.layout, STEP_SECONDS, input, zone);
 const sailRect = (f: Fixture, zone: ZoneState, sail: number): Rect => {
   const object = f.area.objects[sail]!;
   return { ...zone.objects[sail]!, height: object.height, width: object.width };

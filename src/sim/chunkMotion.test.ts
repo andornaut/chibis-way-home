@@ -10,7 +10,7 @@ import { SKILL_PROFILES } from "../progress/index.ts";
 import { themesOf, zonePlanOf } from "../rules/stage/assemble.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
-import { standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
+import { preparedZone, standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 
 const CASES = ["compound-lift-shuttle", "compound-return-shuttle"] as const;
@@ -35,6 +35,7 @@ describe.each(CASES)("authored mover track %s", (id) => {
     const directions = new Set<string>();
     for (let tick = 0; tick < 1800; tick++) {
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         BIRD,
         layout,
@@ -119,6 +120,7 @@ describe.each(CASES)("authored mover track %s", (id) => {
         : !boarded && boardAt !== undefined && (tick - boardAt) * STEP_SECONDS < boardHoldSeconds;
       previousHostX = at.x;
       zone = stepZone(
+        preparedZone(layout),
         SKILL_PROFILES,
         ORDINARY_JUMP,
         layout,
