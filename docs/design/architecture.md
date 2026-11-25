@@ -15,3 +15,5 @@ Reference: [architecture](../../src/README.md#architecture),
 | cwh-0013 | Run boss behaviour as perceive, decide and act            | [cwh-0013.md](../work/cwh-0013.md) |
 | cwh-0014 | Layer the source into components behind a Phaser boundary | [cwh-0014.md](../work/cwh-0014.md) |
 | cwh-0270 | Keep analytics out of the playable game                   | [cwh-0270.md](../work/cwh-0270.md) |
+| cwh-0301 | Plan each stage through one pure entry point              | [cwh-0301.md](../work/cwh-0301.md) |
+| cwh-0302 | Step each boss encounter through one pure entry point     | [cwh-0302.md](../work/cwh-0302.md) |
