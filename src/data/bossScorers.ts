@@ -63,15 +63,19 @@ export const GROUND_BOSS_SCORER: BossScorer = { ...SHARED, moves: [CHASE, CUT_OF
 export const FERT_SCORER: BossScorer = { ...SHARED, moves: [CHASE, CUT_OFF, STANDOFF] };
 export const PEBBLE_SCORER: BossScorer = { ...SHARED, moves: [CHASE, SWOOP_SETUP] };
 
-// A ground charge reaching `reach` tiles: not from point-blank (under 2.5 tiles it fades), not
-// beyond its reach, and only at Chibi's height, so high ground counters it.
+// A charge's band, which its gate holds as hard limits: Chibi at least this many tiles out, and
+// less than this many tiles above or below the boss.
+export const CHARGE_BAND = { heightGap: 3, minGap: 2.5 } as const;
+
+// A ground charge reaching `reach` tiles: not from point-blank (it fades toward the band's
+// minimum gap), not beyond its reach, and only at Chibi's height, so high ground counters it.
 export function chargeScore(reach: number): BossScoredAttack {
   return {
     base: 1,
     considerations: [
-      { curve: { from: 0.5, kind: "smooth", to: 2.5 }, input: "horizontalGap" },
+      { curve: { from: 0.5, kind: "smooth", to: CHARGE_BAND.minGap }, input: "horizontalGap" },
       { curve: { from: 0.7 * reach, kind: "inverse", to: reach }, input: "horizontalGap" },
-      { curve: { from: 1, kind: "inverse", to: 3 }, input: "heightGap" },
+      { curve: { from: 1, kind: "inverse", to: CHARGE_BAND.heightGap }, input: "heightGap" },
     ],
     special: false,
   };
@@ -87,12 +91,16 @@ export const POUNCE_SCORE: BossScoredAttack = {
   special: true,
 };
 
+// Fert's parcel's band, which its gate holds as hard limits: Chibi at least this many tiles
+// out, and at most this many tiles away centre to centre.
+export const PARCEL_BAND = { maxDistance: 15, minGap: 2 } as const;
+
 // Fert's parcel: a lob that lands about 12 tiles out, half as likely without line of sight.
 export const PARCEL_SCORE: BossScoredAttack = {
   base: 0.9,
   considerations: [
-    { curve: { from: 2, kind: "smooth", to: 5 }, input: "horizontalGap" },
-    { curve: { from: 11, kind: "inverse", to: 15 }, input: "distance" },
+    { curve: { from: PARCEL_BAND.minGap, kind: "smooth", to: 5 }, input: "horizontalGap" },
+    { curve: { from: 11, kind: "inverse", to: PARCEL_BAND.maxDistance }, input: "distance" },
     { curve: { from: -1, kind: "linear", to: 1 }, input: "lineOfSight" },
   ],
   special: true,
@@ -111,11 +119,15 @@ export const TRAP_SCORE: BossScoredAttack = {
 // Kiwi's climb and drop: its gate already needs her lined up under a clear climb.
 export const KIWI_DROP_SCORE: BossScoredAttack = { base: 0.9, considerations: [], special: true };
 
+// Bini's growl's band, which its gate holds as a hard limit: Chibi less than this many tiles
+// above or below him.
+export const GROWL_BAND = { heightGap: 4 } as const;
+
 // Bini's growl: its 3-tile-high gust misses Chibi on high ground, and cover blocks it.
 export const GROWL_SCORE: BossScoredAttack = {
   base: 0.9,
   considerations: [
-    { curve: { from: 1.5, kind: "inverse", to: 4 }, input: "heightGap" },
+    { curve: { from: 1.5, kind: "inverse", to: GROWL_BAND.heightGap }, input: "heightGap" },
     { curve: { from: -1, kind: "linear", to: 1 }, input: "lineOfSight" },
   ],
   special: true,

@@ -5,7 +5,8 @@ import { nodeOf } from "./behaviourTrack.ts";
 
 // Why the gate refused a transition:
 // - active-attack: an attack is under way.
-// - condition: one of the transition's `when` conditions other than its range does not hold.
+// - band: Chibi is outside one of the transition's horizontal or height gap limits.
+// - condition: one of the transition's other `when` conditions does not hold.
 // - cooldown: the cooldown after a completed attack is running.
 // - engagement: Chibi is outside the transition's `nearby` range.
 // - no-room: the attack's rush, entered from here facing Chibi, cannot move.
@@ -14,6 +15,7 @@ import { nodeOf } from "./behaviourTrack.ts";
 // - tell-cancel-pause: the pause after the plan's consecutive cancelled tells is running.
 export type AttackGateRefusal =
   | "active-attack"
+  | "band"
   | "condition"
   | "cooldown"
   | "engagement"
@@ -37,11 +39,17 @@ function refused(reason: AttackGateRefusal): AttackGateResult {
 
 // The refusal a failed `when` condition gives, by its kind.
 function unmet(condition: BehaviourCondition): AttackGateRefusal {
-  return condition.kind === "nearby"
-    ? "engagement"
-    : condition.kind === "track-moves"
-      ? "no-room"
-      : "condition";
+  switch (condition.kind) {
+    case "height-gap":
+    case "horizontal-gap":
+      return "band";
+    case "nearby":
+      return "engagement";
+    case "track-moves":
+      return "no-room";
+    default:
+      return "condition";
+  }
 }
 
 function unready(state: BehaviourAttackState): AttackGateRefusal {

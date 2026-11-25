@@ -417,12 +417,13 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
             }
             return { ...condition, distance: condition.distance * tile };
           }
-          if (condition.kind === "horizontal-gap") {
+          if (condition.kind === "horizontal-gap" || condition.kind === "height-gap") {
             if (
               !["at-least", "below"].includes(condition.comparison) ||
               !valid(condition.distance)
             ) {
-              throw new Error(`Invalid horizontal gap in ${key}`);
+              const axis = condition.kind === "horizontal-gap" ? "horizontal" : "height";
+              throw new Error(`Invalid ${axis} gap in ${key}`);
             }
             return { ...condition, distance: condition.distance * tile };
           }

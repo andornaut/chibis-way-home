@@ -70,6 +70,12 @@ export type BehaviourCondition =
       // Tiles between the current opaque boss body and Chibi's collision box, ignoring Y.
       readonly distance: number;
     }
+  | {
+      readonly kind: "height-gap";
+      readonly comparison: "at-least" | "below";
+      // Tiles between the boss's feet and the bottom of Chibi's collision box, above or below.
+      readonly distance: number;
+    }
   | { readonly kind: "same-ground"; readonly tolerance: number }
   | { readonly kind: "reachable" | "lost-target"; readonly tolerance: number };
 

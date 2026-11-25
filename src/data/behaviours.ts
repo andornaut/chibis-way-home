@@ -1,12 +1,15 @@
 import { BIRD } from "./bird.ts";
 import {
+  CHARGE_BAND,
   chargeScore,
   DROP_BURST_SCORE,
   FERT_SCORER,
   GROUND_BOSS_SCORER,
+  GROWL_BAND,
   GROWL_SCORE,
   KIWI_DROP_SCORE,
   MAUL_SCORE,
+  PARCEL_BAND,
   PARCEL_SCORE,
   PEBBLE_SCORER,
   PIGEON_SWOOP_SETUP_DISTANCE,
@@ -163,8 +166,24 @@ function scored(
 }
 const ENGAGEMENT = { kind: "nearby", range: ATTACK_ENGAGEMENT_RANGE } as const;
 
-// Every charge's gate: room for its rush to move toward Chibi from here.
-const CHARGE_GATE: readonly BehaviourCondition[] = [{ kind: "track-moves", state: "rush" }];
+// A charge's gate: Chibi inside the charge's band out to its reach, and room for its rush to
+// move toward him from here.
+function chargeGate(reach: number): readonly BehaviourCondition[] {
+  return [
+    { comparison: "at-least", distance: CHARGE_BAND.minGap, kind: "horizontal-gap" },
+    { comparison: "below", distance: reach, kind: "horizontal-gap" },
+    { comparison: "below", distance: CHARGE_BAND.heightGap, kind: "height-gap" },
+    { kind: "track-moves", state: "rush" },
+  ];
+}
+// Fert's parcel's and Bini's growl's gates: Chibi inside their bands.
+const PARCEL_GATE: readonly BehaviourCondition[] = [
+  { comparison: "at-least", distance: PARCEL_BAND.minGap, kind: "horizontal-gap" },
+  { kind: "nearby", range: PARCEL_BAND.maxDistance },
+];
+const GROWL_GATE: readonly BehaviourCondition[] = [
+  { comparison: "below", distance: GROWL_BAND.heightGap, kind: "height-gap" },
+];
 
 // The engaged ground state: the scorer chooses among its attacks and moves.
 function chaseNode(chase: GroundChase, attacks: readonly BehaviourTransition[]): BehaviourNode {
@@ -515,7 +534,7 @@ export const DOG_BEHAVIOUR: BehaviourPlan = attackProfile(
     {
       committed: ["rush", "rest"],
       finished: [{ from: "rest", to: "pursuit" }],
-      gate: CHARGE_GATE,
+      gate: chargeGate(GROUND_CHARGE.reach),
       id: "charge",
       tells: { crouch: ATTACK_ANTICIPATION_SECONDS },
     },
@@ -588,18 +607,22 @@ export const FERRET_BEHAVIOUR: BehaviourPlan = attackProfile(
     {
       committed: ["rush", "rest"],
       finished: [{ from: "rest", to: "pursuit" }],
-      gate: CHARGE_GATE,
+      gate: chargeGate(GROUND_CHARGE.reach),
       id: "charge",
       tells: { crouch: ATTACK_ANTICIPATION_SECONDS },
     },
     {
       committed: ["throw", "throw-rest"],
       finished: [{ from: "throw-rest", to: "pursuit" }],
+      gate: PARCEL_GATE,
       id: "parcel",
       tells: { "prepare-throw": SPECIAL_TELL_SECONDS },
     },
   ],
 );
+
+// Tiles Trixi's committed charge covers.
+const TRIXI_CHARGE_REACH = 10;
 
 export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
@@ -615,7 +638,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
       ...wanderChargeStates({
         preparation: "warn",
         preparationSeconds: ATTACK_ANTICIPATION_SECONDS,
-        reach: 10,
+        reach: TRIXI_CHARGE_REACH,
         restSeconds: 0.35,
         rushSeconds: 0.36,
         rushSpeed: 21.875,
@@ -656,7 +679,7 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
     {
       committed: ["rush", "slide", "rest"],
       finished: [{ from: "rest", to: "pursuit" }],
-      gate: CHARGE_GATE,
+      gate: chargeGate(TRIXI_CHARGE_REACH),
       id: "charge",
       tells: { warn: ATTACK_ANTICIPATION_SECONDS },
     },
@@ -669,6 +692,8 @@ export const GOOSE_BEHAVIOUR: BehaviourPlan = attackProfile(
   ],
 );
 
+// Tiles Kiwi's committed charge covers.
+const KIWI_CHARGE_REACH = 12;
 const KIWI_DROP_ALIGNMENT = 1;
 // The re-aimed tell before Kiwi's second charge: the minimum reaction time.
 const KIWI_RETELL_SECONDS = 0.6;
@@ -754,7 +779,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
       // lined up under Chibi with a clear climb.
       pursuit: {
         ...chaseNode(GROUND_CHASE, [
-          scored("prepare-charge", chargeScore(12), [ENGAGEMENT]),
+          scored("prepare-charge", chargeScore(KIWI_CHARGE_REACH), [ENGAGEMENT]),
           scored("return-ground-staging", KIWI_DROP_SCORE, [
             ...DETECTION,
             { kind: "attack-ready" },
@@ -814,7 +839,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
         { from: "return-ground", to: "pursuit" },
         { from: "recharge", to: "pursuit" },
       ],
-      gate: CHARGE_GATE,
+      gate: chargeGate(KIWI_CHARGE_REACH),
       id: "charge",
       retells: { recharge: KIWI_RETELL_SECONDS },
       tells: { "prepare-charge": ATTACK_ANTICIPATION_SECONDS },
@@ -827,6 +852,9 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
     },
   ],
 );
+
+// Tiles Bini's committed charge covers.
+const BINI_CHARGE_REACH = 13;
 
 export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
   {
@@ -887,7 +915,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
         ],
       },
       pursuit: chaseNode(BEAR_CHASE, [
-        scored("prepare-charge", chargeScore(13), [ENGAGEMENT]),
+        scored("prepare-charge", chargeScore(BINI_CHARGE_REACH), [ENGAGEMENT]),
         scored("prepare-maul", MAUL_SCORE, [ENGAGEMENT]),
         scored("prepare-growl", GROWL_SCORE, [ENGAGEMENT]),
       ]),
@@ -913,7 +941,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
     {
       committed: ["rush"],
       finished: [{ from: "rush", to: "pursuit" }],
-      gate: CHARGE_GATE,
+      gate: chargeGate(BINI_CHARGE_REACH),
       id: "charge",
       tells: { "prepare-charge": ATTACK_ANTICIPATION_SECONDS },
     },
@@ -926,6 +954,7 @@ export const BEAR_BEHAVIOUR: BehaviourPlan = attackProfile(
     {
       committed: ["growl"],
       finished: [{ from: "growl", to: "pursuit" }],
+      gate: GROWL_GATE,
       id: "growl",
       tells: { "prepare-growl": GROWL_TELL_SECONDS },
     },

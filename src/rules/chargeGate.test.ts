@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams.ts";
 import { STEP_SECONDS } from "../core/index.ts";
+import {
+  BEAR_BEHAVIOUR,
+  DOG_BEHAVIOUR,
+  FERRET_BEHAVIOUR,
+  GOOSE_BEHAVIOUR,
+  RACCOON_BEHAVIOUR,
+} from "../data/behaviours.ts";
 import { BIRD } from "../data/bird.ts";
+import { CHARGE_BAND, chargeScore, GROWL_BAND, PARCEL_BAND } from "../data/bossScorers.ts";
 import { TILE } from "../data/screen.ts";
 import type { ObjectLayout, Point, Rect } from "../data/types/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
@@ -22,12 +30,20 @@ const CHARGERS = [
   "goose-antagonist",
   "raccoon-antagonist",
 ] as const;
+const PLANS = {
+  "bear-antagonist": BEAR_BEHAVIOUR,
+  "dog-antagonist": DOG_BEHAVIOUR,
+  "ferret-antagonist": FERRET_BEHAVIOUR,
+  "goose-antagonist": GOOSE_BEHAVIOUR,
+  "raccoon-antagonist": RACCOON_BEHAVIOUR,
+} as const;
 const FACINGS = [-1, 1] as const;
 // A level gap inside every charge's band.
 const GAP = 5 * TILE;
 
 function boss(character: string): ObjectLayout {
-  return objectLayout(
+  // A rectangular body, so gaps read from the contact box whatever the pose.
+  const { contact, ...object } = objectLayout(
     TILE,
     CATALOGUE,
     HITBOXES,
@@ -35,6 +51,8 @@ function boss(character: string): ObjectLayout {
     {},
     { character, col: 200, row: 10 },
   );
+  expect(contact).toBeDefined();
+  return object;
 }
 
 function worldOf(solids: readonly Rect[]): BehaviourWorld {
@@ -51,14 +69,28 @@ function worldOf(solids: readonly Rect[]): BehaviourWorld {
   };
 }
 
-// The scored charge transition of the boss's engaged state and its rush.
-function chargeOf(object: ObjectLayout) {
+// The scored transition of the boss's engaged state into an attack's tell.
+function attackOf(object: ObjectLayout, id: string) {
   const plan = object.behaviour!;
   const engaged = plan.scorer!.engaged;
   const transition = plan.states[engaged]!.transitions.find(
-    ({ score, to }) => score && plan.states[to]!.attack?.id === "charge",
+    ({ score, to }) => score && plan.states[to]!.attack?.id === id,
   )!;
   return { engaged, tell: transition.to, transition };
+}
+
+// A gap limit of the transition, in layout pixels.
+function limitOf(
+  { when }: ReturnType<typeof attackOf>["transition"],
+  kind: "height-gap" | "horizontal-gap",
+  comparison: "at-least" | "below",
+): number {
+  for (const condition of when) {
+    if (condition.kind === kind && condition.comparison === comparison) {
+      return condition.distance;
+    }
+  }
+  throw new Error(`No ${kind} ${comparison} limit`);
 }
 
 // Chibi standing with his box `gap` pixels from the boss's contact box on its facing side, his
@@ -75,16 +107,16 @@ function chibiAt(object: ObjectLayout, at: Point, facing: -1 | 1, gap: number, r
   };
 }
 
-// One engaged step from the pursuit state, with the refusals the gate recorded for the charge.
+// One engaged step from the pursuit state, with the refusals the gate recorded for the attack.
 function decide(
   object: ObjectLayout,
   solids: readonly Rect[],
   at: Point,
   facing: -1 | 1,
   bird: ReturnType<typeof chibiAt>,
-  patch: Partial<BehaviourState> = {},
+  id = "charge",
 ) {
-  const { engaged, tell } = chargeOf(object);
+  const { engaged, tell } = attackOf(object, id);
   const state: BehaviourState = {
     ...startBehaviour(BIRD, object, bird),
     active: true,
@@ -93,7 +125,6 @@ function decide(
     pendingEntry: false,
     pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
     stateKey: engaged,
-    ...patch,
   };
   const step = stepEncounter({ object, observe: {}, tuning: BIRD }, state, {
     at,
@@ -107,10 +138,14 @@ function decide(
   return { refusals, state: step.state, tell };
 }
 
-function expectRefused(result: ReturnType<typeof decide>, reason: AttackGateRefusal) {
+function expectRefused(
+  result: ReturnType<typeof decide>,
+  reason: AttackGateRefusal,
+  id = "charge",
+) {
   expect(result.refusals).toContain(reason);
   expect(result.state.stateKey).not.toBe(result.tell);
-  expect(result.state.activeAttack?.id).not.toBe("charge");
+  expect(result.state.activeAttack?.id).not.toBe(id);
   expect(result.state.attackCooldownRemainingSeconds).toBeUndefined();
 }
 
@@ -158,6 +193,68 @@ describe.each(CHARGERS)("%s's scored charge", (character) => {
     const result = decide(object, [floor], end, facing, chibiAt(object, end, facing, GAP));
     expectRefused(result, "no-room");
   });
+
+  const { transition } = attackOf(object, "charge");
+  const minGap = limitOf(transition, "horizontal-gap", "at-least");
+  const reach = limitOf(transition, "horizontal-gap", "below");
+  const heightGap = limitOf(transition, "height-gap", "below");
+
+  it("takes its band from the shared charge band and its score's reach", () => {
+    expect(minGap).toBe(CHARGE_BAND.minGap * TILE);
+    expect(heightGap).toBe(CHARGE_BAND.heightGap * TILE);
+    const authored = Object.values(PLANS[character].states)
+      .flatMap(({ transitions }) => transitions)
+      .find(({ score, to }) => score && to === transition.to)!;
+    expect(authored.score).toEqual(chargeScore(reach / TILE));
+  });
+
+  it.each(FACINGS)("is refused for band inside its minimum gap facing %s", (facing) => {
+    const inside = decide(object, [floor], at, facing, chibiAt(object, at, facing, minGap - 1));
+    expectRefused(inside, "band");
+    const edge = decide(object, [floor], at, facing, chibiAt(object, at, facing, minGap));
+    expect(edge.refusals).toEqual([]);
+  });
+
+  it.each(FACINGS)("is refused at its reach facing %s", (facing) => {
+    const beyond = decide(object, [floor], at, facing, chibiAt(object, at, facing, reach));
+    expect(["band", "engagement"]).toContain(beyond.refusals[0]);
+    expect(beyond.state.activeAttack?.id).not.toBe("charge");
+    const within = decide(object, [floor], at, facing, chibiAt(object, at, facing, reach - 1));
+    expect(within.refusals).not.toContain("band");
+  });
+
+  it.each([-1, 1] as const)("is refused for band at its height gap, sign %s", (sign) => {
+    const outside = chibiAt(object, at, 1, GAP, sign * heightGap);
+    expectRefused(decide(object, [floor], at, 1, outside), "band");
+    const inside = chibiAt(object, at, 1, GAP, sign * (heightGap - 1));
+    expect(decide(object, [floor], at, 1, inside).refusals).toEqual([]);
+  });
+});
+
+it("refuses Fert's parcel for band inside its minimum gap", () => {
+  const object = boss("ferret-antagonist");
+  const at = object.origin;
+  const floor: Rect = { height: 240, width: 24000, x: -12000, y: at.y + object.height };
+  const minGap = limitOf(attackOf(object, "parcel").transition, "horizontal-gap", "at-least");
+  expect(minGap).toBe(PARCEL_BAND.minGap * TILE);
+  const inside = chibiAt(object, at, 1, minGap - 1);
+  expectRefused(decide(object, [floor], at, 1, inside, "parcel"), "band", "parcel");
+  const edge = chibiAt(object, at, 1, minGap);
+  expect(decide(object, [floor], at, 1, edge, "parcel").refusals).toEqual([]);
+});
+
+it("refuses Bini's growl for band at its height gap", () => {
+  const object = boss("bear-antagonist");
+  const at = object.origin;
+  const floor: Rect = { height: 240, width: 24000, x: -12000, y: at.y + object.height };
+  const heightGap = limitOf(attackOf(object, "growl").transition, "height-gap", "below");
+  expect(heightGap).toBe(GROWL_BAND.heightGap * TILE);
+  for (const sign of FACINGS) {
+    const outside = chibiAt(object, at, 1, GAP, sign * heightGap);
+    expectRefused(decide(object, [floor], at, 1, outside, "growl"), "band", "growl");
+    const inside = chibiAt(object, at, 1, GAP, sign * (heightGap - 1));
+    expect(decide(object, [floor], at, 1, inside, "growl").refusals).toEqual([]);
+  }
 });
 
 it("starts Archie's charge tell when the gate admits it", () => {

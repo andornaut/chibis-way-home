@@ -345,7 +345,7 @@ function scorerValues(
 ): BossScorerValues {
   const { target: bird, tuning } = perception;
   const target = birdBox(tuning, bird);
-  const heightDelta = at.y + object.height - (target.y + target.height);
+  const heightDelta = feetHeightDelta(object, at, target);
   return {
     distance: Math.hypot(
       target.x + target.width / 2 - (at.x + object.width / 2),
@@ -404,6 +404,11 @@ function horizontalGap(
   return Math.max(0, body.x - target.x - target.width, target.x - body.x - body.width);
 }
 
+// How far Chibi's feet are above the boss's; negative below.
+function feetHeightDelta(object: ObjectLayout, at: Point, target: Rect): number {
+  return at.y + object.height - (target.y + target.height);
+}
+
 function matches(
   perception: BehaviourPerception,
   object: ObjectLayout,
@@ -441,8 +446,12 @@ function matches(
       condition.distance - EDGE
     );
   }
-  if (condition.kind === "horizontal-gap") {
-    const gap = horizontalGap(object, at, state, birdBox(tuning, bird));
+  if (condition.kind === "horizontal-gap" || condition.kind === "height-gap") {
+    const target = birdBox(tuning, bird);
+    const gap =
+      condition.kind === "horizontal-gap"
+        ? horizontalGap(object, at, state, target)
+        : Math.abs(feetHeightDelta(object, at, target));
     return condition.comparison === "at-least"
       ? gap >= condition.distance
       : gap < condition.distance;
