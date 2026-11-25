@@ -12,14 +12,14 @@ The [typography scale](style-guide.md#typography-scale) owns role sizes, weights
 
 Use a shared token for repeated spacing, rather than unrelated coordinates that happen to match. A named design token is not a claim that every consumer already imports one implementation constant.
 
-| Token             | Value                   | Unit       | Scope                                                             | Status or source                                                                                   |
-| ----------------- | ----------------------- | ---------- | ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Row gap           | 4                       | logical px | Related text rows                                                 | Verified `CARD_CONTENT.rowGap`, [UI layout values](../src/data/layout.ts)                          |
-| Related-group gap | 8                       | logical px | Heading to metrics, label to value, grouped actions               | Verified `CARD_CONTENT.gap` and `TEXT_BUTTON.gap`                                                  |
-| Page inset        | 16                      | logical px | Ordinary full-page content and footer alignment                   | Approved shared layout target; consumers derive their available bounds                             |
-| Panel padding     | 16                      | logical px | Ordinary modal bodies                                             | Verified modal `CARD_CONTENT.padding`; retry statistics retain their documented inset              |
-| Column gap        | 16 ordinary, 32 summary | logical px | Ordinary columns and paired stage-summary statistics              | [Measured summary layout](style-guide.md#stage-and-zone-summaries)                                 |
-| Text line box     | 16 minimum              | logical px | Current native ink-box minimum; role line heights remain separate | `CARD_CONTENT.lineHeight`; [typography scale](style-guide.md#typography-scale) owns displayed text |
+| Token             | Value                   | Unit       | Scope                                                                                                                                     | Status or source                                                                                   |
+| ----------------- | ----------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Row gap           | 4                       | logical px | Related text rows, such as metric rows; stacked buttons and control rows use the 8px [stacked action gap](controls.md#sizing-and-spacing) | Verified `CARD_CONTENT.rowGap`, [UI layout values](../src/data/layout.ts)                          |
+| Related-group gap | 8                       | logical px | Heading to metrics, label to value, grouped actions                                                                                       | Verified `CARD_CONTENT.gap` and `TEXT_BUTTON.gap`                                                  |
+| Page inset        | 16                      | logical px | Ordinary full-page content and footer alignment                                                                                           | Approved shared layout target; consumers derive their available bounds                             |
+| Panel padding     | 16                      | logical px | Ordinary modal bodies                                                                                                                     | Verified modal `CARD_CONTENT.padding`; retry statistics retain their documented inset              |
+| Column gap        | 16 ordinary, 32 summary | logical px | Ordinary columns and paired stage-summary statistics                                                                                      | [Measured summary layout](style-guide.md#stage-and-zone-summaries)                                 |
+| Text line box     | 16 minimum              | logical px | Current native ink-box minimum; role line heights remain separate                                                                         | `CARD_CONTENT.lineHeight`; [typography scale](style-guide.md#typography-scale) owns displayed text |
 
 ## Page bounds/alignment
 
@@ -63,13 +63,13 @@ Centre actual modals horizontally and vertically within the logical game viewpor
 | Modal screen margin       | 16                   | logical px | Each side of the view      | Verified `CARD_SCREEN_MARGIN`                            |
 | Modal width               | 688, 500 or 400      | logical px | Large, medium, small       | Verified `CARD_WIDTH`                                    |
 
-Centre titles across the whole modal and mirror the full close-target reservation on the opposite side. Keep other interactive targets clear of the close target by 8px, accounting for their own expansion. Wrap long titles and grow the measured header. A mandatory modal does not acquire a close control merely to match the frame.
+Centre titles across the whole modal and mirror the full close-target reservation on the opposite side. Keep other interactive targets clear of the close target by 8px, accounting for their own expansion. Wrap long titles and grow the measured header. Body text that wraps to more than one line is start-aligned; single-line prompts and messages are centred. A mandatory modal does not acquire a close control merely to match the frame.
 
 All actual modals retain canonical dimming and exclusive input. Page headers, live nonmodal barks and full-page interstitials retain their own presentation contracts.
 
 ## HUD/overlays
 
-Place HUD elements from their own screen and control anchors. The progress line, touch circles, movement hint, pause control and skill HUD are bespoke overlays; their working geometry is not replaced by the ordinary 16px page grid. The pause control and the skill HUD are HTML buttons on the UI layer, placed in base pixels times `--ui-unit` from the same view anchors; the touch circles and movement hint stay on the canvas.
+Place HUD elements from their own screen and control anchors. The progress line, touch circles, movement hint, pause control and skill HUD are bespoke overlays; their working geometry is not replaced by the ordinary 16px page grid. The pause control and the skill HUD are HTML buttons on the UI layer, placed in base pixels times `--ui-unit` from the same view anchors. The Pause/Menu disc's frame and each skill's 48x48 target sit on whole logical pixels; where centring leaves an odd pixel, the spare pixel falls right of or below the frame or target. The touch circles and movement hint stay on the canvas.
 
 The top zone-dialogue panel is 480 wide and centred on the view at 120,76,480,60, with its name tab overhanging to y 66, its portrait regions and its compact 36px footer row at y 140 to 176, as defined in `DIALOGUE_LAYOUT` ([UI layout values](../src/data/layout.ts)). Reserve its actual bounds before arranging content below it. Live barks remain distinct from paused dialogue and modal overlays.
 
