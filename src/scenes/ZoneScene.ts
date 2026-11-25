@@ -173,6 +173,7 @@ import {
   activeStageTime,
   beginStageRun,
   beginZoneVisit,
+  completeRunLinkStage,
   completeStageRun,
   flushStats,
   recentStageChunks,
@@ -1338,8 +1339,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.scene.pause();
   }
 
-  // Save a cleared stage before routing to its continuation. Turning back preserves progress;
-  // Standalone trial runs keep their existing replay route.
+  // Save a cleared stage before routing to its continuation. Turning back preserves progress.
+  // A run link's clear saves as its stage's (completeRunLinkStage), and every run link replays.
   private leave(): void {
     const { turnedBack } = this.zone;
     if (this.mapNode !== undefined) {
@@ -1400,6 +1401,9 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
         this.scene.pause();
       }
       return;
+    }
+    if (this.trial !== undefined && !turnedBack) {
+      completeRunLinkStage(this.stageKey());
     }
     const seed = askedSeed("assembly", window.location.search) ?? newSeed();
     this.loadPlan(

@@ -18,6 +18,7 @@ import {
   earnedAt,
   zoneEndingAt,
 } from "../achievements.ts";
+import { openMap } from "../map.ts";
 import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks.ts";
 import { resolveActiveSkill, SKILL_IDS } from "../skills.ts";
 import { type PlayTipId, type QueuedTip, seenTip } from "../tips.ts";
@@ -428,6 +429,21 @@ function writeStand(stand: string): void {
     skills: progress.skills,
     stand,
   });
+}
+
+// A ?zone= run link's clear of stage, as a map clear records it: its run statistics and clear
+// achievements, then its completion and stand where the map opens it. A stage the map does not
+// open keeps the map unchanged, since the save format refuses a completed stage it cannot reach.
+// Anything but a catalogued stage records nothing.
+export function completeRunLinkStage(stage: string): void {
+  if (!STAGES.has(stage)) {
+    return;
+  }
+  completeStageRun(stage);
+  const { completed } = savedMap();
+  if (openMap(ZONE_MAP, new Set(completed), progress.allZonesUnlocked).zones.includes(stage)) {
+    saveCompleted(stage);
+  }
 }
 
 // He has completed the zone at node: it opens the map past it, and he stands on it.

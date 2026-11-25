@@ -57,6 +57,9 @@ export function retryStageRun(stage: string): void {
 export function completeStageRun(stage: string): RunStatsSummary {
   return pageSave.completeStageRun(stage);
 }
+export function completeRunLinkStage(stage: string): void {
+  pageSave.completeRunLinkStage(stage);
+}
 export function stageRunStats(stage: string): RunStatsSummary {
   return pageSave.stageRunStats(stage);
 }

@@ -8,6 +8,7 @@ import { stageExit } from "../progress/index.ts";
 import { zoneStoryForStage } from "../rules/zoneFlow.ts";
 
 const save = vi.hoisted(() => ({
+  completeRunLinkStage: vi.fn(),
   completeStageRun: vi.fn(() => ({})),
   flushStats: vi.fn(),
   saveCompleted: vi.fn(),
@@ -148,3 +149,45 @@ it("skips the rest of the outgoing exchange straight to the statistics", () => {
   );
   expect(route.start).not.toHaveBeenCalled();
 });
+
+it.each([
+  { outcome: "saves its stage's clear, then replays it", turnedBack: false },
+  { outcome: "replays it without saving a clear", turnedBack: true },
+])(
+  "a run link that ends with turnedBack $turnedBack $outcome in the zone scene",
+  ({ turnedBack }) => {
+    const stage = ORDINARY;
+    const camera = Object.assign(new EventEmitter(), { fadeIn: vi.fn() });
+    const route = { launch: vi.fn(), pause: vi.fn(), start: vi.fn() };
+    const replay = {
+      drawBird: vi.fn(),
+      drawObjects: vi.fn(),
+      loadPlan: vi.fn(),
+      openIntroduction: vi.fn(),
+    };
+    const zone = Object.assign(new ZoneScene(), {
+      ...replay,
+      cameras: { main: camera },
+      scene: route,
+      trial: ZONE_MAP.nodes.find(({ id }) => id === stage)!.zone,
+      zone: { turnedBack },
+    }) as unknown as { leave(): void };
+    zone.leave();
+    if (turnedBack) {
+      expect(save.completeRunLinkStage).not.toHaveBeenCalled();
+    } else {
+      expect(save.completeRunLinkStage).toHaveBeenCalledExactlyOnceWith(stage);
+      expect(save.completeRunLinkStage.mock.invocationCallOrder[0]).toBeLessThan(
+        replay.loadPlan.mock.invocationCallOrder[0]!,
+      );
+    }
+    expect(replay.loadPlan).toHaveBeenCalledOnce();
+    expect(camera.fadeIn).toHaveBeenCalledOnce();
+    camera.emit("camerafadeincomplete");
+    expect(replay.openIntroduction).toHaveBeenCalledOnce();
+    expect(save.completeStageRun).not.toHaveBeenCalled();
+    expect(save.saveCompleted).not.toHaveBeenCalled();
+    expect(route.launch).not.toHaveBeenCalled();
+    expect(route.start).not.toHaveBeenCalled();
+  },
+);
