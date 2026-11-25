@@ -131,6 +131,7 @@ function decide(
   };
   const step = stepEncounter({ object, observe: {}, tuning: BIRD }, state, {
     at,
+    kind: "tick",
     seconds: STEP_SECONDS,
     target: bird,
     world: worldOf(solids),

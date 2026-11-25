@@ -83,7 +83,13 @@ export function createTimedHazardSampler(
   // The most transitions a clock can take in this many seconds.
   const cost = (seconds: number) => (seconds === 0 ? 0 : Math.ceil(seconds / minimumDuration) + 1);
   const advance = (seconds: number, prior: BehaviourState) =>
-    step({ object, tuning }, prior, { at, seconds, target: bird, world: behaviourWorld(solids) });
+    step({ object, tuning }, prior, {
+      at,
+      kind: "tick",
+      seconds,
+      target: bird,
+      world: behaviourWorld(solids),
+    });
   const stateAt = (offset: number): BehaviourState => {
     const cached = checkpoints.get(offset);
     if (cached) {

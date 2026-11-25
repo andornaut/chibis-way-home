@@ -498,7 +498,13 @@ it("returns an encounter step's observations as data only when its context reque
     streams: namedStreams(0, "observer-data"),
     tuning: ORDINARY,
   });
-  const input = { at: actor.origin, seconds: STEP_SECONDS, target: bird, world };
+  const input = {
+    at: actor.origin,
+    kind: "tick" as const,
+    seconds: STEP_SECONDS,
+    target: bird,
+    world,
+  };
   const plain = stepEncounter(context(), before, input);
   expect("observations" in plain).toBe(false);
   const received: BehaviourObservation[] = [];

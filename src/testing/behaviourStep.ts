@@ -21,6 +21,7 @@ export function stepBehaviour(
 ): BehaviourStep {
   const step = stepEncounter({ object, tuning }, state, {
     at,
+    kind: "tick",
     seconds,
     target: bird,
     world: behaviourWorld(geometry),

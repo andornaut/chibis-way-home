@@ -43,10 +43,8 @@ export {
   validateSupportPhases,
 } from "./effectiveCollision.ts";
 export {
-  activateEncounter,
   type EncounterEvent,
   type EncounterStep,
-  enterEncounter,
   settleEncounter,
   stepEncounter,
 } from "./encounter.ts";

@@ -40,9 +40,18 @@ export interface EncounterContext {
   readonly tuning: BirdTuning;
 }
 
+// How an object's encounter begins when Chibi enters its area.
+export interface EncounterEntry {
+  // The boss died earlier in the attempt.
+  readonly defeated?: true;
+  readonly kind: "enter";
+  readonly target: BirdState;
+}
+
 // What one tick hands the object: its position, the step length, Chibi and the world it perceives.
-export interface EncounterInput {
+export interface EncounterTick {
   readonly at: Point;
+  readonly kind: "tick";
   readonly seconds: number;
   readonly target: BirdState;
   // Its spotted line has not been said this attempt.
@@ -73,10 +82,13 @@ export interface EncounterStep {
   readonly state: BehaviourState;
 }
 
-// What a tick decides about the object from every object's finished step, so it follows the step
+// What is decided about the object outside its step. A closed conversation activates it between
+// ticks. A tick decides the rest from every object's finished step, so they follow the step
 // instead of entering it: the death test reads where the step left the object and the other
 // hazards, and the door test where it left the doors.
 export interface EncounterOutcome {
+  // Its conversation closed.
+  readonly activated?: true;
   // Chibi left the area through a room door.
   readonly door?: true;
   // The object died this step.
@@ -86,30 +98,16 @@ export interface EncounterOutcome {
 // The state and events of one object's step, which the tick's outcome settles.
 export type EncounterResult = Pick<EncounterStep, "events" | "state">;
 
-// How an object's encounter begins when Chibi enters its area.
-export interface EncounterEntry {
-  // The boss died earlier in the attempt.
-  readonly defeated?: true;
-  readonly target: BirdState;
-}
+// What one call hands the object: its area entry, or a tick.
+export type EncounterInput = EncounterEntry | EncounterTick;
 
-// The state a behaviour-driven object enters its area with: its plan's initial state, inactive
-// while a conversation holds it. A boss that died earlier in the attempt enters already removed.
-export function enterEncounter(
-  context: Pick<EncounterContext, "object" | "tuning">,
-  entry: EncounterEntry,
-): BehaviourState {
-  const state = startBehaviour(context.tuning, context.object, entry.target);
-  return entry.defeated ? removedBoss(state) : state;
-}
-
-// A closed conversation activates the object. An active object is returned unchanged.
-export function activateEncounter(state: BehaviourState): BehaviourState {
-  return state.active ? state : { ...state, active: true };
-}
-
-// One fixed step of one behaviour-driven object. Pure: it reads only its arguments, so equal
-// arguments replay an equal step. Its stages run in this order:
+// The one entry point of a behaviour-driven object. Pure: it reads only its arguments, so equal
+// arguments replay an equal step.
+//
+// An entry starts the object at its origin in its plan's initial state, inactive while a
+// conversation holds it; a boss that died earlier in the attempt enters already removed.
+//
+// A tick runs one fixed step from the state, in this order:
 // 1. spot: an active, living object with an unsaid spotted line says it on a clear line of sight
 //    from where the step starts.
 // 2. hold: a dead boss holds still while its removal plays, and stages 3 to 6 are skipped.
@@ -122,10 +120,28 @@ export function activateEncounter(state: BehaviourState): BehaviourState {
 // Requested diagnostics gather in a list of the call's own and return as `observations`.
 export function stepEncounter(
   context: EncounterContext,
+  state: undefined,
+  input: EncounterEntry,
+): EncounterStep;
+export function stepEncounter(
+  context: EncounterContext,
   state: BehaviourState,
+  input: EncounterTick,
+): EncounterStep;
+export function stepEncounter(
+  context: EncounterContext,
+  state: BehaviourState | undefined,
   input: EncounterInput,
 ): EncounterStep {
   const { object, tuning } = context;
+  if (input.kind === "enter") {
+    const entered = startBehaviour(tuning, object, input.target);
+    const start = input.defeated ? removedBoss(entered) : entered;
+    return { at: object.origin, events: [], segments: [], state: start };
+  }
+  if (!state) {
+    throw new Error("An encounter ticks only after its entry");
+  }
   const { at, target, world } = input;
   const bark = object.behaviour?.spotted;
   const spotted =
@@ -162,7 +178,7 @@ function moveEncounter(
   context: EncounterContext,
   observations: BehaviourObservation[] | undefined,
   state: BehaviourState,
-  input: EncounterInput,
+  input: EncounterTick,
 ): BehaviourStep {
   const { groundMap, object, observe, streams, supports, tuning } = context;
   const { at, seconds, target } = input;
@@ -194,14 +210,18 @@ function moveEncounter(
 // The encounter step as a dependency of a module that samples it, such as a timed hazard's clock.
 export type EncounterSampler = typeof stepEncounter;
 
-// Applies the tick's outcome to a stepped object. A death ends its pursuit without an escape and
-// starts its removal; a door ends an engaged pursuit as an escape without a bark. An outcome that
-// does not apply returns the result unchanged.
+// Applies an outcome to the object's state and events. Activation makes an inactive object active.
+// A death ends its pursuit without an escape and starts its removal; a door ends an engaged
+// pursuit as an escape without a bark. An outcome that does not apply returns the result
+// unchanged.
 export function settleEncounter(
   outcome: EncounterOutcome,
   result: EncounterResult,
 ): EncounterResult {
   let { events, state } = result;
+  if (outcome.activated && !state.active) {
+    state = { ...state, active: true };
+  }
   if (outcome.killedBy) {
     events = [
       ...events.filter(({ kind }) => kind !== "escaped"),
@@ -216,5 +236,5 @@ export function settleEncounter(
       pursuit: { ...state.pursuit, home: true, phase: "escaped", settled: false },
     };
   }
-  return events === result.events ? result : { events, state };
+  return events === result.events && state === result.state ? result : { events, state };
 }

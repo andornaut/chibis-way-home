@@ -54,7 +54,6 @@ import {
   type Track,
 } from "../bird/index.ts";
 import {
-  activateEncounter,
   type BehaviourObserver,
   type BehaviourPlatformFrame,
   type BehaviourState,
@@ -69,7 +68,6 @@ import {
   effectiveHazardPhase,
   type EncounterEvent,
   type EncounterStep,
-  enterEncounter,
   hazardOccupancy,
   isBoss,
   type PreparedZone,
@@ -443,13 +441,11 @@ export function enterArea(
     behaviours: area.objects.some((object) => object.behaviour)
       ? area.objects.map((object, index) =>
           object.behaviour
-            ? enterEncounter(
-                { object, tuning },
-                {
-                  ...(zone.defeated?.[link.area]?.includes(index) && { defeated: true }),
-                  target: bird,
-                },
-              )
+            ? stepEncounter({ object, tuning }, undefined, {
+                ...(zone.defeated?.[link.area]?.includes(index) && { defeated: true }),
+                kind: "enter",
+                target: bird,
+              }).state
             : undefined,
         )
       : [],
@@ -484,7 +480,8 @@ export function leaveRoom(zone: ZoneState): ZoneState {
 // fresh inactive state again for every patrol with a scene.
 export function activateBehaviour(index: number, zone: ZoneState): ZoneState {
   const behaviour = zone.behaviours[index];
-  const active = behaviour && activateEncounter(behaviour);
+  const active =
+    behaviour && settleEncounter({ activated: true }, { events: [], state: behaviour }).state;
   return active === behaviour
     ? zone
     : {
@@ -1226,9 +1223,12 @@ function resolveObjectFrames(
               supports: traverses ? futureSupports : undefined,
               tuning,
             },
-            prior ?? enterEncounter({ object, tuning }, { target: zone.bird }),
+            prior ??
+              stepEncounter({ object, tuning }, undefined, { kind: "enter", target: zone.bird })
+                .state,
             {
               at: before,
+              kind: "tick",
               seconds,
               target: zone.bird,
               ...(prior && !spottedBefore?.includes(index) && { unspotted: true }),
@@ -1322,6 +1322,7 @@ function futureSupportSampler(
             object.behaviour && state
               ? stepEncounter({ object, tuning }, state, {
                   at: before,
+                  kind: "tick",
                   seconds,
                   target: zone.bird,
                   world: futureGeometry,
