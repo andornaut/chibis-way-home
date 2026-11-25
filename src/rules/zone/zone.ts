@@ -720,6 +720,234 @@ function stepZoneBodiesInternal(
   input: ZoneInput,
   zone: ZoneState,
 ): ZoneBodyStep {
+  const world = stepWorld(prepared, skillProfiles, tuning, layout, seconds, zone);
+  const {
+    area,
+    bodies,
+    crumbling,
+    forcedTransit,
+    kinds,
+    present,
+    presentPlatforms,
+    sceneryPlayback,
+    terrain,
+    time,
+  } = world;
+  const { objects, supportSampler } = resolveObjectFrames(observer, tuning, seconds, world, zone);
+  const positions = objects.map((frame, index): Point =>
+    frame === kinds.fixed[index] ? frame.object.origin : { x: frame.after.x, y: frame.after.y },
+  );
+  const platforms = presentPlatforms.map((index) => objects[index]!);
+  const fixedSolids =
+    terrain === area.solids &&
+    kinds.fixedSolids &&
+    kinds.solids.every((index) => objects[index] === kinds.fixed[index] && present(index));
+  const solids = fixedSolids
+    ? kinds.fixedSolids!
+    : [...terrain, ...kinds.solids.filter(present).map((index) => objects[index]!.after)];
+  const preparedBird = preparePlatformBird(tuning, terrain, solids, platforms, zone.bird);
+  let bird = preparedBird.bird;
+  const crushed = preparedBird.crushed;
+  const { hazardIndices, hazards } = liveHazards(kinds, objects);
+  const { behaviours, defeated, events } = settleBossDeaths(
+    area,
+    kinds,
+    hazardIndices,
+    hazards,
+    positions,
+    steppedBehaviours(kinds, objects, zone),
+    objects.map((frame) => frame.behaviour?.events),
+    zone,
+  );
+  const fixedLedges =
+    kinds.fixedLedges &&
+    kinds.ledges.every((index) => objects[index] === kinds.fixed[index] && present(index));
+  const ledges = fixedLedges
+    ? kinds.fixedLedges!
+    : kinds.ledges.filter(present).map((index) => objects[index]!.after);
+  const { nextPulseId, pulses, spawns } = emitEffects(objects, events, zone);
+  const push = forcePulseVelocity(solids, seconds, pulses, birdBox(tuning, bird));
+  const usePressed = input.useHeld && !zone.useHeld;
+  const door = usePressed
+    ? doorAt(tuning, layout.birdFrame, area.objects, positions, bird)
+    : undefined;
+  const playerInput = { ...input, dashPressed: usePressed && door === undefined, push };
+  const dashing =
+    (bird.dash?.remainingSeconds ?? 0) > EDGE || startsDash(tuning, playerInput, bird);
+  const stepped = stepBirdWithSupport(tuning, solids, ledges, seconds, playerInput, bird);
+  bird = stepped.bird;
+  // The solver's actual collider reference names its owner; equal geometry never does.
+  const birdSupport =
+    stepped.support &&
+    (area.crumbling?.some(({ supportId }) => supportId === stepped.support)
+      ? stepped.support
+      : area.objects[
+          kinds.crumblingObjects.find((index) => objects[index]!.after === stepped.support) ?? -1
+        ]);
+  const remainingPulses = pulses.flatMap((pulse) => {
+    const remaining = pulse.remaining - Math.max(0, seconds - pulse.start);
+    return remaining > 0 ? [{ ...pulse, remaining, start: 0 }] : [];
+  });
+  const transientStep = stepTransients(
+    { height: area.height, width: area.width, x: 0, y: 0 },
+    solids,
+    // Transients pass through path ledges and never come to rest on one.
+    kinds.pathLedges.length > 0
+      ? kinds.ledges
+          .filter((index) => present(index) && !kinds.pathLedges.includes(index))
+          .map((index) => objects[index]!.after)
+      : ledges,
+    seconds,
+    birdBox(tuning, zone.bird),
+    birdBox(tuning, bird),
+    spawns,
+    zone.transients,
+    zone.nextTransientId,
+  );
+  bird = finishPlatformBird(seconds, preparedBird, bird);
+  const crumblingAfter =
+    crumbling &&
+    endCrumblingFrame(
+      area.crumbling!,
+      {
+        ...crumblingActors(
+          tuning,
+          area,
+          bodies,
+          birdSupport,
+          positions,
+          transientStep.entities,
+          bird,
+        ),
+        timeSeconds: time,
+      },
+      crumbling,
+    );
+  const { bodyContact, bossContact, contact, overlap, swept } = birdContact(
+    tuning,
+    area,
+    kinds,
+    objects,
+    hazardIndices,
+    hazards,
+    transientStep.contact,
+    crushed,
+    dashing,
+    seconds,
+    bird,
+    zone,
+  );
+  const steps = zone.steps + 1;
+  if (observer) {
+    recordBehaviourWork(
+      { metadata: { area: zone.area, attempt: zone.attempt, tick: zone.steps }, observer },
+      "simulation_ticks",
+      1,
+    );
+  }
+  if (
+    bodyContact !== undefined ||
+    transientStep.lethal ||
+    crushed ||
+    swept !== undefined ||
+    bird.y > area.height ||
+    overlap >= 0
+  ) {
+    const frozen: ZoneState = {
+      ...zone,
+      ...(defeated && { defeated }),
+      ...(forcedTransit && { forcedTransit }),
+      behaviours,
+      bird,
+      crumbling: crumblingAfter,
+      nextPulseId,
+      nextTransientId: transientStep.nextId,
+      objects: positions,
+      pulses: remainingPulses,
+      sceneryPlayback,
+      seconds: time,
+      steps,
+      transients: transientStep.entities,
+      useHeld: input.useHeld,
+    };
+    return {
+      events,
+      zone: {
+        ...frozen,
+        death: {
+          ...(contact && { contact }),
+          position: { x: bird.x, y: bird.y },
+          reason: crushed
+            ? "crush"
+            : bird.y > area.height
+              ? "fall"
+              : bossContact
+                ? "boss"
+                : "hazard",
+          support: deathSupport(tuning, layout, frozen, bird),
+          velocity: { x: bird.vx, y: bird.vy },
+        },
+      },
+    };
+  }
+  const carrier = bird.grounded
+    ? presentPlatforms.find((index) => standsOn(tuning, bird, objects[index]!.after))
+    : undefined;
+  const forcedTransitForecast =
+    carrier !== undefined && area.objects[carrier]!.forcedTransit && seconds === STEP_SECONDS
+      ? forecastForcedTransit(
+          { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: time },
+          supportSampler(area.objects[carrier]!),
+          {
+            bird,
+            skillProfiles,
+            terrainSolids: terrain,
+            tuning,
+            unknownPush: remainingPulses.length > 0,
+          },
+          {
+            index: carrier,
+            owner: area.objects[carrier]!,
+            rect: objects[carrier]!.after,
+            state: behaviours[carrier],
+            track: zone.tracks[carrier]!,
+          },
+        )
+      : undefined;
+  return {
+    events,
+    zone: {
+      ...zone,
+      ...(defeated && { defeated }),
+      ...(forcedTransit && { forcedTransit }),
+      behaviours,
+      bird,
+      crumbling: crumblingAfter,
+      door,
+      forcedTransitForecast,
+      nextPulseId,
+      nextTransientId: transientStep.nextId,
+      objects: positions,
+      pulses: remainingPulses,
+      sceneryPlayback,
+      seconds: time,
+      steps,
+      transients: transientStep.entities,
+      useHeld: input.useHeld,
+    },
+  };
+}
+
+// The start of one live step: scenery playback, crumbling's opening phase commit, the supports
+// present, the terrain, forced transit and the geometry every behaviour object perceives.
+function stepWorld(
+  prepared: PreparedZone,
+  skillProfiles: readonly BirdTuning[],
+  tuning: BirdTuning,
+  layout: ZoneLayout,
+  seconds: number,
+  zone: ZoneState,
+) {
   const area = areaOf(layout, zone.area);
   const time = zone.seconds + seconds;
   const playbackView = area.objects.some((object) => object.motion.playback === "once-visible")
@@ -783,44 +1011,85 @@ function stepZoneBodiesInternal(
   const baseGeometry = {
     ...behaviourGeometry(area, terrain, present, zone),
     chunks: area.chunks,
-    hazards: kinds.hazards.flatMap((index) => {
-      const object = area.objects[index]!;
-      if (zone.behaviours[index]?.defeat) {
-        return [];
-      }
-      const at = { ...(zone.objects[index] ?? object.origin) };
-      const state = zone.behaviours[index];
-      const rect = object.contact
-        ? { ...spriteFrameOrigin(object.contact.frame, object, at), ...object.contact.frame }
-        : contactBox(object, at, state?.facing ?? 1, state?.axis);
-      const dynamic =
-        object.orbit !== undefined ||
-        object.behaviour !== undefined ||
-        object.motion.algorithm !== "static" ||
-        object.reaction.kind !== "none";
-      return [
-        {
-          ...(dynamic
-            ? hazardOccupancy(
-                stepBehaviour,
-                tuning,
-                area.objects,
-                state,
-                at,
-                rect,
-                zone.seconds,
-                object,
-              )
-            : { rect }),
-          owner: object,
-        },
-      ];
-    }),
+    hazards: perceivedHazards(tuning, area, kinds, zone),
     targetedAttackWindow: forcedTransit?.attackWindow ?? "allowed",
   };
   const geometry = kinds.perception
     ? { ...baseGeometry, view: currentScreen(tuning, area, zone.bird) }
     : baseGeometry;
+  return {
+    area,
+    bodies,
+    crumbling,
+    forcedTransit,
+    geometry,
+    groundMaps,
+    kinds,
+    playback,
+    present,
+    presentPlatforms,
+    sceneryPlayback,
+    terrain,
+    time,
+  };
+}
+
+type StepWorld = ReturnType<typeof stepWorld>;
+
+// What a behaviour object perceives of each live hazard at the start of a step: its contact rect,
+// and the occupancy of one that orbits, behaves, moves or reacts.
+function perceivedHazards(
+  tuning: BirdTuning,
+  area: AreaLayout,
+  kinds: AreaObjects,
+  zone: ZoneState,
+) {
+  return kinds.hazards.flatMap((index) => {
+    const object = area.objects[index]!;
+    if (zone.behaviours[index]?.defeat) {
+      return [];
+    }
+    const at = { ...(zone.objects[index] ?? object.origin) };
+    const state = zone.behaviours[index];
+    const rect = object.contact
+      ? { ...spriteFrameOrigin(object.contact.frame, object, at), ...object.contact.frame }
+      : contactBox(object, at, state?.facing ?? 1, state?.axis);
+    const dynamic =
+      object.orbit !== undefined ||
+      object.behaviour !== undefined ||
+      object.motion.algorithm !== "static" ||
+      object.reaction.kind !== "none";
+    return [
+      {
+        ...(dynamic
+          ? hazardOccupancy(
+              stepBehaviour,
+              tuning,
+              area.objects,
+              state,
+              at,
+              rect,
+              zone.seconds,
+              object,
+            )
+          : { rect }),
+        owner: object,
+      },
+    ];
+  });
+}
+
+// Each object's frame this step, resolved once, an orbit's host before it. The first traversing
+// behaviour object resolves the present supports, which builds the support sampler every
+// traversal world and the forced-transit forecast share.
+function resolveObjectFrames(
+  observer: BehaviourObserver | undefined,
+  tuning: BirdTuning,
+  seconds: number,
+  world: StepWorld,
+  zone: ZoneState,
+) {
+  const { area, crumbling, geometry, groundMaps, kinds, playback, presentPlatforms, time } = world;
   // Each object's frame this tick, and the objects whose frames are being resolved.
   const frames: (ObjectFrame | undefined)[] = new Array(area.objects.length);
   const resolving = new Uint8Array(area.objects.length);
@@ -847,142 +1116,17 @@ function stepZoneBodiesInternal(
         }),
       };
     });
-    futureSupports ??= (() => {
-      const samples = [supportFrames!];
-      let states = presentPlatforms.map((index) => resolveFrame(index).behaviour?.state);
-      const predictable = presentPlatforms.every((index) => kinds.predictable[index]);
-      const atTime = (frame: BehaviourPlatformFrame, at: number): Rect => {
-        const legs = frame.segments;
-        if (!legs?.length) {
-          const fraction = Math.max(0, Math.min(1, (at - zone.seconds) / seconds));
-          return {
-            ...frame.before,
-            x: frame.before.x + (frame.after.x - frame.before.x) * fraction,
-            y: frame.before.y + (frame.after.y - frame.before.y) * fraction,
-          };
-        }
-        const leg = legs.find(({ endSeconds }) => at <= endSeconds) ?? legs.at(-1)!;
-        const fraction = Math.max(
-          0,
-          Math.min(1, (at - leg.startSeconds) / (leg.endSeconds - leg.startSeconds)),
-        );
-        return {
-          ...leg.from,
-          x: leg.from.x + (leg.to.x - leg.from.x) * fraction,
-          y: leg.from.y + (leg.to.y - leg.from.y) * fraction,
-        };
-      };
-      const sample = (start: number, dt: number) => {
-        const offset = (start - zone.seconds) / seconds;
-        const tick = Math.floor(offset + EDGE);
-        if (
-          tick < 0 ||
-          tick > BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps ||
-          dt <= 0 ||
-          start + dt > zone.seconds + (tick + 1) * seconds + EDGE
-        ) {
-          return undefined;
-        }
-        if (tick > 0 && !predictable) {
-          return undefined;
-        }
-        while (samples.length <= tick) {
-          const previous = samples.at(-1)!;
-          const time = zone.seconds + samples.length * seconds;
-          const futureGeometry = {
-            ...geometry,
-            platforms: previous.map(({ after, collision, owner }) => ({
-              collision,
-              owner,
-              rect: after,
-            })),
-          };
-          const nextStates: (BehaviourState | undefined)[] = [];
-          samples.push(
-            presentPlatforms.map((index, slot) => {
-              const object = area.objects[index]!;
-              const before = previous[slot]!.after;
-              const state = states[slot];
-              const behaviour =
-                object.behaviour && state
-                  ? stepEncounter({ object, tuning }, state, {
-                      at: before,
-                      seconds,
-                      target: zone.bird,
-                      world: futureGeometry,
-                    })
-                  : undefined;
-              nextStates.push(behaviour?.state);
-              const after = rectAt(
-                object,
-                behaviour?.at ??
-                  objectStep(
-                    tuning,
-                    object,
-                    seconds,
-                    pathAt(object, zone.tracks[index]!, time + seconds),
-                    zone.bird,
-                    before,
-                  ),
-              );
-              return {
-                after,
-                before,
-                collision: object.collision as "solid" | "ledge",
-                owner: object,
-                segments: behaviour
-                  ? behaviour.segments.map((leg) => ({
-                      endSeconds: time + leg.end,
-                      from: rectAt(object, leg.from),
-                      startSeconds: time + leg.start,
-                      to: rectAt(object, leg.to),
-                    }))
-                  : [{ endSeconds: time + seconds, from: before, startSeconds: time, to: after }],
-              };
-            }),
-          );
-          states = nextStates;
-        }
-        return samples[tick]!.map((frame) => {
-          const startTick = zone.seconds + tick * seconds;
-          const whole = frame.segments ?? [
-            {
-              endSeconds: startTick + seconds,
-              from: frame.before,
-              startSeconds: startTick,
-              to: frame.after,
-            },
-          ];
-          // Clip the exact fixed-step chords at animation/graph slice boundaries.
-          const framed = { ...frame, segments: whole };
-          const before = atTime(framed, start);
-          const after = atTime(framed, start + dt);
-          const legs = whole
-            .filter((leg) => leg.endSeconds > start && leg.startSeconds < start + dt)
-            .map((leg) => ({
-              endSeconds: Math.min(start + dt, leg.endSeconds),
-              from: atTime(framed, Math.max(start, leg.startSeconds)),
-              startSeconds: Math.max(start, leg.startSeconds),
-              to: atTime(framed, Math.min(start + dt, leg.endSeconds)),
-            }));
-          return { ...frame, after, before, segments: legs };
-        });
-      };
-      const clipped = new Map<number, Map<number, readonly BehaviourPlatformFrame[] | undefined>>();
-      return (start: number, dt: number) => {
-        let durations = clipped.get(start);
-        if (durations?.has(dt)) {
-          return durations.get(dt);
-        }
-        const result = sample(start, dt);
-        if (!durations) {
-          durations = new Map();
-          clipped.set(start, durations);
-        }
-        durations.set(dt, result);
-        return result;
-      };
-    })();
+    futureSupports ??= futureSupportSampler(
+      tuning,
+      seconds,
+      area,
+      kinds,
+      geometry,
+      presentPlatforms,
+      supportFrames,
+      presentPlatforms.map((index) => resolveFrame(index).behaviour?.state),
+      zone,
+    );
     traversalShared ??= {
       bounds: { height: area.height, width: area.width, x: 0, y: 0 },
       crumbling: joinedPrediction(
@@ -1102,30 +1246,178 @@ function stepZoneBodiesInternal(
     frames[index] = frame;
     return frame;
   };
-  const objects = area.objects.map((_, index) => resolveFrame(index));
-  let events = objects.map((frame) => frame.behaviour?.events);
-  const positions = objects.map((frame, index): Point =>
-    frame === kinds.fixed[index] ? frame.object.origin : { x: frame.after.x, y: frame.after.y },
-  );
-  let behaviours = zone.behaviours;
-  if (behaviours.length > 0) {
-    const next = kinds.emptyBehaviours.slice();
-    for (const index of kinds.behaviours) {
-      next[index] = objects[index]!.behaviour?.state;
+  return { objects: area.objects.map((_, index) => resolveFrame(index)), supportSampler };
+}
+
+// The present supports' future frames for traversal search, re-stepped tick by tick from their
+// frames and states this step, clipped to the asked interval and memoized by start and duration.
+// Undefined past the search horizon, and past this tick when a support is not predictable.
+function futureSupportSampler(
+  tuning: BirdTuning,
+  seconds: number,
+  area: AreaLayout,
+  kinds: AreaObjects,
+  geometry: StepWorld["geometry"],
+  presentPlatforms: readonly number[],
+  supportFrames: readonly BehaviourPlatformFrame[],
+  initialStates: readonly (BehaviourState | undefined)[],
+  zone: ZoneState,
+): SupportSampler {
+  const samples = [supportFrames];
+  let states = initialStates;
+  const predictable = presentPlatforms.every((index) => kinds.predictable[index]);
+  const atTime = (frame: BehaviourPlatformFrame, at: number): Rect => {
+    const legs = frame.segments;
+    if (!legs?.length) {
+      const fraction = Math.max(0, Math.min(1, (at - zone.seconds) / seconds));
+      return {
+        ...frame.before,
+        x: frame.before.x + (frame.after.x - frame.before.x) * fraction,
+        y: frame.before.y + (frame.after.y - frame.before.y) * fraction,
+      };
     }
-    behaviours = next;
+    const leg = legs.find(({ endSeconds }) => at <= endSeconds) ?? legs.at(-1)!;
+    const fraction = Math.max(
+      0,
+      Math.min(1, (at - leg.startSeconds) / (leg.endSeconds - leg.startSeconds)),
+    );
+    return {
+      ...leg.from,
+      x: leg.from.x + (leg.to.x - leg.from.x) * fraction,
+      y: leg.from.y + (leg.to.y - leg.from.y) * fraction,
+    };
+  };
+  const sample = (start: number, dt: number) => {
+    const offset = (start - zone.seconds) / seconds;
+    const tick = Math.floor(offset + EDGE);
+    if (
+      tick < 0 ||
+      tick > BEHAVIOUR_TRAVERSAL_SEARCH.budget.horizonSteps ||
+      dt <= 0 ||
+      start + dt > zone.seconds + (tick + 1) * seconds + EDGE
+    ) {
+      return undefined;
+    }
+    if (tick > 0 && !predictable) {
+      return undefined;
+    }
+    while (samples.length <= tick) {
+      const previous = samples.at(-1)!;
+      const time = zone.seconds + samples.length * seconds;
+      const futureGeometry = {
+        ...geometry,
+        platforms: previous.map(({ after, collision, owner }) => ({
+          collision,
+          owner,
+          rect: after,
+        })),
+      };
+      const nextStates: (BehaviourState | undefined)[] = [];
+      samples.push(
+        presentPlatforms.map((index, slot) => {
+          const object = area.objects[index]!;
+          const before = previous[slot]!.after;
+          const state = states[slot];
+          const behaviour =
+            object.behaviour && state
+              ? stepEncounter({ object, tuning }, state, {
+                  at: before,
+                  seconds,
+                  target: zone.bird,
+                  world: futureGeometry,
+                })
+              : undefined;
+          nextStates.push(behaviour?.state);
+          const after = rectAt(
+            object,
+            behaviour?.at ??
+              objectStep(
+                tuning,
+                object,
+                seconds,
+                pathAt(object, zone.tracks[index]!, time + seconds),
+                zone.bird,
+                before,
+              ),
+          );
+          return {
+            after,
+            before,
+            collision: object.collision as "solid" | "ledge",
+            owner: object,
+            segments: behaviour
+              ? behaviour.segments.map((leg) => ({
+                  endSeconds: time + leg.end,
+                  from: rectAt(object, leg.from),
+                  startSeconds: time + leg.start,
+                  to: rectAt(object, leg.to),
+                }))
+              : [{ endSeconds: time + seconds, from: before, startSeconds: time, to: after }],
+          };
+        }),
+      );
+      states = nextStates;
+    }
+    return samples[tick]!.map((frame) => {
+      const startTick = zone.seconds + tick * seconds;
+      const whole = frame.segments ?? [
+        {
+          endSeconds: startTick + seconds,
+          from: frame.before,
+          startSeconds: startTick,
+          to: frame.after,
+        },
+      ];
+      // Clip the exact fixed-step chords at animation/graph slice boundaries.
+      const framed = { ...frame, segments: whole };
+      const before = atTime(framed, start);
+      const after = atTime(framed, start + dt);
+      const legs = whole
+        .filter((leg) => leg.endSeconds > start && leg.startSeconds < start + dt)
+        .map((leg) => ({
+          endSeconds: Math.min(start + dt, leg.endSeconds),
+          from: atTime(framed, Math.max(start, leg.startSeconds)),
+          startSeconds: Math.max(start, leg.startSeconds),
+          to: atTime(framed, Math.min(start + dt, leg.endSeconds)),
+        }));
+      return { ...frame, after, before, segments: legs };
+    });
+  };
+  const clipped = new Map<number, Map<number, readonly BehaviourPlatformFrame[] | undefined>>();
+  return (start: number, dt: number) => {
+    let durations = clipped.get(start);
+    if (durations?.has(dt)) {
+      return durations.get(dt);
+    }
+    const result = sample(start, dt);
+    if (!durations) {
+      durations = new Map();
+      clipped.set(start, durations);
+    }
+    durations.set(dt, result);
+    return result;
+  };
+}
+
+// Each behaviour object's state after its step; a zone without behaviours keeps its empty list.
+function steppedBehaviours(
+  kinds: AreaObjects,
+  objects: readonly ObjectFrame[],
+  zone: ZoneState,
+): ZoneState["behaviours"] {
+  if (zone.behaviours.length === 0) {
+    return zone.behaviours;
   }
-  const platforms = presentPlatforms.map((index) => objects[index]!);
-  const fixedSolids =
-    terrain === area.solids &&
-    kinds.fixedSolids &&
-    kinds.solids.every((index) => objects[index] === kinds.fixed[index] && present(index));
-  const solids = fixedSolids
-    ? kinds.fixedSolids!
-    : [...terrain, ...kinds.solids.filter(present).map((index) => objects[index]!.after)];
-  const preparedBird = preparePlatformBird(tuning, terrain, solids, platforms, zone.bird);
-  let bird = preparedBird.bird;
-  const crushed = preparedBird.crushed;
+  const next = kinds.emptyBehaviours.slice();
+  for (const index of kinds.behaviours) {
+    next[index] = objects[index]!.behaviour?.state;
+  }
+  return next;
+}
+
+// The hazards Chibi can touch at the end of a step and their objects' indices: a timed hazard in
+// its active phase, a fixed hazard's cached rect, a behaviour object's contact box, or its hitbox.
+function liveHazards(kinds: AreaObjects, objects: readonly ObjectFrame[]) {
   const hazardIndices = kinds.hazards.filter((index) => {
     const { behaviour, object } = objects[index]!;
     return !object.contact && effectiveCollision(object, behaviour?.state) === "hazard";
@@ -1144,8 +1436,21 @@ function stepZoneBodiesInternal(
           : after)
     );
   });
-  // A boss on a red hazard or below the level dies as Chibi does; its pursuit ends without an
-  // escape, and it stays dead for the rest of the attempt.
+  return { hazardIndices, hazards };
+}
+
+// A boss on a red hazard or below the level dies as Chibi does; its pursuit ends without an
+// escape, and it stays dead for the rest of the attempt.
+function settleBossDeaths(
+  area: AreaLayout,
+  kinds: AreaObjects,
+  hazardIndices: readonly number[],
+  hazards: readonly Rect[],
+  positions: readonly Point[],
+  behaviours: ZoneState["behaviours"],
+  events: readonly (EncounterStep["events"] | undefined)[],
+  zone: ZoneState,
+) {
   const killed = kinds.behaviours.flatMap((index) => {
     const state = behaviours[index];
     const killedBy =
@@ -1159,28 +1464,36 @@ function stepZoneBodiesInternal(
       );
     return killedBy ? [{ index, killedBy, state }] : [];
   });
-  let defeated = zone.defeated;
-  if (killed.length > 0) {
-    const settledBehaviours = behaviours.slice();
-    const settledEvents = events.slice();
-    for (const { index, killedBy, state } of killed) {
-      const settled = settleEncounter({ killedBy }, { events: events[index]!, state });
-      settledBehaviours[index] = settled.state;
-      settledEvents[index] = settled.events;
-    }
-    behaviours = settledBehaviours;
-    events = settledEvents;
-    const deaths = events.flatMap((entries, index) =>
-      entries?.some(({ kind }) => kind === "defeated") ? [index] : [],
-    );
-    defeated = { ...defeated, [zone.area]: [...(defeated?.[zone.area] ?? []), ...deaths] };
+  if (killed.length === 0) {
+    return { behaviours, defeated: zone.defeated, events };
   }
-  const fixedLedges =
-    kinds.fixedLedges &&
-    kinds.ledges.every((index) => objects[index] === kinds.fixed[index] && present(index));
-  const ledges = fixedLedges
-    ? kinds.fixedLedges!
-    : kinds.ledges.filter(present).map((index) => objects[index]!.after);
+  const settledBehaviours = behaviours.slice();
+  const settledEvents = events.slice();
+  for (const { index, killedBy, state } of killed) {
+    const settled = settleEncounter({ killedBy }, { events: events[index]!, state });
+    settledBehaviours[index] = settled.state;
+    settledEvents[index] = settled.events;
+  }
+  const deaths = settledEvents.flatMap((entries, index) =>
+    entries?.some(({ kind }) => kind === "defeated") ? [index] : [],
+  );
+  return {
+    behaviours: settledBehaviours,
+    defeated: {
+      ...zone.defeated,
+      [zone.area]: [...(zone.defeated?.[zone.area] ?? []), ...deaths],
+    },
+    events: settledEvents,
+  };
+}
+
+// The effects behaviour objects' actions emit this step: force pulses, numbered on from the
+// zone's next pulse id after the pulses still running, and transient spawns.
+function emitEffects(
+  objects: readonly ObjectFrame[],
+  events: readonly (EncounterStep["events"] | undefined)[],
+  zone: ZoneState,
+) {
   const pulses: ZonePulse[] = [...zone.pulses];
   let nextPulseId = zone.nextPulseId;
   const spawns: SpawnEvent[] = [];
@@ -1197,63 +1510,25 @@ function stepZoneBodiesInternal(
       }
     }
   });
-  const push = forcePulseVelocity(solids, seconds, pulses, birdBox(tuning, bird));
-  const usePressed = input.useHeld && !zone.useHeld;
-  const door = usePressed
-    ? doorAt(tuning, layout.birdFrame, area.objects, positions, bird)
-    : undefined;
-  const playerInput = { ...input, dashPressed: usePressed && door === undefined, push };
-  const dashing =
-    (bird.dash?.remainingSeconds ?? 0) > EDGE || startsDash(tuning, playerInput, bird);
-  const stepped = stepBirdWithSupport(tuning, solids, ledges, seconds, playerInput, bird);
-  bird = stepped.bird;
-  // The solver's actual collider reference names its owner; equal geometry never does.
-  const birdSupport =
-    stepped.support &&
-    (area.crumbling?.some(({ supportId }) => supportId === stepped.support)
-      ? stepped.support
-      : area.objects[
-          kinds.crumblingObjects.find((index) => objects[index]!.after === stepped.support) ?? -1
-        ]);
-  const remainingPulses = pulses.flatMap((pulse) => {
-    const remaining = pulse.remaining - Math.max(0, seconds - pulse.start);
-    return remaining > 0 ? [{ ...pulse, remaining, start: 0 }] : [];
-  });
-  const transientStep = stepTransients(
-    { height: area.height, width: area.width, x: 0, y: 0 },
-    solids,
-    // Transients pass through path ledges and never come to rest on one.
-    kinds.pathLedges.length > 0
-      ? kinds.ledges
-          .filter((index) => present(index) && !kinds.pathLedges.includes(index))
-          .map((index) => objects[index]!.after)
-      : ledges,
-    seconds,
-    birdBox(tuning, zone.bird),
-    birdBox(tuning, bird),
-    spawns,
-    zone.transients,
-    zone.nextTransientId,
-  );
-  bird = finishPlatformBird(seconds, preparedBird, bird);
-  const crumblingAfter =
-    crumbling &&
-    endCrumblingFrame(
-      area.crumbling!,
-      {
-        ...crumblingActors(
-          tuning,
-          area,
-          bodies,
-          birdSupport,
-          positions,
-          transientStep.entities,
-          bird,
-        ),
-        timeSeconds: time,
-      },
-      crumbling,
-    );
+  return { nextPulseId, pulses, spawns };
+}
+
+// What Chibi touched this step: a boss's silhouette, a transient, a hazard swept between its
+// frames or one he overlaps at the end. A crush or a fall leaves no contact.
+function birdContact(
+  tuning: BirdTuning,
+  area: AreaLayout,
+  kinds: AreaObjects,
+  objects: readonly ObjectFrame[],
+  hazardIndices: readonly number[],
+  hazards: readonly Rect[],
+  transientContact: DeathContact | undefined,
+  crushed: boolean,
+  dashing: boolean,
+  seconds: number,
+  bird: BirdState,
+  zone: ZoneState,
+) {
   const box = birdBox(tuning, bird);
   const beforeBox = birdBox(tuning, zone.bird);
   const birdAt = (time: number): Rect => ({
@@ -1263,65 +1538,110 @@ function stepZoneBodiesInternal(
   });
   const swept =
     seconds > 0
-      ? kinds.hazards.find((index) => {
-          const { behaviour, object, orbitLegs } = objects[index]!;
-          if (behaviour?.state.defeat) {
-            return false;
-          }
-          if (object.orbit && orbitLegs) {
-            const host = area.objects[object.orbit.host]!;
-            return orbitLegs.some((leg) =>
-              orbitSweptContact(
-                object,
-                host,
-                leg,
-                birdAt(leg.start - zone.seconds),
-                birdAt(leg.end - zone.seconds),
-              ),
-            );
-          }
-          if (!behaviour && dashing) {
-            const { after, before } = objects[index]!;
-            return sweptContact(
-              contactBox(object, before, 1),
-              contactBox(object, after, 1),
-              beforeBox,
-              box,
-            );
-          }
-          return behaviour?.segments.some((segment) => {
-            if (segment.hazardPhase !== undefined) {
-              return (
-                segment.hazardPhase === "active" &&
-                sweptContact(
-                  timedHazardRect(object, segment.from),
-                  timedHazardRect(object, segment.to),
-                  birdAt(segment.start),
-                  birdAt(segment.end),
-                )
-              );
-            }
-            if (object.contact) {
-              if (!segment.frame) {
-                throw new Error(`Missing silhouette sweep frame for ${object.art}`);
-              }
-              return silhouetteContact(
-                object,
-                segment.frame,
-                (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
-                segment.from,
-                segment.to,
-                birdAt(segment.start),
-                birdAt(segment.end),
-              );
-            }
-            const before = contactBox(object, segment.from, segment.facing, segment.axis);
-            const after = contactBox(object, segment.to, segment.facing, segment.axis);
-            return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
-          });
-        })
+      ? sweptHazard(area, kinds, objects, dashing, beforeBox, box, birdAt, zone)
       : undefined;
-  const bodyContact = kinds.hazards.find((index) => {
+  const bodyContact = silhouetteContactOf(kinds, objects, box);
+  const overlap = hazards.findIndex((hazard) => rectsOverlap(box, hazard));
+  const objectContact = (index: number): DeathContact => {
+    const { contactCue } = objects[index]!.object;
+    return { index, kind: "object", ...(contactCue && { contactCue }) };
+  };
+  const contact =
+    crushed || bird.y > area.height
+      ? undefined
+      : bodyContact !== undefined
+        ? objectContact(bodyContact)
+        : (transientContact ??
+          (swept !== undefined
+            ? objectContact(swept)
+            : overlap >= 0
+              ? objectContact(hazardIndices[overlap]!)
+              : undefined));
+  // A boss's body, or a transient a boss emitted, is boss contact; every other contact is a hazard.
+  const bossContact =
+    contact !== undefined &&
+    isBoss(objects[contact.kind === "object" ? contact.index : contact.emitter]!.object);
+  return { bodyContact, bossContact, contact, overlap, swept };
+}
+
+// The first hazard whose contact sweeps through Chibi's box during the step: an orbiter along its
+// legs, a dash through a still hazard, or a behaviour object along its segments.
+function sweptHazard(
+  area: AreaLayout,
+  kinds: AreaObjects,
+  objects: readonly ObjectFrame[],
+  dashing: boolean,
+  beforeBox: Rect,
+  box: Rect,
+  birdAt: (time: number) => Rect,
+  zone: ZoneState,
+): number | undefined {
+  return kinds.hazards.find((index) => {
+    const { behaviour, object, orbitLegs } = objects[index]!;
+    if (behaviour?.state.defeat) {
+      return false;
+    }
+    if (object.orbit && orbitLegs) {
+      const host = area.objects[object.orbit.host]!;
+      return orbitLegs.some((leg) =>
+        orbitSweptContact(
+          object,
+          host,
+          leg,
+          birdAt(leg.start - zone.seconds),
+          birdAt(leg.end - zone.seconds),
+        ),
+      );
+    }
+    if (!behaviour && dashing) {
+      const { after, before } = objects[index]!;
+      return sweptContact(
+        contactBox(object, before, 1),
+        contactBox(object, after, 1),
+        beforeBox,
+        box,
+      );
+    }
+    return behaviour?.segments.some((segment) => {
+      if (segment.hazardPhase !== undefined) {
+        return (
+          segment.hazardPhase === "active" &&
+          sweptContact(
+            timedHazardRect(object, segment.from),
+            timedHazardRect(object, segment.to),
+            birdAt(segment.start),
+            birdAt(segment.end),
+          )
+        );
+      }
+      if (object.contact) {
+        if (!segment.frame) {
+          throw new Error(`Missing silhouette sweep frame for ${object.art}`);
+        }
+        return silhouetteContact(
+          object,
+          segment.frame,
+          (segment.axis ?? object.behaviour?.axis) === "x" && segment.facing === -1,
+          segment.from,
+          segment.to,
+          birdAt(segment.start),
+          birdAt(segment.end),
+        );
+      }
+      const before = contactBox(object, segment.from, segment.facing, segment.axis);
+      const after = contactBox(object, segment.to, segment.facing, segment.axis);
+      return sweptContact(before, after, birdAt(segment.start), birdAt(segment.end));
+    });
+  });
+}
+
+// The first live boss whose current silhouette pose overlaps Chibi's box.
+function silhouetteContactOf(
+  kinds: AreaObjects,
+  objects: readonly ObjectFrame[],
+  box: Rect,
+): number | undefined {
+  return kinds.hazards.find((index) => {
     const { after, behaviour, object } = objects[index]!;
     if (!object.contact || behaviour?.state.defeat) {
       return false;
@@ -1345,125 +1665,6 @@ function stepZoneBodiesInternal(
       box,
     );
   });
-  const overlap = hazards.findIndex((hazard) => rectsOverlap(box, hazard));
-  const objectContact = (index: number): DeathContact => {
-    const { contactCue } = objects[index]!.object;
-    return { index, kind: "object", ...(contactCue && { contactCue }) };
-  };
-  const contact =
-    crushed || bird.y > area.height
-      ? undefined
-      : bodyContact !== undefined
-        ? objectContact(bodyContact)
-        : (transientStep.contact ??
-          (swept !== undefined
-            ? objectContact(swept)
-            : overlap >= 0
-              ? objectContact(hazardIndices[overlap]!)
-              : undefined));
-  // A boss's body, or a transient a boss emitted, is boss contact; every other contact is a hazard.
-  const bossContact =
-    contact !== undefined &&
-    isBoss(objects[contact.kind === "object" ? contact.index : contact.emitter]!.object);
-  const steps = zone.steps + 1;
-  if (observer) {
-    recordBehaviourWork(
-      { metadata: { area: zone.area, attempt: zone.attempt, tick: zone.steps }, observer },
-      "simulation_ticks",
-      1,
-    );
-  }
-  if (
-    bodyContact !== undefined ||
-    transientStep.lethal ||
-    crushed ||
-    swept !== undefined ||
-    bird.y > area.height ||
-    overlap >= 0
-  ) {
-    const frozen: ZoneState = {
-      ...zone,
-      ...(defeated && { defeated }),
-      ...(forcedTransit && { forcedTransit }),
-      behaviours,
-      bird,
-      crumbling: crumblingAfter,
-      nextPulseId,
-      nextTransientId: transientStep.nextId,
-      objects: positions,
-      pulses: remainingPulses,
-      sceneryPlayback,
-      seconds: time,
-      steps,
-      transients: transientStep.entities,
-      useHeld: input.useHeld,
-    };
-    return {
-      events,
-      zone: {
-        ...frozen,
-        death: {
-          ...(contact && { contact }),
-          position: { x: bird.x, y: bird.y },
-          reason: crushed
-            ? "crush"
-            : bird.y > area.height
-              ? "fall"
-              : bossContact
-                ? "boss"
-                : "hazard",
-          support: deathSupport(tuning, layout, frozen, bird),
-          velocity: { x: bird.vx, y: bird.vy },
-        },
-      },
-    };
-  }
-  const carrier = bird.grounded
-    ? presentPlatforms.find((index) => standsOn(tuning, bird, objects[index]!.after))
-    : undefined;
-  const forcedTransitForecast =
-    carrier !== undefined && area.objects[carrier]!.forcedTransit && seconds === STEP_SECONDS
-      ? forecastForcedTransit(
-          { area: zone.area, attempt: zone.attempt, dtSeconds: seconds, seconds: time },
-          supportSampler(area.objects[carrier]!),
-          {
-            bird,
-            skillProfiles,
-            terrainSolids: terrain,
-            tuning,
-            unknownPush: remainingPulses.length > 0,
-          },
-          {
-            index: carrier,
-            owner: area.objects[carrier]!,
-            rect: objects[carrier]!.after,
-            state: behaviours[carrier],
-            track: zone.tracks[carrier]!,
-          },
-        )
-      : undefined;
-  return {
-    events,
-    zone: {
-      ...zone,
-      ...(defeated && { defeated }),
-      ...(forcedTransit && { forcedTransit }),
-      behaviours,
-      bird,
-      crumbling: crumblingAfter,
-      door,
-      forcedTransitForecast,
-      nextPulseId,
-      nextTransientId: transientStep.nextId,
-      objects: positions,
-      pulses: remainingPulses,
-      sceneryPlayback,
-      seconds: time,
-      steps,
-      transients: transientStep.entities,
-      useHeld: input.useHeld,
-    },
-  };
 }
 
 // One fixed step of the zone. Pure, so the game and a headless simulator run the same rules.
