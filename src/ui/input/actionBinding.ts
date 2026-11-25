@@ -9,6 +9,7 @@ import {
   type ButtonAppearance,
   type ButtonContent,
   type ButtonOptions,
+  type ButtonState,
   type ButtonView,
   createButton,
 } from "@andornaut/game-kit/runtime/web/ui/dom/button";
@@ -18,6 +19,11 @@ import {
   type FormRowOptions,
   type FormRowView,
 } from "@andornaut/game-kit/runtime/web/ui/dom/formRow";
+import {
+  createHudDisc,
+  type HudDiscOptions,
+  type HudDiscView,
+} from "@andornaut/game-kit/runtime/web/ui/dom/hudDisc";
 import {
   createPager,
   type PagerOptions,
@@ -106,6 +112,17 @@ function gameHoldRule(mounted: { readonly element?: HTMLElement }): HoldRule {
   };
 }
 
+// A standard button's state, read from its element.
+function gameButtonState(element: HTMLButtonElement): ButtonState {
+  const pressed = element.getAttribute("aria-pressed");
+  return {
+    availability: {
+      kind: element.hidden ? "omitted" : element.disabled ? "disabled" : "available",
+    },
+    ...(pressed === "true" || pressed === "false" ? { toggled: pressed === "true" } : {}),
+  };
+}
+
 export function createGameButton(
   document: Document,
   appearance: ButtonAppearance,
@@ -117,15 +134,7 @@ export function createGameButton(
     appearance: { ...appearance, layout: "caller" },
     content,
     getAction: currentButtonAction,
-    getState: (element) => {
-      const pressed = element.getAttribute("aria-pressed");
-      return {
-        availability: {
-          kind: element.hidden ? "omitted" : element.disabled ? "disabled" : "available",
-        },
-        ...(pressed === "true" || pressed === "false" ? { toggled: pressed === "true" } : {}),
-      };
-    },
+    getState: gameButtonState,
     ...state,
     rule: gameHoldRule(mounted),
   });
@@ -179,6 +188,23 @@ export function createGamePager(
     };
   };
   return { actions: [action(view.previous), action(view.next)], view };
+}
+
+// The kit's HUD disc, bound as createGameButton binds a button.
+export function createGameHudDisc(
+  document: Document,
+  disc: Omit<HudDiscOptions, "getAction" | "getState" | "rule">,
+): HudDiscView {
+  const mounted: { element?: HTMLElement } = {};
+  const view = createHudDisc(document, {
+    ...disc,
+    getAction: currentButtonAction,
+    getState: gameButtonState,
+    rule: gameHoldRule(mounted),
+  });
+  mounted.element = view.element;
+  standardButtons.set(view.element, view);
+  return view;
 }
 
 export function disposeGameButtons(root: HTMLElement): void {
