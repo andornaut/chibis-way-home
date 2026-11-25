@@ -180,6 +180,15 @@ describe("progressFormat", () => {
     expect([...TIP_IDS].sort()).toEqual(Object.keys(TEXT.tips).sort());
   });
 
+  it("resets a save in the current shape that the previous version wrote", () => {
+    const fields = { at: "map", completed: [], stand: "start" };
+    expect(loadSave(FORMAT, stored(fields))).toMatchObject({ status: "loaded" });
+    expect(loadSave(FORMAT, stored(fields, PROGRESS_VERSION - 1))).toMatchObject({
+      save: BEGINNING,
+      status: "corrupt",
+    });
+  });
+
   it("leaves a later version's save alone and starts from the beginning", () => {
     const raw = stored({ at: "map", completed: [], stand: "start" }, PROGRESS_VERSION + 1);
     expect(loadSave(FORMAT, raw)).toMatchObject({ save: BEGINNING, status: "newer" });
