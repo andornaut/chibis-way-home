@@ -74,18 +74,23 @@ function encounterDigest(scenario: BossScenario, observed: boolean): string {
   for (let tick = 0; tick < scenario.ticks && !zone.cleared; tick++) {
     zone = zone.death ? activateAll(retryZone(ORDINARY, layout, zone)) : zone;
     const input = controller(tick, zone);
-    const stepped = observed
-      ? stepZoneObserved(
-          observer,
-          preparedZone(layout),
-          SKILL_PROFILES,
-          ORDINARY,
-          layout,
-          STEP_SECONDS,
-          input,
-          zone,
-        )
-      : stepZone(preparedZone(layout), SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
+    const maps = preparedZone(layout);
+    let stepped: ZoneState;
+    if (observed) {
+      const step = stepZoneObserved(
+        maps,
+        SKILL_PROFILES,
+        ORDINARY,
+        layout,
+        STEP_SECONDS,
+        input,
+        zone,
+      );
+      step.observations.forEach((observation) => observer.record(observation));
+      stepped = step.zone;
+    } else {
+      stepped = stepZone(maps, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
+    }
     zone = placeChibi(ORDINARY, scenario.place, tick + 1, stepped);
     parts.push(canonical({ ...zone, tracks: undefined }));
   }

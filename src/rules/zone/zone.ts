@@ -54,7 +54,7 @@ import {
   type Track,
 } from "../bird/index.ts";
 import {
-  type BehaviourObserver,
+  type BehaviourObservation,
   type BehaviourPlatformFrame,
   type BehaviourState,
   type BehaviourWorld,
@@ -72,7 +72,6 @@ import {
   isBoss,
   type PreparedZone,
   prepareZone,
-  recordBehaviourWork,
   settleEncounter,
   type SpawnEvent,
   stepEncounter,
@@ -708,7 +707,7 @@ export function stepZoneBodies(
 }
 
 function stepZoneBodiesInternal(
-  observer: BehaviourObserver | undefined,
+  observed: BehaviourObservation[] | undefined,
   prepared: PreparedZone,
   skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
@@ -730,7 +729,7 @@ function stepZoneBodiesInternal(
     terrain,
     time,
   } = world;
-  const { objects, supportSampler } = resolveObjectFrames(observer, tuning, seconds, world, zone);
+  const { objects, supportSampler } = resolveObjectFrames(observed, tuning, seconds, world, zone);
   const positions = objects.map((frame, index): Point =>
     frame === kinds.fixed[index] ? frame.object.origin : { x: frame.after.x, y: frame.after.y },
   );
@@ -835,13 +834,12 @@ function stepZoneBodiesInternal(
     zone,
   );
   const steps = zone.steps + 1;
-  if (observer) {
-    recordBehaviourWork(
-      { metadata: { area: zone.area, attempt: zone.attempt, tick: zone.steps }, observer },
-      "simulation_ticks",
-      1,
-    );
-  }
+  observed?.push({
+    amount: 1,
+    kind: "work",
+    metadata: { area: zone.area, attempt: zone.attempt, tick: zone.steps },
+    metric: "simulation_ticks",
+  });
   if (
     bodyContact !== undefined ||
     transientStep.lethal ||
@@ -1080,7 +1078,7 @@ function perceivedHazards(
 // behaviour object resolves the present supports, which builds the support sampler every
 // traversal world and the forced-transit forecast share.
 function resolveObjectFrames(
-  observer: BehaviourObserver | undefined,
+  observed: BehaviourObservation[] | undefined,
   tuning: BirdTuning,
   seconds: number,
   world: StepWorld,
@@ -1213,7 +1211,7 @@ function resolveObjectFrames(
             {
               groundMap: groundMaps?.[index],
               object,
-              observe: observer && {
+              observe: observed && {
                 area: zone.area,
                 attempt: zone.attempt,
                 objectIndex: index,
@@ -1236,8 +1234,8 @@ function resolveObjectFrames(
             },
           )
         : undefined;
-      // Each step's diagnostics reach the observer as that step ends.
-      behaviour?.observations?.forEach((observation) => observer?.record(observation));
+      // Each step's diagnostics join the zone step's as that step ends.
+      observed?.push(...(behaviour?.observations ?? []));
       const path = pathAt(object, zone.tracks[index] as Track, time);
       const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
       return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
@@ -1692,9 +1690,15 @@ export function stepZone(
   return stepZoneInternal(undefined, prepared, skillProfiles, tuning, layout, seconds, input, zone);
 }
 
-// Diagnostic callers observe the same step without adding observers to saved or input state.
+// A zone step with the behaviour diagnostics it gathered, in the order they arose.
+export interface ObservedZoneStep {
+  readonly observations: readonly BehaviourObservation[];
+  readonly zone: ZoneState;
+}
+
+// The same step as stepZone, returning its diagnostics beside the zone without adding them to
+// saved or input state: each behaviour object's, then one simulation tick of work.
 export function stepZoneObserved(
-  observer: BehaviourObserver,
   prepared: PreparedZone,
   skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
@@ -1702,12 +1706,16 @@ export function stepZoneObserved(
   seconds: number,
   input: ZoneInput,
   zone: ZoneState,
-): ZoneState {
-  return stepZoneInternal(observer, prepared, skillProfiles, tuning, layout, seconds, input, zone);
+): ObservedZoneStep {
+  const observed: BehaviourObservation[] = [];
+  return {
+    observations: observed,
+    zone: stepZoneInternal(observed, prepared, skillProfiles, tuning, layout, seconds, input, zone),
+  };
 }
 
 function stepZoneInternal(
-  observer: BehaviourObserver | undefined,
+  observed: BehaviourObservation[] | undefined,
   prepared: PreparedZone,
   skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
@@ -1721,7 +1729,7 @@ function stepZoneInternal(
   }
   const area = areaOf(layout, zone.area);
   const body = stepZoneBodiesInternal(
-    observer,
+    observed,
     prepared,
     skillProfiles,
     tuning,

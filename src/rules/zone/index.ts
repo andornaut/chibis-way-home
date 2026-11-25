@@ -7,6 +7,7 @@ export {
   areaOf,
   enterArea,
   leaveRoom,
+  type ObservedZoneStep,
   preparedZone,
   retryZone,
   roomOf,

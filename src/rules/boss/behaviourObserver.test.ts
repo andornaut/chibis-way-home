@@ -12,6 +12,7 @@ import type {
   BehaviourPlan,
   ObjectLayout,
   Rect,
+  ZoneLayout,
 } from "../../data/types/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { zoneTraceLine } from "../../sim/zoneTrace.ts";
@@ -20,11 +21,19 @@ import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { chunksLayout, ORDINARY } from "../../testing/encounterLayouts.ts";
 import { startBird } from "../bird/bird.ts";
 import { objectLayout } from "../stage/tiles.ts";
-import { preparedZone, startZone, stepZone, stepZoneObserved } from "../zone/zone.ts";
+import {
+  preparedZone,
+  startZone,
+  stepZone,
+  stepZoneObserved,
+  type ZoneInput,
+  type ZoneState,
+} from "../zone/zone.ts";
 import { type BehaviourState, startBehaviour } from "./behaviour.ts";
 import { mapReachable, mapRecoveryGoal, planMapLeg } from "./behaviourMapPursuit.ts";
 import {
   type BehaviourObservation,
+  type BehaviourObserver,
   type BehaviourPursuitObservation,
   createBehaviourObserver,
 } from "./behaviourObserver.ts";
@@ -260,6 +269,19 @@ it("leaves native work unevaluated when no target envelope admits a query", () =
   });
 });
 
+// The observed zone step, its returned diagnostics recorded in order.
+function observedStep(
+  observer: BehaviourObserver,
+  layout: ZoneLayout,
+  input: ZoneInput,
+  zone: ZoneState,
+): ZoneState {
+  const maps = preparedZone(layout);
+  const step = stepZoneObserved(maps, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
+  step.observations.forEach((observation) => observer.record(observation));
+  return step.zone;
+}
+
 it("keeps ordinary and observed short step traces identical, including receiver failures", () => {
   const layout = chunksLayout("city-boundary", ["arena-dog-city-boundary"]);
   const initial = startZone(ORDINARY, layout, 0);
@@ -283,26 +305,8 @@ it("keeps ordinary and observed short step traces identical, including receiver 
       input,
       plain,
     );
-    const captured = stepZoneObserved(
-      observations.observer,
-      preparedZone(layout),
-      SKILL_PROFILES,
-      ORDINARY,
-      layout,
-      STEP_SECONDS,
-      input,
-      observed,
-    );
-    const broken = stepZoneObserved(
-      failing,
-      preparedZone(layout),
-      SKILL_PROFILES,
-      ORDINARY,
-      layout,
-      STEP_SECONDS,
-      input,
-      failed,
-    );
+    const captured = observedStep(observations.observer, layout, input, observed);
+    const broken = observedStep(failing, layout, input, failed);
     plainTrace.record(zoneTraceLine(layout, STEP_SECONDS, plain, next));
     observedTrace.record(zoneTraceLine(layout, STEP_SECONDS, observed, captured));
     expect(captured).toEqual(next);
@@ -321,18 +325,8 @@ it("does not observe a simulation tick when a terminal zone holds", () => {
   const layout = chunksLayout("city-boundary", ["arena-dog-city-boundary"]);
   const zone = { ...startZone(ORDINARY, layout, 0), cleared: true };
   const observations = createBehaviourObservations();
-  expect(
-    stepZoneObserved(
-      observations.observer,
-      preparedZone(layout),
-      SKILL_PROFILES,
-      ORDINARY,
-      layout,
-      STEP_SECONDS,
-      { jumpHeld: false, move: 0, useHeld: false },
-      zone,
-    ),
-  ).toBe(zone);
+  const input = { jumpHeld: false, move: 0 as const, useHeld: false };
+  expect(observedStep(observations.observer, layout, input, zone)).toBe(zone);
   expect(observations.report().diagnostics.recordedEvents).toBe(0);
   expect(observations.report().work.simulation_ticks).toEqual({ status: "not_evaluated" });
 });

@@ -947,9 +947,12 @@ export function stepEvade(
   zone: ZoneState,
 ): ZoneState {
   const maps = preparedZone(layout);
-  return observer
-    ? stepZoneObserved(observer, maps, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone)
-    : stepZone(maps, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
+  if (!observer) {
+    return stepZone(maps, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
+  }
+  const step = stepZoneObserved(maps, SKILL_PROFILES, ORDINARY, layout, STEP_SECONDS, input, zone);
+  step.observations.forEach((observation) => observer.record(observation));
+  return step.zone;
 }
 
 // The layout with every boss removed, for the boss-free walk.
