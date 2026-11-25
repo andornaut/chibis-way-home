@@ -149,7 +149,7 @@ const SIZE_CEILINGS = {
   "src/rules/boss/behaviourInterludes.ts": { function: 156 },
   "src/rules/boss/behaviourLayout.ts": { file: 615, function: 606 },
   "src/rules/boss/behaviourMapPursuit.ts": { file: 520 },
-  "src/rules/boss/behaviourPursuitAbilities.ts": { function: 166 },
+  "src/rules/boss/behaviourPursuitAbilities.ts": { function: 164 },
   "src/rules/boss/behaviourReach.ts": { file: 588 },
   "src/rules/boss/behaviourTraversal.ts": { file: 1264, function: 333 },
   "src/rules/boss/flyLanding.ts": { file: 549 },

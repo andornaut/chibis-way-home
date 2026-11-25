@@ -2,6 +2,7 @@ import type { Ability } from "../../ai/index.ts";
 import { EDGE, STEP_SECONDS } from "../../core/index.ts";
 import type { Point, Rect } from "../../data/types/index.ts";
 import { birdBox } from "../bird/index.ts";
+import { withinTellClearance } from "./attackGate.ts";
 import type { BehaviourState } from "./behaviour.ts";
 import type {
   BehaviourAbilityContext,
@@ -291,10 +292,8 @@ export const GROUND_CHASE: PursuitAbility<"ground-chase"> = {
     const paceTurns = (prior?.paceTurns ?? 0) + (turned ? 1 : 0);
     const plan = planned && { ...planned, state: { ...planned.state, paceTurns } };
     if (leg?.kind === "pace") {
-      const clearance = object.behaviour!.pursuit!.relief?.pause.tellClearanceSeconds ?? 0;
-      const since = next.scorer?.sinceAttackSeconds;
       let holdSeconds = prior?.paceHoldSeconds ?? 0;
-      if (since !== undefined && since < clearance - EDGE) {
+      if (withinTellClearance(object, next.scorer?.sinceAttackSeconds)) {
         holdSeconds = 0;
       } else if (turned) {
         if (!world.decisions) {

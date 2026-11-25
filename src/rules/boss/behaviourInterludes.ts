@@ -1,5 +1,6 @@
 import { EDGE } from "../../core/index.ts";
 import type { ChaseRelief, DialogueLine, ObjectLayout, Point } from "../../data/types/index.ts";
+import { withinTellClearance } from "./attackGate.ts";
 import type {
   BehaviourEvent,
   BehaviourSegment,
@@ -67,8 +68,7 @@ export function startChasePause(
     state.activeAttack ||
     state.hop ||
     context.pursuitReachable !== true ||
-    (scorer.sinceAttackSeconds !== undefined &&
-      scorer.sinceAttackSeconds < relief.pause.tellClearanceSeconds - EDGE) ||
+    withinTellClearance(object, scorer.sinceAttackSeconds) ||
     (motion.kind === "pursue" && motion.mode === "fly"
       ? !safeIntentHover(world, seconds - time, object, current)
       : state.traversal !== undefined && !state.traversal.physical.grounded)

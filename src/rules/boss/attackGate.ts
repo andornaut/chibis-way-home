@@ -64,6 +64,13 @@ function unready(state: BehaviourAttackState): AttackGateRefusal {
       : "tell-cancel-pause";
 }
 
+// Whether `since` seconds after a chase pause or an attack lie within the plan's tell clearance,
+// which a scored attack, a chase pause and a pace pause each wait out. An unknown time is clear.
+export function withinTellClearance(object: ObjectLayout, since: number | undefined): boolean {
+  const clearance = object.behaviour?.pursuit?.relief?.pause.tellClearanceSeconds ?? 0;
+  return since !== undefined && since < clearance - EDGE;
+}
+
 // The one admission test of a transition, consulted by the scored decision and by the graph
 // transition walk before the transition is taken. `matches` evaluates one `when` condition for
 // the caller's perception and position. The transition's own data selects the tests, in this
@@ -79,12 +86,8 @@ export function attackGate(
   state: AttackGateState,
   transition: BehaviourTransition,
 ): AttackGateResult {
-  if (transition.score) {
-    const clearance = object.behaviour?.pursuit?.relief?.pause.tellClearanceSeconds ?? 0;
-    const sincePause = state.scorer?.sincePauseSeconds;
-    if (sincePause !== undefined && sincePause < clearance - EDGE) {
-      return refused("pause-clearance");
-    }
+  if (transition.score && withinTellClearance(object, state.scorer?.sincePauseSeconds)) {
+    return refused("pause-clearance");
   }
   const tell = nodeOf(object, transition.to);
   if (!canEnterAttack(tell, state)) {
