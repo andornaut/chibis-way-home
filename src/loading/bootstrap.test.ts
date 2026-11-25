@@ -121,7 +121,7 @@ it("awaits actual destruction before replacement and retains only one committed 
   startup.bridge.mockImplementationOnce(() => {
     throw new Error("Game setup failed");
   });
-  const { bootstrap } = await import("../main.ts");
+  const { bootstrap } = await import("../game.ts");
   const attempts = createLoadingAttempts({ load: bootstrap, onState: () => {} });
   await attempts.start();
   const first = startup.games[0]!;
@@ -144,7 +144,7 @@ it("awaits actual destruction before replacement and retains only one committed 
 it("does not wake an unstarted loop or acquire after a waiting replacement is cancelled", async () => {
   startup.started = false;
   startup.constructorFailure = true;
-  const { bootstrap } = await import("../main.ts");
+  const { bootstrap } = await import("../game.ts");
   const attempts = createLoadingAttempts({ load: bootstrap, onState: () => {} });
   await attempts.start();
   const first = startup.games[0]!;

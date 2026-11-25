@@ -51,9 +51,9 @@ import { modalInput } from "./modalInput.ts";
 
 // The sources are read from disk, from the project root.
 const SCENES = "src/scenes";
-const MAIN = readFileSync("src/main.ts", "utf8");
+const MAIN = readFileSync("src/game.ts", "utf8");
 
-// Each scene class main.ts registers, with the key its constructor passes.
+// Each scene class game.ts registers, with the key its constructor passes.
 const registered = readdirSync(SCENES)
   .filter((file) => file.endsWith("Scene.ts"))
   .flatMap((file) => {
@@ -87,7 +87,7 @@ function stub({ active = [], barksIdle = true, paused = [], zoneBlocked = false 
 }
 
 describe("deferring unlock notices", () => {
-  it("classifies every scene main.ts registers", () => {
+  it("classifies every scene game.ts registers", () => {
     const keys = registered.map(({ key }) => key);
     expect(registered.length).toBeGreaterThan(20);
     expect(keys.filter((key) => key === undefined)).toEqual([]);

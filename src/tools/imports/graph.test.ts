@@ -118,7 +118,7 @@ it("fails a reach past another group's entry, except into data and from the test
     edge("src/scenes/MapScene.ts", "src/data/map.ts"),
     edge("src/scenes/MapScene.test.ts", "src/ui/dom/map.ts"),
     edge("src/ui/dom/map.ts", "src/ui/layout/map.ts"),
-    edge("src/play.ts", "src/main.ts"),
+    edge("src/play.ts", "src/game.ts"),
     edge("src/rules/zone/zone.ts", "src/rules/boss/behaviour.ts"),
     edge("src/rules/zone/zone.ts", "src/rules/zone/death.ts"),
   ];

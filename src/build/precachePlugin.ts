@@ -37,7 +37,7 @@ export function precachePlugin(
     async generateBundle(_options, bundle) {
       const entries = Object.values(bundle).filter((file) => file.type === "chunk" && file.isEntry);
       const game = Object.values(bundle).find(
-        (file) => file.type === "chunk" && file.facadeModuleId?.endsWith("/src/main.ts"),
+        (file) => file.type === "chunk" && file.facadeModuleId?.endsWith("/src/game.ts"),
       );
       if (game === undefined) {
         this.error("The deferred game entry is missing");

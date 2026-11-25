@@ -63,7 +63,7 @@ const attempts = createLoadingAttempts({
     if ((await launch) === "reloading" || !attempt.isCurrent()) {
       return;
     }
-    const game = await import("./main.ts");
+    const game = await import("./game.ts");
     if (attempt.isCurrent()) {
       await game.bootstrap(attempt);
     }

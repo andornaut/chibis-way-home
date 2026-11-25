@@ -7,7 +7,7 @@ import type { KnownViolations } from "./graph.ts";
 
 export const KNOWN_VIOLATIONS: KnownViolations = {
   // Each import of a group in the same layer, a higher layer or no layer.
-  direction: ["src/play.ts -> src/main.ts"],
+  direction: [],
   // Each importing group and the module it reaches past the entry of the module's group.
   entry: [],
   // Each group no layer places.

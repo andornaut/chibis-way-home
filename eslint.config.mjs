@@ -12,7 +12,7 @@ import ts from "typescript-eslint";
 import { plugins, sourceRules, toolingRules } from "./eslint.config.base.mjs";
 
 const SOURCE_FILES = ["src/**/*.ts"];
-const PHASER_FILES = ["src/main.ts", "src/scenes/**"];
+const PHASER_FILES = ["src/game.ts", "src/scenes/**"];
 const TEST_FILES = ["src/**/*.test.ts"];
 const CONFIG_FILES = ["*.ts", "*.js", "*.mjs", "art/tools/**/*.ts"];
 
@@ -25,7 +25,7 @@ const BOUNDARIES = [
     forbid: {
       group: ["phaser", "phaser/*", "**/phaser/*", "**/scenes", "**/scenes/*"],
       message:
-        "Only src/scenes/ and src/main.ts may import Phaser, the kit's phaser/ modules or a scene.",
+        "Only src/scenes/ and src/game.ts may import Phaser, the kit's phaser/ modules or a scene.",
     },
   },
   {

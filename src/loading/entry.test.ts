@@ -27,7 +27,7 @@ vi.mock("../pwa/index.ts", () => ({
   installOffer: startup.install,
   setupPhoneApp: startup.launch,
 }));
-vi.mock("../main.ts", () => {
+vi.mock("../game.ts", () => {
   startup.importGame();
   return { bootstrap: startup.bootstrap };
 });

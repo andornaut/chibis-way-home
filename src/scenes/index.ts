@@ -1,5 +1,5 @@
 // The game's Phaser scenes, the HTML UI layer they draw through and the update card's bridge, which
-// src/main.ts registers with the game.
+// src/game.ts registers with the game.
 export { AchievementNoticeScene } from "./AchievementNoticeScene.ts";
 export { AchievementsScene } from "./AchievementsScene.ts";
 export { BootScene } from "./BootScene.ts";
