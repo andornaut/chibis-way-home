@@ -1397,20 +1397,22 @@ export function assembleZone(
   );
 }
 
-// The pool chunks every run of the zone key's recipe holds, judged on seam rows alone. A run is a
-// walk over seam rows from the start's exit row to the finish's entry row, each chunk one step
-// from its entry row to its exit row. A stage with an arena also walks to the arena's entry row,
-// through one of its approach predecessors when it names them, and on from the arena's exit row.
-// A chunk is required when such a walk exists with it and none without it: the one chunk for a
-// step every walk takes, such as each connector of a single loop of rows, a sole predecessor and
-// the chain that reaches it. Lengths, slots, encounters and maxPerZone are ignored, so the set
-// never names a chunk a run can do without. Only a chunk alone in its step or a predecessor can
-// be required, so the cost is one pass over the pool for each of those.
-export function requiredChunks(
+// The seam steps every run of the zone key's recipe takes, each as its sources: the pool chunks
+// able to make it, in pool order. Judged on seam rows alone. A run is a walk over seam rows from
+// the start's exit row to the finish's entry row, each chunk one step from its entry row to its
+// exit row. A stage with an arena also walks to the arena's entry row, through one of its
+// approach predecessors when it names them, and on from the arena's exit row. A step is required
+// when such a walk exists with its chunks and none without them, such as each step of a single
+// loop of rows and the chain that reaches an arena's approach. Its sources are those of its
+// chunks that alone restore a walk: all of them, or only the approach predecessors where the step
+// leads into the arena. Lengths, slots, encounters and maxPerZone are ignored, so every run
+// holds a source of every step named. The cost is one pass over the pool for each step and each
+// chunk of a required one.
+export function requiredSteps(
   library: ChunkLibrary,
   key: string,
   recipe: ZoneRecipe,
-): ReadonlySet<string> {
+): readonly (readonly string[])[] {
   const arenaId = library.arenas?.[key];
   const arena = arenaId === undefined ? undefined : chunkOf(library, arenaId);
   const predecessors = recipe.arenaApproach?.predecessors;
@@ -1467,22 +1469,53 @@ export function requiredChunks(
     );
   };
   if (!fits(steps)) {
-    return new Set();
+    return [];
   }
-  const sharing = new Map<string, number>();
-  const stepOf = ({ entryRow, exitRow }: Step) => `${entryRow}>${exitRow}`;
+  const sharing = new Map<string, Step[]>();
   for (const step of steps) {
-    sharing.set(stepOf(step), (sharing.get(stepOf(step)) ?? 0) + 1);
+    const rows = `${step.entryRow}>${step.exitRow}`;
+    sharing.set(rows, [...(sharing.get(rows) ?? []), step]);
   }
-  return new Set(
-    steps
-      .filter(
-        (step) =>
-          (sharing.get(stepOf(step)) === 1 || predecessors?.includes(step.id) === true) &&
-          !fits(steps.filter((other) => other !== step)),
-      )
-      .map(({ id }) => id),
-  );
+  return [...sharing.values()].flatMap((members) => {
+    const others = steps.filter((step) => !members.includes(step));
+    if (fits(others)) {
+      return [];
+    }
+    const sources = members.filter((member) => fits([...others, member])).map(({ id }) => id);
+    return sources.length > 0 ? [sources] : [];
+  });
+}
+
+// The avoided chunks the narrowed pool of the zone key's recipe keeps: for each required step
+// (requiredSteps) whose every source is avoided, the source avoided least recently, which is the
+// one whose newest entry is oldest, the lowest id among equals.
+function keptSources(
+  library: ChunkLibrary,
+  avoid: AvoidEntries,
+  key: string,
+  recipe: ZoneRecipe,
+): ReadonlySet<string> {
+  // The index of the newest entry that names each avoided chunk.
+  const newest = new Map<string, number>();
+  for (const [index, entry] of avoid.entries()) {
+    for (const id of entry) {
+      if (!newest.has(id)) {
+        newest.set(id, index);
+      }
+    }
+  }
+  const kept = new Set<string>();
+  for (const sources of requiredSteps(library, key, recipe)) {
+    if (sources.every((id) => newest.has(id))) {
+      kept.add(
+        sources.reduce((oldest, id) => {
+          const order = newest.get(id)! - newest.get(oldest)!;
+          return order > 0 || (order === 0 && id < oldest) ? id : oldest;
+        }),
+      );
+    }
+  }
+  return kept;
 }
 
 // Whether a stage's avoided chunks were left out of its plan ("honoured"), or no assembly fitted
@@ -1499,11 +1532,13 @@ export interface AvoidingAssembly {
   readonly plan: ZonePlan;
 }
 
-// assembleZone, first with the avoided chunks left out of every middle pool except those a flat
-// recipe cannot do without (requiredChunks), then, when no assembly fits without them, with every
-// pool whole. An ordered stage's section pools keep none. Deterministic in (seed, avoid). Recency
-// across stages passes the zone's recent stage entries; no entry, or none that names a chunk,
-// assembles as assembleZone and counts as honoured. Only the outcome that nothing fits falls back: a narrowed
+// assembleZone, first with the avoided chunks left out of every middle pool, then, when no
+// assembly fits without them, with every pool whole. Where every source of a step a flat recipe
+// cannot do without is avoided, the pool keeps the one avoided least recently (keptSources), so
+// a step with one source always keeps it and a step with several takes them in turn. An ordered
+// stage's section pools keep none. Deterministic in (seed, avoid). Recency across stages passes
+// the zone's recent stage entries; no entry, or none that names a chunk, assembles as
+// assembleZone and counts as honoured. Only the outcome that nothing fits falls back: a narrowed
 // pool that is no valid pool, or NoAssemblyError. Any other error is thrown on.
 export function assembleZoneAvoiding(
   library: ChunkLibrary,
@@ -1528,9 +1563,9 @@ export function assembleZoneAvoiding(
     };
     valid = orderedRecipeProblems(library, narrowed).length === 0;
   } else {
-    const required = requiredChunks(library, key, recipe);
+    const kept = keptSources(library, avoid, key, recipe);
     const chunks = recipeChunkPool(library, recipe).filter(
-      (id) => !avoided.has(id) || required.has(id),
+      (id) => !avoided.has(id) || kept.has(id),
     );
     narrowed = { ...recipe, chunks };
     valid = chunks.length > 0;

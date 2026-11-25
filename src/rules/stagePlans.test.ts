@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
 import type { ZoneMap, ZonePlan, ZoneRecipe } from "../data/types/index.ts";
-import { requiredChunks } from "./assemble.ts";
+import { requiredSteps } from "./assemble.ts";
 import { middleChunkIds, planStage, recipeKey, stageTarget } from "./stagePlans.ts";
 import { CHUNK_LIBRARY, STAGE_CONTEXT, zoneOfTheme, zonePlanAvoiding } from "./zonePlans.ts";
 
@@ -96,10 +96,11 @@ const AVOID_SEEDS = Array.from({ length: 8 }, (_, seed) => seed);
 
 describe("a stage entered again", () => {
   it.each(OUTDOOR)(
-    "plans %s without the earlier plan's middle chunks, but those every plan needs",
+    "plans %s without the earlier plan's middle chunks, but a source of each step every plan needs",
     (key, recipe: ZoneRecipe) => {
-      const required = requiredChunks(CHUNK_LIBRARY, key, recipe);
-      expect(required.size).toBeGreaterThan(0);
+      const steps = requiredSteps(CHUNK_LIBRARY, key, recipe);
+      const required = new Set(steps.flat());
+      expect(steps.length).toBeGreaterThan(0);
       for (const seed of AVOID_SEEDS) {
         const earlier = planStage(STAGE_CONTEXT, { avoid: [], seed, target: { recipe: key } });
         const again = planStage(STAGE_CONTEXT, {
@@ -107,7 +108,9 @@ describe("a stage entered again", () => {
           seed: seed + 1,
           target: { recipe: key },
         });
-        expect(earlier.middle).toEqual(expect.arrayContaining([...required]));
+        for (const sources of steps) {
+          expect(sources.some((id) => earlier.middle.includes(id))).toBe(true);
+        }
         expect(again.avoidance).toBe("honoured");
         const arena = CHUNK_LIBRARY.arenas?.[key];
         expect(

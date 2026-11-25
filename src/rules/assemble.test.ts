@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { RECENT_STAGES } from "../data/stageProgress.ts";
 import type { AreaPlan, ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../data/types/index.ts";
 import { FIXTURE_LIBRARY, FIXTURE_RECIPE } from "../testing/chunks.ts";
 import {
@@ -8,7 +9,7 @@ import {
   assembleZoneAvoiding,
   type ChunkLibrary,
   NoAssemblyError,
-  requiredChunks,
+  requiredSteps,
   zonePlanOf,
 } from "./assemble.ts";
 import { recipeProblems } from "./chunk.ts";
@@ -956,7 +957,7 @@ describe("ordered section assembly", () => {
   });
 });
 
-describe("requiredChunks", () => {
+describe("requiredSteps", () => {
   // One loop of rows 50, 40, 30 and back with a side step at 40; the caps are too narrow to
   // make a run alone.
   const loop = {
@@ -965,39 +966,42 @@ describe("requiredChunks", () => {
     "up-high": chunk(40, 30),
     "up-low": chunk(50, 40),
   };
-  const ids = (chunks: Readonly<Record<string, ChunkPlan>>, zone: ZoneRecipe, key = "z") => [
-    ...requiredChunks(library(chunks), key, zone),
-  ];
+  // Each required step as its sources, joined.
+  const steps = (lib: ChunkLibrary, zone: ZoneRecipe) =>
+    requiredSteps(lib, "z", zone)
+      .map((sources) => sources.join(" "))
+      .sort();
 
-  it("names the one chunk for each seam step every run takes", () => {
-    expect(ids(loop, recipe(3)).sort()).toEqual(["down", "up-high", "up-low"]);
+  it("names the one source of each seam step every run takes", () => {
+    expect(steps(library(loop), recipe(3))).toEqual(["down", "up-high", "up-low"]);
   });
 
-  it("names no chunk whose step another chunk or route also makes", () => {
-    expect(ids({ ...loop, "down-again": chunk(30, 50) }, recipe(3)).sort()).toEqual([
+  it("names every source of a step several chunks make, and no step another route replaces", () => {
+    expect(steps(library({ ...loop, "down-again": chunk(30, 50) }), recipe(3))).toEqual([
+      "down down-again",
       "up-high",
       "up-low",
     ]);
-    expect(ids({ ...loop, flat: chunk(50, 50) }, recipe(3))).toEqual([]);
+    expect(steps(library({ ...loop, flat: chunk(50, 50) }), recipe(3))).toEqual([]);
   });
 
   it("names none when the caps alone fill the least length, or nothing joins", () => {
-    expect(ids(loop, recipe(0))).toEqual([]);
-    expect(ids({ "up-low": loop["up-low"] }, recipe(1))).toEqual([]);
+    expect(steps(library(loop), recipe(0))).toEqual([]);
+    expect(steps(library({ "up-low": loop["up-low"] }), recipe(1))).toEqual([]);
   });
 
-  it("names the chain that reaches an arena's sole approach predecessor", () => {
+  it("names the chain that reaches an arena's approach, whose step only a predecessor makes", () => {
     const chunks = {
       ...loop,
       approach: chunk(30, 40),
       arena: chunk(40, 40, { encounters: 1 }),
       flat: chunk(50, 50),
+      "no-approach": chunk(30, 40),
     };
     const zone = recipe(6, {
       arenaApproach: { predecessors: ["approach"], profile: "cold-encounter-v1" },
     });
-    const lib = { ...library(chunks), arenas: { z: "arena" } };
-    expect([...requiredChunks(lib, "z", zone)].sort()).toEqual([
+    expect(steps({ ...library(chunks), arenas: { z: "arena" } }, zone)).toEqual([
       "approach",
       "down",
       "up-high",
@@ -1060,6 +1064,64 @@ describe("assembleZoneAvoiding", () => {
       expect(avoidance).toBe("honoured");
       expect(middles(plan)).toEqual(["up", "flat-b", "down"]);
     }
+  });
+
+  describe("with several sources for a step every run takes", () => {
+    // Up to row 40, one flat chunk, then down by one of the sources named.
+    const pool = (downs: readonly string[]) =>
+      library({
+        ...Object.fromEntries(downs.map((id) => [id, chunk(40, 50)])),
+        "flat-a": chunk(40, 40),
+        "flat-b": chunk(40, 40),
+        "flat-c": chunk(40, 40),
+        up: chunk(50, 40),
+      });
+    const zone = recipe(3);
+    const TWO = ["down-a", "down-b"];
+    const THREE = [...TWO, "down-c"];
+
+    it.each([
+      ["the older of two", TWO, [["down-a"], ["down-b"]], "down-b"],
+      ["the older of two, the other way round", TWO, [["down-b"], ["down-a"]], "down-a"],
+      ["the oldest of three entries", THREE, [["down-b"], ["down-c"], ["down-a"]], "down-a"],
+      ["one by its newest entry", THREE, [["down-a", "down-c"], ["down-b"], ["down-a"]], "down-b"],
+      ["the lowest id among equals", TWO, [["down-b", "down-a"]], "down-a"],
+    ])("keeps %s when every source is avoided", (_, downs, avoid, kept) => {
+      for (const seed of SEEDS) {
+        const { avoidance, plan } = assembleZoneAvoiding(pool(downs), avoid, seed, "z", zone);
+        expect(avoidance).toBe("honoured");
+        expect(middles(plan).at(-1)).toBe(kept);
+      }
+    });
+
+    it("leaves an avoided source out while another is not avoided", () => {
+      for (const seed of SEEDS) {
+        const { avoidance, plan } = assembleZoneAvoiding(
+          pool(TWO),
+          [["down-a", "up"]],
+          seed,
+          "z",
+          zone,
+        );
+        expect(avoidance).toBe("honoured");
+        expect(middles(plan).at(-1)).toBe("down-b");
+      }
+    });
+
+    it("alternates the sources over consecutive entries", () => {
+      let recent: (readonly string[])[] = [];
+      const downs: string[] = [];
+      for (const seed of SEEDS) {
+        const { avoidance, plan } = assembleZoneAvoiding(pool(TWO), recent, seed, "z", zone);
+        expect(avoidance).toBe("honoured");
+        downs.push(middles(plan).at(-1)!);
+        recent = [middles(plan), ...recent].slice(0, RECENT_STAGES);
+      }
+      expect(TWO).toContain(downs[0]);
+      expect(downs.slice(1)).toEqual(
+        downs.slice(0, -1).map((down) => TWO.find((id) => id !== down)),
+      );
+    });
   });
 
   it("falls back when the narrowed pool has no run, and throws when the whole pool has none", () => {
