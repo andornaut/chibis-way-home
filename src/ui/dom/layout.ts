@@ -26,11 +26,22 @@ function depth(element: Element): number {
   return count;
 }
 
+// Outer layouts first, so each gives its content its room, then inner ones up to the outer
+// again, so a frame measures the groups arranged inside it. A layout whose parts do not fit keeps
+// its last placement.
 function run(elements: ReadonlySet<Element>): void {
-  // Inner layouts first: a frame measures the groups inside it.
-  for (const element of [...elements].sort((left, right) => depth(right) - depth(left))) {
-    if (element.isConnected) {
+  const outerFirst = [...elements].sort((left, right) => depth(left) - depth(right));
+  for (const element of [...outerFirst, ...outerFirst.reverse().slice(1)]) {
+    if (!element.isConnected) {
+      continue;
+    }
+    try {
       layouts.get(element)?.();
+    } catch (error) {
+      if (!(error instanceof RangeError)) {
+        throw error;
+      }
+      console.warn("A UI layout does not fit", error);
     }
   }
 }

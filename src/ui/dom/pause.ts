@@ -308,7 +308,7 @@ export function showSkillButton(
 // groups, so each press area reaches half the stacked gap past its face.
 const STACK: ActionsContext = { axis: "stack", stackWidth: "fill" };
 const HALF_STACK_GAP = { margin: STACK_BUTTON_GAP / 2 } as const;
-const PAIR: ActionsContext = { axis: "row", press: HALF_STACK_GAP };
+const PAIR: ActionsContext = { press: HALF_STACK_GAP };
 const SOLE: ActionsContext = { press: HALF_STACK_GAP };
 const PAIR_FACE = {
   height: TEXT_BUTTON.height,
@@ -361,6 +361,8 @@ export function showPauseMenu(
   }
   second.hidden = !homeShown;
   last.hidden = !homeShown;
+  // The frame gives the groups their room, then takes their height.
+  frame.layout();
   groups.forEach((group) => group.arrange());
   frame.layout();
 }
