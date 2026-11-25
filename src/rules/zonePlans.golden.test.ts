@@ -55,7 +55,7 @@ it("pins a hash for every stage recipe", () => {
 it.each(Object.keys(STAGE_RECIPES).sort())(
   "assembles %s as recorded for each seed, with and without avoided chunks",
   (key) => {
-    const avoid = middleOf(zonePlanFor(0, key));
+    const avoid = [middleOf(zonePlanFor(0, key))];
     expect({
       avoiding: SEEDS.map((seed) => planHash(() => zonePlanAvoiding(avoid, seed, key))),
       whole: SEEDS.map((seed) => planHash(() => zonePlanFor(seed, key))),

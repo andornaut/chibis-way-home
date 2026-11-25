@@ -374,12 +374,13 @@ function savedRecent(): { readonly recent?: RecentChunks } {
 }
 
 // The middle chunk ids of the zone's latest stage entries (recentMiddleChunks).
-export function savedRecentMiddleChunks(zone: string): readonly string[] {
+export function savedRecentMiddleChunks(zone: string): readonly (readonly string[])[] {
   return recentMiddleChunks(progress, zone);
 }
 
-// The middle chunk ids a fresh entry of a catalogued stage avoids: its destination's recent ones.
-export function recentStageChunks(stage: string): readonly string[] {
+// The middle chunk ids a fresh entry of a catalogued stage avoids: its destination's recent
+// entries, newest first.
+export function recentStageChunks(stage: string): readonly (readonly string[])[] {
   const zone = stageDestinationId(ZONE_MAP, stage);
   return zone === undefined ? [] : recentMiddleChunks(progress, zone);
 }

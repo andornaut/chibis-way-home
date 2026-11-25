@@ -19,7 +19,7 @@ import { ZONE_FRAMES } from "../data/zoneFrames.ts";
 import { RECIPES } from "../data/zones.ts";
 import { arenaApproachRelations } from "./arenaApproaches.ts";
 import { arenaChunk } from "./arenas.ts";
-import type { ChunkLibrary } from "./assemble.ts";
+import type { AvoidEntries, ChunkLibrary } from "./assemble.ts";
 import { certifiedChunks } from "./modules.ts";
 import { planStage, type StageContext } from "./stagePlans.ts";
 
@@ -111,7 +111,7 @@ export function zonePlanFor(seed: number, key: string): ZonePlan {
 }
 
 // zonePlanFor without the avoided middle chunks while an assembly fits without them
-// (assembleZoneAvoiding), the same for the same seed and avoided chunks.
-export function zonePlanAvoiding(avoid: readonly string[], seed: number, key: string): ZonePlan {
+// (assembleZoneAvoiding), the same for the same seed and avoided entries.
+export function zonePlanAvoiding(avoid: AvoidEntries, seed: number, key: string): ZonePlan {
   return planStage(STAGE_CONTEXT, { avoid, seed, target: { recipe: key } }).plan;
 }

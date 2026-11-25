@@ -102,10 +102,10 @@ export function recordStepAchievements(
 export function recordStageChunks(stage: string, middle: readonly string[]): void {
   pageSave.recordStageChunks(stage, middle);
 }
-export function recentStageChunks(stage: string): readonly string[] {
+export function recentStageChunks(stage: string): readonly (readonly string[])[] {
   return pageSave.recentStageChunks(stage);
 }
-export function savedRecentMiddleChunks(zone: string): readonly string[] {
+export function savedRecentMiddleChunks(zone: string): readonly (readonly string[])[] {
   return pageSave.savedRecentMiddleChunks(zone);
 }
 export function nextTip(blocked: () => boolean): QueuedTip | undefined {

@@ -1489,6 +1489,10 @@ export function requiredChunks(
 // without them and every pool was used whole ("fallback").
 export type Avoidance = "fallback" | "honoured";
 
+// The chunks to avoid: the middle chunk ids of a zone's recent stage entries, one list an entry,
+// newest first.
+export type AvoidEntries = readonly (readonly string[])[];
+
 // A zone assembled with chunks to avoid.
 export interface AvoidingAssembly {
   readonly avoidance: Avoidance;
@@ -1498,20 +1502,20 @@ export interface AvoidingAssembly {
 // assembleZone, first with the avoided chunks left out of every middle pool except those a flat
 // recipe cannot do without (requiredChunks), then, when no assembly fits without them, with every
 // pool whole. An ordered stage's section pools keep none. Deterministic in (seed, avoid). Recency
-// across stages passes the ids of the zone's recent stages; an empty list assembles as
-// assembleZone and counts as honoured. Only the outcome that nothing fits falls back: a narrowed
+// across stages passes the zone's recent stage entries; no entry, or none that names a chunk,
+// assembles as assembleZone and counts as honoured. Only the outcome that nothing fits falls back: a narrowed
 // pool that is no valid pool, or NoAssemblyError. Any other error is thrown on.
 export function assembleZoneAvoiding(
   library: ChunkLibrary,
-  avoid: readonly string[],
+  avoid: AvoidEntries,
   seed: number,
   key: string,
   recipe: StageRecipe,
 ): AvoidingAssembly {
-  if (avoid.length === 0) {
+  const avoided = new Set(avoid.flat());
+  if (avoided.size === 0) {
     return { avoidance: "honoured", plan: assembleZone(library, seed, key, recipe) };
   }
-  const avoided = new Set(avoid);
   let narrowed: StageRecipe;
   let valid: boolean;
   if ("sections" in recipe) {

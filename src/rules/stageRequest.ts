@@ -1,4 +1,5 @@
 import type { ZoneMap } from "../data/types/index.ts";
+import type { AvoidEntries } from "./assemble.ts";
 import { askedRecipe, askedSeed } from "./pageParams.ts";
 import { type StageRequest, stageTarget } from "./stagePlans.ts";
 import { askedStagePreview, type StagePreview } from "./stagePreview.ts";
@@ -9,8 +10,9 @@ export interface StageEntryContext {
   // the entropy.
   readonly entropy: () => number;
   readonly map: ZoneMap;
-  // The middle chunk ids a fresh entry of a map stage avoids.
-  readonly recent: (stage: string) => readonly string[];
+  // The middle chunk ids a fresh entry of a map stage avoids: its destination's recent stage
+  // entries, newest first.
+  readonly recent: (stage: string) => AvoidEntries;
   // The recipe keys ?zone= and ?stagePreview= may name.
   readonly recipes: readonly string[];
 }

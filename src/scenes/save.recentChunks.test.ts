@@ -30,8 +30,8 @@ it("records a stage entry's middle chunks, avoids them in its zone and clears th
   const avoided = zone.stages.map((stage) => reopened.recentStageChunks(stage));
   reopened.clearProgress();
   expect({ avoided, cleared: reopened.savedRecentMiddleChunks(zone.id), kept }).toEqual({
-    avoided: zone.stages.map(() => [known]),
+    avoided: zone.stages.map(() => [[known]]),
     cleared: [],
-    kept: [known],
+    kept: [[known]],
   });
 });

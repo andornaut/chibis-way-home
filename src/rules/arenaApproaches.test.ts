@@ -87,7 +87,7 @@ it("rejects unknown profiles, unmeasured multi-predecessor policies and duplicat
 it("retains the required approach while excluding other recently used chunks", () => {
   const ids = assembleZoneAvoiding(
     lib,
-    ["qualified", "other-0"],
+    [["qualified", "other-0"]],
     7,
     "test-stage",
     recipe,

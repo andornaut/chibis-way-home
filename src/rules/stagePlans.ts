@@ -1,5 +1,10 @@
 import type { StageRecipe, ZoneMap, ZonePlan } from "../data/types/index.ts";
-import { assembleZoneAvoiding, type Avoidance, type ChunkLibrary } from "./assemble.ts";
+import {
+  assembleZoneAvoiding,
+  type Avoidance,
+  type AvoidEntries,
+  type ChunkLibrary,
+} from "./assemble.ts";
 
 // What a stage plan is assembled from.
 export interface StageContext {
@@ -11,9 +16,10 @@ export interface StageContext {
 // The stage to plan: a map node, which plays its zone's recipe, or a recipe by its key.
 export type StageTarget = { readonly node: string } | { readonly recipe: string };
 
-// One stage to plan: the middle chunks to avoid, the assembly seed and the target.
+// One stage to plan: the middle chunks to avoid, as the zone's recent stage entries newest first,
+// the assembly seed and the target.
 export interface StageRequest {
-  readonly avoid: readonly string[];
+  readonly avoid: AvoidEntries;
   readonly seed: number;
   readonly target: StageTarget;
 }

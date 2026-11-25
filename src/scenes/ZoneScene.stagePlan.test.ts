@@ -6,7 +6,7 @@ import { planStage } from "../rules/stagePlans.ts";
 import { STAGE_CONTEXT } from "../rules/zonePlans.ts";
 
 const save = vi.hoisted(() => ({
-  recentStageChunks: vi.fn((): readonly string[] => []),
+  recentStageChunks: vi.fn((): readonly (readonly string[])[] => []),
   recordStageChunks: vi.fn(),
 }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
@@ -45,11 +45,11 @@ it("plans a map entry without its saved recent chunks, then records its own midd
     }
     const target = { node: node.id };
     const { middle } = planStage(STAGE_CONTEXT, { avoid: [], seed: SEED, target });
-    const avoiding = planStage(STAGE_CONTEXT, { avoid: middle, seed: SEED, target });
+    const avoiding = planStage(STAGE_CONTEXT, { avoid: [middle], seed: SEED, target });
     return avoiding.middle.join() !== middle.join();
   })!.id;
   const target = { node: stage };
-  const recent = planStage(STAGE_CONTEXT, { avoid: [], seed: SEED, target }).middle;
+  const recent = [planStage(STAGE_CONTEXT, { avoid: [], seed: SEED, target }).middle];
   save.recentStageChunks.mockReturnValue(recent);
   const expected = planStage(STAGE_CONTEXT, { avoid: recent, seed: SEED, target });
   const loadPlan = start(`?assembly=${SEED}`, { node: stage });

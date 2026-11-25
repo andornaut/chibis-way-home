@@ -11,7 +11,7 @@ const NODE = ZONE_MAP.nodes.find(
   (node) => node.kind === "zone" && node.zone !== undefined && node.id !== ZONE_MAP.start,
 )!.id;
 const DRAWN = 4242;
-const RECENT = ["recent-a", "recent-b"];
+const RECENT = [["recent-a", "recent-b"], ["recent-c"]];
 const OPENING = { node: ZONE_MAP.start };
 
 // A context whose entropy and recent chunks are recorded.
@@ -19,7 +19,7 @@ function context() {
   return {
     entropy: vi.fn(() => DRAWN),
     map: ZONE_MAP,
-    recent: vi.fn((): readonly string[] => RECENT),
+    recent: vi.fn((): readonly (readonly string[])[] => RECENT),
     recipes: KEYS,
   };
 }

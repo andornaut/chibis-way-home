@@ -35,7 +35,12 @@ describe("recent middle chunks", () => {
       recent: recorded.at === "map" ? recorded.recent?.[ZONE] : undefined,
       window: RECENT_STAGES,
       zone: recentMiddleChunks(recorded, ZONE),
-    }).toEqual({ other: ["b"], recent: [["d", "a"], ["c"]], window: 2, zone: ["d", "a", "c"] });
+    }).toEqual({
+      other: [["b"]],
+      recent: [["d", "a"], ["c"]],
+      window: 2,
+      zone: [["d", "a"], ["c"]],
+    });
   });
 
   it("is empty by default and at the beginning, where nothing is recorded", () => {

@@ -52,12 +52,12 @@ describe("the stage a request plans", () => {
     const whole = (key: string) =>
       planStage(CONTEXT, { avoid: [], seed: 0, target: { recipe: key } });
     const avoiding = (key: string) =>
-      planStage(CONTEXT, { avoid: whole(key).middle, seed: 0, target: { recipe: key } });
+      planStage(CONTEXT, { avoid: [whole(key).middle], seed: 0, target: { recipe: key } });
     // A recipe that still assembles without its own middle chunks.
     const key = Object.keys(STAGE_CONTEXT.recipes).find(
       (each) => avoiding(each).middle.join() !== whole(each).middle.join(),
     )!;
-    expect(avoiding(key).plan).toEqual(zonePlanAvoiding(whole(key).middle, 0, key));
+    expect(avoiding(key).plan).toEqual(zonePlanAvoiding([whole(key).middle], 0, key));
   }, 60_000);
 
   it.each([
@@ -103,7 +103,7 @@ describe("a stage entered again", () => {
       for (const seed of AVOID_SEEDS) {
         const earlier = planStage(STAGE_CONTEXT, { avoid: [], seed, target: { recipe: key } });
         const again = planStage(STAGE_CONTEXT, {
-          avoid: earlier.middle,
+          avoid: [earlier.middle],
           seed: seed + 1,
           target: { recipe: key },
         });
