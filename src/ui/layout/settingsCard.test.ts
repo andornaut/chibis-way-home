@@ -147,7 +147,7 @@ it("fits the Settings card with Install in the view without scrolling", () => {
   const placed = placeModalFrame(context, parts(body));
   expect(placed.scrolls).toBe(false);
   expect(placed.card.height).toBeLessThanOrEqual(LIMIT);
-  expect(placed.card.height).toBe(326);
+  expect(placed.card.height).toBe(314);
 });
 
 it("stacks the Cheats unlocks at the stacked gap over a row, with Back centred in the footer", () => {
