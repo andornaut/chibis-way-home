@@ -8,6 +8,8 @@ import { STAGE_RECIPES, zonePlanAvoiding, zonePlanFor } from "./zonePlans.ts";
 
 // Pins every recipe's assembled plan: a refactor of stage planning keeps each hash. Update the
 // fixture only with a deliberate change to the chunks, recipes or assembly.
+// CLEANUP (added 2026-11-25): remove this test and zonePlans.golden.json when cwh-0307 replaces
+// plan hashes with property tests.
 const FIXTURE = new URL("./zonePlans.golden.json", import.meta.url);
 const SEEDS = Array.from({ length: 16 }, (_, seed) => seed);
 

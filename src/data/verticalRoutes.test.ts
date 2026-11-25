@@ -159,8 +159,8 @@ it.each([
     assembled: "city-boundary",
     connectors: BLUE_CONNECTORS,
     name: "Blue",
-    surfaceReturn: "outdoor-guarded-return",
     stages: ["street", "city-streets", "city-boundary"],
+    surfaceReturn: "outdoor-guarded-return",
     verticalId: blueVerticalId,
   },
   {
@@ -168,8 +168,8 @@ it.each([
     assembled: "river-crossing",
     connectors: COUNTRYSIDE_CONNECTORS,
     name: "Countryside",
-    surfaceReturn: "outdoor-surface-return",
     stages: ["farmland", "country-lanes", "river-crossing"],
+    surfaceReturn: "outdoor-surface-return",
     verticalId: countrysideVerticalId,
   },
 ])(
