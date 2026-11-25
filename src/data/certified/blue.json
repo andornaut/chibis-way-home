@@ -709,8 +709,8 @@
     }
   ],
   "inputs": {
-    "data": "8f7945dd8e05184f",
-    "proofs": "2317910ecd510ac3"
+    "data": "34ca8cc56135d25c",
+    "proofs": "3da47b4279092027"
   },
   "version": 1,
   "zone": "blue",
@@ -726,8 +726,8 @@
         "trace": "42e549eecb670bcb:37686"
       },
       "inputs": {
-        "data": "8f7945dd8e05184f",
-        "proofs": "2317910ecd510ac3"
+        "data": "34ca8cc56135d25c",
+        "proofs": "3da47b4279092027"
       },
       "predecessors": ["outdoor-deep-ascent"],
       "profile": "cold-encounter-v1",
