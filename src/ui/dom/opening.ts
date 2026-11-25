@@ -1,10 +1,14 @@
+import { ACTION_GAPS } from "@andornaut/game-kit/runtime/ui/actionGroup";
+import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
 import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { CARD_CONTENT, PLAY_MARK, TEXT_BUTTON } from "../../data/layout.ts";
-import { mountUiLayout, type UiLayoutNode } from "./layoutTree.ts";
+import { type ActionsView, measuredActions } from "./actions.ts";
+import { textButton } from "./card.ts";
+import { registerLayout, rendered } from "./layout.ts";
 
 export type OpeningAction = "continue" | "skip";
 
@@ -16,6 +20,8 @@ export const OPENING_PROPERTIES: LayoutValues = {
 };
 
 export interface OpeningView {
+  // The footer row: Skip on the left and Continue on the right.
+  readonly actions: ActionsView;
   readonly buttons: Readonly<Record<OpeningAction, HTMLButtonElement>>;
   readonly caption: HTMLElement;
   readonly mark: HTMLImageElement;
@@ -29,7 +35,39 @@ export interface OpeningWords {
   readonly skip: string;
 }
 
-// Native text determines both equal-width faces. Continue leads the focus order, with Skip left.
+// The width of a row of faces side by side, the standard gap apart.
+export function openingActionsWidth(widths: readonly number[]): number {
+  return (
+    widths.reduce((sum, width) => sum + width, 0) +
+    Math.max(0, widths.length - 1) * ACTION_GAPS.standard.row
+  );
+}
+
+// A row group exactly as wide as its faces and gaps, so the footer's layout anchors it.
+function contentActions(
+  document: Document,
+  className: string,
+  elements: readonly HTMLElement[],
+): ActionsView {
+  const group = createActionGroup(document, { className });
+  group.element.append(...elements);
+  const arrange = () => {
+    if (!rendered(group.element.parentElement ?? group.element)) {
+      return undefined;
+    }
+    const actions = measuredActions(group, elements);
+    const shown = actions.filter(({ element }) => !element.hidden);
+    return group.arrange(
+      { axis: "row", width: openingActionsWidth(shown.map(({ size }) => size.width)) },
+      actions,
+    );
+  };
+  registerLayout(arrange, group.element);
+  return { arrange, element: group.element, group };
+}
+
+// The footer holds the caption and, at its right, the action row sized to its faces. Continue
+// leads the focus order; the group shows it on the right, after Skip.
 export function createOpeningView(document: Document, words: OpeningWords): OpeningView {
   const root = document.createElement("div");
   root.className = "opening-scene";
@@ -42,88 +80,23 @@ export function createOpeningView(document: Document, words: OpeningWords): Open
   view.className = "ui-view opening-view";
   const footer = document.createElement("div");
   footer.className = "opening-footer";
-  let caption!: HTMLElement;
-  const buttons = new Map<OpeningAction, HTMLButtonElement>();
+  const caption = document.createElement("p");
+  caption.className = "opening-caption ui-text-body";
+  caption.setAttribute("aria-live", "polite");
+  const buttons = {
+    continue: textButton(document, words.continue, true),
+    skip: textButton(document, words.skip),
+  };
+  buttons.continue.dataset.control = "continue";
+  buttons.skip.dataset.control = "skip";
   const mark = document.createElement("img");
   mark.alt = "";
-  const actions = document.createElement("div");
-  actions.className = "ui-card-actions opening-actions";
-  const tree: UiLayoutNode = {
-    component: "Native",
-    key: "opening",
-    kind: "component",
-    props: { element: root },
-    slots: {
-      content: [
-        { component: "Native", key: "backdrop", kind: "component", props: { element: backdrop } },
-        {
-          component: "Native",
-          key: "view",
-          kind: "component",
-          props: { element: view },
-          slots: {
-            content: [
-              {
-                component: "Native",
-                key: "footer",
-                kind: "component",
-                props: { element: footer },
-                slots: {
-                  content: [
-                    {
-                      component: "Text",
-                      key: "caption",
-                      kind: "component",
-                      props: {
-                        attributes: { "aria-live": "polite" },
-                        className: "opening-caption ui-text-body",
-                        ref: (element) => {
-                          caption = element;
-                        },
-                        tag: "p",
-                        text: "",
-                      },
-                    },
-                    {
-                      component: "Native",
-                      key: "actions",
-                      kind: "component",
-                      props: { element: actions },
-                      slots: {
-                        content: (["continue", "skip"] as const).map((action) => ({
-                          component: "Button",
-                          key: action,
-                          kind: "component",
-                          props: {
-                            control: action,
-                            label: words[action],
-                            primary: action === "continue",
-                            ref: (button) => {
-                              buttons.set(action, button);
-                              if (action === "continue") {
-                                button.querySelector(".ui-text-button-label")!.prepend(mark);
-                              }
-                            },
-                          },
-                        })),
-                      },
-                    },
-                  ],
-                },
-              },
-            ],
-          },
-        },
-      ],
-    },
-  };
-  mountUiLayout(document, document.createElement("div"), tree);
-  return {
-    buttons: { continue: buttons.get("continue")!, skip: buttons.get("skip")! },
-    caption,
-    mark,
-    root,
-  };
+  buttons.continue.querySelector(".ui-text-button-label")!.prepend(mark);
+  const actions = contentActions(document, "opening-actions", [buttons.continue, buttons.skip]);
+  footer.append(caption, actions.element);
+  view.append(footer);
+  root.append(backdrop, view);
+  return { actions, buttons, caption, mark, root };
 }
 
 export function showOpeningCaption(text: string, view: OpeningView): void {

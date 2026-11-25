@@ -1,4 +1,5 @@
-/* The footer keeps its height and right anchor. Its actions fit their label and mark. */
+/* The footer keeps its height and right anchor. Its action group is as wide as its faces, which
+   fit their label and mark. */
 .opening-view {
   pointer-events: none;
 }
@@ -23,11 +24,6 @@
   white-space: pre;
   color: var(--colour-white);
   text-box: trim-both cap alphabetic;
-}
-
-.ui-card-actions.opening-actions {
-  /* The outer hit area reaches past the right inset; its face stays on the original anchor. */
-  margin: 0 calc(-1 * var(--hit)) 0 0;
 }
 
 /* The play mark and label count as one content-sized face. */

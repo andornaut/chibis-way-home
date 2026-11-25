@@ -2,10 +2,12 @@ import { controlPresentation } from "@andornaut/game-kit/runtime/ui/controlPrese
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import { MAP_LAYOUT } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
 import type { Point, Rect } from "../../data/types/index.ts";
 import type { MapAction } from "../input/mapInput.ts";
 import { MAP_SCREEN } from "../layout/mapScreen.ts";
-import { mountUiLayout, type UiLayoutNode } from "./layoutTree.ts";
+import { type ActionsView, createActions } from "./actions.ts";
+import { textButton } from "./card.ts";
 
 export type DestinationLook = "current" | "locked" | "normal" | "unbuilt" | "visited";
 
@@ -24,6 +26,8 @@ export interface MapWords {
 }
 
 export interface MapView {
+  // The footer row: Back to title on the left and Continue on the right.
+  readonly actions: ActionsView;
   readonly buttons: Readonly<Record<MapAction, HTMLButtonElement>>;
   readonly destinations: ReadonlyMap<string, HTMLButtonElement>;
   readonly letterbox: HTMLElement;
@@ -33,6 +37,7 @@ export interface MapView {
 }
 
 export const MAP_PROPERTIES = {
+  "--map-action-y": MAP_SCREEN.actionY,
   "--map-bird-height": 0,
   "--map-bird-image": "none",
   "--map-bird-width": 0,
@@ -49,9 +54,10 @@ export const MAP_PROPERTIES = {
   "--map-y": 0,
 };
 
+// The title's box, centred on the title's x; its text is centred in it.
 export const MAP_TITLE_PROPERTIES = {
   "--map-title-width": MAP_SCREEN.title.width,
-  "--map-x": MAP_SCREEN.title.x,
+  "--map-x": MAP_SCREEN.title.x - MAP_SCREEN.title.width / 2,
   "--map-y": MAP_SCREEN.title.y,
 };
 
@@ -79,47 +85,24 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
   writeLayoutProperties(MAP_PROPERTIES, view);
   root.setAttribute("aria-labelledby", "map-title");
   const content = document.createElement("div");
-  content.className = "map-content ui-action-row";
-  writeLayoutProperties({ "--ui-action-y": MAP_SCREEN.actionY }, content);
-  const children: UiLayoutNode[] = [
-    {
-      component: "Text",
-      key: "title",
-      kind: "component",
-      props: {
-        className: "map-title ui-text-heading",
-        id: "map-title",
-        ref: (title) =>
-          writeLayoutProperties(
-            {
-              "--map-title-width": MAP_SCREEN.title.width,
-              "--map-x": MAP_SCREEN.title.x,
-              "--map-y": MAP_SCREEN.title.y,
-            },
-            title,
-          ),
-        tag: "h1",
-        text: words.title,
-      },
-    },
-  ];
-  const controls = new Map<MapAction, HTMLButtonElement>();
-  for (const key of ["continue", "home"] as const) {
-    children.push({
-      component: "Button",
-      key,
-      kind: "component",
-      props: {
-        control: key,
-        label: words[key],
-        primary: key === "continue",
-        ref: (button) => {
-          button.classList.add("ui-anchored-action");
-          controls.set(key, button);
-        },
-      },
-    });
-  }
+  content.className = "map-content";
+  const title = document.createElement("h1");
+  title.className = "map-title ui-text-heading";
+  title.id = "map-title";
+  title.textContent = words.title;
+  writeLayoutProperties(MAP_TITLE_PROPERTIES, title);
+  // Continue leads the focus order; the group shows it on the right.
+  const buttons = {
+    continue: textButton(document, words.continue, true),
+    home: textButton(document, words.home),
+  };
+  buttons.continue.dataset.control = "continue";
+  buttons.home.dataset.control = "home";
+  const actions = createActions(document, [buttons.continue, buttons.home], {
+    className: "map-actions",
+    width: SCREEN.width,
+  });
+  content.append(title, actions.element);
   const destinations = new Map<string, HTMLButtonElement>();
   const markers = new Map<string, HTMLImageElement>();
   for (const face of faces) {
@@ -165,82 +148,29 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
       },
       marker,
     );
-    children.push(
+    const description = document.createElement("span");
+    description.hidden = true;
+    description.id = descriptionId;
+    description.textContent = presentation.reason ?? words.states[state];
+    button.append(marker, description);
+    const label = document.createElement("p");
+    label.className = "map-label ui-text-label";
+    label.setAttribute("aria-hidden", "true");
+    label.textContent = name;
+    box(
       {
-        component: "Native",
-        key: `destination-${id}`,
-        kind: "component",
-        props: { element: button },
-        slots: {
-          content: [
-            { component: "Native", key: "marker", kind: "component", props: { element: marker } },
-            {
-              component: "Text",
-              key: "state",
-              kind: "component",
-              props: {
-                attributes: { hidden: "" },
-                id: descriptionId,
-                tag: "span",
-                text: presentation.reason ?? words.states[state],
-              },
-            },
-          ],
-        },
+        height: MAP_LAYOUT.label.height,
+        width: MAP_LAYOUT.label.width,
+        x: centre.x - MAP_LAYOUT.label.width / 2,
+        y: centre.y + MAP_LAYOUT.label.top,
       },
-      {
-        component: "Text",
-        key: `label-${id}`,
-        kind: "component",
-        props: {
-          attributes: { "aria-hidden": "true" },
-          className: "map-label",
-          ref: (label) =>
-            box(
-              {
-                height: MAP_LAYOUT.label.height,
-                width: MAP_LAYOUT.label.width,
-                x: centre.x - MAP_LAYOUT.label.width / 2,
-                y: centre.y + MAP_LAYOUT.label.top,
-              },
-              label,
-            ),
-          tag: "p",
-          text: name,
-        },
-      },
+      label,
     );
+    content.append(button, label);
     destinations.set(id, button);
     markers.set(id, marker);
   }
-  mountUiLayout(document, document.createElement("div"), {
-    component: "Native",
-    key: "map",
-    kind: "component",
-    props: { element: root },
-    slots: {
-      content: [
-        { component: "Native", key: "letterbox", kind: "component", props: { element: letterbox } },
-        {
-          component: "Native",
-          key: "view",
-          kind: "component",
-          props: { element: view },
-          slots: {
-            content: [
-              {
-                component: "Native",
-                key: "content",
-                kind: "component",
-                props: { element: content },
-                slots: { content: children },
-              },
-            ],
-          },
-        },
-      ],
-    },
-  });
-  const buttons = { continue: controls.get("continue")!, home: controls.get("home")! };
-  return { buttons, destinations, letterbox, markers, root, view };
+  view.append(content);
+  root.append(letterbox, view);
+  return { actions, buttons, destinations, letterbox, markers, root, view };
 }

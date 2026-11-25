@@ -35,9 +35,16 @@
 }
 
 .map-title {
-  max-width: calc(var(--ui-unit) * var(--map-title-width) * 1px);
+  width: calc(var(--ui-unit) * var(--map-title-width) * 1px);
   text-align: center;
-  translate: -50% 0;
+}
+
+/* The footer row spans the view with its faces' top at the action row's y; the group centres
+   its faces and owns their gap and press areas. */
+.map-actions {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--map-action-y) * 1px);
+  left: 0;
 }
 
 .map-label,
@@ -52,9 +59,6 @@
   align-items: center;
   justify-content: center;
   background: var(--colour-lgrey);
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 700;
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
   white-space: nowrap;
   pointer-events: none;
 }
@@ -79,13 +83,13 @@
 
 .map-destination:not([aria-disabled="true"]):is(:focus-visible, [data-pressed]) + .map-label {
   forced-color-adjust: none;
-  background: var(--button-focus-fill);
-  color: var(--button-focus-ink);
+  background: var(--ui-button-focus-fill);
+  color: var(--ui-button-focus-text);
 }
 
 .map-destination:not([aria-disabled="true"])[data-pressed] + .map-label {
-  background: var(--button-press-fill);
-  color: var(--button-press-ink);
+  background: var(--ui-colour-button-pressed-face);
+  color: var(--ui-colour-button-pressed-text);
 }
 
 .map-destination[aria-disabled="true"] {

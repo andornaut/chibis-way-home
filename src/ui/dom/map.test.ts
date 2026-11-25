@@ -1,155 +1,134 @@
 // @vitest-environment happy-dom
-import {
-  MAX_RENDER_SCALE,
-  renderFit,
-  renderScale,
-} from "@andornaut/game-kit/runtime/view/renderScale";
+import { ACTION_GAPS, arrangeActions } from "@andornaut/game-kit/runtime/ui/actionGroup";
 import { expect, it } from "vitest";
 
-import { MAP_LAYOUT } from "../../data/layout.ts";
+import { MAP_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
+import { TEXT } from "../../data/text.ts";
+import { hitMargin } from "../layout/hitAreas.ts";
 import { MAP_SCREEN } from "../layout/mapScreen.ts";
-import { playView } from "../layout/playView.ts";
-import { createUiLayer } from "./layer.ts";
-import { createMap, type DestinationLook } from "./map.ts";
+import { actionRole } from "./actions.ts";
+import { createMap, type DestinationLook, type MapFace } from "./map.ts";
 
-it("names every destination and describes its availability without adding nodes to Tab navigation", () => {
-  const states: Record<DestinationLook, string> = {
-    current: "Here",
-    locked: "Locked",
-    normal: "Available",
-    unbuilt: "Unavailable",
-    visited: "Completed",
-  };
-  const view = createMap(
-    document,
-    { continue: "Continue", home: "Title", states, title: "Map" },
-    Object.keys(states).map((state) => ({
-      centre: { x: 100, y: 100 },
-      id: state,
-      name: `Zone ${state}`,
-      state: state as DestinationLook,
-    })),
-  );
-  expect(
-    view.buttons.continue
-      .querySelector(".ui-text-button-face")!
-      .hasAttribute("data-ui-authored-size"),
-  ).toBe(false);
-  for (const [state, button] of view.destinations) {
-    expect(button.getAttribute("aria-label")).toBe(`Zone ${state}`);
-    expect(
-      view.root.querySelector(`#${button.getAttribute("aria-describedby")}`)?.textContent,
-    ).toBe(states[state as DestinationLook]);
-    expect(button.tabIndex).toBe(-1);
-    expect(button.getAttribute("aria-disabled")).toBe(
-      ["locked", "unbuilt"].includes(state) ? "true" : null,
-    );
+const WORDS = {
+  continue: TEXT.map.continue,
+  home: TEXT.pause.home,
+  states: TEXT.map.destinationStates,
+  title: TEXT.map.title,
+};
+const LOOKS = Object.keys(TEXT.map.destinationStates) as DestinationLook[];
+const NAMES = Object.values(TEXT.map.zones);
+// One destination in each state, named from the zone names.
+const FACES: MapFace[] = LOOKS.map((state, index) => ({
+  centre: { x: 100 + 100 * index, y: 100 },
+  id: state,
+  name: NAMES[index % NAMES.length]!,
+  state,
+}));
+const face = (width: number) => ({ height: TEXT_BUTTON.height, width });
+const number = (name: string, element: HTMLElement) => Number(element.style.getPropertyValue(name));
+
+it("names the Map by its title and its footer actions from the text data", () => {
+  const view = createMap(document, WORDS, FACES);
+  const title = view.root.querySelector(`#${view.root.getAttribute("aria-labelledby")}`)!;
+  expect(title.tagName).toBe("H1");
+  expect(title.textContent).toBe(TEXT.map.title);
+  expect(view.buttons.continue.textContent).toBe(TEXT.map.continue);
+  expect(view.buttons.home.textContent).toBe(TEXT.pause.home);
+  expect(actionRole(view.buttons.continue)).toBe("primary");
+  expect(actionRole(view.buttons.home)).toBe("secondary");
+  for (const [control, button] of Object.entries(view.buttons)) {
+    expect(button.dataset.control).toBe(control);
+    expect(button.disabled).toBe(false);
+    expect(button.hidden).toBe(false);
   }
-  expect(view.destinations.get("current")!.getAttribute("aria-current")).toBe("location");
-  expect(view.markers.get("normal")!.alt).toBe("");
-  expect([...view.root.querySelectorAll("button")].slice(0, 2)).toEqual([
+});
+
+it("moves the Tab focus from Continue to Back to title and never to a destination", () => {
+  const view = createMap(document, WORDS, FACES);
+  const buttons = [...view.root.querySelectorAll("button")];
+  expect(buttons.filter((button) => button.tabIndex >= 0)).toEqual([
     view.buttons.continue,
     view.buttons.home,
   ]);
+  expect(buttons.slice(2)).toEqual([...view.destinations.values()]);
 });
 
-it("keeps marker, label and footer press geometry independent", () => {
-  const view = createMap(
-    document,
-    {
-      continue: "Continue",
-      home: "Title",
-      states: {
-        current: "Here",
-        locked: "Locked",
-        normal: "Available",
-        unbuilt: "Unavailable",
-        visited: "Completed",
-      },
-      title: "Map",
-    },
-    [{ centre: { x: 100, y: 100 }, id: "zone", name: "Zone", state: "normal" }],
-  );
-  const node = view.destinations.get("zone")!;
-  expect(Number(node.style.getPropertyValue("--map-width"))).toBe(MAP_SCREEN.nodeHit.width);
-  expect(Number(node.style.getPropertyValue("--map-x"))).toBe(100 - MAP_SCREEN.nodeHit.width / 2);
-  const label = view.root.querySelector<HTMLElement>(".map-label")!;
-  expect(Number(label.style.getPropertyValue("--map-width"))).toBe(MAP_LAYOUT.label.width);
-  expect(label.closest("button")).toBeNull();
-  for (const button of [view.buttons.continue, view.buttons.home]) {
-    expect(Number(button.parentElement!.style.getPropertyValue("--ui-action-y"))).toBe(
-      MAP_SCREEN.actionY,
+it("names every destination and describes its state", () => {
+  const view = createMap(document, WORDS, FACES);
+  expect([...view.destinations.keys()]).toEqual(LOOKS);
+  for (const { id, name, state } of FACES) {
+    const button = view.destinations.get(id)!;
+    expect(button.getAttribute("aria-label")).toBe(name);
+    const description = view.root.querySelector<HTMLElement>(
+      `#${button.getAttribute("aria-describedby")}`,
+    )!;
+    expect(description.textContent).toBe(TEXT.map.destinationStates[state]);
+    expect(description.hidden).toBe(true);
+    expect(button.getAttribute("aria-disabled")).toBe(
+      state === "locked" || state === "unbuilt" ? "true" : null,
     );
-    expect(button.classList.contains("ui-anchored-action")).toBe(true);
-    expect(
-      button.querySelector(".ui-text-button-face")?.hasAttribute("data-ui-authored-size"),
-    ).toBe(false);
+    expect(button.getAttribute("aria-current")).toBe(state === "current" ? "location" : null);
+    expect(button.dataset.state).toBe(state);
+    expect(view.markers.get(id)!.alt).toBe("");
+    expect(button.contains(view.markers.get(id)!)).toBe(true);
   }
 });
 
-it("keeps the fitted play view inside the full-layer scene root across refits", () => {
-  const map = createMap(
-    document,
-    {
-      continue: "Continue",
-      home: "Title",
-      states: {
-        current: "Here",
-        locked: "Locked",
-        normal: "Available",
-        unbuilt: "Unavailable",
-        visited: "Completed",
-      },
-      title: "Map",
-    },
-    [],
+it("shows each name once, outside its destination's press area and hidden from its accessible name", () => {
+  const view = createMap(document, WORDS, FACES);
+  const labels = [...view.root.querySelectorAll<HTMLElement>("p")];
+  expect(labels.map((label) => label.textContent)).toEqual(FACES.map(({ name }) => name));
+  for (const [index, label] of labels.entries()) {
+    expect(label.getAttribute("aria-hidden")).toBe("true");
+    expect(label.closest("button")).toBeNull();
+    // The label follows its destination, whose focus and press it shows.
+    expect(label.previousElementSibling).toBe(view.destinations.get(FACES[index]!.id));
+  }
+});
+
+it("places each destination's press area and name from the map's geometry", () => {
+  const view = createMap(document, WORDS, FACES);
+  for (const { centre, id } of FACES) {
+    const button = view.destinations.get(id)!;
+    expect(number("--map-width", button)).toBe(MAP_SCREEN.nodeHit.width);
+    expect(number("--map-height", button)).toBe(MAP_SCREEN.nodeHit.height);
+    expect(number("--map-x", button) + MAP_SCREEN.nodeHit.width / 2).toBe(centre.x);
+    expect(number("--map-y", button) + MAP_SCREEN.nodeHit.height / 2).toBe(centre.y);
+    const marker = view.markers.get(id)!;
+    expect(number("--map-x", button) + number("--map-x", marker)).toBe(
+      centre.x + MAP_SCREEN.marker.zone.x,
+    );
+    const label = button.nextElementSibling as HTMLElement;
+    expect(number("--map-x", label) + number("--map-width", label) / 2).toBe(centre.x);
+    expect(number("--map-y", label)).toBe(centre.y + MAP_LAYOUT.label.top);
+  }
+  const title = view.root.querySelector<HTMLElement>("h1")!;
+  expect(number("--map-x", title) + number("--map-title-width", title) / 2).toBe(SCREEN.width / 2);
+  expect(number("--map-y", title)).toBe(MAP_SCREEN.title.y);
+  expect(number("--map-action-y", view.view)).toBe(MAP_SCREEN.actionY);
+});
+
+it("shows Back to title on the left and Continue on the right, 16 px apart, centred as a pair", () => {
+  const gap = ACTION_GAPS.standard.row;
+  const margin = hitMargin({ ...face(TEXT_BUTTON.height), x: 0, y: 0 });
+  expect(gap).toBe(TEXT_BUTTON.gap);
+  // Focus order: Continue, then Back to title.
+  const arrangement = arrangeActions({ width: SCREEN.width }, [
+    { key: "continue", role: "primary", size: face(128) },
+    { key: "home", role: "secondary", size: face(160) },
+  ]);
+  expect(arrangement.axis).toBe("row");
+  const placed = Object.fromEntries(
+    arrangement.actions.map((action) => [action.key, action] as const),
   );
-  const layer = createUiLayer([], document);
-  const unmount = layer.mount(0, map.root);
-  expect(map.root.classList.contains("ui-scene")).toBe(true);
-  expect(map.root.classList.contains("ui-view")).toBe(false);
-  expect(map.view.parentElement).toBe(map.root);
-  expect(map.view.classList.contains("ui-scene")).toBe(false);
-  expect(map.view.classList.contains("ui-view")).toBe(true);
-  expect(map.view.querySelector(".map-content")?.parentElement).toBe(map.view);
-  for (const size of [
-    { height: 390, width: 844 },
-    { height: 640, width: 1280 },
-  ]) {
-    const fit = renderFit(SCREEN, renderScale(MAX_RENDER_SCALE, 1), size);
-    const play = playView(fit);
-    layer.fit({ x: 17, y: 29 }, fit);
-    expect(layer.element.style.getPropertyValue("--ui-view-left")).toBe(`${17 + play.x / fit.r}px`);
-    expect(layer.element.style.getPropertyValue("--ui-view-top")).toBe(`${29 + play.y / fit.r}px`);
-    expect(map.view.parentElement).toBe(map.root);
-  }
-  unmount();
-  layer.dispose();
-});
-
-it("creates independent destination image slots through the production factory for authoring", () => {
-  const words = {
-    continue: "Continue",
-    home: "Title",
-    states: {
-      current: "Here",
-      locked: "Locked",
-      normal: "Available",
-      unbuilt: "Unavailable",
-      visited: "Completed",
-    },
-    title: "Map",
-  };
-  const faces = [
-    { centre: { x: 100, y: 100 }, id: "fixture", name: words.title, state: "current" as const },
-  ];
-  const live = createMap(document, words, faces);
-  document.body.append(live.root);
-  live.markers.get("fixture")!.src = "blob:runtime-marker";
-  const authored = createMap(document, words, faces);
-  expect(authored.markers.get("fixture")!.getAttribute("src")).toBeNull();
-  expect(authored.destinations.get("fixture")).not.toBe(live.destinations.get("fixture"));
-  expect(authored.view.querySelector(".map-content")?.parentElement).toBe(authored.view);
-  live.root.remove();
+  const left = (SCREEN.width - (160 + gap + 128)) / 2;
+  expect(placed.home).toMatchObject({
+    face: { ...face(160), x: left, y: 0 },
+    outset: { left: margin, right: gap / 2 },
+  });
+  expect(placed.continue).toMatchObject({
+    face: { ...face(128), x: left + 160 + gap, y: 0 },
+    outset: { left: gap / 2, right: margin },
+  });
 });

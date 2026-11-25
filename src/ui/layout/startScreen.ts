@@ -2,9 +2,12 @@ import { START_SCREEN, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect, Size } from "../../data/types/index.ts";
 import { PAUSE_DISC } from "./controlChrome.ts";
+import { hitMargin } from "./hitAreas.ts";
 import { TOP_BAR_CENTRE_Y } from "./topBar.ts";
 
-// Start uses the shared navigation disc and keeps Exit's established press area.
+// Start uses the shared navigation disc. Exit's frame sits on whole pixels, centred on the top
+// section to the pixel above; its press area is the frame grown by the hit rule's margin, in
+// whole pixels, and held below the view's top.
 const NAV_HEIGHT = START_SCREEN.navHeight;
 const LOGO_TOP_GAP = START_SCREEN.logoTopGap;
 const LOGO_ACTION_GAP = START_SCREEN.logoActionGap;
@@ -24,11 +27,18 @@ export interface StartScreenLayout {
 }
 
 function exitButton(): IconButtonLayout {
-  const { exitCentreX: x, exitTarget: target } = START_SCREEN;
   const size = PAUSE_DISC.frame;
+  const art = {
+    height: size,
+    width: size,
+    x: START_SCREEN.exitX,
+    y: Math.floor(TOP_BAR_CENTRE_Y - size / 2),
+  };
+  const margin = Math.ceil(hitMargin(art));
+  const target = size + 2 * margin;
   return {
-    art: { height: size, width: size, x: x - size / 2, y: TOP_BAR_CENTRE_Y - size / 2 },
-    hit: { height: target, width: target, x: x - target / 2, y: 0 },
+    art,
+    hit: { height: target, width: target, x: art.x - margin, y: Math.max(0, art.y - margin) },
   };
 }
 

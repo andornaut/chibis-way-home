@@ -7,6 +7,16 @@
   height: calc(var(--ui-unit) * var(--start-height) * 1px);
 }
 
+/* The footer row spans the view with its faces' top at the action row's y; the group centres
+   its faces and owns their gap and press areas. */
+.start-actions {
+  --start-action-y: 0;
+
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--start-action-y) * 1px);
+  left: 0;
+}
+
 .start-view img {
   image-rendering: pixelated;
   pointer-events: none;

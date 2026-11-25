@@ -278,9 +278,8 @@ export const STAGE_SUMMARY = {
 export const START_SCREEN = {
   // The top of the Start action row.
   actionY: 268,
-  // The Exit button's horizontal centre and established target size.
-  exitCentreX: 694,
-  exitTarget: 54,
+  // The left of the Exit button's frame.
+  exitX: 676,
   // The gap from the logo's bottom to the action row's top.
   logoActionGap: 15,
   // The gap from the nav bar's bottom to the logo's top.

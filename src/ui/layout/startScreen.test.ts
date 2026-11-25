@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
-import { hitAround, hitMargin, pressedArea } from "./hitAreas.ts";
+import { hitMargin, pressedArea } from "./hitAreas.ts";
 import { PAUSE_BUTTON } from "./pauseCard.ts";
 import { startScreenLayout } from "./startScreen.ts";
 
@@ -26,21 +26,25 @@ describe.each([
 ])("the start screen %s", (_, exitShown, saved) => {
   const layout = startScreenLayout(SCREEN, exitShown, saved);
 
-  it("centres visible Menu and Exit faces in the shared top section with usable press targets", () => {
-    const centre = layout.nav.y + layout.nav.height / 2;
-    expect(PAUSE_BUTTON.art.y + PAUSE_BUTTON.art.height / 2).toBe(centre);
-    expect(PAUSE_BUTTON.hit.y).toBeGreaterThanOrEqual(0);
-    expect(PAUSE_BUTTON.hit.width).toBe(hitAround(PAUSE_BUTTON.art).width);
-    if (layout.exit !== undefined) {
-      const { art, hit } = layout.exit;
-      expect(art.y + art.height / 2).toBe(centre);
-      expect(art.x + art.width / 2).toBe(694);
-      expect([art.width, art.height]).toEqual([PAUSE_BUTTON.art.width, PAUSE_BUTTON.art.height]);
-      expect(hit).toEqual({ height: 54, width: 54, x: 667, y: 0 });
+  it("puts Exit's frame on whole pixels at the top section's centre, with the hit rule's target", () => {
+    if (layout.exit === undefined) {
+      return;
     }
+    const { art, hit } = layout.exit;
+    const centre = layout.nav.y + layout.nav.height / 2;
+    expect(art).toEqual({ height: 35, width: 35, x: 676, y: 6 });
+    expect([art.width, art.height]).toEqual([PAUSE_BUTTON.art.width, PAUSE_BUTTON.art.height]);
+    // An odd frame in an even section sits half a pixel above the centre.
+    expect(centre - (art.y + art.height / 2)).toBe(0.5);
+    const margin = Math.ceil(hitMargin(art));
+    expect(hit).toEqual({ height: 53, width: 53, x: 667, y: 0 });
+    expect(hit.width).toBe(art.width + 2 * margin);
+    expect(hit.x).toBe(art.x - margin);
+    expect(inside(SCREEN_RECT, hit)).toBe(true);
+    expect(inside(hit, art)).toBe(true);
   });
 
-  it("takes the whole existing Exit target when Exit is present", () => {
+  it("takes a press anywhere in Exit's target", () => {
     if (layout.exit === undefined) {
       return;
     }
@@ -50,15 +54,7 @@ describe.each([
     expect(pressedArea(areas, { x: hit.x + hit.width - 1, y: hit.y + hit.height - 1 })).toBe(
       "exit",
     );
-  });
-
-  it("keeps Exit at its existing position and omits standalone menu actions", () => {
-    const withExit = startScreenLayout(SCREEN, true, saved).exit!;
-    if (layout.exit !== undefined) {
-      expect(layout.exit).toEqual(withExit);
-    }
-    expect("achievements" in layout).toBe(false);
-    expect("settings" in layout).toBe(false);
+    expect(pressedArea(areas, { x: hit.x - 1, y: hit.y })).toBeUndefined();
   });
 
   it("reserves the standard action height below the nav and preserves save visibility", () => {
