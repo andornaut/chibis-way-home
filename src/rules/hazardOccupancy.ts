@@ -8,6 +8,7 @@ import type {
   Rect,
 } from "../data/types/index.ts";
 import type { BehaviourState } from "./behaviour.ts";
+import type { EncounterSampler } from "./encounter.ts";
 import { axisOf } from "./motion.ts";
 import { orbitBounds } from "./orbit.ts";
 import { createTimedHazardSampler, timedHazardRect } from "./timedHazard.ts";
@@ -376,6 +377,7 @@ export function hazardBoundsAt(
 
 // Preserve the legacy envelope while exposing certified timed contacts explicitly.
 export function hazardOccupancy(
+  step: EncounterSampler,
   tuning: BirdTuning,
   objects: readonly ObjectLayout[],
   state: BehaviourState | undefined,
@@ -384,7 +386,7 @@ export function hazardOccupancy(
   timeSeconds: number,
   object: ObjectLayout,
 ) {
-  const timedContacts = createTimedHazardSampler(tuning, object, { at, state, timeSeconds });
+  const timedContacts = createTimedHazardSampler(step, tuning, object, { at, state, timeSeconds });
   return {
     boundsAt: hazardBoundsAt(objects, state, at, contact, timeSeconds, object),
     rect: timedContacts ? timedHazardRect(object, at) : contact,

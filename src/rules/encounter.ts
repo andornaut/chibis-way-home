@@ -150,7 +150,7 @@ function moveEncounter(
 }
 
 // Fixtures that hold their own geometry read the step before its outcomes become events, without
-// a map, streams or observer of the context.
+// a map, streams or observer of the context. Timed hazard samplers advance their clocks with it.
 export function stepBehaviour(
   tuning: BirdTuning,
   object: ObjectLayout,
@@ -167,6 +167,9 @@ export function stepBehaviour(
     world: behaviourWorld(geometry),
   });
 }
+
+// The encounter step as a dependency of a module that samples it.
+export type EncounterSampler = typeof stepBehaviour;
 
 // Applies the tick's outcome to a stepped object. A death ends its pursuit without an escape and
 // starts its removal; a door ends an engaged pursuit as an escape without a bark. An outcome that

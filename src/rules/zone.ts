@@ -58,6 +58,7 @@ import {
   type EncounterEvent,
   type EncounterStep,
   settleEncounter,
+  stepBehaviour,
   stepEncounter,
 } from "./encounter.ts";
 import { type ForcePulse, forcePulseVelocity } from "./force.ts";
@@ -784,7 +785,16 @@ function stepZoneBodiesInternal(
       return [
         {
           ...(dynamic
-            ? hazardOccupancy(tuning, area.objects, state, at, rect, zone.seconds, object)
+            ? hazardOccupancy(
+                stepBehaviour,
+                tuning,
+                area.objects,
+                state,
+                at,
+                rect,
+                zone.seconds,
+                object,
+              )
             : { rect }),
           owner: object,
         },

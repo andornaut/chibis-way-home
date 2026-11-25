@@ -50,7 +50,7 @@ const full = { ...object.origin, height: object.height, width: object.width };
 const snapshotTime = 10;
 const activeTime = snapshotTime + WARNED_VENT_SECONDS.inactive + WARNED_VENT_SECONDS.warning;
 const sampler = () =>
-  createTimedHazardSampler(BIRD, object, {
+  createTimedHazardSampler(stepBehaviour, BIRD, object, {
     at: object.origin,
     state: started(),
     timeSeconds: snapshotTime,
@@ -76,7 +76,7 @@ it("clips the actual executor's active slices to absolute query times and full v
 it("anchors prediction to a copied live elapsed snapshot rather than a new cycle", () => {
   const elapsed = WARNED_VENT_SECONDS.inactive + WARNED_VENT_SECONDS.warning / 2;
   const live = stepBehaviour(BIRD, object, [], elapsed, bird, object.origin, started()).state;
-  const sample = createTimedHazardSampler(BIRD, object, {
+  const sample = createTimedHazardSampler(stepBehaviour, BIRD, object, {
     at: object.origin,
     state: live,
     timeSeconds: snapshotTime,
@@ -121,6 +121,7 @@ function context(state = started()) {
         {
           owner: object,
           ...hazardOccupancy(
+            stepBehaviour,
             BIRD,
             [object],
             state,
@@ -160,7 +161,7 @@ it("uses native timed safety without rejecting inactive geometry as permanently 
 });
 
 it("distinguishes missing snapshot data from a certified empty active interval", () => {
-  const missing = createTimedHazardSampler(BIRD, object, {
+  const missing = createTimedHazardSampler(stepBehaviour, BIRD, object, {
     at: object.origin,
     state: undefined,
     timeSeconds: snapshotTime,
@@ -184,7 +185,7 @@ it("distinguishes missing snapshot data from a certified empty active interval",
   expect(native.safe(request(snapshotTime, snapshotTime + 0.1))).toBe(false);
   expect(native.sampleColliders(snapshotTime, 0.1, full).complete).toBe(false);
   expect(
-    createTimedHazardSampler(BIRD, actor, {
+    createTimedHazardSampler(stepBehaviour, BIRD, actor, {
       at: actor.origin,
       state: started(),
       timeSeconds: snapshotTime,

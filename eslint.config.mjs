@@ -127,21 +127,6 @@ const INDEXED = {
   },
 };
 
-// CLEANUP (added 2026-11-04): the files of the one value import cycle, where timedHazard imports
-// behaviour and behaviourTraversal and behaviourMapPursuit import timedHazardSafe from
-// timedHazard. Remove this exemption once the cycle is broken.
-const CYCLE_EXEMPT_FILES = [
-  "src/rules/behaviour.ts",
-  "src/rules/behaviourAbilities.ts",
-  "src/rules/behaviourIdle.ts",
-  "src/rules/behaviourIntent.ts",
-  "src/rules/behaviourMapPursuit.ts",
-  "src/rules/behaviourPursuitAbilities.ts",
-  "src/rules/behaviourRecoveryAbilities.ts",
-  "src/rules/behaviourTraversal.ts",
-  "src/rules/timedHazard.ts",
-];
-
 const IMPORT_X = {
   rules: { extensions, "no-cycle": noCycle, "no-restricted-paths": noRestrictedPaths },
 };
@@ -261,7 +246,6 @@ export default defineConfig(
   // imports are erased at build time, so they never form one.
   {
     files: SOURCE_FILES,
-    ignores: CYCLE_EXEMPT_FILES,
     plugins: { "import-x": IMPORT_X },
     rules: { "import-x/no-cycle": "error" },
     settings: IMPORT_X_SETTINGS,

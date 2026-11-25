@@ -2,10 +2,10 @@ import type { TraversalSafety } from "@andornaut/game-kit/runtime/terrain/traver
 
 import { sweptContact } from "../core/index.ts";
 import type { BirdTuning, ObjectLayout, Point, Rect } from "../data/types/index.ts";
-import { actBehaviour, type BehaviourState } from "./behaviour.ts";
-import { perceiveBehaviour } from "./behaviourPerception.ts";
+import type { BehaviourState } from "./behaviour.ts";
 import { startBird } from "./bird.ts";
 import { effectiveHazardPhase, validateHazardPhases } from "./effectiveCollision.ts";
+import type { EncounterSampler } from "./encounter.ts";
 
 interface TimedHazardContact {
   readonly startSeconds: number;
@@ -25,9 +25,11 @@ const MAX_TRANSITIONS = 4096;
 const MAX_CHECKPOINTS = 64;
 const TIMED_OBJECTS = new WeakMap<ObjectLayout, boolean>();
 
-// Each sampler owns a bounded, immutable snapshot of one stationary elapsed-only graph.
-// Undefined is unknown; an empty array certifies no active contact during the interval.
+// Each sampler owns a bounded, immutable snapshot of one stationary elapsed-only graph, which it
+// advances through the encounter step it is handed. Undefined is unknown; an empty array
+// certifies no active contact during the interval.
 export function createTimedHazardSampler(
+  step: EncounterSampler,
   tuning: BirdTuning,
   object: ObjectLayout,
   snapshot: {
@@ -74,7 +76,9 @@ export function createTimedHazardSampler(
     }),
   );
   const checkpoints = new Map<number, BehaviourState>([[0, { ...state }]]);
-  const perception = perceiveBehaviour(tuning, [], startBird(tuning, at));
+  // The clock perceives no terrain, and Chibi where it stands.
+  const solids: readonly Rect[] = [];
+  const bird = startBird(tuning, at);
   let remaining = MAX_TRANSITIONS;
   const advance = (seconds: number, prior: BehaviourState) => {
     const cost = Math.ceil(seconds / minimumDuration) + 1;
@@ -82,8 +86,7 @@ export function createTimedHazardSampler(
       return undefined;
     }
     remaining -= cost;
-    // A stationary elapsed-only clock needs only the act stage of the encounter step.
-    return actBehaviour(perception, object, seconds, at, prior);
+    return step(tuning, object, solids, seconds, bird, at, prior);
   };
   const stateAt = (offset: number): BehaviourState | undefined => {
     const cached = checkpoints.get(offset);
