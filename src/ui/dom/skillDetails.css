@@ -2,12 +2,6 @@
    lengths are base px times --ui-unit, from the layer's layout properties and
    SKILL_DETAILS_LAYOUT on the card's view. */
 
-/* The body has no press areas, so it starts the gap below the close X's press area, or below a
-   taller title. */
-.skill-details-card > .ui-card-header {
-  min-height: calc(var(--ui-unit) * (var(--close-clear) - var(--card-frame)) * 1px);
-}
-
 /* The disc beside the description, a gap apart, both centred on the body's height. */
 .skill-details-body {
   display: flex;
@@ -20,5 +14,4 @@
 .skill-details-description {
   max-width: calc(var(--ui-unit) * var(--skill-details-width) * 1px);
   margin: 0;
-  text-align: start;
 }

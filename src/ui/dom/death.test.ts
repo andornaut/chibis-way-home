@@ -1,142 +1,110 @@
 // @vitest-environment happy-dom
-import { readFileSync } from "node:fs";
-import { createRequire } from "node:module";
-
+import { fillNames } from "@andornaut/game-kit/runtime/lines";
+import { arrangeActions } from "@andornaut/game-kit/runtime/ui/actionGroup";
+import { placeModalFrame } from "@andornaut/game-kit/runtime/ui/modalFrame";
 import { expect, it } from "vitest";
 
-import { TEXT } from "../../data/text.ts";
-import { createChoiceCard } from "./choice.ts";
+import { CARD_CONTENT, CARD_SCREEN_MARGIN, CARD_WIDTH, TEXT_BUTTON } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
+import { STATS_SCOPE_TEXT, TEXT } from "../../data/text.ts";
+import { DEATH_ACTIONS } from "../input/deathInput.ts";
+import { actionRole } from "./actions.ts";
 import { createDeathCard } from "./death.ts";
-import { createDialogueView } from "./dialogue.ts";
-import { createUiLayer, UI_LAYOUT } from "./layer.ts";
-import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
-// Vitest blanks CSS imports, so these contracts read the actual stylesheets.
-const deathCss = readFileSync(createRequire(import.meta.url).resolve("./death.css"), "utf8");
-const runStatsCss = readFileSync(createRequire(import.meta.url).resolve("./runStats.css"), "utf8");
-const uiCss = readFileSync(createRequire(import.meta.url).resolve("./ui.css"), "utf8");
 
-// Every custom property the death card's and the run statistics' stylesheets read is one the
-// layer, its view bridge, the skin, the card's own elements or the stylesheets set, so no rule
-// reads a value nothing provides.
-it("reads only custom properties the layer, the skin, the card or the stylesheets set", () => {
-  const css = `${deathCss}\n${runStatsCss}`;
-  const read = new Set([...css.matchAll(/var\((--[\w-]+)/g)].map(([, name]) => name!));
-  const set = new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map(([, name]) => name!));
-  const card = createDeathCard(document, {
-    actions: [{ key: "retry", label: "Try again" }],
-    label: "Card",
-    progress: "Progress",
-    stage: "Stage",
-    stats: [{ label: "Attempts:", value: "1" }],
-    title: "Zone",
-    totals: [{ label: "Run total:", value: "0:01" }],
-  });
-  const written = [
-    card.root,
-    ...card.root.querySelectorAll<HTMLElement>("[style]"),
-    createUiLayer([], document).element,
-  ].flatMap(({ style }) => [...Array(style.length).keys()].map((index) => style.item(index)));
-  const provided = (name: string) =>
-    set.has(name) ||
-    written.includes(name) ||
-    name in UI_LAYOUT ||
-    /^--ui-(unit|view-\w+|slice-\d+)$/.test(name) ||
-    // ui.css sets these on the card's action row.
-    ["--half-gap", "--hit"].includes(name) ||
-    UI_COLOURS.some((colour) => name === `--colour-${colour}`) ||
-    UI_FRAMES.some(({ name: frame }) =>
-      ["border", "bottom", "image", "left", "right", "slice", "top"].some(
-        (part) => name === `--${frame}-${part}`,
-      ),
-    );
-  expect([...read].filter((name) => !provided(name))).toEqual([]);
-});
+const SILENT = {
+  actions: DEATH_ACTIONS.map((key) => ({
+    key,
+    label: key === "retry" ? TEXT.death.retry : TEXT.pause.home,
+  })),
+  label: fillNames(TEXT.death.label, { zone: TEXT.death.title }),
+  progress: TEXT.death.progress,
+  stage: TEXT.death.stage,
+  stats: [{ label: TEXT.stats.attempts, value: "2" }],
+  title: TEXT.death.title,
+  totals: [{ label: STATS_SCOPE_TEXT.zoneTotal, value: "4:50" }],
+};
+const WORDS = { ...SILENT, statement: TEXT.death.retry };
+const ROOM = CARD_WIDTH.large - 2 * CARD_CONTENT.padding;
+const FACE = { height: TEXT_BUTTON.height, width: 160 };
 
-// Happy DOM checks the actual group/CSS contract, not physical viewport measurements.
-function footerStyles(): HTMLStyleElement {
-  const style = document.createElement("style");
-  const kit = readFileSync(
-    createRequire(import.meta.url).resolve("@andornaut/game-kit/runtime/web/ui/dom/controls.css"),
-    "utf8",
+const text = (ids: string | null, root: HTMLElement) =>
+  (ids ?? "").split(" ").map((id) => root.querySelector(`#${id}`)?.textContent);
+
+// The card's actions as the action group arranges them, each at a nominal face.
+const arranged = (buttons: readonly HTMLButtonElement[]) =>
+  arrangeActions(
+    { width: ROOM },
+    buttons.map((key) => ({ hidden: key.hidden === true, key, role: actionRole(key), size: FACE })),
   );
-  style.textContent = [kit, uiCss, deathCss].join("\n");
-  document.head.append(style);
-  return style;
-}
 
-it("lays out the final retry footer as a wrapping content row with its primary on the right", () => {
-  const style = footerStyles();
-  const card = createDeathCard(document, {
-    actions: [
-      { key: "retry", label: TEXT.death.retry },
-      { key: "home", label: TEXT.pause.home },
-    ],
-    label: TEXT.death.label,
-    progress: TEXT.death.progress,
-    stage: TEXT.death.stage,
-    stats: [],
-    title: TEXT.death.title,
-    totals: [],
-  });
-  document.body.append(card.root);
-  try {
-    const actions = card.dialog.lastElementChild as HTMLElement;
-    expect(actions.classList.contains("ui-control-group")).toBe(true);
-    expect(actions.dataset.uiAxis).toBe("row");
-    const group = getComputedStyle(actions);
-    expect(group.display).toBe("flex");
-    expect(group.flexWrap).toBe("wrap");
-    expect(group.justifyContent).toBe("center");
-    expect([...actions.children]).toEqual([card.buttons.retry, card.buttons.home]);
-    expect(card.buttons.retry.classList.contains("ui-text-button-primary")).toBe(true);
-    expect(card.buttons.home.classList.contains("ui-text-button-primary")).toBe(false);
-    expect(getComputedStyle(card.buttons.retry).order).toBe("1");
-    expect(getComputedStyle(card.buttons.home).order).not.toBe("1");
-    expect(getComputedStyle(card.buttons.retry).flex).toBe("0 0 auto");
-    expect(getComputedStyle(card.buttons.home).flex).toBe("0 0 auto");
-    card.buttons.home.hidden = true;
-    expect(getComputedStyle(card.buttons.home).display).toBe("none");
-    expect(getComputedStyle(actions).justifyContent).toBe("center");
-    card.buttons.retry.focus();
-    expect(document.activeElement).toBe(card.buttons.retry);
-  } finally {
-    card.root.remove();
-    style.remove();
-  }
+it("is an alert named by its label and described by its lines, with no close", () => {
+  const card = createDeathCard(document, WORDS);
+  expect(card.dialog.getAttribute("role")).toBe("alertdialog");
+  expect(card.dialog.getAttribute("aria-label")).toBe(WORDS.label);
+  expect(card.dialog.hasAttribute("aria-labelledby")).toBe(false);
+  expect(text(card.dialog.getAttribute("aria-describedby"), card.dialog)).toEqual([
+    WORDS.stage,
+    WORDS.progress,
+    WORDS.statement,
+  ]);
+  expect(card.dialog.querySelector("h2")?.textContent).toBe(WORDS.title);
+  const plain = createDeathCard(document, SILENT).dialog;
+  expect(text(plain.getAttribute("aria-describedby"), plain)).toEqual([
+    WORDS.stage,
+    WORDS.progress,
+  ]);
 });
 
-it("keeps dialogue rows and choice stacks on the same native group geometry", () => {
-  const style = footerStyles();
-  const dialogue = createDialogueView(document, false, "conversation", TEXT.dialogue);
-  const choice = createChoiceCard(document, "choice", {
-    options: [
-      { id: "continue", label: TEXT.dialogue.continue },
-      { id: "skip", label: TEXT.dialogue.skip },
-    ],
-    prompt: TEXT.dialogue.label,
+it("moves the focus through Try again then Back to title, both enabled, and nothing else", () => {
+  const card = createDeathCard(document, WORDS);
+  const focusable = [...card.dialog.querySelectorAll("button")];
+  expect(focusable).toEqual([card.buttons.retry, card.buttons.home]);
+  expect(focusable.map(({ textContent }) => textContent)).toEqual([
+    TEXT.death.retry,
+    TEXT.pause.home,
+  ]);
+  expect(focusable.every((button) => !button.disabled && !button.hidden)).toBe(true);
+});
+
+it("shows Back to title left of Try again, the game's gap apart and centred as a pair", () => {
+  const card = createDeathCard(document, WORDS);
+  const { actions, axis } = arranged([card.buttons.retry, card.buttons.home]);
+  const [retry, home] = actions.map((action) => {
+    if (action.hidden) {
+      throw new Error("Both actions show");
+    }
+    return action;
   });
-  document.body.append(dialogue.root, choice.root);
-  try {
-    expect(dialogue.footer.dataset.uiAxis).toBe("row");
-    expect(getComputedStyle(dialogue.footer).display).toBe("flex");
-    expect(getComputedStyle(dialogue.footer).flexWrap).toBe("wrap");
-    expect(getComputedStyle(dialogue.buttons.continue).order).toBe("1");
-    expect([...dialogue.footer.children]).toEqual([
-      dialogue.buttons.continue,
-      dialogue.buttons.skip,
-    ]);
-    const actions = choice.dialog.lastElementChild as HTMLElement;
-    expect(actions.dataset.uiAxis).toBe("stack");
-    expect(getComputedStyle(actions).display).toBe("inline-grid");
-    expect(getComputedStyle(actions).gridAutoFlow).toBe("row");
-    expect([...actions.children]).toEqual([...choice.buttons.values()]);
-    expect([...actions.children].map((button) => button.textContent)).toEqual([
-      TEXT.dialogue.continue,
-      TEXT.dialogue.skip,
-    ]);
-  } finally {
-    dialogue.root.remove();
-    choice.root.remove();
-    style.remove();
-  }
+  expect(axis).toBe("row");
+  expect(retry!.face.x - (home!.face.x + home!.face.width)).toBe(TEXT_BUTTON.gap);
+  expect(TEXT_BUTTON.gap).toBe(16);
+  expect(home!.face.x).toBe(ROOM - (retry!.face.x + retry!.face.width));
+  // Press areas meet midway between the faces and never overlap.
+  expect(home!.outset.right).toBe(TEXT_BUTTON.gap / 2);
+  expect(retry!.outset.left).toBe(TEXT_BUTTON.gap / 2);
+});
+
+it("centres a sole shown action", () => {
+  const card = createDeathCard(document, WORDS);
+  card.buttons.home.hidden = true;
+  const [retry] = arranged([card.buttons.retry, card.buttons.home]).actions;
+  expect(retry).toMatchObject({ face: { width: FACE.width, x: (ROOM - FACE.width) / 2 } });
+});
+
+it("places its frame on whole pixels at the large width, centred in the play view", () => {
+  const { card } = placeModalFrame(
+    {
+      content: { height: SCREEN.height, width: SCREEN.width, x: 0, y: 0 },
+      families: CARD_WIDTH,
+      family: "large",
+      gap: CARD_CONTENT.gap,
+      margin: CARD_SCREEN_MARGIN,
+      padding: CARD_CONTENT.padding,
+    },
+    { body: 181, title: { height: 17 } },
+  );
+  expect(card.width).toBe(CARD_WIDTH.large);
+  expect(Object.values(card).every(Number.isInteger)).toBe(true);
+  expect(card.x).toBe(Math.floor((SCREEN.width - card.width) / 2));
+  expect(card.y).toBe(Math.floor((SCREEN.height - card.height) / 2));
 });

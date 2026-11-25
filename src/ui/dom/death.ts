@@ -6,15 +6,15 @@ import {
 import { CARD_CONTENT, DEATH_CARD } from "../../data/layout.ts";
 import type { DeathAction } from "../input/deathInput.ts";
 import type { StatsMetricRow } from "../layout/runStats.ts";
-import { setCardWidth, textButton } from "./card.ts";
-import { mountUiLayout } from "./layoutTree.ts";
+import { type ActionsView, createActions } from "./actions.ts";
+import { textButton } from "./card.ts";
+import { createCardFrame } from "./cardFrame.ts";
 import { createRunStats } from "./runStats.ts";
 
-// The required death card in the HTML UI (death.css): over a full-area backdrop that takes every
-// press outside it, the card on the play view in art's ui-settings-card frame, with the zone's
-// name, the stage and progress lines, the antagonist's statement, the stage's metrics and the
-// totals in two columns either side of an ink divider, and Back to title and Try again. It has
-// no close: only its actions leave it.
+// The required death card in the HTML UI (death.css, on cardFrame.ts): the zone's name as its
+// title, the stage and progress lines, the antagonist's statement, the stage's metrics and the
+// totals in two columns either side of an ink divider, and Back to title and Try again side by
+// side, centred. It has no close: only its actions leave it.
 
 export interface DeathCardWords {
   // Each button's key and label, in the order the keyboard's focus moves through them.
@@ -31,6 +31,8 @@ export interface DeathCardWords {
 }
 
 export interface DeathCardView {
+  // The two actions' group.
+  readonly actions: ActionsView;
   readonly backdrop: HTMLElement;
   readonly buttons: Readonly<Record<DeathAction, HTMLButtonElement>>;
   // The card itself: role alertdialog, named by its label and described by its lines.
@@ -49,36 +51,33 @@ export const DEATH_LAYOUT: LayoutValues = {
 const ID = "death-card";
 
 // The death card for words. Its actions are primary Try again and Back to title, in focus order;
-// death.css shows Back to title on the left.
+// their group shows Back to title on the left.
 export function createDeathCard(document: Document, words: DeathCardWords): DeathCardView {
-  const element = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
-    const created = document.createElement(tag);
-    created.className = className;
-    return created;
-  };
   const line = (key: string, text: string) => {
-    const paragraph = element("p", "ui-death-line ui-text-body");
+    const paragraph = document.createElement("p");
+    paragraph.className = "ui-death-line ui-text-body";
     paragraph.id = `${ID}-${key}`;
     paragraph.textContent = text;
     return paragraph;
   };
-  const root = element("div", "ui-card-scene ui-death-scene");
-  writeLayoutProperties(DEATH_LAYOUT, root);
-  const backdrop = element("div", "ui-backdrop");
-  const view = element("div", "ui-view ui-card-view");
-  const dialog = element("section", "ui-card ui-frame ui-death-card");
   // The stage's metrics beside the totals, and two actions side by side.
-  setCardWidth("large", dialog);
-  dialog.id = ID;
-  dialog.setAttribute("role", "alertdialog");
-  dialog.setAttribute("aria-label", words.label);
-  const title = element("h2", "ui-card-title");
-  title.id = `${ID}-title`;
-  title.textContent = words.title;
-  const identity = element("div", "ui-death-identity");
+  const frame = createCardFrame(document, {
+    alert: true,
+    className: "ui-death-card",
+    id: ID,
+    sceneClassName: "ui-death-scene",
+    title: words.title,
+    width: "large",
+  });
+  writeLayoutProperties(DEATH_LAYOUT, frame.root);
+  const identity = document.createElement("div");
+  identity.className = "ui-death-identity";
   identity.append(line("stage", words.stage), line("progress", words.progress));
   const statement = words.statement === undefined ? [] : [line("statement", words.statement)];
-  dialog.setAttribute(
+  // Named by its label, which says more than its title, and described by its lines.
+  frame.dialog.removeAttribute("aria-labelledby");
+  frame.dialog.setAttribute("aria-label", words.label);
+  frame.dialog.setAttribute(
     "aria-describedby",
     [...identity.children, ...statement].map(({ id }) => id).join(" "),
   );
@@ -87,13 +86,6 @@ export function createDeathCard(document: Document, words: DeathCardWords): Deat
     { columnGap: 2 * CARD_CONTENT.gap, divider: DEATH_CARD.dividerWidth },
     [words.stats, words.totals],
   );
-  const actions = element("div", "ui-card-actions ui-death-actions");
-  mountUiLayout(document, document.createElement("div"), {
-    component: "Native",
-    key: "actions",
-    kind: "component",
-    props: { element: actions },
-  });
   const buttons = Object.fromEntries(
     words.actions.map(({ key, label }) => {
       const button = textButton(document, label, key === "retry");
@@ -101,9 +93,11 @@ export function createDeathCard(document: Document, words: DeathCardWords): Deat
       return [key, button];
     }),
   ) as Record<DeathAction, HTMLButtonElement>;
-  actions.append(...words.actions.map(({ key }) => buttons[key]));
-  dialog.append(title, identity, ...statement, stats, actions);
-  view.append(dialog);
-  root.append(backdrop, view);
-  return { backdrop, buttons, dialog, root };
+  const actions = createActions(
+    document,
+    words.actions.map(({ key }) => buttons[key]),
+    { className: "ui-card-actions ui-death-actions" },
+  );
+  frame.content.append(identity, ...statement, stats, actions.element);
+  return { actions, backdrop: frame.backdrop, buttons, dialog: frame.dialog, root: frame.root };
 }

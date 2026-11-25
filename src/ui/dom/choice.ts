@@ -1,10 +1,10 @@
-import { setCardWidth, textButton } from "./card.ts";
-import { mountUiLayout } from "./layoutTree.ts";
+import { type ActionsView, createActions } from "./actions.ts";
+import { textButton } from "./card.ts";
+import { createCardFrame } from "./cardFrame.ts";
 
-// A conversation's required choice in the HTML UI (ui.css's shared card and stack): over a
-// full-area backdrop that takes every press outside it, the card on the play view in art's
-// ui-settings-card frame, with the prompt and its answers stacked below it, each in art's
-// ui-button. It has no title, close X or default answer: only an answer leaves it.
+// A conversation's required choice in the HTML UI (cardFrame.ts): the prompt, one centred line,
+// over its answers stacked at the card's full content width, each in art's ui-button. It has no
+// title, close X or default answer: only an answer leaves it.
 
 export interface ChoiceWords {
   // Each answer's id and label, in the order the keyboard's focus moves through them.
@@ -13,6 +13,8 @@ export interface ChoiceWords {
 }
 
 export interface ChoiceCardView {
+  // The answers' group.
+  readonly actions: ActionsView;
   readonly backdrop: HTMLElement;
   // Each answer's button, by its id.
   readonly buttons: ReadonlyMap<string, HTMLButtonElement>;
@@ -28,30 +30,18 @@ export function createChoiceCard(
   id: string,
   words: ChoiceWords,
 ): ChoiceCardView {
-  const element = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
-    const created = document.createElement(tag);
-    created.className = className;
-    return created;
-  };
-  const root = element("div", "ui-card-scene");
-  const backdrop = element("div", "ui-backdrop");
-  const view = element("div", "ui-view ui-card-view");
-  const dialog = element("section", "ui-card ui-frame dialogue-choice");
   // A prompt over stacked answers.
-  setCardWidth("small", dialog);
-  dialog.id = id;
-  dialog.setAttribute("role", "alertdialog");
-  dialog.setAttribute("aria-labelledby", `${id}-prompt`);
-  const prompt = element("p", "ui-card-text");
+  const frame = createCardFrame(document, {
+    alert: true,
+    className: "dialogue-choice",
+    id,
+    width: "small",
+  });
+  const prompt = document.createElement("p");
+  prompt.className = "ui-card-text ui-text-body";
   prompt.id = `${id}-prompt`;
   prompt.textContent = words.prompt;
-  const actions = element("div", "ui-card-actions ui-button-stack");
-  mountUiLayout(document, document.createElement("div"), {
-    component: "Native",
-    key: "actions",
-    kind: "component",
-    props: { element: actions },
-  });
+  frame.dialog.setAttribute("aria-labelledby", prompt.id);
   const buttons = new Map(
     words.options.map(({ id: answer, label }) => {
       const button = textButton(document, label);
@@ -59,9 +49,10 @@ export function createChoiceCard(
       return [answer, button] as const;
     }),
   );
-  actions.append(...buttons.values());
-  dialog.append(prompt, actions);
-  view.append(dialog);
-  root.append(backdrop, view);
-  return { backdrop, buttons, dialog, root };
+  const actions = createActions(document, [...buttons.values()], {
+    className: "ui-card-actions",
+    context: { axis: "stack", stackWidth: "fill" },
+  });
+  frame.content.append(prompt, actions.element);
+  return { actions, backdrop: frame.backdrop, buttons, dialog: frame.dialog, root: frame.root };
 }

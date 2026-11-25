@@ -17,7 +17,9 @@ export interface CelebrationView extends CardView<CelebrationControl> {
   readonly mark: HTMLSpanElement;
 }
 
-// Only the decorative play mark has Celebration-specific geometry.
+// The celebration card in the HTML UI (celebration.css, on card.ts): its title, its message, one
+// centred line, and Continue, art's green face with the play mark, beside Restart. Only the
+// decorative play mark has Celebration-specific geometry.
 export const CELEBRATION_DOM_LAYOUT: LayoutValues = {
   "--celebration-mark-gap": PLAY_MARK.gap,
   "--celebration-mark-height": PLAY_MARK.height,

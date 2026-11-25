@@ -38,10 +38,12 @@
 }
 
 /* Body text in a line box --run-stats-line tall for one line, each further line the body line
-   height below: the body line box, its half-leading past that height taken back. */
+   height below: the body line box, its half-leading past that height taken back. Each takes the
+   colour of the surface that shows it. */
 .ui-run-stats-label,
 .ui-run-stats-value {
   margin: calc(var(--ui-unit) * (var(--run-stats-line) - var(--text-line)) / 2 * 1px) 0;
+  color: inherit;
 }
 
 .ui-run-stats-label {

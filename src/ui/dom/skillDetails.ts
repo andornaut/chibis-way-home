@@ -5,10 +5,10 @@ import {
 
 import { SKILL_DETAILS } from "../../data/layout.ts";
 import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";
-import { closeButton, setCardWidth } from "./card.ts";
+import { createCardFrame } from "./cardFrame.ts";
 import { createSkillDisc } from "./skillDisc.ts";
 
-// The skill details card in the HTML UI (skillDetails.css, on ui.css's .ui-card): its title, the
+// The skill details card in the HTML UI (skillDetails.css, on cardFrame.ts): its title, the
 // skill's ready disc beside its description with inline control illustrations, and the close X.
 
 // The layout properties skillDetails.css reads, in base px.
@@ -16,12 +16,15 @@ export const SKILL_DETAILS_LAYOUT: LayoutValues = {
   "--skill-details-width": SKILL_DETAILS.descriptionWidth,
 };
 
-export interface SkillDetailsWords extends ActionHelpWords {
-  // The close X's accessible name.
-  readonly close: string;
+export interface SkillSummaryWords extends ActionHelpWords {
   readonly description: string;
   // The disc's accessible name.
   readonly disc: string;
+}
+
+export interface SkillDetailsWords extends SkillSummaryWords {
+  // The close X's accessible name.
+  readonly close: string;
   readonly title: string;
 }
 
@@ -32,6 +35,14 @@ export interface SkillDetailsColours {
   readonly navy: number;
   readonly white: number;
   readonly yellow: number;
+}
+
+export interface SkillSummaryView {
+  // The description, a wrapped paragraph identified by the id given.
+  readonly description: HTMLElement;
+  readonly element: HTMLElement;
+  // The disc's glyph, whose source the caller sets.
+  readonly glyph: HTMLImageElement;
 }
 
 export interface SkillDetailsView {
@@ -45,6 +56,25 @@ export interface SkillDetailsView {
   readonly root: HTMLElement;
 }
 
+// A skill's ready, unselected disc (a yellow face and an ink glyph) beside its description, a
+// start-aligned paragraph with inline control illustrations, identified by id.
+export function createSkillSummary(
+  document: Document,
+  colours: SkillDetailsColours,
+  id: string,
+  words: SkillSummaryWords,
+): SkillSummaryView {
+  const element = document.createElement("div");
+  element.className = "skill-details-body";
+  const disc = createSkillDisc(document, colours, { ready: true }, words.disc);
+  const description = document.createElement("p");
+  description.className = "skill-details-description ui-card-paragraph ui-text-body";
+  description.id = id;
+  description.append(...createActionHelp(document, colours, words, words.description));
+  element.append(disc.element, description);
+  return { description, element, glyph: disc.glyph };
+}
+
 // The card for words, its dialog identified by id, which its title's and description's ids extend.
 export function createSkillDetailsCard(
   document: Document,
@@ -52,37 +82,23 @@ export function createSkillDetailsCard(
   id: string,
   words: SkillDetailsWords,
 ): SkillDetailsView {
-  const element = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string) => {
-    const created = document.createElement(tag);
-    created.className = className;
-    return created;
-  };
-  const root = element("div", "ui-card-scene");
-  writeLayoutProperties(SKILL_DETAILS_LAYOUT, root);
-  const backdrop = element("div", "ui-backdrop");
-  const view = element("div", "ui-view ui-card-view");
-  const dialog = element("section", "ui-card ui-frame ui-card-closeable skill-details-card");
   // The disc beside a description up to its full width.
-  setCardWidth("large", dialog);
-  dialog.id = id;
-  dialog.setAttribute("role", "dialog");
-  dialog.setAttribute("aria-labelledby", `${id}-title`);
-  dialog.setAttribute("aria-describedby", `${id}-description`);
-  const header = element("div", "ui-card-header");
-  const title = element("h2", "ui-card-title");
-  title.id = `${id}-title`;
-  title.textContent = words.title;
-  header.append(title);
-  const body = element("div", "skill-details-body");
-  // The ready, unselected disc: a yellow face and an ink glyph.
-  const disc = createSkillDisc(document, colours, { ready: true }, words.disc);
-  const description = element("p", "skill-details-description ui-text-body");
-  description.id = `${id}-description`;
-  description.append(...createActionHelp(document, colours, words, words.description));
-  body.append(disc.element, description);
-  const close = closeButton(document, words.close);
-  dialog.append(header, body, close);
-  view.append(dialog);
-  root.append(backdrop, view);
-  return { backdrop, close, dialog, glyph: disc.glyph, root };
+  const frame = createCardFrame(document, {
+    className: "skill-details-card",
+    close: words.close,
+    id,
+    title: words.title,
+    width: "large",
+  });
+  writeLayoutProperties(SKILL_DETAILS_LAYOUT, frame.root);
+  const summary = createSkillSummary(document, colours, `${id}-description`, words);
+  frame.dialog.setAttribute("aria-describedby", summary.description.id);
+  frame.content.append(summary.element);
+  return {
+    backdrop: frame.backdrop,
+    close: frame.close!,
+    dialog: frame.dialog,
+    glyph: summary.glyph,
+    root: frame.root,
+  };
 }

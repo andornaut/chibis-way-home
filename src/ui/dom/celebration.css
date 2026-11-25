@@ -1,6 +1,7 @@
-.celebration-card .ui-card-text {
-  align-self: stretch;
-  text-align: start;
+/* Continue is art's green ui-resume face with an ink label, through the theme's primary slots. */
+.celebration-card {
+  --ui-colour-button-primary-face: var(--colour-green);
+  --ui-colour-button-primary-text: var(--colour-ink);
 }
 
 .celebration-card .ui-text-button-primary .ui-text-button-face {
@@ -11,10 +12,10 @@
   --ui-button-left: var(--ui-resume-left);
   --ui-button-top: var(--ui-resume-top);
 
-  /* Retain the green raster edges and use the shared state fill inside them. */
+  /* Retain the green raster edges and fill the face inside them from the slot. */
   border-image-slice: var(--ui-frame-slice);
-  background: var(--colour-green) padding-box;
-  color: var(--colour-ink);
+  background: var(--ui-colour-button-primary-face) padding-box;
+  color: var(--ui-colour-button-primary-text);
 }
 
 .celebration-card .ui-text-button-primary[data-pressed] .ui-text-button-face {

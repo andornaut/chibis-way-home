@@ -1,11 +1,6 @@
 /* The death card (death.ts), after ui.css and runStats.css. Lengths are base pixels times
    --ui-unit, from the layer's layout properties and DEATH_LAYOUT, written on the card's view. */
 
-/* The title keeps a closeable card's clearance on both sides, so it centres as theirs do. */
-.ui-death-card > .ui-card-title {
-  padding: 0 calc(var(--ui-unit) * (var(--close-reserve) - var(--card-padding)) * 1px);
-}
-
 /* The stage and progress lines, a row gap apart. */
 .ui-death-identity {
   display: flex;
@@ -28,6 +23,6 @@
 
 /* The metrics a gap in from the content on every side, so a card gap and this one separate them
    from the lines above and the actions below. */
-.ui-death-card > .ui-run-stats {
+.ui-death-card .ui-run-stats {
   padding: calc(var(--ui-unit) * var(--card-gap) * 1px);
 }
