@@ -7,13 +7,7 @@ import {
 
 import { disposeGameButtons } from "../input/actionBinding.ts";
 import { setTextButtonRole, setTextButtonSizing, type TextButtonSizing } from "./buttonLayout.ts";
-import {
-  type CardView,
-  type CardWords,
-  createCardElement,
-  createTextButtonElement,
-  setCardWidth,
-} from "./cardElements.ts";
+import { textButton } from "./card.ts";
 
 type TextTag = "h1" | "h2" | "h3" | "p" | "span";
 export interface UiTextProps {
@@ -33,11 +27,6 @@ export interface UiButtonProps {
   readonly primary?: boolean;
   readonly ref?: (button: HTMLButtonElement) => void;
 }
-export interface UiCardProps {
-  readonly id: string;
-  readonly ref?: (view: CardView<string>) => void;
-  readonly words: CardWords<string>;
-}
 export interface UiNativeProps {
   // Each runtime or mock invocation supplies fresh nodes from the same production factory.
   readonly content?: HTMLElement;
@@ -45,7 +34,6 @@ export interface UiNativeProps {
 }
 export type UiLayoutSchema = {
   Button: { readonly props: UiButtonProps; readonly slots: never };
-  Card: { readonly props: UiCardProps; readonly slots: never };
   Native: { readonly props: UiNativeProps; readonly slots: "content" };
   Text: { readonly props: UiTextProps; readonly slots: never };
 };
@@ -66,7 +54,7 @@ export function createUiLayoutPorts(document: Document): LayoutComponentPorts<Ui
   return {
     Button: {
       create(initial) {
-        const element = createTextButtonElement(document, initial.label, initial.primary);
+        const element = textButton(document, initial.label, initial.primary);
         const update = (props: UiButtonProps) => {
           buttonLabel(props.label, element);
           setTextButtonSizing(props.sizing ?? "standard", element);
@@ -83,52 +71,6 @@ export function createUiLayoutPorts(document: Document): LayoutComponentPorts<Ui
         };
         update(initial);
         return { dispose: () => disposeGameButtons(element), element, slots: {}, update };
-      },
-      slots: [],
-    },
-    Card: {
-      create(initial) {
-        const view = createCardElement(document, initial.id, initial.words);
-        const keys = initial.words.actions.map(({ key }) => key);
-        const update = (props: UiCardProps) => {
-          if (
-            props.id !== initial.id ||
-            (props.words.close === undefined) !== (initial.words.close === undefined) ||
-            (props.words.text === undefined) !== (initial.words.text === undefined) ||
-            props.words.actions.map(({ key }) => key).join("\0") !== keys.join("\0")
-          ) {
-            throw new RangeError("Changed card structure requires a new layout key");
-          }
-          setCardWidth(props.words.width, view.dialog);
-          view.dialog.setAttribute("role", props.words.alert ? "alertdialog" : "dialog");
-          view.dialog.querySelector(".ui-card-title")!.textContent = props.words.title;
-          const text = view.dialog.querySelector(".ui-card-text");
-          if (text !== null) {
-            text.textContent = props.words.text!;
-          }
-          view.dialog
-            .querySelector(".ui-card-actions")!
-            .classList.toggle("ui-button-stack", props.words.actionsLayout === "stack");
-          (view.dialog.querySelector(".ui-card-actions") as HTMLElement).dataset.uiAxis =
-            props.words.actionsLayout === "stack" ? "stack" : "row";
-          for (const action of props.words.actions) {
-            const button = view.buttons[action.key]!;
-            buttonLabel(action.label, button);
-            button.classList.toggle("ui-text-button-primary", action.primary === true);
-            setTextButtonRole(action.primary === true, button);
-          }
-          if (view.close !== undefined) {
-            view.close.setAttribute("aria-label", props.words.close!);
-          }
-          props.ref?.(view);
-        };
-        update(initial);
-        return {
-          dispose: () => disposeGameButtons(view.root),
-          element: view.root,
-          slots: {},
-          update,
-        };
       },
       slots: [],
     },

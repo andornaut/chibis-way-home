@@ -39,49 +39,31 @@
   touch-action: none;
 }
 
-/* One row as tall as the view, so a card's max-height is measured from the view's height rather
-   than from an auto row's, which grows to the card's content. */
-.ui-card-view {
-  display: grid;
-  grid-template-rows: minmax(0, 1fr);
-  place-items: center;
-}
-
-/* A card at its width family's width (data-card-width), as tall as its content up to the view's
-   height less the screen margin above and below, in art's ui-settings-card frame. The padding
-   inside the frame keeps the content its padding in from the card's edge. */
-.ui-card {
+/* A card (cardFrame.ts) on the kit's modal frame, which places the card and its parts from the
+   card's outer edge. Its skin layer is art's ui-settings-card frame. */
+.ui-card-skin {
   --ui-frame-image: var(--ui-settings-card-image);
   --ui-frame-slice: var(--ui-settings-card-slice);
   --ui-frame-width: var(--ui-settings-card-border);
-  --card-inside: calc(var(--ui-unit) * (var(--card-padding) - var(--card-frame)) * 1px);
+}
 
-  box-sizing: border-box;
+/* A card's content groups, the card gap apart. Single-line prompts are centred; a wrapped
+   paragraph takes ui-card-paragraph. */
+.ui-card-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
-  max-height: calc(100% - 2 * var(--ui-unit) * var(--card-screen-margin) * 1px);
-  padding: var(--card-inside);
-  pointer-events: auto;
-  touch-action: none;
   text-align: center;
 }
 
-.ui-card[data-card-width="large"] {
-  width: calc(var(--ui-unit) * var(--card-width-large) * 1px);
+.ui-card-paragraph {
+  text-align: start;
 }
 
-.ui-card[data-card-width="medium"] {
-  width: calc(var(--ui-unit) * var(--card-width-medium) * 1px);
-}
-
-.ui-card[data-card-width="small"] {
-  width: calc(var(--ui-unit) * var(--card-width-small) * 1px);
-}
-
-.ui-card:focus {
-  outline: none;
+/* A body that fits does not clip the press areas that reach past it. */
+.ui-modal-card:not([data-ui-modal-scrolls]) > .ui-modal-body {
+  overflow: visible;
 }
 
 /* Text boxes trim to the ink's cap height and baseline where the browser supports it, so the
@@ -93,38 +75,43 @@
   text-box: trim-both cap alphabetic;
 }
 
-/* The title's ink sits as far below the frame as the content's ink sits below the title's. */
-.ui-card-title {
-  margin-bottom: calc(var(--card-inside) - var(--ui-unit) * var(--card-gap) * 1px);
+/* This game's text roles beside the kit theme's (theme.ts): one class each. */
+.ui-text-dialogue-heading {
+  font-size: calc(var(--ui-unit) * var(--ui-text-dialogue-heading-size) * 1px);
+  font-weight: var(--ui-text-dialogue-heading-weight);
+  line-height: calc(var(--ui-unit) * var(--ui-text-dialogue-heading-line-height) * 1px);
 }
 
-/* Text roles. A card's title and text carry theirs; any other element takes the class. */
-.ui-card-title,
-.ui-text-heading {
-  font-size: calc(var(--ui-unit) * var(--heading-size) * 1px);
-  font-weight: 700;
-  line-height: calc(var(--ui-unit) * var(--heading-line) * 1px);
+.ui-text-dialogue-line {
+  font-size: calc(var(--ui-unit) * var(--ui-text-dialogue-line-size) * 1px);
+  font-weight: var(--ui-text-dialogue-line-weight);
+  line-height: calc(var(--ui-unit) * var(--ui-text-dialogue-line-line-height) * 1px);
 }
 
-.ui-card-text,
-.ui-text-body {
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 400;
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+.ui-text-dialogue-name {
+  font-size: calc(var(--ui-unit) * var(--ui-text-dialogue-name-size) * 1px);
+  font-weight: var(--ui-text-dialogue-name-weight);
+  line-height: calc(var(--ui-unit) * var(--ui-text-dialogue-name-line-height) * 1px);
 }
 
-/* A native button without the browser's box, spacing or focus outline, taking presses. Text and
-   close buttons carry it; any other button takes the class. */
+.ui-text-stage-number {
+  font-size: calc(var(--ui-unit) * var(--ui-text-stage-number-size) * 1px);
+  font-weight: var(--ui-text-stage-number-weight);
+  line-height: calc(var(--ui-unit) * var(--ui-text-stage-number-line-height) * 1px);
+}
+
+.ui-text-summary-zone {
+  font-size: calc(var(--ui-unit) * var(--ui-text-summary-zone-size) * 1px);
+  font-weight: var(--ui-text-summary-zone-weight);
+  line-height: calc(var(--ui-unit) * var(--ui-text-summary-zone-line-height) * 1px);
+}
+
+/* A native button takes presses and shows no browser focus outline: the face shows the focus. */
 .ui-button-reset,
 .ui-close-button,
 .ui-text-button {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
   pointer-events: auto;
   touch-action: none;
-  cursor: pointer;
 }
 
 .ui-button-reset:focus,
@@ -133,130 +120,21 @@
   outline: none;
 }
 
-/* Each row face fits its own label with the standard padding. The button's press area
-   reaches --button-hit past its face, and half
-   the gap toward the next button, so adjacent press areas meet midway between the faces. */
-.ui-card-actions {
-  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
-  --half-gap: calc(var(--ui-button-gap) / 2);
-
-  /* Press wrappers already supply the face gap. */
-  --ui-control-gap: 0;
-
-  margin: calc(-1 * var(--hit));
-}
-
-/* The other children of the scene layer keep their absolute positions. */
-.ui-action-row {
-  --ui-action-y: 0;
-
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-}
-
-.ui-anchored-action {
-  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
-
-  position: relative;
-  top: calc(var(--ui-unit) * var(--ui-action-y) * 1px - var(--hit));
-  flex: none;
-  width: max-content;
-}
-
-.ui-anchored-action.ui-text-button-primary {
-  order: 1;
-}
-
-.ui-action-row:has(> .ui-anchored-action:not([hidden]) ~ .ui-anchored-action:not([hidden]))
-  > .ui-anchored-action.ui-text-button-primary {
-  padding-left: calc(var(--ui-button-gap) / 2);
-}
-
-.ui-action-row:has(> .ui-anchored-action:not([hidden]) ~ .ui-anchored-action:not([hidden]))
-  > .ui-anchored-action:not(.ui-text-button-primary) {
-  padding-right: calc(var(--ui-button-gap) / 2);
-}
-
-/* Rows wrap on small widths and keep a single visible action centred. */
-.ui-card-actions:not(.ui-button-stack) {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: calc(100% + 2 * var(--hit));
-}
-
-.ui-card-actions:not(.ui-button-stack) > .ui-text-button {
-  flex: 0 0 auto;
-}
-
-.ui-card-actions:not(.ui-button-stack) > .ui-text-button-primary {
-  order: 1;
+/* A text button's box is its face; the action group that holds it places it and gives it its
+   press area (actionGroup.css). */
+.ui-text-button {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
 }
 
 .ui-text-button[hidden] {
   display: none;
-}
-
-.ui-text-button {
-  display: block;
-  padding: var(--hit);
-  font: inherit;
-  color: inherit;
-}
-
-:where(.ui-card-actions:not(.ui-button-stack), .achievements-pager, .stage-select-pager)
-  > .ui-text-button:not([hidden]):not(:nth-child(1 of :not([hidden]))) {
-  padding-left: var(--half-gap);
-}
-
-:where(.ui-card-actions:not(.ui-button-stack), .achievements-pager, .stage-select-pager)
-  > .ui-text-button:not([hidden]):not(:nth-last-child(1 of :not([hidden]))) {
-  padding-right: var(--half-gap);
-}
-
-/* A row of two visible buttons, primary then secondary, shows the secondary on the left and the primary on
-   the right, though the primary leads the focus order: each press area reaches the full margin on
-   its outer side and half the gap on its inner. */
-.ui-card-actions:not(:where(.ui-button-stack))
-  > .ui-text-button-primary:not([hidden]):nth-child(1 of :not([hidden])):nth-last-child(
-    2 of :not([hidden])
-  ) {
-  padding-right: var(--hit);
-  padding-left: var(--half-gap);
-}
-
-.ui-card-actions:not(:where(.ui-button-stack)):has(
-    > .ui-text-button-primary:not([hidden]):nth-child(1 of :not([hidden])):nth-last-child(
-        2 of :not([hidden])
-      )
-  )
-  > .ui-text-button:not([hidden]):nth-child(2 of :not([hidden])) {
-  padding-right: var(--half-gap);
-  padding-left: var(--hit);
-}
-
-/* Vertical action groups share their full width and inline press outset. Only the gaps between
-   visible faces change the block padding; horizontal action placement never applies here. */
-.ui-card-actions.ui-button-stack {
-  --half-gap: calc(var(--ui-stack-button-gap) / 2);
-
-  align-self: stretch;
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.ui-button-stack > .ui-text-button {
-  box-sizing: border-box;
-  width: 100%;
-  padding-inline: var(--hit);
-}
-
-.ui-button-stack > .ui-text-button:not([hidden]):not(:nth-child(1 of :not([hidden]))) {
-  padding-top: var(--half-gap);
-}
-
-.ui-button-stack > .ui-text-button:not([hidden]):not(:nth-last-child(1 of :not([hidden]))) {
-  padding-bottom: var(--half-gap);
 }
 
 /* Art's ui-button face, its label centred on the face above the lip and clear of its sides by
@@ -274,9 +152,7 @@
     calc(
       var(--ui-unit) * (var(--button-lip) + var(--ui-button-top) - var(--ui-button-bottom)) * 1px
     );
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 700;
-  line-height: calc(var(--ui-unit) * var(--text-line) * 1px);
+  background-clip: padding-box;
   white-space: nowrap;
 }
 
@@ -294,13 +170,11 @@
   translate: 0 var(--button-sink);
 }
 
-/* Art's ui-button-primary face, with a white label. */
+/* Art's ui-button-primary face; the theme's primary text slot colours its label. */
 .ui-text-button-primary .ui-text-button-face {
   --ui-frame-image: var(--ui-button-primary-image);
   --ui-frame-slice: var(--ui-button-primary-slice);
   --ui-frame-width: var(--ui-button-primary-border);
-
-  color: var(--colour-white);
 }
 
 .ui-text-button-primary[data-pressed] .ui-text-button-face {
@@ -308,8 +182,8 @@
   --ui-frame-slice: var(--ui-button-primary-pressed-slice);
 }
 
-/* A disabled text button: art's flat disabled ui-button face, which has no lip, with a dark slate
-   label centred on the whole button. It never shows pressed; a disabled one takes no press or
+/* A disabled text button: art's flat disabled ui-button face, which has no lip, with its label in
+   the theme's disabled text slot centred on the whole button. It never shows pressed; a disabled one takes no press or
    focus, and an aria-disabled one takes a press only to refuse it. */
 .ui-text-button:is(:disabled, [aria-disabled="true"]) {
   cursor: default;
@@ -321,47 +195,16 @@
 
   padding-top: calc(var(--ui-unit) * (var(--ui-button-bottom) - var(--ui-button-top)) * 1px);
   padding-bottom: 0;
-  color: var(--colour-dslate);
 }
 
-/* A card with a close X holds the X in its top-right corner and its title in a header that
-   starts at the frame. */
-.ui-card-closeable {
-  position: relative;
-  padding-top: 0;
-}
-
-/* The header reaches down to where the body's press areas clear the X's press area by the gap,
-   or further for a taller title, and centres the title's ink in it: the frame to the title's ink
-   equals the title's ink to the first button's face. The title keeps clear of the X's press area
-   on both sides, so it stays centred. */
-.ui-card-header {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  align-self: stretch;
-  min-height: calc(
-    var(--ui-unit) * (var(--close-clear) + var(--button-hit) - var(--card-frame)) * 1px
-  );
-  margin-bottom: calc(-1 * var(--ui-unit) * var(--card-gap) * 1px);
-  padding: var(--card-inside)
-    calc(var(--ui-unit) * (var(--close-reserve) - var(--card-padding)) * 1px);
-}
-
-.ui-card-header .ui-card-title {
-  margin-bottom: 0;
-}
-
-/* The X's box is its press area, reaching --close-hit past art's ui-close on every side, with the
-   art its inset in from the card's outer top and right edges. */
+/* The close X's box is its face, art's ui-close; the card's frame places it and gives it its
+   press target (modalFrame.css). */
 .ui-close-button {
-  --at: calc(var(--ui-unit) * (var(--close-inset) - var(--close-hit)) * 1px - var(--card-edge));
-
-  position: absolute;
-  top: var(--at);
-  right: var(--at);
-  padding: calc(var(--ui-unit) * var(--close-hit) * 1px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
 }
 
 .ui-close-face {
@@ -377,26 +220,21 @@
   background-image: var(--ui-close-pressed-image);
 }
 
-/* Focus and press change the face and ink inside the ordinary button frame. */
-#game > .ui-layer :is(.ui-standard-button, .ui-text-button, .settings-row):focus-visible {
+/* Focus and press fill the face inside its frame from the theme's focus and pressed slots
+   (uiTheme.css, with controls.css's focus fill): the frame drops its own fill so the slot's shows.
+   --button-state-fill and --button-state-ink carry the same state to compound controls. */
+#game > .ui-layer :is(.ui-standard-button, .ui-text-button):focus-visible {
   outline: none;
 }
 
-#game > .ui-layer {
-  --button-focus-fill: var(--colour-yellow);
-  --button-focus-ink: var(--colour-ink);
-  --button-press-fill: var(--colour-amber);
-  --button-press-ink: var(--colour-ink);
+#game > .ui-layer :is(button):is(:focus-visible, [data-pressed], [data-ui-pressed]) {
+  --button-state-fill: var(--ui-button-focus-fill);
+  --button-state-ink: var(--ui-button-focus-text);
 }
 
-#game > .ui-layer :is(button, .settings-row):is(:focus-visible, [data-pressed], [data-ui-pressed]) {
-  --button-state-fill: var(--button-focus-fill);
-  --button-state-ink: var(--button-focus-ink);
-}
-
-#game > .ui-layer :is(button, .settings-row):is([data-pressed], [data-ui-pressed]) {
-  --button-state-fill: var(--button-press-fill);
-  --button-state-ink: var(--button-press-ink);
+#game > .ui-layer :is(button):is([data-pressed], [data-ui-pressed]) {
+  --button-state-fill: var(--ui-colour-button-pressed-face);
+  --button-state-ink: var(--ui-colour-button-pressed-text);
 }
 
 .ui-text-button:not(:disabled, [aria-disabled="true"]):is(
@@ -406,7 +244,7 @@
   )
   .ui-text-button-face {
   border-image-slice: var(--ui-frame-slice);
-  background: var(--button-state-fill) padding-box;
+  background-color: var(--button-state-fill);
   color: var(--button-state-ink);
 }
 
@@ -427,10 +265,10 @@
 
 @media (forced-colors: active) {
   #game > .ui-layer {
-    --button-focus-fill: Highlight;
-    --button-focus-ink: HighlightText;
-    --button-press-fill: ButtonText;
-    --button-press-ink: ButtonFace;
+    --ui-button-focus-fill: Highlight;
+    --ui-button-focus-text: HighlightText;
+    --ui-colour-button-pressed-face: ButtonText;
+    --ui-colour-button-pressed-text: ButtonFace;
   }
 
   .ui-text-button .ui-text-button-face {

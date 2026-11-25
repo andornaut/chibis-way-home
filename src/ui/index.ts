@@ -85,7 +85,6 @@ export {
   createUiLayoutPorts,
   mountUiLayout,
   type UiButtonProps,
-  type UiCardProps,
   type UiLayoutNode,
   type UiLayoutSchema,
   type UiNativeProps,

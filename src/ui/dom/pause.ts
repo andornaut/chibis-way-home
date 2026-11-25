@@ -1,15 +1,19 @@
+import { BUTTON_GAP, STACK_BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
+import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
 import type { GameText, Point, SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
 import { PAUSE_CHROME_FRAME, type PauseChromePose } from "../chrome/pauseChrome.ts";
 import { createGameButton } from "../input/actionBinding.ts";
+import { cardWidth } from "../layout/contentCard.ts";
 import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
 import { SKILL_BUTTON } from "../layout/skillHud.ts";
-import { type CardView, type CardWords, createCard } from "./card.ts";
+import { type ActionsContext, type ActionsView, createActions } from "./actions.ts";
+import { type CardFrame, createCardFrame, setTextButtonLabel, textButton } from "./card.ts";
 import { UI_COVERED } from "./layer.ts";
 import { createNavigationDisc } from "./navigationDisc.ts";
 import {
@@ -74,6 +78,16 @@ export interface PauseWords {
 
 export type PauseCardButton = "achievements" | "cheats" | "home" | "resume" | "settings";
 
+export interface PauseCardView {
+  readonly backdrop: HTMLElement;
+  readonly buttons: Readonly<Record<PauseCardButton, HTMLButtonElement>>;
+  readonly close: HTMLButtonElement;
+  readonly dialog: HTMLElement;
+  readonly frame: CardFrame;
+  // The action groups, top to bottom: one stack, or two rows of two above the primary.
+  readonly groups: readonly ActionsView[];
+  readonly root: HTMLElement;
+}
 export interface SkillButtonView {
   readonly button: HTMLButtonElement;
   readonly disc: SkillDiscView;
@@ -82,7 +96,7 @@ export interface SkillButtonView {
 export interface PauseView {
   // The card in its own wrapper, hidden while the card is closed: the backdrop that takes taps
   // outside the card, and the dialog.
-  readonly card: CardView<PauseCardButton> & { readonly close: HTMLButtonElement };
+  readonly card: PauseCardView;
   // The skill HUD remains painted while modal cover disables its controls.
   readonly hud: HTMLElement;
   readonly pauseButton: HTMLButtonElement;
@@ -108,17 +122,39 @@ export function createPauseView(
   };
   const root = element("div", "pause-scene");
   writeLayoutProperties(PAUSE_LAYOUT, root);
-  const card = createCard<PauseCardButton>(document, id, {
-    actions: pauseMenuActions(words.card),
-    actionsLayout: "stack",
+  const frame = createCardFrame(document, {
+    className: "pause-card",
     close: words.card.close,
+    id,
     title: words.card.title,
     width: "medium",
   });
-  const close = card.close!;
-  card.dialog.classList.add("pause-card");
-  // The close X wraps after the card actions in keyboard focus.
-  card.dialog.prepend(close);
+  const buttons = Object.fromEntries(
+    pauseMenuActions(words.card).map(({ key, label, primary }) => [
+      key,
+      textButton(document, label, primary),
+    ]),
+  ) as Record<PauseCardButton, HTMLButtonElement>;
+  const menu = element("div", "pause-actions");
+  const columns = () => menu.hasAttribute("data-columns");
+  const groups = [0, 1, 2].map((index) =>
+    createActions(document, [], {
+      className: "ui-card-actions",
+      context: () => (columns() ? (index < 2 ? PAIR : SOLE) : STACK),
+      size: () => (columns() && index < 2 ? PAIR_FACE : undefined),
+    }),
+  );
+  menu.append(...groups.map((group) => group.element));
+  frame.content.append(menu);
+  const card: PauseCardView = {
+    backdrop: frame.backdrop,
+    buttons,
+    close: frame.close!,
+    dialog: frame.dialog,
+    frame,
+    groups,
+    root: frame.root,
+  };
   card.root.hidden = true;
   const view = element("div", "ui-view pause-hud-view");
   const { element: pauseButton } = createGameButton(
@@ -160,7 +196,7 @@ export function createPauseView(
   view.append(pauseButton, hud);
   root.append(card.root, view);
   return {
-    card: { ...card, close },
+    card,
     hud,
     pauseButton,
     readiness,
@@ -230,8 +266,24 @@ export function showSkillButton(
   paintSkillDisc(colours, state, view.disc);
 }
 
+// The four-action menu is one stack of full-width faces. With Back to title shown, the five
+// actions are two rows of two equal faces above the centred primary; the rows are separate
+// groups, so each press area reaches half the stacked gap past its face.
+const STACK: ActionsContext = { axis: "stack", stackWidth: "fill" };
+const HALF_STACK_GAP = { margin: STACK_BUTTON_GAP / 2 } as const;
+const PAIR: ActionsContext = { axis: "row", press: HALF_STACK_GAP };
+const SOLE: ActionsContext = { press: HALF_STACK_GAP };
+const PAIR_FACE = {
+  height: TEXT_BUTTON.height,
+  width: (cardWidth("medium") - 2 * CARD_CONTENT.padding - BUTTON_GAP) / 2,
+} as const;
+
 // Vertical menu actions keep the primary last in both reading and visual order.
-export function pauseMenuActions(words: PauseWords["card"]): CardWords<PauseCardButton>["actions"] {
+export function pauseMenuActions(words: PauseWords["card"]): readonly {
+  readonly key: PauseCardButton;
+  readonly label: string;
+  readonly primary?: boolean;
+}[] {
   return [
     { key: "achievements", label: words.achievements },
     { key: "cheats", label: words.cheats },
@@ -247,16 +299,31 @@ export function showPauseMenu(
   homeShown: boolean,
   view: PauseView,
 ): void {
-  view.card.dialog.querySelector(".ui-card-title")!.textContent =
-    mode === "pause" ? words.pause.title : words.menu.title;
-  view.card.buttons.resume.querySelector(".ui-text-button-label")!.textContent =
-    mode === "pause" ? words.pause.resume : words.pause.close;
-  view.card.dialog.toggleAttribute("data-home-shown", homeShown);
-  view.card.buttons.home.hidden = !homeShown;
-  view.card.buttons.achievements.hidden = false;
-  const { cheats, settings } = view.card.buttons;
-  const [first, second] = mode === "pause" ? [settings, cheats] : [cheats, settings];
-  if (first.nextElementSibling !== second) {
-    second.before(first);
+  const { buttons, frame, groups } = view.card;
+  frame.frame.setTitle(mode === "pause" ? words.pause.title : words.menu.title);
+  setTextButtonLabel(mode === "pause" ? words.pause.resume : words.pause.close, buttons.resume);
+  buttons.home.hidden = !homeShown;
+  buttons.achievements.hidden = false;
+  const { achievements, cheats, home, resume, settings } = buttons;
+  const order =
+    mode === "pause"
+      ? [achievements, settings, cheats, home]
+      : [achievements, cheats, settings, home];
+  const [first, second, last] = groups.map((group) => group.element) as [
+    HTMLElement,
+    HTMLElement,
+    HTMLElement,
+  ];
+  first.parentElement!.toggleAttribute("data-columns", homeShown);
+  if (homeShown) {
+    first.append(...order.slice(0, 2));
+    second.append(...order.slice(2));
+    last.append(resume);
+  } else {
+    first.append(...order, resume);
   }
+  second.hidden = !homeShown;
+  last.hidden = !homeShown;
+  groups.forEach((group) => group.arrange());
+  frame.layout();
 }

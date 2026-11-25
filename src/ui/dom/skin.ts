@@ -15,6 +15,7 @@ import type { Rect } from "../../data/types/index.ts";
 import type { Palette } from "../chrome/dim.ts";
 import { modalColour } from "../chrome/modalDim.ts";
 import { refreshTextButtonFrames } from "./buttonLayout.ts";
+import { setThemeColours, themeColours } from "./theme.ts";
 
 // Art's nine-slice frames the HTML UI draws, cut from the images the game already loaded: each
 // frame's art key, the animation tag whose first frame it is (the sheet's first frame where
@@ -156,6 +157,7 @@ export async function applySkin(
   const dim = modalColour(palette);
   const colours = skinColours(palette);
   writeLayoutProperties(colours.lit, layer);
+  setThemeColours(palette.colours, layer);
   setPageDivider(
     {
       colour: Number.parseInt(palette.colours.ink!.slice(1), 16),
@@ -175,6 +177,11 @@ export async function applySkin(
   );
   const dimmed: Record<string, string> = {
     ...colours.dimmed,
+    ...themeColours(
+      Object.fromEntries(
+        Object.entries(palette.colours).map(([name, colour]) => [name, remappedHex(dim, colour)]),
+      ),
+    ),
     "--ui-page-divider-colour": remappedHex(dim, palette.colours.ink!),
   };
   frames.forEach(({ name, slice: insets }, index) => {

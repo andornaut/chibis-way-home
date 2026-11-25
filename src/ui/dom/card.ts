@@ -1,71 +1,112 @@
+import { createGameButton } from "../input/actionBinding.ts";
 import type { CardWidth } from "../layout/contentCard.ts";
-import { type CardView, type CardWords, setCardWidth } from "./cardElements.ts";
-import { mountUiLayout } from "./layoutTree.ts";
+import { type ActionsView, createActions } from "./actions.ts";
+import { setTextButtonRole } from "./buttonLayout.ts";
+import { type CardFrame, createCardFrame } from "./cardFrame.ts";
 
-export { type CardView, type CardWords, closeButton, setCardWidth } from "./cardElements.ts";
+export { setCardWidth } from "./cardElements.ts";
+export { type CardFrame, closeButton, createCardFrame } from "./cardFrame.ts";
 
-// Detached materialization uses the same typed production ports as composed screen trees.
-export function textButton(document: Document, label: string, primary = false): HTMLButtonElement {
-  let button: HTMLButtonElement | undefined;
-  mountUiLayout(document, document.createElement("div"), {
-    component: "Button",
-    key: "button",
-    kind: "component",
-    props: {
-      label,
-      primary,
-      ref: (element) => {
-        button = element;
-      },
-    },
-  });
-  return button!;
+// A modal card of words in the HTML UI (cardFrame.ts): its title, optional text and its actions
+// in a row or a stack, with an optional close X.
+
+export interface CardWords<Key extends string> {
+  // Each button's key and label, in the order the keyboard's focus moves through them, and
+  // whether it takes art's primary button.
+  readonly actions: readonly {
+    readonly key: Key;
+    readonly label: string;
+    readonly primary?: boolean;
+  }[];
+  // Action orientation; stacked actions share full-width faces.
+  readonly actionsLayout?: "row" | "stack";
+  // A card the player must answer (role alertdialog) rather than one they may browse past.
+  readonly alert?: boolean;
+  // The close X's accessible name, for a card with one. The focus reaches it after the buttons.
+  readonly close?: string;
+  readonly text?: string;
+  readonly title: string;
+  readonly width: CardWidth;
 }
 
+export interface CardView<Key extends string> {
+  readonly actions: ActionsView;
+  readonly backdrop: HTMLElement;
+  readonly buttons: Readonly<Record<Key, HTMLButtonElement>>;
+  readonly close?: HTMLButtonElement;
+  // The card itself: role dialog, named by its title and described by its text.
+  readonly dialog: HTMLElement;
+  readonly frame: CardFrame;
+  // The scene's view, which the UI layer mounts.
+  readonly root: HTMLElement;
+}
+
+// A text button: its box is its face, art's frame with the label; the group that holds it gives
+// it its press area.
+export function textButton(document: Document, label: string, primary = false): HTMLButtonElement {
+  const { element: button } = createGameButton(
+    document,
+    {
+      className: primary ? "ui-text-button ui-text-button-primary" : "ui-text-button",
+      contentClassName: "ui-text-button-label",
+      face: { className: "ui-text-button-face ui-text-label ui-frame ui-control-button" },
+    },
+    { kind: "text", label },
+  );
+  setTextButtonRole(primary, button);
+  return button;
+}
+
+// Sets a text button's label.
+export function setTextButtonLabel(label: string, button: HTMLButtonElement): void {
+  button.querySelector(".ui-text-button-label")!.textContent = label;
+}
+
+// The card for words, its dialog identified by id, which its title's and text's ids extend.
 export function createCard<Key extends string>(
   document: Document,
   id: string,
   words: CardWords<Key>,
 ): CardView<Key> {
-  let view: CardView<string> | undefined;
-  mountUiLayout(document, document.createElement("div"), {
-    component: "Card",
-    key: id,
-    kind: "component",
-    props: {
-      id,
-      ref: (created) => {
-        view = created;
-      },
-      words,
-    },
+  const frame = createCardFrame(document, {
+    ...(words.alert === undefined ? {} : { alert: words.alert }),
+    ...(words.close === undefined ? {} : { close: words.close }),
+    ...(words.text === undefined ? {} : { description: words.text }),
+    id,
+    title: words.title,
+    width: words.width,
   });
-  return view!;
+  const buttons = Object.fromEntries(
+    words.actions.map(({ key, label, primary }) => [key, textButton(document, label, primary)]),
+  ) as Record<Key, HTMLButtonElement>;
+  const actions = createActions(
+    document,
+    words.actions.map(({ key }) => buttons[key]),
+    {
+      className: "ui-card-actions",
+      context: words.actionsLayout === "stack" ? { axis: "stack", stackWidth: "fill" } : {},
+    },
+  );
+  frame.content.append(actions.element);
+  return {
+    actions,
+    backdrop: frame.backdrop,
+    buttons,
+    ...(frame.close === undefined ? {} : { close: frame.close }),
+    dialog: frame.dialog,
+    frame,
+    root: frame.root,
+  };
 }
 
-// A status message is one short line.
-const MESSAGE_CARD_WIDTH: CardWidth = "small";
-
-// A card holding one line of text, in the same frame and text style as createCard's, over a
-// backdrop that takes every tap: a status message with no title, buttons or close X. Returns the
-// scene's view, which the UI layer mounts.
+// A card holding one line of text over a backdrop that takes every tap: a status message with no
+// title, buttons or close X. Returns the scene's view, which the UI layer mounts.
 export function createMessageCard(document: Document, id: string, text: string): HTMLElement {
-  const root = document.createElement("div");
-  root.className = "ui-card-scene";
-  const backdrop = document.createElement("div");
-  backdrop.className = "ui-backdrop";
-  const view = document.createElement("div");
-  view.className = "ui-view ui-card-view";
-  const card = document.createElement("section");
-  card.className = "ui-card ui-frame";
-  setCardWidth(MESSAGE_CARD_WIDTH, card);
-  card.id = id;
-  card.setAttribute("role", "status");
+  const frame = createCardFrame(document, { id, width: "small" });
+  frame.dialog.setAttribute("role", "status");
   const message = document.createElement("p");
-  message.className = "ui-card-text";
+  message.className = "ui-card-text ui-text-body";
   message.textContent = text;
-  card.append(message);
-  view.append(card);
-  root.append(backdrop, view);
-  return root;
+  frame.content.append(message);
+  return frame.root;
 }

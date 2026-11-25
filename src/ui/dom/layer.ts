@@ -9,12 +9,10 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/modalLayer";
 import { createViewUnits, slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
-import { CARD_CONTENT, CARD_SCREEN_MARGIN, DEATH_CARD, TEXT_BUTTON } from "../../data/layout.ts";
+import { CARD_CONTENT, DEATH_CARD, TEXT_BUTTON } from "../../data/layout.ts";
 import type { Point } from "../../data/types/index.ts";
 import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
 import { disposeGameButtons } from "../input/actionBinding.ts";
-import { CARD_CLOSE } from "../layout/cardClose.ts";
-import { cardTitleReserve, cardWidth } from "../layout/contentCard.ts";
 import { FONT_METRICS } from "../layout/fontRoles.ts";
 import { hitMargin } from "../layout/hitAreas.ts";
 import { playView } from "../layout/playView.ts";
@@ -23,6 +21,8 @@ import {
   setButtonLayoutDefaults,
   watchTextButtonFrames,
 } from "./buttonLayout.ts";
+import { layoutWithin, watchLayouts } from "./layout.ts";
+import { setThemeText } from "./theme.ts";
 
 // The HTML UI over the canvas (src/ui/dom/ui.css). The layer covers #game, so full-area
 // backdrops reach the bars; each scene's view mounts in it as one child, stacked by the scene's
@@ -33,9 +33,6 @@ import {
 // Whole CSS pixel lengths apart from the view art frame edges.
 const WHOLE_LENGTHS = [TEXT_BUTTON.pressedSink, CARD_CONTENT.frameBorder, DEATH_CARD.dividerWidth];
 
-// A card's close X, drawn its inset in from the card's top and right edges, and its press area.
-const { art: CLOSE_ART, hit: CLOSE_HIT } = CARD_CLOSE;
-
 // The UI font family and layout constants: unitless base px or whole-px lengths from the view
 // bridge.
 export const UI_LAYOUT: LayoutValues = {
@@ -45,24 +42,9 @@ export const UI_LAYOUT: LayoutValues = {
   "--button-inset": TEXT_BUTTON.inset,
   "--button-lip": TEXT_BUTTON.lipHeight,
   "--button-sink": slice(TEXT_BUTTON.pressedSink),
-  "--card-edge": slice(CARD_CONTENT.frameBorder),
   "--card-frame": CARD_CONTENT.frameBorder,
   "--card-gap": CARD_CONTENT.gap,
   "--card-padding": CARD_CONTENT.padding,
-  // The least gap between a card and the view's top and bottom (ui.css .ui-card max-height).
-  "--card-screen-margin": CARD_SCREEN_MARGIN,
-  // Each width family's card width (ui.css .ui-card[data-card-width]).
-  "--card-width-large": cardWidth("large"),
-  "--card-width-medium": cardWidth("medium"),
-  "--card-width-small": cardWidth("small"),
-  // How far below the card's top a card with a close X starts its body's press areas, the gap
-  // past the X's press area.
-  "--close-clear": CLOSE_HIT.y + CLOSE_HIT.height + CARD_CONTENT.gap,
-  // How far the X's press area reaches past its drawn side.
-  "--close-hit": CLOSE_ART.x - CLOSE_HIT.x,
-  "--close-inset": CARD_CONTENT.closeInset,
-  // A centred title's clearance from each side of a card with a close X.
-  "--close-reserve": cardTitleReserve(true),
   "--close-size": CARD_CONTENT.closeSize,
   "--heading-line": FONT_METRICS.mainHeading.lineHeight,
   "--heading-size": FONT_METRICS.mainHeading.size,
@@ -311,8 +293,10 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
   const element = document.createElement("div");
   element.className = "ui-layer";
   writeLayoutProperties(UI_LAYOUT, element);
+  setThemeText(element);
   setButtonLayoutDefaults(element);
   const stopButtonFrames = watchTextButtonFrames(element);
+  const stopLayouts = watchLayouts(element);
   const edges = [...new Set([...frameEdges, ...WHOLE_LENGTHS])].sort((a, b) => a - b);
   const update = createViewUnits(edges, element);
   const dim = createDim(element);
@@ -328,6 +312,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
     dimImage: (lit, dimmed) => dim.image(lit, dimmed),
     dispose() {
       stopButtonFrames();
+      stopLayouts();
       modals.dispose();
       dim.dispose();
       disposeGameButtons(element);
@@ -346,6 +331,7 @@ export function createUiLayer(frameEdges: readonly number[], document: Document)
         },
       });
       refreshTextButtonFrames(element);
+      layoutWithin(element);
     },
     menuEntry(button) {
       if (entryView.childElementCount !== 0) {

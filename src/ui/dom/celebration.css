@@ -1,4 +1,4 @@
-.celebration-card > .ui-card-text {
+.celebration-card .ui-card-text {
   align-self: stretch;
   text-align: start;
 }
