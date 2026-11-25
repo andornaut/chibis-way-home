@@ -55,13 +55,9 @@ const CLOSEABLE_BODY_OUTSET = hitMargin({
   y: 0,
 });
 
-// Every closeable card's one-line title sits at one height: centred between the frame's inner
-// edge and where a text button's face would start below the close X.
+// The close X's press target ends this far below the card's top, the gap included.
 const CLOSE_CLEAR =
   CLOSE.face.y + CLOSE.face.height / 2 + HIT_RULE.minTarget / 2 + CARD_CONTENT.gap;
-const CLOSEABLE_TITLE_TOP = Math.round(
-  (CARD_CONTENT.frameBorder + CLOSE_CLEAR + CLOSEABLE_BODY_OUTSET - TITLE_LINE) / 2,
-);
 
 // What the kit's frame places a card from: its context, its title's insets and how far the
 // body's first press area reaches above the body.
@@ -81,9 +77,11 @@ export function cardFramePlacement(card: {
 } {
   const bodyOutset = card.bodyOutset ?? CLOSEABLE_BODY_OUTSET;
   const height = card.titleHeight ?? Math.ceil(TITLE_LINE);
-  // The header the close X's clearance sets, unless a taller title sets it.
+  // The header the close X's clearance sets, unless a taller title sets it. The title's ink is
+  // centred between the frame's inner edge and the header's end, on the nearest whole pixel.
   const header = CLOSE_CLEAR + bodyOutset;
   const fits = card.close && height + 2 * TITLE_INSET < header;
+  const top = Math.round((CARD_CONTENT.frameBorder + header - TITLE_LINE) / 2);
   return {
     ...(card.close ? { bodyOutset } : {}),
     context: {
@@ -97,9 +95,7 @@ export function cardFramePlacement(card: {
     },
     title: card.titled
       ? {
-          inkOffset: fits
-            ? CLOSEABLE_TITLE_TOP - Math.floor((header - height) / 2)
-            : TITLE_INK_OFFSET,
+          inkOffset: fits ? top - Math.floor((header - height) / 2) : TITLE_INK_OFFSET,
           inset: TITLE_INSET,
         }
       : { inset: CARD_CONTENT.padding / 2 },

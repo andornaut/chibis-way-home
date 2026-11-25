@@ -53,10 +53,15 @@ it("starts a closeable card's body where a press area above it clears the close 
   const { body, card, close, title } = place({ close: true, family: "medium", titled: true }, 100);
   const outset = Math.ceil(HIT_RULE.marginShare * TEXT_BUTTON.height);
   expect(body.y - outset - (close!.press.y + close!.press.height)).toBe(CARD_CONTENT.gap);
-  // A body of text or rows starts at the gap below the close target, under the same title.
+  // A body of text or rows starts at the gap below the close target; either way the title's ink
+  // sits midway between the frame's inner edge and the body, to the nearest pixel.
   const rows = place({ bodyOutset: 0, close: true, family: "medium", titled: true }, 100);
   expect(rows.body.y - (rows.close!.press.y + rows.close!.press.height)).toBe(CARD_CONTENT.gap);
-  expect(rows.title.y - rows.card.y).toBe(title.y - card.y);
+  for (const placed of [rows, { body, card, title }]) {
+    const above = placed.title.y - (placed.card.y + CARD_CONTENT.frameBorder);
+    const below = placed.body.y - (placed.title.y + TITLE);
+    expect(Math.abs(above - below)).toBeLessThanOrEqual(1);
+  }
   // The title is centred across the whole card, clear of the close target on both sides.
   expect(title.x - card.x).toBe(card.x + card.width - (title.x + title.width));
   expect(title.x + title.width).toBeLessThanOrEqual(close!.press.x - CARD_CONTENT.gap);
