@@ -41,7 +41,7 @@ const BOUNDARIES = [
 // The bounded contexts: the folders of src/ each context's files may import, besides its own.
 // Tests are exempt, so a test may build its fixtures from any context.
 // Each context imports only contexts below it, bottom first: data; core; ai and
-// assets; camera and stage; rules; progress; presentation and ui; crash; loading; pwa; the
+// assets; camera and stage; rules; progress; save; presentation and ui; crash; loading; pwa; the
 // side pages (homePage, gallery, tuningPage); scenes; then the tooling (dev, sim, build,
 // tools). "folder/module.ts" allows one module of a folder ("folder/index.ts" its index):
 // each is an import that a later move removes, by moving the module into a context or the
@@ -62,6 +62,7 @@ const CONTEXTS = {
   progress: ["data"],
   pwa: ["assets", "loading", "ui"],
   rules: ["ai", "camera", "core", "data", "stage"],
+  save: ["data", "progress"],
   scenes: [
     "assets",
     "core",
@@ -72,6 +73,7 @@ const CONTEXTS = {
     "progress",
     "pwa",
     "rules",
+    "save",
     "stage",
     "ui",
   ],
@@ -92,7 +94,8 @@ const INDEXED = {
   camera: {},
   core: {},
   presentation: { loading: ["./zoneTheme.ts"] },
-  progress: { scenes: ["./save/pageSave.ts"] },
+  progress: {},
+  save: {},
   stage: {},
   ui: {
     crash: ["./input/actionBinding.ts"],

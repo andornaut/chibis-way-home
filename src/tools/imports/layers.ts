@@ -19,6 +19,7 @@ export const LAYERS: readonly Layer[] = [
   { band: "Model", groups: ["rules/stage"] },
   { band: "Model", groups: ["rules/zone"] },
   { band: "Saving", groups: ["progress"] },
+  { band: "Saving", groups: ["save"] },
   { band: "Presentation", groups: ["presentation", "ui"] },
   { band: "Platform", groups: ["crash", "dev"] },
   { band: "Platform", groups: ["loading"] },

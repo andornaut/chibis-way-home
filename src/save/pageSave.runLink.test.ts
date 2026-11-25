@@ -2,13 +2,13 @@ import { encodeSave } from "@andornaut/game-kit/runtime/save/versionedSave";
 import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
 
-import { ACHIEVEMENTS } from "../../data/achievements.ts";
-import { CHUNKS } from "../../data/chunks.ts";
-import { ZONE_MAP } from "../../data/map.ts";
-import type { AchievementCondition } from "../../data/types/index.ts";
-import { RECIPES } from "../../data/zones.ts";
+import { ACHIEVEMENTS } from "../data/achievements.ts";
+import { CHUNKS } from "../data/chunks.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import type { AchievementCondition } from "../data/types/index.ts";
+import { RECIPES } from "../data/zones.ts";
+import { BEGINNING, PROGRESS_KEYS, progressFormat } from "../progress/index.ts";
 import { createPageSave } from "./pageSave.ts";
-import { BEGINNING, PROGRESS_KEYS, progressFormat } from "./progress.ts";
 
 // A page save of its own over the stubbed localStorage.
 const openPageSave = () => createPageSave(localSaveStorage(), () => false);

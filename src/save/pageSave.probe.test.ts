@@ -2,14 +2,19 @@ import { encodeSave, type SaveFormat } from "@andornaut/game-kit/runtime/save/ve
 import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { expect, it, vi } from "vitest";
 
-import { CHUNKS } from "../../data/chunks.ts";
-import { ZONE_MAP } from "../../data/map.ts";
-import { RECIPES } from "../../data/zones.ts";
-import { ACHIEVEMENT_IDS } from "../achievements.ts";
-import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT } from "./achievements.ts";
+import { CHUNKS } from "../data/chunks.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { RECIPES } from "../data/zones.ts";
+import {
+  ACHIEVEMENT_IDS,
+  ACHIEVEMENT_KEYS,
+  ACHIEVEMENTS_FORMAT,
+  PROGRESS_KEYS,
+  progressFormat,
+  STATS_KEYS,
+  statsFormat,
+} from "../progress/index.ts";
 import { createPageSave } from "./pageSave.ts";
-import { PROGRESS_KEYS, progressFormat } from "./progress.ts";
-import { STATS_KEYS, statsFormat } from "./stats.ts";
 
 const { probeSaveAge, resetSave, resetSaveAvailable } = createPageSave(
   localSaveStorage(),

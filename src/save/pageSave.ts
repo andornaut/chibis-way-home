@@ -7,46 +7,46 @@ import {
 import type { SaveStorage } from "@andornaut/game-kit/runtime/save/storage";
 import { loadSave, type SaveFormat } from "@andornaut/game-kit/runtime/save/versionedSave";
 
-import { BOSS_CHARACTERS } from "../../data/achievements.ts";
-import { CHUNKS } from "../../data/chunks.ts";
-import { ZONE_MAP } from "../../data/map.ts";
-import type { AchievementId, BossId, SkillId } from "../../data/types/index.ts";
-import { RECIPES } from "../../data/zones.ts";
+import { BOSS_CHARACTERS } from "../data/achievements.ts";
+import { CHUNKS } from "../data/chunks.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import type { AchievementId, BossId, SkillId } from "../data/types/index.ts";
+import { RECIPES } from "../data/zones.ts";
 import {
   ACHIEVEMENT_IDS,
+  ACHIEVEMENT_KEYS,
   achievementEntries,
   type AchievementEntry,
   type AchievementFacts,
+  ACHIEVEMENTS_FORMAT,
   type AchievementScope,
-  earnedAt,
-  zoneEndingAt,
-} from "../achievements.ts";
-import { openMap } from "../map.ts";
-import { stageDestinationId } from "../mapDestinations.ts";
-import { recentMiddleChunks, withRecentMiddleChunks } from "../recentChunks.ts";
-import { resolveActiveSkill, SKILL_IDS } from "../skills.ts";
-import { type PlayTipId, type QueuedTip, seenTip } from "../tips.ts";
-import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT, achievementsStore } from "./achievements.ts";
-import {
+  achievementsStore,
   BEGINNING,
+  earnedAt,
+  hasRecordedStats,
   mapProgress,
+  openMap,
+  type PlayTipId,
   type Progress,
   PROGRESS_KEYS,
   progressFormat,
+  type QueuedTip,
   type RecentChunks,
-} from "./progress.ts";
-import { skillGrantEffects, withGrantedSkill } from "./skillGrant.ts";
-import {
-  hasRecordedStats,
+  recentMiddleChunks,
+  resolveActiveSkill,
   type RunStatsSummary,
+  seenTip,
+  SKILL_IDS,
+  stageDestinationId,
   stageStatsStore,
   STATS_KEYS,
   statsFormat,
   type WholeRunStatsSummary,
+  withRecentMiddleChunks,
+  zoneEndingAt,
   type ZoneStatsSummary,
-} from "./stats.ts";
-
-export { type Progress } from "./progress.ts";
+} from "../progress/index.ts";
+import { skillGrantEffects, withGrantedSkill } from "./skillGrant.ts";
 
 // What one createPageSave holds: the stores over its storage, the loaded progress and what the
 // page has queued. Every operation below reads and writes it and nothing else.

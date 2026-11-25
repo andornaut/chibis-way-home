@@ -2,7 +2,6 @@ import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/local
 
 import type { Rect, ZoneLayout } from "../data/types/index.ts";
 import type { Progress } from "../progress/index.ts";
-import { createPageSave, type PageSave, type SaveAge } from "../progress/save/pageSave.ts";
 import {
   activeStepSeconds,
   areaOf,
@@ -11,6 +10,7 @@ import {
   type ZoneState,
   zoneStepRecord,
 } from "../rules/zone/index.ts";
+import { createPageSave, type PageSave, type SaveAge } from "../save/index.ts";
 
 export type { Progress };
 

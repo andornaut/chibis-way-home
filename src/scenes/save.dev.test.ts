@@ -3,8 +3,8 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
 import { SKILL_IDS } from "../progress/index.ts";
-import { createPageSave } from "../progress/save/pageSave.ts";
 import type { ZoneState } from "../rules/zone/zone.ts";
+import { createPageSave } from "../save/index.ts";
 import { createSave } from "./save.ts";
 
 // A page save of its own over the stubbed localStorage.
