@@ -1,6 +1,7 @@
 // The game as an installed phone app: install and updates, the back gesture, the screen wake lock
 // and persistent storage. setupPhoneApp runs once from play.ts; the scenes listen for
-// PHONE_EVENTS on window and call the functions below.
+// PHONE_EVENTS on window and call the functions below, and the settings card follows installOffer.
+// The build reads the cache policy to write the service worker's precache.
 //
 // The kit's launch installs the complete build under the loading bar before the game exists, and
 // a fresh document already runs a complete staged build, which the router promotes silently at
@@ -30,15 +31,16 @@ import {
 } from "@andornaut/game-kit/runtime/web/pwa/dom/wakeLock";
 import { requestPersistentStorage } from "@andornaut/game-kit/runtime/web/pwa/storagePersistence";
 
-import { launchLoading } from "../loading/launch.ts";
-import { installationFeedback } from "../loading/required.ts";
+import { installationFeedback, launchLoading } from "../loading/index.ts";
 import { CACHE_POLICY, SERVICE_WORKER_URL, SOUND_FORMAT } from "./cachePolicy.ts";
 import { dispatchPhoneEvent, PHONE_EVENTS } from "./events.ts";
 import { createNetworkPlay } from "./networkPlay.ts";
 import { createRequiredUpdate } from "./requiredUpdate.ts";
 import { createUpdateOffer } from "./updateOffer.ts";
 
+export { CACHE_POLICY, SOUNDS } from "./cachePolicy.ts";
 export { PHONE_EVENTS } from "./events.ts";
+export { installOffer } from "./installOffer.ts";
 
 // The history state key of the extra entry that back pops instead of leaving the game.
 const BACK_GUARD_KEY = "birdBackGuard";

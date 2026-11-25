@@ -60,7 +60,7 @@ import type {
 } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
 import { developmentStep, invulnerabilityEnabled } from "../dev/index.ts";
-import { afterLoadingPaint, beginStageLoading } from "../loading/progress.ts";
+import { afterLoadingPaint, beginStageLoading } from "../loading/index.ts";
 import {
   barkOwnerOnscreen,
   birdFrameAt,

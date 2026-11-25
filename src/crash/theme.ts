@@ -2,7 +2,7 @@ import type { CrashColours } from "@andornaut/game-kit/runtime/web/crash/dom/cra
 import { setTextRoles, setUiColours } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import palette from "../../public/art/palette.json" with { type: "json" };
-import { BIRD_FRAME, CRASH_BIRD_URL } from "../assets/birdFrame.ts";
+import { BIRD_FRAME, CRASH_BIRD_URL } from "../assets/index.ts";
 import { PAGE_THEME_COLOURS, THEME_TEXT } from "../data/layout.ts";
 
 const { dslate, ink, navy, white } = palette.colours;

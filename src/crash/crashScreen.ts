@@ -1,6 +1,6 @@
 // The page's crash screen (the kit's web/crash/dom/crashScreen), in the game's words and palette,
 // with the message, stack and build label under dev=1. It writes nothing to the save, whose
-// in-memory state may be corrupt. src/crash/install.ts imports this module before any other.
+// in-memory state may be corrupt. src/crash/index.ts imports this module before any other.
 import "@andornaut/game-kit/runtime/web/crash/dom/crash.css";
 import "./theme.css";
 

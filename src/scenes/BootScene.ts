@@ -24,9 +24,14 @@ import {
 } from "../assets/index.ts";
 import { TILE } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
-import { launchLoading } from "../loading/launch.ts";
-import { beginRequiredUpdate, beginStartupChecks, startupLoading } from "../loading/progress.ts";
-import { observeRequiredAttempt, requiredLoading } from "../loading/required.ts";
+import {
+  beginRequiredUpdate,
+  beginStartupChecks,
+  launchLoading,
+  observeRequiredAttempt,
+  requiredLoading,
+  startupLoading,
+} from "../loading/index.ts";
 import { requiredUpdate, requireNewer } from "../pwa/index.ts";
 import { createMessageCard, UI_FRAMES } from "../ui/index.ts";
 import { ACHIEVEMENT_NOTICE } from "./achievementNotice.ts";

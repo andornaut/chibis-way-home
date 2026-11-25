@@ -3,7 +3,7 @@ import { precachePlugin as kitPrecachePlugin } from "@andornaut/game-kit/build/p
 import type { Plugin } from "vite";
 
 import type { ArtManifest } from "../assets/index.ts";
-import { CACHE_POLICY, SOUNDS } from "../pwa/cachePolicy.ts";
+import { CACHE_POLICY, SOUNDS } from "../pwa/index.ts";
 import { FILE_READ_CONCURRENCY, mapBounded } from "./mapBounded.ts";
 import { ART_MANIFEST_URL, artUrls, bootArtUrls } from "./precacheArt.ts";
 

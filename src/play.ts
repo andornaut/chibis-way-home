@@ -1,6 +1,6 @@
 // Bootstrap dependencies must load before the failure presenter can exist.
 // Once loaded, crash handlers precede the deferred Phaser/game import.
-import "./crash/install.ts";
+import "./crash/index.ts";
 import "@andornaut/game-kit/runtime/web/progress/dom/progressBar.css";
 import "@andornaut/game-kit/runtime/web/view/frameTurnLandscapeGame.css";
 import "./main.css";
@@ -11,15 +11,16 @@ import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildCont
 import { trackInputModality } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { lockGameOrientation } from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
 
-import { loadingFailurePresentation } from "./loading/presentation.ts";
-import { beginStartupChecks, mountLoading, startupLoading } from "./loading/progress.ts";
 import {
+  beginStartupChecks,
+  loadingFailurePresentation,
+  mountLoading,
   mountRequiredLoading,
   observeRequiredAttempt,
   requiredLoading,
-} from "./loading/required.ts";
-import { setupPhoneApp } from "./pwa/index.ts";
-import { installOffer } from "./pwa/installOffer.ts";
+  startupLoading,
+} from "./loading/index.ts";
+import { installOffer, setupPhoneApp } from "./pwa/index.ts";
 
 const parent = document.getElementById("game");
 if (parent && !new URLSearchParams(window.location.search).has("stagePreview")) {

@@ -40,33 +40,36 @@ import { MAX_RENDER_SCALE } from "@andornaut/game-kit/runtime/view/renderScale";
 import { followFrameTurn } from "@andornaut/game-kit/runtime/web/view/phaser/followFrameTurn";
 import { Core, Game, Scale, WEBGL } from "phaser";
 
-import { CRASH_SCREEN } from "./crash/crashScreen.ts";
+import { CRASH_SCREEN } from "./crash/index.ts";
 import { SCREEN } from "./data/screen.ts";
 import { TEXT } from "./data/text.ts";
-import { AchievementNoticeScene } from "./scenes/AchievementNoticeScene.ts";
-import { AchievementsScene } from "./scenes/AchievementsScene.ts";
-import { BootScene } from "./scenes/BootScene.ts";
-import { CelebrationScene } from "./scenes/CelebrationScene.ts";
-import { CheatsScene } from "./scenes/CheatsScene.ts";
-import { CutsceneScene } from "./scenes/CutsceneScene.ts";
-import { DeathScene } from "./scenes/DeathScene.ts";
-import { DialogueChoiceScene } from "./scenes/DialogueChoiceScene.ts";
-import { DialogueScene } from "./scenes/DialogueScene.ts";
-import { mountDomUi } from "./scenes/domUi.ts";
-import { MapScene } from "./scenes/MapScene.ts";
-import { OpeningScene } from "./scenes/OpeningScene.ts";
-import { PauseScene } from "./scenes/PauseScene.ts";
-import { RestartScene } from "./scenes/RestartScene.ts";
-import { RoomScene } from "./scenes/RoomScene.ts";
-import { SettingsScene } from "./scenes/SettingsScene.ts";
-import { SkillDetailScene } from "./scenes/SkillDetailScene.ts";
-import { StageSelectScene } from "./scenes/StageSelectScene.ts";
-import { StartScene } from "./scenes/StartScene.ts";
-import { installUpdateModalBridge, UpdateScene } from "./scenes/UpdateScene.ts";
-import { ZoneBarkScene } from "./scenes/ZoneBarkScene.ts";
-import { ZoneDepartureScene } from "./scenes/ZoneDepartureScene.ts";
-import { ZoneIntroductionScene } from "./scenes/ZoneIntroductionScene.ts";
-import { ZoneScene } from "./scenes/ZoneScene.ts";
+import {
+  AchievementNoticeScene,
+  AchievementsScene,
+  BootScene,
+  CelebrationScene,
+  CheatsScene,
+  CutsceneScene,
+  DeathScene,
+  DialogueChoiceScene,
+  DialogueScene,
+  installUpdateModalBridge,
+  MapScene,
+  mountDomUi,
+  OpeningScene,
+  PauseScene,
+  RestartScene,
+  RoomScene,
+  SettingsScene,
+  SkillDetailScene,
+  StageSelectScene,
+  StartScene,
+  UpdateScene,
+  ZoneBarkScene,
+  ZoneDepartureScene,
+  ZoneIntroductionScene,
+  ZoneScene,
+} from "./scenes/index.ts";
 import { mountFpsCounter } from "./ui/index.ts";
 import { FRAME_TURN } from "./ui/input/frameTurn.ts";
 

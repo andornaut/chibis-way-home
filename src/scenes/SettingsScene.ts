@@ -7,7 +7,7 @@ import { Scene } from "phaser";
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { TEXT } from "../data/text.ts";
-import { installOffer } from "../pwa/installOffer.ts";
+import { installOffer } from "../pwa/index.ts";
 import {
   createSettingsCard,
   fpsCounterShown,
