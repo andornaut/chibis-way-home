@@ -85,7 +85,6 @@ import {
   terrainTiles,
 } from "../presentation/index.ts";
 import {
-  middleChunkIds,
   nodeOf,
   SKILL_PROFILES,
   skillTuning,
@@ -97,6 +96,7 @@ import { deathSupport } from "../rules/death.ts";
 import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams.ts";
 import { currentScreen } from "../rules/perception.ts";
 import { createStageBarks } from "../rules/stageBarks.ts";
+import { middleChunkIds } from "../rules/stagePlans.ts";
 import {
   askedStagePreview,
   type StagePreview,

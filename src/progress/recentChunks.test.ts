@@ -3,9 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
 import { RECENT_STAGES } from "../data/stageProgress.ts";
-import type { ZonePlan } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
-import { middleChunkIds, recentMiddleChunks, withRecentMiddleChunks } from "./recentChunks.ts";
+import { recentMiddleChunks, withRecentMiddleChunks } from "./recentChunks.ts";
 import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./save/progress.ts";
 
 const ZONE = ZONE_MAP.destinations[0]!.id;
@@ -72,17 +71,5 @@ describe("recent middle chunks", () => {
       plain: plain.ok && "recent" in (JSON.parse(plain.value) as object),
       reopened: encoded.ok && loadSave(FORMAT, encoded.value).save,
     }).toEqual({ plain: false, reopened: recorded });
-  });
-
-  it("takes each area's chunks but its first and last as the middle", () => {
-    const placed = (ids: string[]) => ids.map((chunk, col) => ({ chunk, col, cols: 1 }));
-    const plan = {
-      areaOrder: ["lower", "upper"],
-      areas: {
-        lower: { chunks: placed(["start", "a", "b", "finish"]) },
-        upper: { chunks: placed(["cap", "b", "c", "cap"]) },
-      },
-    } as unknown as ZonePlan;
-    expect(middleChunkIds(plan)).toEqual(["a", "b", "c"]);
   });
 });
