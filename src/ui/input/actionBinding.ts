@@ -18,6 +18,11 @@ import {
   type FormRowOptions,
   type FormRowView,
 } from "@andornaut/game-kit/runtime/web/ui/dom/formRow";
+import {
+  createPager,
+  type PagerOptions,
+  type PagerView,
+} from "@andornaut/game-kit/runtime/web/ui/dom/pager";
 import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { TOUCH } from "../../data/touch.ts";
@@ -91,7 +96,7 @@ function currentButtonAction(button: HTMLElement): GameAction | null {
 }
 
 // The hold rule of the standard control that mounted holds once it is created.
-function gameHoldRule(mounted: { element?: HTMLButtonElement }): HoldRule {
+function gameHoldRule(mounted: { readonly element?: HTMLElement }): HoldRule {
   return {
     holdMs: TOUCH.actionHoldMilliseconds,
     get slopPx() {
@@ -143,6 +148,37 @@ export function createGameFormRow(
   mounted.element = view.element;
   standardButtons.set(view.element, view);
   return view;
+}
+
+export interface GamePager {
+  // Previous and Next as the actions a scene binds, in that order.
+  readonly actions: readonly [GameAction, GameAction];
+  readonly view: PagerView;
+}
+
+// A pager on the kit's (pager.css): Previous, the page count and Next. Its buttons are standard
+// buttons, so the shared binding presses and holds them as it does createGameButton's, and each
+// runs the pager's own step under its guard, or its refusal.
+export function createGamePager(
+  document: Document,
+  options: Omit<PagerOptions, "rule">,
+): GamePager {
+  const mounted: { element?: HTMLElement } = {};
+  const view = createPager(document, { ...options, rule: gameHoldRule(mounted) });
+  mounted.element = view.element;
+  const action = (button: ButtonView): GameAction => {
+    standardButtons.set(button.element, button);
+    return {
+      activate: () => button.holdAction()?.activate(),
+      available: () => true,
+      element: button.element,
+      // The step's own identity, which the binding matches against the button's current action.
+      get identity() {
+        return button.holdAction()?.identity;
+      },
+    };
+  };
+  return { actions: [action(view.previous), action(view.next)], view };
 }
 
 export function disposeGameButtons(root: HTMLElement): void {
