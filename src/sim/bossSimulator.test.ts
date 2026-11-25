@@ -157,24 +157,27 @@ describe("Kiwi under a low ceiling", () => {
     return { ...base, areas: { ...base.areas, main: { ...main, objects } } };
   }
 
-  // Chibi stands at the entry, away from the slab: Kiwi chases to line up with him, and the
+  // Her alignment: lined up under Chibi, who is above her.
+  const ALIGNMENT = ["horizontal-gap", "target-above"] as const;
+  // Chibi stands at the entry on Kiwi's floor, away from the slab: Kiwi chases him, and the
   // variants without the guards exercise the slab.
   it.each([
     {
       climbs: true,
       name: "without alignment, the climb guard or the blocked exit",
       stalls: true,
-      states: without("horizontal-gap", "track-clear", "blocked"),
+      states: without(...ALIGNMENT, "track-clear", "blocked"),
     },
     {
       climbs: true,
       name: "without alignment or the climb guard",
       stalls: false,
-      states: without("horizontal-gap", "track-clear"),
+      states: without(...ALIGNMENT, "track-clear"),
     },
     // With the climb guard she climbs only once she has chased clear of the slab.
-    { climbs: true, name: "without alignment", stalls: false, states: without("horizontal-gap") },
-    { climbs: true, name: "data graph", stalls: false, states: RACCOON_BEHAVIOUR.states },
+    { climbs: true, name: "without alignment", stalls: false, states: without(...ALIGNMENT) },
+    // With Chibi on her floor, never above her, she does not climb.
+    { climbs: false, name: "data graph", stalls: false, states: RACCOON_BEHAVIOUR.states },
   ])("$name: climbs=$climbs, stalls=$stalls", ({ climbs, stalls, states }) => {
     const { ticks } = simulateBosses(ORDINARY, {
       controller: () => scriptedChibi(ENCOUNTER_SCRIPTS.still!),
