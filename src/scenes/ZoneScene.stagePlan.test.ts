@@ -10,7 +10,7 @@ const save = vi.hoisted(() => ({
   recordStageChunks: vi.fn(),
 }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 vi.mock("./save.ts", () => save);
 vi.mock("../progress/save/runSummary.ts", () => ({ wholeRunSummary: () => ({}) }));
 

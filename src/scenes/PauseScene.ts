@@ -19,6 +19,7 @@ import {
   cardTurnAction,
   createPauseView,
   focusKeyAction,
+  frameTurn,
   type PauseColours,
   type PauseView,
   setTouchSettingShown,
@@ -29,7 +30,6 @@ import {
   type TouchSetting,
   touchSettings,
 } from "../ui/index.ts";
-import { FRAME_TURN } from "../ui/input/frameTurn.ts";
 import type { AchievementsOpener, AchievementsScene } from "./AchievementsScene.ts";
 import type { CheatsOpener, CheatsScene } from "./CheatsScene.ts";
 import { bindSceneActions, bindSceneButtons } from "./domTaps.ts";
@@ -233,7 +233,7 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
     };
     window.addEventListener(PHONE_EVENTS.backPressed, onBack);
     // The page frame turning mid-play or mid-conversation pauses it, as P does.
-    const stopTurns = FRAME_TURN.onChange(() => this.act(cardTurnAction(this.state !== "closed")));
+    const stopTurns = frameTurn().onChange(() => this.act(cardTurnAction(this.state !== "closed")));
     this.events.once("shutdown", () => {
       window.removeEventListener(PHONE_EVENTS.backPressed, onBack);
       stopTurns();

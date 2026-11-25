@@ -12,7 +12,7 @@ import type { ZoneDeath } from "../data/types/index.ts";
 import * as deathPresentation from "../presentation/index.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 vi.mock("../pwa/index.ts", () => ({
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),

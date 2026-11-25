@@ -70,8 +70,7 @@ import {
   ZoneIntroductionScene,
   ZoneScene,
 } from "./scenes/index.ts";
-import { mountFpsCounter } from "./ui/index.ts";
-import { FRAME_TURN } from "./ui/input/frameTurn.ts";
+import { frameTurn, mountFpsCounter } from "./ui/index.ts";
 
 // The page's ink background (public/site.css), which the canvas's bars match.
 const INK = "#181425";
@@ -87,6 +86,9 @@ const INK = "#181425";
 // constructed after the document's one-time staged-update launch boundary and shows its first
 // screen as soon as it has loaded.
 let retirement: Promise<void> = Promise.resolve();
+
+// The page frame's turn, watched from the moment the game module loads.
+const turn = frameTurn();
 
 function retireGame(game: Game): Promise<void> {
   return new Promise((resolve) => {
@@ -185,7 +187,7 @@ function startGame(attempt: LoadingAttempt): void {
         deviceResolution: { max: MAX_RENDER_SCALE },
         gameSize: game.scale.gameSize,
         parent,
-        watch: FRAME_TURN,
+        watch: turn,
       },
       game,
     );

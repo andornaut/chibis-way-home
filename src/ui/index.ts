@@ -1,6 +1,5 @@
 // The interface: layout of screens and cards, dialogue, input intent, keyboard focus, pause and
-// room input, touch settings, control chrome and the map's drawing. src/ui/input/frameTurn.ts
-// watches the page on load, so it stays out of this index.
+// room input, touch settings, control chrome, the map's drawing and the page frame's turn.
 export { actionHelpParts } from "./chrome/actionHelp.ts";
 export { type Palette } from "./chrome/dim.ts";
 export { helpChromeLayers, helpChromeSvg } from "./chrome/helpChrome.ts";
@@ -144,6 +143,7 @@ export {
   type GameActionOptions,
 } from "./input/actionBinding.ts";
 export { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "./input/deathInput.ts";
+export { frameTurn } from "./input/frameTurn.ts";
 export {
   combineIntents,
   type HeldTouch,

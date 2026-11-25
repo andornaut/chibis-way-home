@@ -30,7 +30,7 @@ import {
 const saved = vi.hoisted(() => ({ active: null as SkillId | null, owned: [] as SkillId[] }));
 const routing = vi.hoisted(() => ({ accepts: true }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { turn: () => 0 } }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({ turn: () => 0 }) }));
 vi.mock("./modalInput.ts", () => ({ modalInput: () => ({ accepts: () => routing.accepts }) }));
 vi.mock("../ui/settings/touchControls.ts", () => ({
   coarsePointer: (host: Window) => host.matchMedia("(pointer: coarse)").matches,

@@ -7,7 +7,7 @@ import { startBird, stepBird } from "../rules/bird/bird.ts";
 import * as engine from "../rules/zone/zone.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 vi.mock("../dev/mode.ts", () => ({
   invulnerabilityEnabled: () => false,
 }));

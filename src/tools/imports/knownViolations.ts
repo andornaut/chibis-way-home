@@ -14,9 +14,7 @@ export const KNOWN_VIOLATIONS: KnownViolations = {
     "loading -> src/presentation/zoneTheme.ts",
     "loading -> src/ui/chrome/modalDim.ts",
     "loading -> src/ui/input/actionBinding.ts",
-    "main.ts -> src/ui/input/frameTurn.ts",
     "scenes -> src/progress/save/pageSave.ts",
-    "scenes -> src/ui/input/frameTurn.ts",
   ],
   // Each group no layer places.
   unplaced: [],

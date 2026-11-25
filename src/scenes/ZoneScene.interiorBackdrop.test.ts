@@ -6,7 +6,7 @@ import type { ZoneState } from "../rules/zone/zone.ts";
 import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 
 it("creates a native repeating two-axis clip behind props and keeps its world rectangle across camera changes", () => {
   const item = {

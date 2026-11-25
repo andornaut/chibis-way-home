@@ -8,12 +8,12 @@ const selection = vi.hoisted(() => ({ select: vi.fn() }));
 const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
 vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scene: class {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({
-  FRAME_TURN: {
+  frameTurn: () => ({
     onChange: (listener: () => void) => {
       turns.change = listener;
       return () => {};
     },
-  },
+  }),
 }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },

@@ -1,6 +1,15 @@
-import { watchFrameTurn } from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
+import {
+  type FrameTurnWatch,
+  watchFrameTurn,
+} from "@andornaut/game-kit/runtime/web/view/dom/watchFrameTurn";
 
-// The game page's frame turn (the kit's web/view/dom/watchFrameTurn): the game is drawn for landscape, so on a
-// touch screen in portrait the frame turns onto its side, by the kit's stylesheet that
-// src/main.ts imports. Read by src/main.ts's Phaser setup and the zone's touch mapping.
-export const FRAME_TURN = watchFrameTurn("landscape", window);
+let watched: FrameTurnWatch | undefined;
+
+// The game page's frame turn (the kit's web/view/dom/watchFrameTurn): the game is drawn for
+// landscape, so on a touch screen in portrait the frame turns onto its side, by the kit's
+// stylesheet that src/main.ts imports. src/main.ts starts the watch as the game module loads;
+// its Phaser setup and the zone's touch mapping read it.
+export function frameTurn(): FrameTurnWatch {
+  watched ??= watchFrameTurn("landscape", window);
+  return watched;
+}

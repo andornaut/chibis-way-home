@@ -11,7 +11,7 @@ const offer = vi.hoisted(() => ({
   listener: undefined as ((shown: boolean) => void) | undefined,
 }));
 vi.mock("phaser", () => ({ Core: { Events: { POST_RENDER: "postrender" } }, Scene: class {} }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: { onChange: () => () => {} } }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({ onChange: () => () => {} }) }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
   startWakeLock: vi.fn(),

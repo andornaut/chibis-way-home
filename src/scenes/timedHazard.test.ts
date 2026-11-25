@@ -15,7 +15,7 @@ import { objectLayout } from "../rules/stage/tiles.ts";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 
 import type { ArtManifest } from "../assets/index.ts";
 import type { ZoneState } from "../rules/zone/zone.ts";

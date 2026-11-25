@@ -61,7 +61,7 @@ vi.mock("../pwa/index.ts", () => ({ setupPhoneApp: startup.setup }));
 vi.mock("../pwa/installOffer.ts", () => ({ installOffer: startup.install }));
 vi.mock("../scenes/domUi.ts", () => ({ mountDomUi: () => vi.fn() }));
 vi.mock("../scenes/save.ts", () => ({}));
-vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 
 beforeEach(() => {
   vi.resetModules();

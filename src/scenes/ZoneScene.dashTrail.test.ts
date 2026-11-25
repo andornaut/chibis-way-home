@@ -9,7 +9,7 @@ import type { ZoneState } from "../rules/zone/zone.ts";
 
 const gate = vi.hoisted(() => ({ accepts: vi.fn(() => true) }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ FRAME_TURN: {} }));
+vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
 
 import { createZoneObjectArt } from "./zoneObjectArt.ts";

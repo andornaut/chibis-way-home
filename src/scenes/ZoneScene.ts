@@ -125,6 +125,7 @@ import {
   controlTag,
   createStageProgress,
   createTouchControls,
+  frameTurn,
   type HeldTouch,
   isMouseMovementKey,
   keyIntent,
@@ -146,7 +147,6 @@ import {
   touchSettingShown,
   trackPress,
 } from "../ui/index.ts";
-import { FRAME_TURN } from "../ui/input/frameTurn.ts";
 import { achievementNoticeShowing } from "./achievementNotice.ts";
 import { mountAirJumpCue } from "./airJumpCue.ts";
 import { mountBossWarning } from "./bossWarning.ts";
@@ -1532,7 +1532,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           return false;
         }
         const point = pageToGame(
-          FRAME_TURN.turn(),
+          frameTurn().turn(),
           canvas.getBoundingClientRect(),
           canvasRect(this),
           { x: event.clientX, y: event.clientY },
@@ -1597,11 +1597,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // the nav bar or a link or button (the HTML pause button and skill buttons among them), or while
   // a modal covers play. A touch's role is read where it starts on the game's nearest edge pixel
   // (clampInto), and a move touch's travel unclamped (pageToGame), so a drag within the bars still
-  // moves him. Both read through the page frame's turn (FRAME_TURN).
+  // moves him. Both read through the page frame's turn (frameTurn).
   private watchTouches(): void {
     const unclamped = (event: PagePointerEvent) =>
       pageToGame(
-        FRAME_TURN.turn(),
+        frameTurn().turn(),
         this.game.canvas.getBoundingClientRect(),
         canvasRect(this),
         clientPoint(event),
