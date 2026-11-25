@@ -9,7 +9,11 @@ import {
   stampPreparation,
   startBehaviour,
 } from "./behaviour.ts";
-import type { BehaviourObservationContext } from "./behaviourObserver.ts";
+import {
+  type BehaviourObservation,
+  type BehaviourObservationMetadata,
+  createBehaviourObserver,
+} from "./behaviourObserver.ts";
 import type { BehaviourPerception } from "./behaviourPerception.ts";
 import {
   type BehaviourGeometry,
@@ -29,8 +33,9 @@ export interface EncounterContext {
   // The object's ground pursuit map over the area's static terrain, when one is built.
   readonly groundMap?: PursuitGroundMap | undefined;
   readonly object: ObjectLayout;
-  // Diagnostic recording; it never changes the step.
-  readonly observation?: BehaviourObservationContext | undefined;
+  // Requests the step's diagnostics, which return as its observations under this metadata. It
+  // never changes the rest of the step.
+  readonly observe?: BehaviourObservationMetadata | undefined;
   // Object-local decision streams; equal keys replay equal draws.
   readonly streams?: RandomStreams | undefined;
   // The sampler of the supports' later frames, for an object whose world holds a traversal frame.
@@ -67,6 +72,8 @@ export type EncounterEvent =
 export interface EncounterStep {
   readonly at: Point;
   readonly events: readonly EncounterEvent[];
+  // The step's diagnostics in the order they arose, present only when the context requests them.
+  readonly observations?: readonly BehaviourObservation[];
   readonly segments: BehaviourStep["segments"];
   readonly state: BehaviourState;
 }
@@ -111,12 +118,13 @@ export function activateEncounter(state: BehaviourState): BehaviourState {
 // 1. spot: an active, living object with an unsaid spotted line says it on a clear line of sight
 //    from where the step starts.
 // 2. hold: a dead boss holds still while its removal plays, and stages 3 to 6 are skipped.
-// 3. perceive: one snapshot of Chibi and the world, with the context's map, streams and observer.
+// 3. perceive: one snapshot of Chibi and the world, with the context's map, streams and sampler.
 // 4. act: the pursuit update, recovery, then decide and act slices through the ability table.
 // 5. keep clear: after an ended chase, movement toward Chibi within the escape distance is
 //    cancelled.
 // 6. stamp preparation: a takeoff preparation records its start once.
 // 7. events: the spotted line, the entry actions and a distance escape, in order.
+// Requested diagnostics gather in a list of the call's own and return as `observations`.
 export function stepEncounter(
   context: EncounterContext,
   state: BehaviourState,
@@ -136,7 +144,8 @@ export function stepEncounter(
       contactBox(object, at, state.facing, state.axis),
       birdBox(tuning, target),
     );
-  const step = moveEncounter(context, state, input);
+  const observations: BehaviourObservation[] | undefined = context.observe && [];
+  const step = moveEncounter(context, observations, state, input);
   const events: EncounterEvent[] = spotted ? [{ bark, kind: "spotted" }] : [];
   for (const action of step.actions) {
     events.push({ action, kind: "action" });
@@ -144,16 +153,23 @@ export function stepEncounter(
   if (step.escaped) {
     events.push({ bark: step.escaped, cause: "distance", kind: "escaped" });
   }
-  return { at: step.at, events, segments: step.segments, state: step.state };
+  return {
+    at: step.at,
+    events,
+    ...(observations && { observations }),
+    segments: step.segments,
+    state: step.state,
+  };
 }
 
-// Stages 2 to 6: the step before its outcomes become events.
+// Stages 2 to 6: the step before its outcomes become events. Diagnostics append to the list.
 function moveEncounter(
   context: EncounterContext,
+  observations: BehaviourObservation[] | undefined,
   state: BehaviourState,
   input: EncounterInput,
 ): BehaviourStep {
-  const { groundMap, object, observation, streams, supports, tuning } = context;
+  const { groundMap, object, observe, streams, supports, tuning } = context;
   const { at, seconds, target } = input;
   if (state.defeat) {
     return holdDefeated(seconds, at, state);
@@ -164,7 +180,15 @@ function moveEncounter(
     ...(frame && supports && { traversalFrame: { ...frame, sample: supports } }),
     ...(groundMap && { groundMap }),
     ...(streams && { decisions: streams }),
-    ...(observation && { observation }),
+    ...(observations &&
+      observe && {
+        observation: {
+          metadata: observe,
+          observer: createBehaviourObserver((observation) => {
+            observations.push(observation);
+          }),
+        },
+      }),
   };
   const perception: BehaviourPerception = { target, tuning, world };
   const acted = actBehaviour(perception, object, seconds, at, state);
@@ -183,7 +207,7 @@ export function stepBehaviour(
   at: Point,
   state: BehaviourState,
 ): BehaviourStep {
-  return moveEncounter({ object, tuning }, state, {
+  return moveEncounter({ object, tuning }, undefined, state, {
     at,
     seconds,
     target: bird,

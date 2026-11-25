@@ -22,7 +22,7 @@ import {
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { probeRearm, traversalGoal } from "./behaviourTraversal.ts";
 import { startBird } from "./bird.ts";
-import { stepBehaviour } from "./encounter.ts";
+import { stepBehaviour, stepEncounter } from "./encounter.ts";
 import { pursuitGroundMap } from "./movementMaps.ts";
 import { objectLayout } from "./tiles.ts";
 import { startZone, stepZone, stepZoneObserved } from "./zone.ts";
@@ -461,6 +461,39 @@ it("records the actual scorer choice without consuming another decision stream o
   const replay = createBehaviourObservations();
   expect(run(replay.observer)).toEqual(actual);
   expect(replay.report().lastChoice).toEqual(choice);
+});
+
+it("returns an encounter step's observations as data only when its context requests them", () => {
+  const { actor, target, world } = rearmFixture();
+  const bird = {
+    ...startBird(ORDINARY, { x: target.x + target.width / 2, y: target.y + target.height }),
+    grounded: true,
+  };
+  const before: BehaviourState = {
+    ...startBehaviour(ORDINARY, actor, bird),
+    active: true,
+    pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
+    stateKey: "pursuit",
+  };
+  const metadata = { area: "main", attempt: 0, objectIndex: 3, tick: 9 };
+  const context = () => ({
+    object: actor,
+    streams: namedStreams(0, "observer-data"),
+    tuning: ORDINARY,
+  });
+  const input = { at: actor.origin, seconds: STEP_SECONDS, target: bird, world };
+  const plain = stepEncounter(context(), before, input);
+  expect("observations" in plain).toBe(false);
+  const received: BehaviourObservation[] = [];
+  const observer = createBehaviourObserver((observation) => received.push(observation));
+  const observed = { ...world, observation: { metadata, observer } };
+  expect(stepEncounter(context(), before, { ...input, world: observed })).toEqual(plain);
+  const requested = stepEncounter({ ...context(), observe: metadata }, before, input);
+  const { observations, ...step } = requested;
+  expect(step).toEqual(plain);
+  expect(received.length).toBeGreaterThan(0);
+  expect(observations).toEqual(received);
+  expect(observations?.every((observation) => Object.isFrozen(observation))).toBe(true);
 });
 
 it.each([true, false])("counts only applied graph transitions (applied=%s)", (applied) => {

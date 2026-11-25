@@ -1064,14 +1064,11 @@ function stepZoneBodiesInternal(
             {
               groundMap: groundMaps?.[index],
               object,
-              observation: observer && {
-                metadata: {
-                  area: zone.area,
-                  attempt: zone.attempt,
-                  objectIndex: index,
-                  tick: zone.steps,
-                },
-                observer,
+              observe: observer && {
+                area: zone.area,
+                attempt: zone.attempt,
+                objectIndex: index,
+                tick: zone.steps,
               },
               streams: namedStreams(zone.seed + zone.attempt, `idle-roam:${zone.area}:${index}`),
               supports: traverses ? futureSupports : undefined,
@@ -1087,6 +1084,8 @@ function stepZoneBodiesInternal(
             },
           )
         : undefined;
+      // Each step's diagnostics reach the observer as that step ends.
+      behaviour?.observations?.forEach((observation) => observer?.record(observation));
       const path = pathAt(object, zone.tracks[index] as Track, time);
       const after = behaviour?.at ?? objectStep(tuning, object, seconds, path, zone.bird, before);
       return { after: rectAt(object, after), before: rectAt(object, before), behaviour, object };
