@@ -1,5 +1,5 @@
 {
-  "arenas": [{ "hash": "9553d5a0611accc9", "id": "arena-bear-ravine", "stage": "ravine" }],
+  "arenas": [{ "hash": "ced60f5e64d7f904", "id": "arena-bear-ravine", "stage": "ravine" }],
   "entries": [
     {
       "encounters": 0,
@@ -914,7 +914,7 @@
       "work": 897
     }
   ],
-  "inputs": { "data": "28a01aefd294548f", "proofs": "08f52b09b6c335ee" },
+  "inputs": { "data": "28a01aefd294548f", "proofs": "078b38197a2c96eb" },
   "version": 1,
   "zone": "woodland"
 }
