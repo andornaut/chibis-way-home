@@ -12,6 +12,7 @@ import {
   type ZoneStatsSummary,
 } from "../progress/index.ts";
 import {
+  canvasInk,
   createStageSummary,
   focusKeyAction,
   pauseKey,
@@ -96,7 +97,12 @@ export class CutsceneScene extends Scene {
     if (!preview || !this.textures.exists(preview)) {
       throw new Error(`Missing actual stage preview ${this.summary.clearedStage}`);
     }
-    const view = createStageSummary(document, "stage-summary", stageSummaryWords(this.summary));
+    const view = createStageSummary(
+      document,
+      canvasInk(document),
+      "stage-summary",
+      stageSummaryWords(this.summary),
+    );
     const stops = [this.watchPresses(view), this.watchKeys(view)];
     let shown = true;
     this.events.once("shutdown", () => {

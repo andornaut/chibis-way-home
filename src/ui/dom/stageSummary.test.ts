@@ -2,14 +2,15 @@
 import { arrangeActions } from "@andornaut/game-kit/runtime/ui/actionGroup";
 import { expect, it } from "vitest";
 
-import { CARD_CONTENT, STAGE_SUMMARY, TEXT_BUTTON } from "../../data/layout.ts";
+import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { STATS_SCOPE_TEXT, TEXT } from "../../data/text.ts";
-import { FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
+import { capTop, FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
 import { hitMargin } from "../layout/hitAreas.ts";
 import {
   createStageSummary,
-  STAGE_SUMMARY_LAYOUT,
+  type LineInk,
+  stageSummaryGaps,
   type StageSummaryWords,
 } from "./stageSummary.ts";
 
@@ -31,13 +32,14 @@ const TURNED_BACK: StageSummaryWords = {
   ],
   zone: TEXT.map.zones.woodland!,
 };
+const NO_INK = () => ({ fall: 0, rise: 0 });
 const WORDS = {
   ...TURNED_BACK,
   statement: { colour: "tan", name: TEXT.dialogue.speakers.dog!, text: TEXT.dialogue.label },
 } satisfies StageSummaryWords;
 
 it("names the summary by its zone, with a sole enabled primary Continue last", () => {
-  const view = createStageSummary(document, "summary", WORDS);
+  const view = createStageSummary(document, NO_INK, "summary", WORDS);
   const buttons = [...view.dialog.querySelectorAll("button")];
   expect({
     buttons: buttons.map(({ textContent }) => textContent),
@@ -59,7 +61,7 @@ it("names the summary by its zone, with a sole enabled primary Continue last", (
 });
 
 it("reads the stage's metrics, then the totals, each label before its value", () => {
-  const view = createStageSummary(document, "summary", WORDS);
+  const view = createStageSummary(document, NO_INK, "summary", WORDS);
   expect(
     [...view.dialog.querySelectorAll("dl")].map((list) =>
       [...list.querySelectorAll("dt, dd")].map(({ textContent }) => textContent),
@@ -70,14 +72,14 @@ it("reads the stage's metrics, then the totals, each label before its value", ()
 });
 
 it("continues from Continue and the statement line, which reads as name, colon and words", () => {
-  const view = createStageSummary(document, "summary", WORDS);
+  const view = createStageSummary(document, NO_INK, "summary", WORDS);
   const { name, text } = WORDS.statement;
   expect(view.statement?.textContent).toBe(`${name}: ${text}`);
   expect([...view.dialog.querySelectorAll("[data-continue]")]).toEqual([
     view.statement,
     view.continue,
   ]);
-  const turnedBack = createStageSummary(document, "summary", TURNED_BACK);
+  const turnedBack = createStageSummary(document, NO_INK, "summary", TURNED_BACK);
   expect(turnedBack.statement).toBeUndefined();
   expect([...turnedBack.dialog.querySelectorAll("[data-continue]")]).toEqual([turnedBack.continue]);
 });
@@ -98,29 +100,40 @@ it("centres Continue's face at y 296 in the page inset, its press area starting 
   expect([top, top - hit]).toEqual([296, 284]);
 });
 
-// The page's rows from the layout properties, at 720x360: every row's ink stays a group gap
-// clear of Continue's press area.
-it("fits the rows above Continue's press area with the group gap to spare", () => {
-  const layout = STAGE_SUMMARY_LAYOUT as Readonly<Record<string, number>>;
-  const { body, compactMainHeading } = FONT_METRICS;
-  const { capHeight, descent } = UI_FONT_FACE;
-  const gap = layout["--summary-row-gap"]!;
-  const ascender = layout["--summary-ascender"]!;
-  // A text row's box: its cap height down to the font's descent.
-  const line = ({ size }: { readonly size: number }) => (capHeight + descent) * size;
-  const metrics = 3 * CARD_CONTENT.lineHeight + 2 * CARD_CONTENT.rowGap;
-  const rows = [
-    layout["--summary-padding"]!,
-    line(compactMainHeading),
-    gap + ascender + line(body),
-    gap + line(body),
-    gap + layout["--summary-preview-height"]!,
-    gap + ascender - layout["--summary-stat-cap-top"]! + metrics,
-    CARD_CONTENT.gap + layout["--summary-stat-descent"]! + ascender + line(body),
-  ];
-  const bottom = rows.reduce((sum, height) => sum + height, 0);
-  expect(gap).toBe(4);
-  // The first metric's ascenders sit the row gap below the preview.
-  expect(ascender).toBeCloseTo((STAGE_SUMMARY.ascender - capHeight) * body.size);
-  expect(bottom).toBeLessThanOrEqual(284 - CARD_CONTENT.gap);
+// Each row's box trims to its cap height and baseline, so its margin adds the ink the previous row
+// drops below its baseline and the ink this row lifts above its cap height to the rule's gap.
+it("leaves the rule's gaps between the rows' measured ink", () => {
+  const inks: Readonly<Record<string, LineInk>> = {
+    "Attempts:": { fall: 3, rise: 0 },
+    "Last time:": { fall: 0, rise: 1 },
+    Progress: { fall: 3, rise: 0.5 },
+    Stage: { fall: 3.5, rise: 0.75 },
+    Zone: { fall: 3.25, rise: 0 },
+  };
+  const row = (label: string) => ({ label, value: "1" });
+  const gaps = stageSummaryGaps((_role, text) => inks[text] ?? { fall: 0, rise: 0 }, {
+    continue: "Continue",
+    progress: "Progress",
+    stage: "Stage",
+    statement: { colour: "tan", name: "Kiwi", text: "Words" },
+    stats: [row("Last time:"), row("Attempts:")],
+    totals: [row("Stage total:"), row("Run total:")],
+    zone: "Zone",
+  });
+  const { body } = FONT_METRICS;
+  const capTop16 = capTop({ lineHeight: CARD_CONTENT.lineHeight, size: body.size });
+  const belowBaseline = CARD_CONTENT.lineHeight - capTop16 - UI_FONT_FACE.capHeight * body.size;
+  expect(gaps).toEqual({
+    "--summary-preview-gap": CARD_CONTENT.rowGap + 3,
+    "--summary-progress-gap": CARD_CONTENT.rowGap + 3.5 + 0.5,
+    "--summary-stage-gap": CARD_CONTENT.rowGap + 3.25 + 0.75,
+    "--summary-statement-gap": CARD_CONTENT.gap - belowBaseline + 3,
+    "--summary-stats-gap": CARD_CONTENT.rowGap - capTop16 + 1,
+  });
+});
+
+it("writes the measured gaps on the summary's view", () => {
+  const view = createStageSummary(document, () => ({ fall: 2, rise: 1 }), "summary", WORDS);
+  const style = view.root.querySelector<HTMLElement>(".stage-summary-view")!.style;
+  expect(Number(style.getPropertyValue("--summary-stage-gap"))).toBe(CARD_CONTENT.rowGap + 3);
 });

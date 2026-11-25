@@ -45,6 +45,7 @@ export {
 } from "./dom/achievements.ts";
 export { createSkillActionHelp } from "./dom/actionHelp.ts";
 export { BUTTON_FACE_INSETS, BUTTON_TOKENS } from "./dom/buttonLayout.ts";
+export { canvasInk } from "./dom/canvasInk.ts";
 export { type CardView, createCard, createMessageCard } from "./dom/card.ts";
 export {
   type CelebrationControl,
@@ -120,7 +121,9 @@ export { createStageProgress, type StageProgressView } from "./dom/stageProgress
 export { createStageSelect, type StageFace, type StageSelectView } from "./dom/stageSelect.ts";
 export {
   createStageSummary,
+  type InkMeasure,
   STAGE_SUMMARY_LAYOUT,
+  stageSummaryGaps,
   type StageSummaryView,
   type StageSummaryWords,
 } from "./dom/stageSummary.ts";

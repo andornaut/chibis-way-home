@@ -310,9 +310,6 @@ export const ROOM_LAYOUT = {
 
 // The cutscene's stage summary.
 export const STAGE_SUMMARY = {
-  // art: Chibi Sans's ascender height in both weights, as a fraction of the font size: the top of
-  // b, d, h, k and l, which rise above the cap height.
-  ascender: 1484 / 2048,
   // Each statistics column's width.
   columnWidth: 152,
   // The preview image's drawn height.

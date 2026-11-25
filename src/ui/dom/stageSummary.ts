@@ -26,32 +26,67 @@ const { body, compactMainHeading } = FONT_METRICS;
 const STAT_CAP_TOP = capTop({ lineHeight: CARD_CONTENT.lineHeight, size: body.size });
 const STAT_BELOW_BASELINE =
   CARD_CONTENT.lineHeight - STAT_CAP_TOP - UI_FONT_FACE.capHeight * body.size;
-// How far body text's ascenders rise above its cap height.
-const ASCENDER_RISE = (STAGE_SUMMARY.ascender - UI_FONT_FACE.capHeight) * body.size;
 
-// The layout properties stageSummary.css reads, in base px, written on the summary's view. The
-// rows' gaps are the stylesheet's: each text row's box runs from its cap height to the font's
-// descent, the row gap apart, and these offsets from the font's metrics place the ink of the
-// rows whose boxes differ.
+// The layout properties stageSummary.css reads, in base px, written on the summary's view with
+// its rows' gaps (stageSummaryGaps).
 export const STAGE_SUMMARY_LAYOUT: LayoutValues = {
   "--run-stats-divider": slice(DEATH_CARD.dividerWidth),
-  // The ink a row with ascenders lifts above its cap height.
-  "--summary-ascender": ASCENDER_RISE,
-  // The room a body line's descenders take below its baseline.
-  "--summary-descent": UI_FONT_FACE.descent * body.size,
   "--summary-padding": CARD_CONTENT.padding,
   "--summary-preview-height": STAGE_SUMMARY.previewHeight,
   "--summary-preview-width":
     (STAGE_SUMMARY.previewHeight * STAGE_PREVIEW.width) / STAGE_PREVIEW.height,
-  "--summary-row-gap": CARD_CONTENT.rowGap,
-  // The room a metric's line box holds above its cap height.
-  "--summary-stat-cap-top": STAT_CAP_TOP,
-  // How far a metric's descenders fall below its line box.
-  "--summary-stat-descent": UI_FONT_FACE.descent * body.size - STAT_BELOW_BASELINE,
   "--summary-stats-width": 2 * STAGE_SUMMARY.columnWidth + 2 * CARD_CONTENT.padding,
   "--summary-word-gap": CARD_CONTENT.gap,
-  "--summary-zone-descent": UI_FONT_FACE.descent * compactMainHeading.size,
 };
+
+// How far a line's ink rises above its role's cap height and falls below its baseline, in base px.
+export interface LineInk {
+  readonly fall: number;
+  readonly rise: number;
+}
+
+// The ink of text set in the UI font at a type role. The scene supplies it from the loaded font
+// (canvasInk), so the layout here stays a function of its words and their ink.
+export type InkMeasure = (
+  role: { readonly size: number; readonly weight: number },
+  text: string,
+) => LineInk;
+
+const HEADING_ROLE = { size: compactMainHeading.size, weight: 700 };
+const BODY_ROLE = { size: body.size, weight: 400 };
+
+// The margins above each row that leave the rule's gaps between the rows' measured ink, each row
+// box trimmed to its cap height and baseline: a row gap between the zone, stage and progress lines,
+// the preview and the first metrics, and a group gap from the last metrics to the statement.
+export function stageSummaryGaps(measure: InkMeasure, words: StageSummaryWords): LayoutValues {
+  const row = (index: number) =>
+    [words.stats[index], words.totals[index]].flatMap((entry) =>
+      entry === undefined ? [] : [measure(BODY_ROLE, entry.label), measure(BODY_ROLE, entry.value)],
+    );
+  const zone = measure(HEADING_ROLE, words.zone);
+  const stage = measure(BODY_ROLE, words.stage);
+  const progress = measure(BODY_ROLE, words.progress);
+  const first = Math.max(0, ...row(0).map(({ rise }) => rise));
+  const last = Math.max(
+    0,
+    ...row(Math.max(words.stats.length, words.totals.length) - 1).map(({ fall }) => fall),
+  );
+  const statement =
+    words.statement === undefined
+      ? 0
+      : Math.max(
+          measure(BODY_ROLE, `${words.statement.name}:`).rise,
+          measure(BODY_ROLE, words.statement.text).rise,
+        );
+  const { gap, rowGap } = CARD_CONTENT;
+  return {
+    "--summary-preview-gap": rowGap + progress.fall,
+    "--summary-progress-gap": rowGap + stage.fall + progress.rise,
+    "--summary-stage-gap": rowGap + zone.fall + stage.rise,
+    "--summary-statement-gap": gap - STAT_BELOW_BASELINE + last + statement,
+    "--summary-stats-gap": rowGap - STAT_CAP_TOP + first,
+  };
+}
 
 export interface StageSummaryWords {
   readonly continue: string;
@@ -80,10 +115,12 @@ export interface StageSummaryView {
   readonly statement?: HTMLElement;
 }
 
-// The summary for words, its dialog identified by id, which its parts' ids extend. Continue and
-// the statement line are marked data-continue: a tap on either continues.
+// The summary for words, its rows spaced by their ink from measure, its dialog identified by id,
+// which its parts' ids extend. Continue and the statement line are marked data-continue: a tap on
+// either continues.
 export function createStageSummary(
   document: Document,
+  measure: InkMeasure,
   id: string,
   words: StageSummaryWords,
 ): StageSummaryView {
@@ -103,7 +140,7 @@ export function createStageSummary(
   };
   const root = element("div", "stage-summary-scene");
   const view = element("div", "ui-view stage-summary-view");
-  writeLayoutProperties(STAGE_SUMMARY_LAYOUT, view);
+  writeLayoutProperties({ ...STAGE_SUMMARY_LAYOUT, ...stageSummaryGaps(measure, words) }, view);
   const dialog = element("section", "stage-summary");
   dialog.id = id;
   dialog.setAttribute("role", "dialog");
