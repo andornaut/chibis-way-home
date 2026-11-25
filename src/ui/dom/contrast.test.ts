@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
 
 import palette from "../../../public/art/palette.json" with { type: "json" };
+import { THEME_COLOURS } from "./theme.ts";
 
 const colours: Readonly<Record<string, string>> = palette.colours;
 
@@ -32,10 +33,16 @@ function rules(path: string): (readonly [string, string])[] {
 // Each rule's selector and the palette colour its color declaration reads.
 function textColours(path: string): (readonly [string, string])[] {
   return rules(path).flatMap(([selector, body]) =>
-    [...body.matchAll(/(?<![\w-])color:\s*var\(--colour-([\w-]+)\)/g)].map(
-      ([, name]) => [selector, name!] as const,
+    [...body.matchAll(/(?<![\w-])color:\s*var\(--(ui-)?colour-([\w-]+)\)/g)].map(
+      ([, slot, name]) => [selector, slot === undefined ? name! : themeColour(name!)] as const,
     ),
   );
+}
+
+// The palette colour a theme slot, named as in its custom property, takes.
+function themeColour(slot: string): string {
+  const role = slot.replace(/-(\w)/g, (_, letter: string) => letter.toUpperCase());
+  return (THEME_COLOURS as Readonly<Record<string, string>>)[role]!;
 }
 
 const achievements = textColours("src/ui/dom/achievements.css");

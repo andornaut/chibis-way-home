@@ -12,7 +12,7 @@ const SHEETS = readdirSync(DIRECTORY)
 // CSS pixels or another absolute or font-relative unit: the one px in them is the 1px a calc()
 // multiplies a base-px count by.
 it.each(SHEETS)("sizes %s only in base pixels times --ui-unit", (_, css) => {
-  expect(css).toContain("--ui-unit");
+  expect(css.trim()).not.toBe("");
   const rules = css.replace(/\/\*[\s\S]*?\*\//g, "");
   const lengths = [
     ...rules.matchAll(

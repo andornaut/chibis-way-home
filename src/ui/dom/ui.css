@@ -106,7 +106,7 @@
   line-height: calc(var(--ui-unit) * var(--ui-text-summary-zone-line-height) * 1px);
 }
 
-/* A native button takes presses and shows no browser focus outline: the face shows the focus. */
+/* A native button takes presses; its face shows the focus, so the browser draws no outline. */
 .ui-button-reset,
 .ui-close-button,
 .ui-text-button {
