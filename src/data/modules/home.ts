@@ -1,8 +1,10 @@
 import { AWNING_SECONDS, awningCycle } from "../obstacleBehaviours.ts";
+import { CRUMBLING_SUPPORT_TUNING } from "../obstacleTuning.ts";
 import type { ChunkModule, Instance, SupportCycleSeconds, TerrainRect } from "../types/index.ts";
 
 // Home city halves on the lower route (row 80). The awning row fills the right half, after the
-// half Chibi watches it from, so a chunk never holds two clocked obstacles.
+// half Chibi watches it from, and no other half holds a clocked obstacle, so a chunk never holds
+// two.
 const ROWS = 120;
 
 const floor = (col: number, cols: number, row: number): TerrainRect => ({
@@ -12,6 +14,11 @@ const floor = (col: number, cols: number, row: number): TerrainRect => ({
   row,
   rows: ROWS - row,
 });
+// A red-topped pit floor across `cols` columns at `row`.
+const red = (col: number, cols: number, row: number): readonly Instance[] => [
+  { character: "red-edge-top", col, cols, role: "edge-top", row: row - 1 },
+  { character: "red-edge-support", col, cols, role: "support", row, rows: ROWS - row },
+];
 // A wall-left awning whose standable top is row, starting in state initial.
 const awning = (col: number, row: number, initial: keyof SupportCycleSeconds): Instance => ({
   behaviour: awningCycle(AWNING_SECONDS, initial),
@@ -57,6 +64,53 @@ const MODULE_LIST: readonly ChunkModule[] = [
       { col: 4, cols: 2, look: "raised", row: 84, rows: 4 },
       floor(26, 4, 80),
     ],
+    zones: ["home"],
+  },
+  // Grade 3: a running jump between two garden walls across a red pit; an overshoot steps down to
+  // the street.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "homecity-garden-walls",
+    objects: red(9, 13, 90),
+    route: {
+      profile: "recovery",
+      targets: [{ at: { col: 7, row: 75 } }, { at: { col: 24, row: 75 } }],
+    },
+    sides: ["left", "right"],
+    solids: [floor(0, 5, 80), floor(5, 4, 75), floor(22, 4, 75), floor(26, 4, 80)],
+    zones: ["home"],
+  },
+  // Grade 4: a crumbling balcony over a red pit, then a jump up to a rooftop before it goes and a
+  // step down to the street.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "homecity-crumbling-balcony",
+    objects: [
+      {
+        character: "platform-ledge",
+        col: 8,
+        cols: 5,
+        crumbling: CRUMBLING_SUPPORT_TUNING,
+        role: "ledge",
+        row: 76,
+      },
+      ...red(6, 12, 92),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 10.5, row: 76 }, xRange: { max: 11, min: 8 } },
+        { at: { col: 21, row: 72 } },
+      ],
+    },
+    sides: ["left", "right"],
+    solids: [floor(0, 6, 80), floor(18, 6, 72), floor(24, 6, 80)],
     zones: ["home"],
   },
 ];
