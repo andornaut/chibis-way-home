@@ -12,7 +12,6 @@ import { ARCHETYPES } from "../data/archetypes.ts";
 import { BIRD } from "../data/bird.ts";
 import { CHARACTERS } from "../data/characters.ts";
 import { STAGE_PREVIEW } from "../data/layout.ts";
-import { ZONE_MAP } from "../data/map.ts";
 import { SCREEN, TILE } from "../data/screen.ts";
 import { STAGE_PREVIEWS } from "../data/stagePreviews.ts";
 import type { Point } from "../data/types/index.ts";
@@ -25,6 +24,7 @@ import {
 } from "../rules/stagePreview.ts";
 import { zoneLayout } from "../rules/tiles.ts";
 import { areaOf, enterArea, startZone } from "../rules/zone.ts";
+import { STAGE_CONTEXT } from "../rules/zonePlans.ts";
 import { nodeArt } from "../sim/catalogue.ts";
 
 export interface CaptureFile {
@@ -117,7 +117,7 @@ export function startPreviewScroll(preview: Omit<StagePreview, "scroll">): Point
     art.hitboxes,
     art.tilesets,
     new Set(),
-    stagePreviewPlan(ZONE_MAP, preview.assemblySeed, preview.key),
+    stagePreviewPlan(STAGE_CONTEXT, preview.assemblySeed, preview.key),
   );
   let zone = startZone(BIRD, layout, preview.motionSeed);
   if (preview.area && preview.area !== zone.area) {

@@ -84,19 +84,13 @@ import {
   stepPose,
   terrainTiles,
 } from "../presentation/index.ts";
-import {
-  nodeOf,
-  SKILL_PROFILES,
-  skillTuning,
-  stageExit,
-  wholeRunSummary,
-} from "../progress/index.ts";
+import { SKILL_PROFILES, skillTuning, stageExit, wholeRunSummary } from "../progress/index.ts";
 import { startWakeLock, stopWakeLock } from "../pwa/index.ts";
 import { deathSupport } from "../rules/death.ts";
 import { askedRecipe, askedSeed, SEED_LIMIT } from "../rules/pageParams.ts";
 import { currentScreen } from "../rules/perception.ts";
 import { createStageBarks } from "../rules/stageBarks.ts";
-import { middleChunkIds } from "../rules/stagePlans.ts";
+import { planStage } from "../rules/stagePlans.ts";
 import {
   askedStagePreview,
   type StagePreview,
@@ -124,7 +118,7 @@ import {
   type ZoneStory,
   zoneStoryForStage,
 } from "../rules/zoneFlow.ts";
-import { zonePlanAvoiding, zonePlanFor } from "../rules/zonePlans.ts";
+import { STAGE_CONTEXT } from "../rules/zonePlans.ts";
 import { type Tileset } from "../stage/index.ts";
 import {
   buttonHeld,
@@ -206,16 +200,6 @@ import {
 // Rules stay seeded, so the scene draws the entropy.
 function newSeed(): number {
   return Math.floor(Math.random() * SEED_LIMIT);
-}
-
-// The zone a map node plays, assembled for seed where it is a recipe, without the avoided middle
-// chunks while an assembly fits without them.
-function zoneAt(seed: number, node: string, avoid: readonly string[] = []): ZonePlan {
-  const key = nodeOf(ZONE_MAP, node).zone;
-  if (key === undefined) {
-    throw new Error(`Map node ${node} has no zone to play`);
-  }
-  return zonePlanAvoiding(avoid, seed, key);
 }
 
 // What every zone's instances are resolved against.
@@ -475,26 +459,30 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     const node = this.mapNode;
     const seed =
       this.preview?.assemblySeed ?? askedSeed("assembly", window.location.search) ?? newSeed();
+    const opening = { node: ZONE_MAP.start };
     if (this.preview) {
-      this.loadPlan(stagePreviewPlan(ZONE_MAP, seed, this.preview.key));
+      this.loadPlan(stagePreviewPlan(STAGE_CONTEXT, seed, this.preview.key));
       this.freezePreview(this.preview);
       return;
     }
     if (this.backdrop) {
-      this.loadPlan(zoneAt(seed, ZONE_MAP.start));
+      this.loadPlan(planStage(STAGE_CONTEXT, { avoid: [], seed, target: opening }).plan);
       this.holdStill();
       return;
     }
     // An assembled zone is assembled afresh each time he enters it, unless ?assembly=<n> fixes
     // the seed.
     if (node !== undefined) {
-      const plan = zoneAt(seed, node, recentStageChunks(node));
+      const { middle, plan } = planStage(STAGE_CONTEXT, {
+        avoid: recentStageChunks(node),
+        seed,
+        target: { node },
+      });
       this.loadPlan(plan);
-      recordStageChunks(node, middleChunkIds(plan));
-    } else if (this.trial !== undefined) {
-      this.loadPlan(zonePlanFor(seed, this.trial));
+      recordStageChunks(node, middle);
     } else {
-      this.loadPlan(zoneAt(seed, ZONE_MAP.start));
+      const target = this.trial === undefined ? opening : { recipe: this.trial };
+      this.loadPlan(planStage(STAGE_CONTEXT, { avoid: [], seed, target }).plan);
     }
 
     this.createHud();
@@ -1406,9 +1394,8 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       completeRunLinkStage(this.stageKey());
     }
     const seed = askedSeed("assembly", window.location.search) ?? newSeed();
-    this.loadPlan(
-      this.trial === undefined ? zoneAt(seed, ZONE_MAP.start) : zonePlanFor(seed, this.trial),
-    );
+    const target = this.trial === undefined ? { node: ZONE_MAP.start } : { recipe: this.trial };
+    this.loadPlan(planStage(STAGE_CONTEXT, { avoid: [], seed, target }).plan);
     this.drawObjects();
     this.drawBird();
     const camera = this.cameras.main;

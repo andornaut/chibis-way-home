@@ -16,8 +16,9 @@ import { CHARACTERS } from "../data/characters.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { TILE } from "../data/screen.ts";
 import type { SpriteSilhouettes, ZonePlan } from "../data/types/index.ts";
+import { planStage, recipeKey, stageTarget } from "../rules/stagePlans.ts";
 import { zoneLayout } from "../rules/tiles.ts";
-import { zonePlanFor } from "../rules/zonePlans.ts";
+import { STAGE_CONTEXT } from "../rules/zonePlans.ts";
 import type { Tileset } from "../stage/index.ts";
 import { type PreparedStage, prepareStage } from "./simulate.ts";
 
@@ -86,17 +87,15 @@ export function stageLoader(
   artRoot = new URL("../../public/art/", import.meta.url),
 ) {
   const art = nodeArt(artRoot);
-  const node = ZONE_MAP.nodes.find(({ id }) => id === stage);
-  const key = node?.kind === "zone" ? node.zone : stage;
-  if (!key) {
-    throw new Error(`Stage ${stage} is not implemented`);
-  }
+  const target = stageTarget(ZONE_MAP, stage);
+  // A stage with no zone to play is refused before any seed is asked for.
+  recipeKey(ZONE_MAP, target);
   let previous: { seed: number; stage: PreparedStage } | undefined;
   return (seed: number): PreparedStage => {
     if (previous?.seed === seed) {
       return previous.stage;
     }
-    const plan = zonePlanFor(seed, key);
+    const { plan } = planStage(STAGE_CONTEXT, { avoid: [], seed, target });
     const stage = preparedPlan({ ...art, seed }, plan);
     previous = { seed, stage };
     return stage;

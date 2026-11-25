@@ -1,7 +1,23 @@
 import { describe, expect, it } from "vitest";
 
-import type { ZonePlan } from "../data/types/index.ts";
-import { middleChunkIds } from "./stagePlans.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import type { ZoneMap, ZonePlan } from "../data/types/index.ts";
+import { middleChunkIds, planStage, recipeKey, stageTarget } from "./stagePlans.ts";
+import { STAGE_CONTEXT, zonePlanAvoiding } from "./zonePlans.ts";
+
+const STAGE = ZONE_MAP.nodes.find((node) => node.kind === "zone" && node.zone !== undefined)!;
+const { at } = STAGE;
+// The game's map with a fork and a zone node that has no zone yet.
+const MAP: ZoneMap = {
+  ...ZONE_MAP,
+  nodes: [
+    ...ZONE_MAP.nodes,
+    { at, id: "a-fork", kind: "fork" },
+    { at, id: "unbuilt", kind: "zone" },
+  ],
+};
+const CONTEXT = { ...STAGE_CONTEXT, map: MAP };
+const SEED = 3;
 
 describe("a plan's middle chunks", () => {
   it("takes each area's chunks but its first and last as the middle", () => {
@@ -14,5 +30,55 @@ describe("a plan's middle chunks", () => {
       },
     } as unknown as ZonePlan;
     expect(middleChunkIds(plan)).toEqual(["a", "b", "c"]);
+  });
+});
+
+describe("the stage a request plans", () => {
+  it("plans a map node as its zone's recipe, with the recipe key and the plan's middle", () => {
+    const byNode = planStage(CONTEXT, { avoid: [], seed: SEED, target: { node: STAGE.id } });
+    expect(byNode).toEqual(
+      planStage(CONTEXT, { avoid: [], seed: SEED, target: { recipe: STAGE.zone! } }),
+    );
+    expect(byNode).toEqual({
+      key: STAGE.zone,
+      middle: middleChunkIds(byNode.plan),
+      plan: zonePlanAvoiding([], SEED, STAGE.zone!),
+    });
+  });
+
+  it("passes the avoided chunks to the assembly", () => {
+    const whole = (key: string) =>
+      planStage(CONTEXT, { avoid: [], seed: 0, target: { recipe: key } });
+    const avoiding = (key: string) =>
+      planStage(CONTEXT, { avoid: whole(key).middle, seed: 0, target: { recipe: key } });
+    // A recipe that still assembles without its own middle chunks.
+    const key = Object.keys(STAGE_CONTEXT.recipes).find(
+      (each) => avoiding(each).middle.join() !== whole(each).middle.join(),
+    )!;
+    expect(avoiding(key).plan).toEqual(zonePlanAvoiding(whole(key).middle, 0, key));
+  }, 60_000);
+
+  it.each([
+    ["a node the map lacks", { node: "nowhere" }, "No map node nowhere"],
+    ["a fork", { node: "a-fork" }, "Map node a-fork has no zone to play"],
+    ["a zone node with no zone yet", { node: "unbuilt" }, "Map node unbuilt has no zone to play"],
+    ["a key with no recipe", { recipe: "nowhere" }, "No recipe nowhere"],
+  ])("refuses %s", (_, target, message) => {
+    expect(() => planStage(CONTEXT, { avoid: [], seed: SEED, target })).toThrow(message);
+  });
+
+  it("names a zone node as a node and any other name as a recipe key", () => {
+    expect({
+      fork: stageTarget(MAP, "a-fork"),
+      recipe: stageTarget(MAP, "nowhere"),
+      stage: stageTarget(MAP, STAGE.id),
+      unbuilt: stageTarget(MAP, "unbuilt"),
+    }).toEqual({
+      fork: { recipe: "a-fork" },
+      recipe: { recipe: "nowhere" },
+      stage: { node: STAGE.id },
+      unbuilt: { node: "unbuilt" },
+    });
+    expect(recipeKey(MAP, stageTarget(MAP, STAGE.id))).toBe(STAGE.zone);
   });
 });

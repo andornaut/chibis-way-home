@@ -3,6 +3,7 @@ import { BACKGROUND_SECTIONS } from "../data/backgrounds.ts";
 import { CERTIFIED_LISTS } from "../data/certified/index.ts";
 import { CHARACTERS } from "../data/characters.ts";
 import { CHUNK_RULES, CHUNKS, THEMES } from "../data/chunks.ts";
+import { ZONE_MAP } from "../data/map.ts";
 import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules/index.ts";
 import { ZONE_ROWS } from "../data/screen.ts";
 import { SEAM_ROWS } from "../data/seams.ts";
@@ -18,8 +19,9 @@ import { ZONE_FRAMES } from "../data/zoneFrames.ts";
 import { RECIPES } from "../data/zones.ts";
 import { arenaApproachRelations } from "./arenaApproaches.ts";
 import { arenaChunk } from "./arenas.ts";
-import { assembleZoneAvoiding, type ChunkLibrary } from "./assemble.ts";
+import type { ChunkLibrary } from "./assemble.ts";
 import { certifiedChunks } from "./modules.ts";
+import { planStage, type StageContext } from "./stagePlans.ts";
 
 // The certified lists as a build loads them: only their pool fields.
 const POOLS: readonly CertifiedPool[] = CERTIFIED_LISTS;
@@ -95,6 +97,13 @@ export const STAGE_RECIPES: Readonly<Record<string, StageRecipe>> = Object.fromE
   Object.entries(RECIPES).map(([key, recipe]) => [key, withCertifiedPairs(recipe)]),
 );
 
+// What the game plans its stages from: its chunks, map and recipes.
+export const STAGE_CONTEXT: StageContext = {
+  library: CHUNK_LIBRARY,
+  map: ZONE_MAP,
+  recipes: STAGE_RECIPES,
+};
+
 // The zone key names, assembled from its recipe in STAGE_RECIPES for seed, the same for the same
 // seed.
 export function zonePlanFor(seed: number, key: string): ZonePlan {
@@ -104,9 +113,5 @@ export function zonePlanFor(seed: number, key: string): ZonePlan {
 // zonePlanFor without the avoided middle chunks while an assembly fits without them
 // (assembleZoneAvoiding), the same for the same seed and avoided chunks.
 export function zonePlanAvoiding(avoid: readonly string[], seed: number, key: string): ZonePlan {
-  const recipe = STAGE_RECIPES[key];
-  if (!recipe) {
-    throw new Error(`No recipe ${key}`);
-  }
-  return assembleZoneAvoiding(CHUNK_LIBRARY, avoid, seed, key, recipe);
+  return planStage(STAGE_CONTEXT, { avoid, seed, target: { recipe: key } }).plan;
 }
