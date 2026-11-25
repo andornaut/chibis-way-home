@@ -62,15 +62,6 @@
   box-shadow: inset 0 -2px 0 var(--crash-button-lip);
 }
 
-.crash-details summary:focus-visible {
-  outline: 2px solid var(--ui-colour-button-focus-face);
-  outline-offset: 2px;
-  box-shadow:
-    0 0 0 2px var(--crash-ink),
-    0 0 0 6px var(--crash-ink),
-    inset 0 -4px 0 var(--crash-button-lip);
-}
-
 @media (forced-colors: active) {
   .crash-button {
     forced-color-adjust: none;
@@ -88,10 +79,6 @@
   .crash-button:active {
     background: ButtonText;
     color: ButtonFace;
-  }
-
-  .crash-details summary:focus-visible {
-    outline-color: Highlight;
   }
 }
 
