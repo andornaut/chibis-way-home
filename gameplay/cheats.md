@@ -9,7 +9,9 @@ The [shared saves and cheats policy](https://github.com/andornaut/game-coordinat
 
 ## Saving
 
-Cheats act on the real save like normal play: progress, unlocks, power-ups, seen tips, achievements and statistics from cheats and cheated runs are saved and earned as usual. A cheat chosen on the start screen applies to the next Start or Continue. Confirmed Restart returns to a new save. Ordinary first-time tips still work under the [tip rules](player-copy.md#dialogue).
+Cheats act on the real save like normal play: progress, unlocks, power-ups, seen tips, achievements and statistics from cheats and cheated runs are saved and earned as usual. A cheat chosen on the start screen applies to the next Start or Continue. Confirmed Restart returns to a new save.
+
+A run link (`?zone=` with a stage's map node) plays that stage on its own and replays it after each clear. A clear, not a turn back, records the stage's run statistics and clear achievements like a map clear. Where the map already opens that stage, it also saves the completion and moves the map stand there; otherwise the map is unchanged. Ordinary first-time tips still work under the [tip rules](player-copy.md#dialogue).
 
 ## Controls
 
