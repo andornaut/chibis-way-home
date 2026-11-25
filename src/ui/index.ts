@@ -62,7 +62,6 @@ export {
   type CheatsCardView,
   type CheatsCardWords,
   createCheatsCard,
-  showCheats,
 } from "./dom/cheats.ts";
 export { type ChoiceCardView, createChoiceCard } from "./dom/choice.ts";
 export { createDeathCard, type DeathCardView } from "./dom/death.ts";
@@ -128,7 +127,6 @@ export {
   type SettingsSpriteRow,
   type SettingsSwitch,
   showSteps,
-  showSwitches,
 } from "./dom/settings.ts";
 export { createSkillDetailsCard, type SkillDetailsView } from "./dom/skillDetails.ts";
 export { filledFrame } from "./dom/skillDisc.ts";

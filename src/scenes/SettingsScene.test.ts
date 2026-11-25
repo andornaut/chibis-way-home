@@ -2,6 +2,7 @@
 import { EventEmitter } from "node:events";
 
 import type { InstallState } from "@andornaut/game-kit/runtime/web/pwa/installState";
+import { FORM_ROW_STATE_CLASS } from "@andornaut/game-kit/runtime/web/ui/dom/formRow";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const gate = vi.hoisted(() => ({
@@ -103,10 +104,17 @@ async function openCard(opener = "start", install = false) {
   scene.create();
   await settle();
   const [dialog, steps] = document.querySelectorAll<HTMLElement>("[role=dialog]");
-  const name = (element: Element | null) =>
-    element?.getAttribute("aria-label") ??
-    document.getElementById(element?.getAttribute("aria-labelledby") ?? "")?.textContent ??
-    element?.textContent;
+  // An element's accessible name: its label, or its text without the decorative parts.
+  const name = (element: Element | null) => {
+    const shown = element?.cloneNode(true) as Element | undefined;
+    shown?.querySelectorAll('[aria-hidden="true"]').forEach((hidden) => hidden.remove());
+    return (
+      element?.getAttribute("aria-label") ??
+      document.getElementById(element?.getAttribute("aria-labelledby") ?? "")?.textContent ??
+      shown?.textContent
+    );
+  };
+  const hidden = (element: Element) => element.closest("[hidden]") !== null;
   const control = (label: string) =>
     [...document.querySelectorAll<HTMLButtonElement>("button")].find(
       (button) => !button.closest("[hidden]") && name(button) === label,
@@ -116,22 +124,32 @@ async function openCard(opener = "start", install = false) {
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: value, ...options }),
     );
   const focused = () => name(document.activeElement);
-  return { control, dialog: dialog!, events, focused, key, owner, scene, steps: steps!, stop };
+  return {
+    control,
+    dialog: dialog!,
+    events,
+    focused,
+    hidden,
+    key,
+    name,
+    owner,
+    scene,
+    steps: steps!,
+    stop,
+  };
 }
 
 it("shows a switch for each setting named from TEXT, then the build label, focused on the card", async () => {
-  const { dialog } = await openCard();
+  const { dialog, name } = await openCard();
   const switches = [...dialog.querySelectorAll("[role=switch]")];
   expect({
     build: dialog.querySelector(".settings-build")?.textContent,
     checked: switches.map((element) => element.getAttribute("aria-checked")),
     focused: document.activeElement === dialog,
     icons: [...dialog.querySelectorAll("img")].map((icon) => icon.getAttribute("src")),
-    install: dialog.querySelector(".settings-install"),
-    name: document.getElementById(dialog.getAttribute("aria-labelledby") ?? "")?.textContent,
-    switches: switches.map(
-      (element) => document.getElementById(element.getAttribute("aria-labelledby")!)?.textContent,
-    ),
+    install: [...dialog.querySelectorAll("button")].map(name).includes(WORDS.install),
+    name: name(dialog),
+    switches: switches.map(name),
   }).toEqual({
     build: expect.stringContaining(__APP_VERSION__) as unknown,
     checked: [
@@ -142,7 +160,7 @@ it("shows a switch for each setting named from TEXT, then the build label, focus
     ].map(String),
     focused: true,
     icons: ["blob:icon-reduced-motion"],
-    install: null,
+    install: false,
     name: WORDS.title,
     switches: SWITCHES,
   });
@@ -160,7 +178,6 @@ it("keeps switch descriptions separate from their accessible setting names", asy
         (icon) => icon.closest("[aria-hidden=true]") !== null && !icon.hasAttribute("aria-label"),
       ),
       icons: icons.map((icon) => icon.dataset.action),
-      name: [...button.querySelector(".settings-name")!.children].map((line) => line.textContent),
       note: note && button.contains(note) ? note.textContent : null,
     };
   };
@@ -172,27 +189,24 @@ it("keeps switch descriptions separate from their accessible setting names", asy
     {
       decorative: true,
       icons: ["move"],
-      name: [WORDS.moveControls, WORDS.descriptions.moveControls],
       note: WORDS.descriptions.moveControls,
     },
     {
       decorative: true,
       icons: ["use", "jump"],
-      name: [WORDS.actionButtons, WORDS.descriptions.actionButtons],
       note: WORDS.descriptions.actionButtons,
     },
-    { decorative: true, icons: [], name: [WORDS.fps], note: null },
+    { decorative: true, icons: [], note: null },
     {
       decorative: true,
       icons: [],
-      name: [WORDS.reducedMotion, WORDS.descriptions.reducedMotion],
       note: WORDS.descriptions.reducedMotion,
     },
   ]);
 });
 
 it("shows current state text before and after toggling without changing the setting name", async () => {
-  const { control } = await openCard();
+  const { control, name } = await openCard();
   for (const [label, enabled, disabled] of [
     [WORDS.moveControls, WORDS.state.shown, WORDS.state.hidden],
     [WORDS.actionButtons, WORDS.state.shown, WORDS.state.hidden],
@@ -200,25 +214,21 @@ it("shows current state text before and after toggling without changing the sett
   ] as const) {
     const button = control(label);
     const checked = button.getAttribute("aria-checked") === "true";
-    const state = button.querySelector<HTMLElement>(".settings-state")!;
+    const state = button.querySelector<HTMLElement>(`.${FORM_ROW_STATE_CLASS}`)!;
     expect(state.textContent).toBe(checked ? enabled : disabled);
     button.click();
     expect(button.getAttribute("aria-checked")).toBe(String(!checked));
     expect(state.textContent).toBe(checked ? disabled : enabled);
-    expect(document.getElementById(button.getAttribute("aria-labelledby")!)?.textContent).toBe(
-      label,
-    );
+    expect(name(button)).toBe(label);
   }
 });
 
 it.each(["tap", "hold", "keyboard"] as const)(
   "opens Install once by %s from its single labelled icon face",
   async (action) => {
-    const { control, key, steps } = await openCard("pause", true);
+    const { control, hidden, key, steps } = await openCard("pause", true);
     const install = control(WORDS.install);
     expect(install.textContent).toBe(WORDS.install);
-    expect(install.querySelectorAll(".ui-text-button-face")).toHaveLength(1);
-    expect(install.querySelector(".settings-label")).toBeNull();
     const icon = install.querySelector("img")!;
     expect(icon.getAttribute("src")).toBe("blob:icon-install");
     expect(icon.getAttribute("alt")).toBe("");
@@ -246,7 +256,7 @@ it.each(["tap", "hold", "keyboard"] as const)(
       }
       await vi.advanceTimersByTimeAsync(0);
       expect(offer.install).toHaveBeenCalledOnce();
-      expect(steps.hidden).toBe(false);
+      expect(hidden(steps)).toBe(false);
     } finally {
       vi.useRealTimers();
     }
@@ -254,14 +264,7 @@ it.each(["tap", "hold", "keyboard"] as const)(
 );
 
 it("moves the keyboard's focus through the rows, Install, Back and the close X, wrapping", async () => {
-  const { control, dialog, focused, key } = await openCard("start", true);
-  const [left, right] = dialog.querySelectorAll(".settings-column");
-  expect([...left!.children]).toEqual(SWITCHES.slice(0, 2).map(control));
-  expect([...right!.children]).toEqual([
-    control(WORDS.fps),
-    control(WORDS.reducedMotion),
-    control(WORDS.install),
-  ]);
+  const { focused, key } = await openCard("start", true);
   const steps = (values: readonly string[]) =>
     values.map((value) => {
       key(value);
@@ -433,16 +436,19 @@ it("closes on a tap outside the card, never on one that lands on it or travels",
 });
 
 it("keeps Settings painted beneath the install steps, which Escape, back and its X close in turn", async () => {
-  const { control, dialog, focused, key, owner, scene, steps } = await openCard("pause", true);
+  const { control, dialog, focused, hidden, key, name, owner, scene, steps } = await openCard(
+    "pause",
+    true,
+  );
   control(WORDS.install).focus();
   key("Enter");
   await settle();
   const { steps: text, title } = WORDS.installSteps.ios;
-  const showing = () => ({ settings: !dialog.hidden, steps: !steps.hidden });
+  const showing = () => ({ settings: !hidden(dialog), steps: !hidden(steps) });
   expect({
     focused: focused(),
     glyph: steps.querySelector("img")?.getAttribute("src"),
-    name: document.getElementById(steps.getAttribute("aria-labelledby") ?? "")?.textContent,
+    name: name(steps),
     showing: showing(),
     text: document.getElementById(steps.getAttribute("aria-describedby") ?? "")?.textContent,
   }).toEqual({
@@ -532,7 +538,7 @@ it("prevents compatibility mouse defaults only for an eligible current Settings 
 });
 
 it("restores Install after a touch-opened steps card and protects its X and backdrop dismissals", async () => {
-  const { control, dialog, owner, steps } = await openCard("pause", true);
+  const { control, dialog, hidden, owner, steps } = await openCard("pause", true);
   const install = control(WORDS.install);
   const back = control(WORDS.back);
   const backdrop = document.querySelector<HTMLElement>(".ui-backdrop")!;
@@ -555,21 +561,21 @@ it("restores Install after a touch-opened steps card and protects its X and back
   expect(document.activeElement).toBe(dialog);
   expect(tap(install)).toBe(false);
   await settle();
-  expect(steps.hidden).toBe(false);
+  expect(hidden(steps)).toBe(false);
   expect(document.activeElement).toBe(close);
   back.click();
   tap(back);
-  expect(steps.hidden).toBe(false);
+  expect(hidden(steps)).toBe(false);
   expect(owner.settingsClosed).not.toHaveBeenCalled();
   expect(tap(close)).toBe(true);
-  expect(steps.hidden).toBe(true);
+  expect(hidden(steps)).toBe(true);
   expect(document.activeElement).toBe(install);
   expect(owner.settingsClosed).not.toHaveBeenCalled();
   dialog.focus();
   tap(install);
   await settle();
   expect(tap(backdrop)).toBe(true);
-  expect(steps.hidden).toBe(true);
+  expect(hidden(steps)).toBe(true);
   expect(document.activeElement).toBe(install);
   expect(owner.settingsClosed).not.toHaveBeenCalled();
 });

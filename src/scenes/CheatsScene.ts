@@ -8,7 +8,6 @@ import {
   type CheatsCardView,
   type CheatsCardWords,
   createCheatsCard,
-  showCheats,
 } from "../ui/index.ts";
 import { bindSceneButtons } from "./domTaps.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
@@ -102,9 +101,7 @@ export class CheatsScene extends Scene {
   }
 
   private render(): void {
-    if (this.cheats !== undefined) {
-      showCheats(invulnerabilityEnabled(), CHEATS_WORDS.state, this.cheats);
-    }
+    this.cheats?.showInvincibility(invulnerabilityEnabled());
   }
 
   private toggleInvincibility(): void {

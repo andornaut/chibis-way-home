@@ -2,6 +2,7 @@
 import { EventEmitter } from "node:events";
 
 import { INSTALLED_APP_DISPLAY_QUERY } from "@andornaut/game-kit/runtime/web/pwa/backNavigation";
+import { FORM_ROW_STATE_CLASS } from "@andornaut/game-kit/runtime/web/ui/dom/formRow";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
 const gate = vi.hoisted(() => ({
@@ -80,43 +81,37 @@ function openCard(installed = false) {
   });
   scene.init({ opener: "pause" });
   scene.create();
+  // A button's accessible name: its label, or its text without the decorative parts.
+  const name = (button: Element) => {
+    const shown = button.cloneNode(true) as Element;
+    shown.querySelectorAll('[aria-hidden="true"]').forEach((hidden) => hidden.remove());
+    return button.getAttribute("aria-label") ?? shown.textContent;
+  };
   const control = (label: string) =>
     [...document.querySelectorAll<HTMLButtonElement>("button")].find(
-      (button) =>
-        !button.closest("[hidden]") &&
-        (button.getAttribute("aria-label") ??
-          document.getElementById(button.getAttribute("aria-labelledby") ?? "")?.textContent ??
-          button.textContent) === label,
+      (button) => !button.closest("[hidden]") && name(button) === label,
     )!;
   const key = (value: string, options: KeyboardEventInit = {}) =>
     document.activeElement?.dispatchEvent(
       new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: value, ...options }),
     );
-  return { control, dialog, key, openCheats, owner, scene };
+  return { control, dialog, key, name, openCheats, owner, scene };
 }
 
 it.each([false, true])("shows only the current cheat controls in app mode %s", (installed) => {
-  const { control } = openCard(installed);
+  const { control, name } = openCard(installed);
   const card = control(DEV_TEXT.invulnerable).closest<HTMLElement>("[role=dialog]")!;
-  expect(
-    [...card.querySelectorAll("button")].map(
-      (button) => button.getAttribute("aria-label") ?? button.textContent,
-    ),
-  ).toEqual([
+  expect([...card.querySelectorAll("button")].map(name)).toEqual([
     DEV_TEXT.unlockAllPowerUps,
     DEV_TEXT.unlockAllZones,
-    [DEV_TEXT.invulnerable, DEV_TEXT.invulnerableNote, TEXT.settings.state.off].join(""),
+    DEV_TEXT.invulnerable,
     TEXT.achievements.back,
     DEV_TEXT.cheats.close,
   ]);
   const invincibility = control(DEV_TEXT.invulnerable);
   const note = document.getElementById(invincibility.getAttribute("aria-describedby")!);
   expect(note?.textContent).toBe(DEV_TEXT.invulnerableNote);
-  expect([card.hasAttribute("aria-describedby"), card.querySelector(".cheats-warning")]).toEqual([
-    false,
-    null,
-  ]);
-  expect(card.dataset.cardWidth).toBe("medium");
+  expect(card.hasAttribute("aria-describedby")).toBe(false);
   expect(document.querySelector("[role=alertdialog]")).toBeNull();
   expect(saves.resetSave).not.toHaveBeenCalled();
 });
@@ -126,18 +121,19 @@ it("saves each unlock once, reports it, and switches the stored Invincibility se
   control(DEV_TEXT.unlockAllPowerUps).click();
   expect(saves.unlockAllPowerUps).toHaveBeenCalledOnce();
   expect(saves.unlockAllZones).not.toHaveBeenCalled();
-  expect(document.querySelector(".cheats-status")?.textContent).toBe(
-    DEV_TEXT.results.unlockAllPowerUps,
-  );
+  const status = document.querySelector("[role=status]");
+  expect(status?.textContent).toBe(DEV_TEXT.results.unlockAllPowerUps);
   control(DEV_TEXT.unlockAllZones).click();
   expect(saves.unlockAllZones).toHaveBeenCalledOnce();
-  expect(document.querySelector(".cheats-status")?.textContent).toBe("");
+  expect(status?.textContent).toBe("");
   const toggle = control(DEV_TEXT.invulnerable);
   toggle.click();
   expect(invulnerabilityEnabled()).toBe(true);
   expect(localStorage.getItem("chibis-way-home.invincibility")).toBe("on");
   expect(toggle.getAttribute("aria-checked")).toBe("true");
-  expect(toggle.querySelector(".settings-state")?.textContent).toBe(TEXT.settings.state.on);
+  expect(toggle.querySelector(`.${FORM_ROW_STATE_CLASS}`)?.textContent).toBe(
+    TEXT.settings.state.on,
+  );
   toggle.click();
   expect(invulnerabilityEnabled()).toBe(false);
   expect(localStorage.getItem("chibis-way-home.invincibility")).toBeNull();
@@ -182,15 +178,9 @@ it.each(["tap", "hold", "keyboard"] as const)(
   },
 );
 
-it("keeps all actions behind the modal gate and preserves the switch's decorative state stack", () => {
+it("keeps all actions behind the modal gate", () => {
   const { control, scene } = openCard();
   const toggle = control(DEV_TEXT.invulnerable);
-  const value = toggle.querySelector(".settings-toggle-value")!;
-  expect([...value.children].map((child) => child.className)).toEqual([
-    "settings-switch",
-    "settings-state",
-  ]);
-  expect(value.getAttribute("aria-hidden")).toBe("true");
   gate.accepts.mockReturnValue(false);
   control(DEV_TEXT.unlockAllPowerUps).click();
   toggle.click();

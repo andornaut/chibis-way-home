@@ -1,29 +1,29 @@
+import { createFormRows } from "@andornaut/game-kit/runtime/web/ui/dom/formRow";
 import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
 import fpsCounterIcon from "../../../art/icons/icon-fps-counter.svg?raw";
-import type { CardWidth } from "../layout/contentCard.ts";
-import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
+import { createGameFormRow } from "../input/actionBinding.ts";
+import { SETTINGS_LAYOUT, SETTINGS_ROWS } from "../layout/settingsCard.ts";
 import {
   TOUCH_SETTING_ACTIONS,
   TOUCH_SETTINGS,
   type TouchSetting,
 } from "../settings/touchControls.ts";
 import { createActionIcon } from "./actionHelp.ts";
-import { closeButton, setCardWidth } from "./card.ts";
-import { createTextButtonElement } from "./cardElements.ts";
-import { createToggleValue, fitToggleValues, showToggleValue } from "./toggleValue.ts";
+import { textButton } from "./card.ts";
+import { type CardFrame, createCardFrame } from "./cardFrame.ts";
 
-// The settings card in the HTML UI (settings.css, on ui.css's .ui-card): its title, a switch row
-// for each setting, the Install row while the game can be installed, the build label, a fixed Back action and the close
-// X; and in the same view, hidden until Install needs it, the install steps card in its place,
-// with its title, the browser's steps beside their glyph and its own close X. Each row is one
-// button and its whole press area: a switch row (role switch, aria-checked, named by its label)
-// holds its icons, label and art's ui-switch; the Install row (named by its label) holds its icon,
-// single label in a standard secondary face. A switch row shows its current state below the switch and
-// can describe its effect under its label. Touch rows draw the controls they show or hide as inline
-// control icons; Install and Reduced motion use art sprites. The icons are decorative, hidden
-// from assistive technology. The close X comes last, so the keyboard's focus moves through the
-// rows in order, then Back and the close X.
+// The settings card in the HTML UI (cardFrame.ts, settings.css): its title, two columns of switch
+// rows on the kit's form rows, the touch settings left and the display settings right, the
+// Install button under the right column while the game can be installed, the build label, Back in
+// the footer and the close X; and in the same view, hidden until Install needs it, the install
+// steps card over it, with its title, the browser's steps beside their glyph and its own close X.
+// A switch row is one button and its whole press area (role switch, aria-checked, named by its
+// label and described by its note): its icons, its label over its note and art's ui-switch over
+// its state word. Touch rows draw the controls they show or hide as inline control icons; FPS
+// counter, Reduced motion and Install use art's icons. The icons are decorative, hidden from
+// assistive technology. Install is one standard face holding its icon and label. The keyboard's
+// focus moves through the rows in order, then Install, Back and the close X.
 
 export type SettingsSwitch = "fps" | "reducedMotion" | TouchSetting;
 
@@ -64,7 +64,7 @@ export interface SettingsCardView {
   readonly close: HTMLButtonElement;
   // Each sprite row's leading icon, for the caller to set its source.
   readonly icons: Readonly<Partial<Record<SettingsSpriteRow, HTMLImageElement>>>;
-  // The Install row, while the card shows one.
+  // The Install button, while the card shows one.
   readonly install?: HTMLButtonElement;
   // The scene's view, which the UI layer mounts.
   readonly root: HTMLElement;
@@ -72,19 +72,21 @@ export interface SettingsCardView {
     readonly close: HTMLButtonElement;
     // The steps card itself: role dialog, named by its title and described by its steps.
     readonly dialog: HTMLElement;
+    readonly frame: CardFrame;
     readonly glyph: HTMLImageElement;
+    // The steps card's view, hidden while the settings card shows alone.
+    readonly root: HTMLElement;
     readonly text: HTMLElement;
-    readonly title: HTMLElement;
   };
   readonly switches: Readonly<Record<SettingsSwitch, HTMLButtonElement>>;
+  // Shows each switch on or off as on states it.
+  showSwitches(on: (setting: SettingsSwitch) => boolean): void;
 }
 
 function isTouchSetting(key: string): key is TouchSetting {
   return (TOUCH_SETTINGS as readonly string[]).includes(key);
 }
 
-// Touch settings fill the left column. FPS, Reduced motion and optional Install fill the right.
-// Both columns fit without a scrolling region.
 export function createSettingsCard(
   document: Document,
   colours: SettingsCardColours,
@@ -101,167 +103,141 @@ export function createSettingsCard(
     created.className = className;
     return created;
   };
-  const text = <K extends keyof HTMLElementTagNameMap>(
-    tag: K,
-    className: string,
-    value: string,
-  ) => {
-    const created = element(tag, className);
-    created.textContent = value;
-    return created;
+  const sprite = () => {
+    const icon = element("img", "settings-icon");
+    icon.alt = "";
+    return icon;
   };
-  const dialogFor = (dialogId: string, title: string, className: string, family: CardWidth) => {
-    const dialog = element("section", `ui-card ui-frame ui-card-closeable ${className}`);
-    setCardWidth(family, dialog);
-    dialog.id = dialogId;
-    dialog.setAttribute("role", "dialog");
-    dialog.setAttribute("aria-labelledby", `${dialogId}-title`);
-    const header = element("div", "ui-card-header");
-    const heading = text("h2", "ui-card-title", title);
-    heading.id = `${dialogId}-title`;
-    header.append(heading);
-    dialog.append(header);
-    return { dialog, heading };
-  };
-  const root = element("div", "ui-card-scene");
-  writeLayoutProperties(SETTINGS_LAYOUT, root);
-  const backdrop = element("div", "ui-backdrop");
-  const view = element("div", "ui-view ui-card-view");
-  // The full-width Settings form retains two columns; its Install steps child stays medium.
-  const { dialog } = dialogFor(id, words.title, "settings-card", "large");
-  const list = element("div", "settings-rows");
-  const left = element("div", "settings-column");
-  const right = element("div", "settings-column");
-  list.append(left, right);
+  const frame = createCardFrame(document, {
+    className: "settings-card",
+    close: words.close,
+    id,
+    title: words.title,
+    width: "large",
+  });
+  writeLayoutProperties(SETTINGS_LAYOUT, frame.root);
   const icons: Partial<Record<SettingsSpriteRow, HTMLImageElement>> = {};
-  // A row's button with its icons and its label, which names it. Each switch's note describes
-  // its effect; aria-checked exposes the current state without repeating the visible state text.
-  const row = (key: SettingsSwitch) => {
-    const button = element("button", "settings-row ui-button-reset");
-    button.type = "button";
-    const slot = element("span", "settings-icons");
-    slot.setAttribute("aria-hidden", "true");
+  const on = new Map<SettingsSwitch, boolean>();
+  const stateWord = (key: SettingsSwitch) => {
+    const enabled = on.get(key) === true;
+    return isTouchSetting(key)
+      ? words.state[enabled ? "shown" : "hidden"]
+      : words.state[enabled ? "on" : "off"];
+  };
+  const rowIcon = (key: SettingsSwitch): Element => {
     if (isTouchSetting(key)) {
-      slot.append(
+      const controls = element("span", "settings-icons");
+      controls.append(
         ...TOUCH_SETTING_ACTIONS[key].map((action) =>
           createActionIcon(document, colours, undefined, action),
         ),
       );
-    } else if (key === "fps") {
-      const icon = element("span", "settings-icon settings-fps-icon");
+      return controls;
+    }
+    if (key === "fps") {
+      const icon = element("span", "settings-fps-icon");
       icon.innerHTML = fpsCounterIcon;
-      slot.append(icon);
-    } else {
-      const icon = element("img", "settings-icon");
-      icon.alt = "";
-      icons[key] = icon;
-      slot.append(icon);
+      return icon;
     }
-    const name = element("span", "settings-name");
-    const label = text("span", "settings-label", words[key]);
-    label.id = `${id}-${key}`;
-    button.setAttribute("aria-labelledby", label.id);
-    name.append(label);
-    if (key !== "fps") {
-      const note = text("span", "settings-note", words.descriptions[key]);
-      note.id = `${id}-${key}-note`;
-      button.setAttribute("aria-describedby", note.id);
-      name.append(note);
-    }
-    button.append(slot, name);
-    (isTouchSetting(key) ? left : right).append(button);
-    return button;
+    const icon = sprite();
+    icons[key] = icon;
+    return icon;
   };
-  const switches = Object.fromEntries(
-    rows.switches.map((key) => {
-      const button = row(key);
-      button.setAttribute("role", "switch");
-      button.setAttribute("aria-checked", "false");
-      const value = createToggleValue(document);
-      button.append(value);
-      return [key, button];
-    }),
-  ) as Record<SettingsSwitch, HTMLButtonElement>;
+  // Touch settings fill the left column; the display settings and Install fill the right.
+  const columns = element("div", "settings-columns");
+  const column = () => {
+    const list = createFormRows(document, SETTINGS_ROWS, { className: "switch-rows" });
+    const box = element("div", "settings-column");
+    box.append(list.element);
+    columns.append(box);
+    return { box, list: list.element };
+  };
+  const left = column();
+  const right = column();
+  const views = rows.switches.map((key) => {
+    const view = createGameFormRow(document, {
+      className: "ui-button-reset",
+      getState: () => ({ checked: on.get(key) === true, value: stateWord(key) }),
+      icon: rowIcon(key),
+      label: words[key],
+      ...(key === "fps" ? {} : { note: words.descriptions[key] }),
+      switch: true,
+    });
+    (isTouchSetting(key) ? left : right).list.append(view.element);
+    return [key, view] as const;
+  });
   let install: HTMLButtonElement | undefined;
   if (rows.install) {
-    install = createTextButtonElement(document, words.install);
+    install = textButton(document, words.install);
     install.classList.add("settings-install");
-    const icon = element("img", "settings-icon");
-    icon.alt = "";
+    const icon = sprite();
     icon.setAttribute("aria-hidden", "true");
     icons.install = icon;
     install.querySelector(".ui-text-button-label")!.prepend(icon);
-    right.append(install);
+    right.box.append(install);
   }
-  const back = createTextButtonElement(document, words.back, true);
-  const footer = element("div", "ui-card-actions settings-footer");
-  footer.append(back);
-  const close = closeButton(document, words.close);
-  dialog.append(list, text("p", "ui-card-text settings-build", rows.build), footer, close);
-  const steps = dialogFor(`${id}-steps`, "", "settings-steps", "medium");
-  steps.dialog.hidden = true;
-  steps.dialog.setAttribute("aria-describedby", `${id}-steps-text`);
-  const body = element("div", "settings-steps-body");
-  const glyph = element("img", "settings-icon");
-  glyph.alt = "";
-  const stepsText = element("p", "ui-card-text settings-steps-text");
+  const build = element("p", "ui-card-text ui-text-supporting settings-build");
+  build.textContent = rows.build;
+  frame.content.append(columns, build);
+  const back = textButton(document, words.back, true);
+  frame.setFooter([back]);
+  // The steps card's view sits over the settings card's, under the one backdrop.
+  const steps = createCardFrame(document, {
+    className: "settings-steps",
+    close: words.close,
+    id: `${id}-steps`,
+    title: "",
+    width: "medium",
+  });
+  steps.backdrop.remove();
+  steps.root.hidden = true;
+  const stepsBody = element("div", "settings-steps-body");
+  const glyph = sprite();
+  const stepsText = element("p", "ui-card-text ui-card-paragraph ui-text-body settings-steps-text");
   stepsText.id = `${id}-steps-text`;
-  body.append(glyph, stepsText);
-  const stepsClose = closeButton(document, words.close);
-  steps.dialog.append(body, stepsClose);
-  view.append(dialog, steps.dialog);
-  root.append(backdrop, view);
+  steps.dialog.setAttribute("aria-describedby", stepsText.id);
+  stepsBody.append(glyph, stepsText);
+  steps.content.append(stepsBody);
+  frame.root.append(steps.root);
   return {
     back,
-    backdrop,
-    close,
-    dialog,
+    backdrop: frame.backdrop,
+    close: frame.close!,
+    dialog: frame.dialog,
     icons,
     ...(install && { install }),
-    root,
-    steps: {
-      close: stepsClose,
-      dialog: steps.dialog,
-      glyph,
-      text: stepsText,
-      title: steps.heading,
+    root: frame.root,
+    showSwitches(shown) {
+      for (const [key, view] of views) {
+        on.set(key, shown(key));
+        view.refresh();
+      }
     },
-    switches,
+    steps: {
+      close: steps.close!,
+      dialog: steps.dialog,
+      frame: steps,
+      glyph,
+      root: steps.root,
+      text: stepsText,
+    },
+    switches: Object.fromEntries(views.map(([key, view]) => [key, view.element])) as Record<
+      SettingsSwitch,
+      HTMLButtonElement
+    >,
   };
 }
 
-// Shows each switch on or off as on states it.
-export function showSwitches(
-  on: (setting: SettingsSwitch) => boolean,
-  words: SettingsCardWords["state"],
-  view: SettingsCardView,
-): void {
-  for (const [setting, button] of Object.entries(view.switches) as [
-    SettingsSwitch,
-    HTMLButtonElement,
-  ][]) {
-    const enabled = on(setting);
-    button.setAttribute("aria-checked", String(enabled));
-    const state = isTouchSetting(setting) ? (enabled ? "shown" : "hidden") : enabled ? "on" : "off";
-    showToggleValue(words[state], button.querySelector<HTMLElement>(".settings-toggle-value")!);
-  }
-  fitToggleValues(
-    Object.values(view.switches).map((button) =>
-      button.querySelector<HTMLElement>(".settings-toggle-value")!,
-    ),
-  );
-}
-
-// Shows the install steps card in the settings card's place, with words, and its glyph where it
-// has one; or, for undefined, the settings card again. No control keeps a pressed look across the
-// change.
+// Shows the install steps card over the settings card, with words, and its glyph where it has
+// one; or, for undefined, the settings card alone again. No control keeps a pressed look across
+// the change.
 export function showSteps(
   words: { readonly glyph: boolean; readonly steps: string; readonly title: string } | undefined,
   view: SettingsCardView,
 ): void {
   const { steps } = view;
   if (words !== undefined) {
-    steps.title.textContent = words.title;
+    steps.frame.frame.setTitle(words.title);
     steps.text.textContent = words.steps;
     steps.glyph.hidden = !words.glyph;
     steps.dialog.toggleAttribute("data-glyph", words.glyph);
@@ -269,7 +245,8 @@ export function showSteps(
       steps.glyph.removeAttribute("src");
     }
   }
-  steps.dialog.hidden = words === undefined;
+  steps.root.hidden = words === undefined;
+  steps.frame.layout();
   for (const button of view.root.querySelectorAll<HTMLElement>("[data-pressed]")) {
     delete button.dataset.pressed;
   }

@@ -179,6 +179,8 @@ export const LOADING_FAILURE_PRESENTATION = {
 export const SETTINGS_CARD = {
   // art: each row's leading icon side, and the install steps glyph's.
   icon: 16,
+  // art: the gap between Install's leading icon and its label.
+  installIconGap: PLAY_MARK.gap,
   // Install steps wrap within this width beside their glyph.
   stepsTextWidth: 320,
   // art: the toggle switch's size.

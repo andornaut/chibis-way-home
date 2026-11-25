@@ -18,7 +18,6 @@ import {
   type SettingsSpriteRow,
   type SettingsSwitch,
   showSteps,
-  showSwitches,
   TOUCH_SETTINGS,
   type TouchSetting,
   touchSettingShown,
@@ -79,11 +78,12 @@ function settingOn(setting: SettingsSwitch): boolean {
 // at once; a touch setting shows in the opener's dim as it changes. The close X, back, Escape, P
 // and a tap outside close the card, back to the scene that opened it. Install shows the browser's
 // install prompt where it holds one, otherwise the install steps card for the browser's own
-// install steps in the settings card's place, which the same controls close, back to the
+// install steps over the settings card, which the same controls close, back to the
 // settings card. The card is HTML in the UI layer (src/ui/dom/settings.ts), shown once the dim
 // under it and the rows' sprite icons are ready: a row acts when a press lands on it and lifts on
 // it; Tab and the arrows move the keyboard's focus, which starts on the card itself, through the
-// rows and the close X, and Enter and Space press the focused one (the kit's modalLayer).
+// rows, Install, Back and the close X, and Enter and Space press the focused one (the kit's
+// modalLayer).
 // The steps card's focus starts on its close X, so Enter and Space close it.
 export class SettingsScene extends Scene {
   private opener = "";
@@ -315,8 +315,6 @@ export class SettingsScene extends Scene {
   }
 
   private render(): void {
-    if (this.card !== undefined) {
-      showSwitches(settingOn, TEXT.settings.state, this.card);
-    }
+    this.card?.showSwitches(settingOn);
   }
 }
