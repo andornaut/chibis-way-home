@@ -72,6 +72,10 @@ export default gameViteConfig<typeof ConfigModules>({
     ...config.test,
     // Each project names its own tests, since a project extends the root include list.
     include: [],
+    // Each worker's V8 sizes its heap from the whole container's memory, so four workers let
+    // garbage grow past the check container's limit together. The suite's largest live heap is
+    // about 250 MB; the cap makes each worker collect well before the four reach the limit.
+    execArgv: ["--max-old-space-size=512"],
     maxWorkers: 4,
     projects: [
       { extends: true, test: { exclude: DOM_TESTS, include: [TESTS], name: "node" } },
