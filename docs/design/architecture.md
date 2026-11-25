@@ -18,3 +18,4 @@ Reference: [architecture](../../src/README.md#architecture),
 | cwh-0301 | Plan each stage through one pure entry point                  | [cwh-0301.md](../work/cwh-0301.md) |
 | cwh-0302 | Step each boss encounter through one pure entry point         | [cwh-0302.md](../work/cwh-0302.md) |
 | cwh-0307 | Pin procedural systems by properties and one acceptance batch | [cwh-0307.md](../work/cwh-0307.md) |
+| cwh-0308 | Hand the encounter step its remaining hidden inputs           | [cwh-0308.md](../work/cwh-0308.md) |
