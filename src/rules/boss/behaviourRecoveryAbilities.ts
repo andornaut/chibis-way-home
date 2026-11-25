@@ -1,4 +1,5 @@
 import { type Ability, abilityFor, type AbilityTable } from "../../ai/index.ts";
+import { STEP_SECONDS } from "../../core/index.ts";
 import type { ObjectLayout, Point } from "../../data/types/index.ts";
 import { birdBox } from "../bird/index.ts";
 import type { BehaviourState, BehaviourStep } from "./behaviour.ts";
@@ -12,6 +13,7 @@ import {
 } from "./behaviourIdle.ts";
 import type { BehaviourPerception } from "./behaviourPerception.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
+import { restingPursuer } from "./behaviourResting.ts";
 import { nodeOf } from "./behaviourTrack.ts";
 import type { BehaviourTraversalState } from "./behaviourTraversal.ts";
 import { landingSupport, supportContact } from "./flyLanding.ts";
@@ -77,6 +79,7 @@ export function idleReady(
     recovery.kind === "pursue" &&
     recovery.mode === "fly" &&
     (node.motion.kind === "wait" || (node.motion.kind === "pursue" && node.motion.mode === "fly"));
+  const resting = () => restingPursuer(world, object, recovery, STEP_SECONDS, state.traversal, at);
   return (
     world.traversalFrame !== undefined &&
     !attackProtected(node, state) &&
@@ -85,10 +88,12 @@ export function idleReady(
     node.motion.kind !== "fly" &&
     !node.onEnter?.length &&
     !state.hop &&
-    (!state.traversal || (state.traversal.physical.grounded && !state.traversal.preparation)) &&
-    (supportContact(object, world, at) || flyingHover) &&
     idle.seconds >= watchdog.seconds &&
-    (idle.attemptedAt === undefined || idle.seconds - idle.attemptedAt >= watchdog.seconds)
+    (idle.attemptedAt === undefined || idle.seconds - idle.attemptedAt >= watchdog.seconds) &&
+    (!state.traversal ||
+      (state.traversal.physical.grounded && !state.traversal.preparation) ||
+      resting()) &&
+    (supportContact(object, world, at) || flyingHover || resting())
   );
 }
 

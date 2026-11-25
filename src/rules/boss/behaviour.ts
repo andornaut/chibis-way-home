@@ -66,6 +66,7 @@ import {
   idleReady,
   recoveryStep,
 } from "./behaviourRecoveryAbilities.ts";
+import { restingPursuer } from "./behaviourResting.ts";
 import {
   advanceScorer,
   type BehaviourScorerState,
@@ -1341,6 +1342,7 @@ function graphHold(
     node.attack?.phase !== "completed" &&
     next.activeAttack?.phase !== "committed";
   const fallback = next.traversal;
+  const resting = () => restingPursuer(world, object, node.motion, seconds, fallback, current);
   const refreshableGroundFallback =
     time < seconds &&
     traversalStep === undefined &&
@@ -1360,7 +1362,7 @@ function graphHold(
     Number.isFinite(fallback.physical.vy) &&
     Math.abs(fallback.physical.vy) <= EDGE &&
     (!next.intent || next.intent.remainingSeconds <= 0) &&
-    supportContact(object, world, current);
+    (supportContact(object, world, current) || resting());
   const graphHeld =
     traversalStep !== undefined ||
     next.traversal?.preparation !== undefined ||
@@ -1373,7 +1375,8 @@ function graphHold(
     (node.motion.kind === "pursue" &&
       next.traversal &&
       !next.traversal.physical.grounded &&
-      !refreshableGroundFallback);
+      !refreshableGroundFallback &&
+      !resting());
   return { graphHeld, refreshableGroundFallback, selectionFallback };
 }
 

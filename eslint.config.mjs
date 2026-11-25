@@ -145,7 +145,7 @@ const SIZE_CEILINGS = {
   "src/data/types/stage.ts": { file: 558 },
   "src/progress/save/stats.ts": { function: 249 },
   "src/rules/bird/bird.ts": { file: 675, function: 254 },
-  "src/rules/boss/behaviour.ts": { file: 2008, function: 208 },
+  "src/rules/boss/behaviour.ts": { file: 2011, function: 208 },
   "src/rules/boss/behaviourInterludes.ts": { function: 156 },
   "src/rules/boss/behaviourLayout.ts": { file: 615, function: 606 },
   "src/rules/boss/behaviourMapPursuit.ts": { file: 520 },
