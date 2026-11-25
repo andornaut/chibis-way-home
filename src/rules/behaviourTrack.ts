@@ -58,20 +58,31 @@ export function travelLimit(
     : undefined;
 }
 
-// The current state's track end in a direction, measured from its anchor.
+// The current state's track end in a direction, measured from its anchor. A ground boss's
+// committed move along its facing, a rush or its slide, has the track's length whichever way it
+// faces.
 export function trackEndpoint(
   object: ObjectLayout,
   direction: -1 | 1,
   state: BehaviourState,
 ): number {
-  const plan = nodeOf(object, state.stateKey).track ?? object.behaviour;
+  const node = nodeOf(object, state.stateKey);
+  const plan = node.track ?? object.behaviour;
   if (!plan) {
     throw new Error(`No behaviour for ${object.character}`);
   }
   const origin = (state.anchor ?? object.origin)[plan.axis];
+  const distance =
+    node.motion.kind === "move" &&
+    node.motion.direction === "facing" &&
+    node.attack?.phase === "committed" &&
+    plan.axis === "x" &&
+    groundBoss(object)
+      ? state.facing * Math.abs(plan.distance)
+      : plan.distance;
   return direction === 1
-    ? Math.max(origin, origin + plan.distance)
-    : Math.min(origin, origin + plan.distance);
+    ? Math.max(origin, origin + distance)
+    : Math.min(origin, origin + distance);
 }
 
 const groundBosses = new WeakMap<BehaviourPlan, boolean>();

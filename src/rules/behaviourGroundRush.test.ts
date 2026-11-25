@@ -1,4 +1,4 @@
-import { expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { namedStreams } from "../ai/randomStreams.ts";
 import { EDGE, STEP_SECONDS } from "../core/index.ts";
@@ -8,6 +8,7 @@ import type { Rect } from "../data/types/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import { type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
+import { nodeOf, trackEndpoint } from "./behaviourTrack.ts";
 import { startBird } from "./bird.ts";
 import { stepBehaviour } from "./encounter.ts";
 import { objectLayout } from "./tiles.ts";
@@ -85,5 +86,78 @@ it("drops a committed rush whose support vanishes instead of holding it in the a
   for (let index = 11; index < path.length; index++) {
     const { at } = path[index]!;
     expect(at.y > path[index - 1]!.at.y || at.y + archie.height === pit.y).toBe(true);
+  }
+});
+
+// Every boss whose charge is a committed rush along its facing, on one wide floor.
+const CHARGERS = [
+  "bear-antagonist",
+  "dog-antagonist",
+  "ferret-antagonist",
+  "goose-antagonist",
+  "raccoon-antagonist",
+] as const;
+const FACINGS = [-1, 1] as const;
+
+describe.each(CHARGERS)("%s's committed rush", (character) => {
+  const boss = objectLayout(
+    TILE,
+    CATALOGUE,
+    HITBOXES,
+    TILESETS["tiles-street"],
+    {},
+    { character, col: 22, row: 46 },
+  );
+  const at = boss.origin;
+  const floor: Rect = { height: 120, width: 4800, x: at.x - 2400, y: at.y + boss.height };
+  const rush = nodeOf(boss, "rush");
+  const length = Math.abs((rush.track ?? boss.behaviour!).distance);
+  const rushing = (facing: -1 | 1): BehaviourState => ({
+    ...startBehaviour(BIRD, boss, chibi),
+    active: true,
+    activeAttack: { id: rush.attack!.id, phase: "committed" },
+    anchor: at,
+    axis: "x",
+    facing,
+    pendingEntry: true,
+    pursuit: { phase: "engaged", settled: false, unreachableSeconds: 0 },
+    stateKey: "rush",
+  });
+
+  it("is a committed move along its facing", () => {
+    expect(rush.attack?.phase).toBe("committed");
+    expect(rush.motion).toMatchObject({ direction: "facing", kind: "move" });
+    expect(length).toBeGreaterThan(0);
+  });
+
+  it.each(FACINGS)("has its track's length ahead when facing %s", (facing) => {
+    const state = rushing(facing);
+    expect(trackEndpoint(boss, facing, state)).toBe(at.x + facing * length);
+    expect(trackEndpoint(boss, -facing as -1 | 1, state)).toBe(at.x);
+  });
+
+  it.each(FACINGS)("travels the way it faces when facing %s", (facing) => {
+    const step = stepBehaviour(
+      BIRD,
+      boss,
+      world([floor], 0),
+      STEP_SECONDS,
+      chibi,
+      at,
+      rushing(facing),
+    );
+    expect(step.state.stateKey).toBe("rush");
+    expect((step.at.x - at.x) * facing).toBeGreaterThan(0);
+  });
+});
+
+it("keeps an uncommitted state's track on its authored side", () => {
+  const wandering = { ...startBehaviour(BIRD, archie, chibi), anchor: archie.origin };
+  const authored = archie.origin.x + archie.behaviour!.distance;
+  for (const facing of FACINGS) {
+    const turned = { ...wandering, facing };
+    expect(nodeOf(archie, turned.stateKey).attack).toBeUndefined();
+    expect(trackEndpoint(archie, -1, turned)).toBe(Math.min(archie.origin.x, authored));
+    expect(trackEndpoint(archie, 1, turned)).toBe(Math.max(archie.origin.x, authored));
   }
 });
