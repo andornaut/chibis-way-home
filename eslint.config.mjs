@@ -179,7 +179,7 @@ const SIZE_CEILINGS = {
   "src/testing/evadeLaunch.ts": { function: 279 },
   "src/testing/evadeProjectileAvoidance.ts": { function: 194 },
   "src/testing/groundedGapController.ts": { function: 248 },
-  "src/testing/pairCertify.ts": { file: 842 },
+  "src/testing/pairCertify.ts": { file: 827 },
   "src/testing/requiredRouteIntent.ts": { function: 171 },
   "src/tools/chunkPairs.ts": { file: 830, function: 209 },
   "src/tools/stagePreviewCapture.ts": { file: 570 },
