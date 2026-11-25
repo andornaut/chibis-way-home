@@ -12,6 +12,8 @@ import {
   groundMap,
   groundMask,
   mapTerrain,
+  preparedZone,
+  prepareZone,
   pursuitGroundMap,
 } from "./movementMaps.ts";
 
@@ -131,14 +133,29 @@ describe("map terrain", () => {
 });
 
 describe("area movement maps", () => {
-  it("builds each pursuer's map once per area and reads it from the cache", () => {
+  it("builds each pursuer's map once per area", () => {
     const area = areaOf("city-boundary", "arena-dog-city-boundary");
     const archie = boss(area, "dog-antagonist");
-    expect(pursuitGroundMap(area, archie, false)).toBeUndefined();
     const first = pursuitGroundMap(area, archie);
     expect(first).toBeDefined();
     expect(pursuitGroundMap(area, archie)).toBe(first);
-    expect(pursuitGroundMap(area, archie, false)).toBe(first);
+  });
+
+  it("prepares a zone's pursuit maps once, by area and object index", () => {
+    const layout = chunkLayout("city-boundary", "arena-dog-city-boundary");
+    const area = layout.areas[layout.start.area]!;
+    expect(preparedZone(layout).areas.size).toBe(0);
+    const prepared = prepareZone(layout);
+    expect(prepareZone(layout)).toBe(prepared);
+    expect(preparedZone(layout)).toBe(prepared);
+    // A layout sharing a prepared area reads the same maps.
+    expect(preparedZone({ ...layout }).areas.get(area)).toBe(prepared.areas.get(area));
+    const maps = prepared.areas.get(area)!;
+    expect(maps).toHaveLength(area.objects.length);
+    area.objects.forEach((object, index) => {
+      expect(maps[index]).toBe(pursuitGroundMap(area, object));
+    });
+    expect(maps[area.objects.indexOf(boss(area, "dog-antagonist"))]).toBeDefined();
   });
 
   it("hashes identical builds identically", () => {

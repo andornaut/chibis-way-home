@@ -74,7 +74,7 @@ import {
 import { ordinaryTransitControl } from "./forcedTransitProfile.ts";
 import { hazardOccupancy } from "./hazardOccupancy.ts";
 import { axisOf, motionTrack, type Track } from "./motion.ts";
-import { preparePursuitMaps, pursuitGroundMap } from "./movementMaps.ts";
+import { type PreparedZone, preparedZone, prepareZone } from "./movementMaps.ts";
 import {
   orbitHostLegs,
   type OrbitLeg,
@@ -518,10 +518,10 @@ export function roomOf(layout: ZoneLayout, zone: ZoneState): string | undefined 
   return zone.door === undefined ? undefined : areaOf(layout, zone.area).objects[zone.door]?.room;
 }
 
-// Zone start builds every area's pursuit maps, so no play step builds one.
+// Zone start prepares every area's pursuit maps, so no play step builds one.
 export function startZone(tuning: BirdTuning, layout: ZoneLayout, seed: number): ZoneState {
   validateWalkEntries(tuning, layout);
-  preparePursuitMaps(layout);
+  prepareZone(layout);
   return enterArea(tuning, layout, layout.start, { attempt: 0, restarts: 0, seed, steps: 0 });
 }
 
@@ -680,11 +680,21 @@ export function stepZoneBodies(
   input: ZoneInput,
   zone: ZoneState,
 ): ZoneBodyStep {
-  return stepZoneBodiesInternal(undefined, skillProfiles, tuning, layout, seconds, input, zone);
+  return stepZoneBodiesInternal(
+    undefined,
+    preparedZone(layout),
+    skillProfiles,
+    tuning,
+    layout,
+    seconds,
+    input,
+    zone,
+  );
 }
 
 function stepZoneBodiesInternal(
   observer: BehaviourObserver | undefined,
+  prepared: PreparedZone,
   skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -711,6 +721,7 @@ function stepZoneBodiesInternal(
   const sceneryPlayback = playback?.map((frame) => frame?.state);
 
   const kinds = areaObjects(area);
+  const groundMaps = prepared.areas.get(area);
   // A dead boss is no longer a body.
   const bodies = kinds.crumblingActors.filter((index) => !zone.behaviours[index]?.defeat);
   // One shared phase commit at the boundary, before any collider is constructed this tick.
@@ -1026,7 +1037,7 @@ function stepZoneBodiesInternal(
         object.behaviour || prior?.defeat
           ? stepEncounter(
               {
-                groundMap: object.behaviour?.pursuit && pursuitGroundMap(area, object, false),
+                groundMap: groundMaps?.[index],
                 object,
                 observation: observer && {
                   metadata: {
@@ -1432,7 +1443,16 @@ export function stepZone(
   input: ZoneInput,
   zone: ZoneState,
 ): ZoneState {
-  return stepZoneInternal(undefined, skillProfiles, tuning, layout, seconds, input, zone);
+  return stepZoneInternal(
+    undefined,
+    preparedZone(layout),
+    skillProfiles,
+    tuning,
+    layout,
+    seconds,
+    input,
+    zone,
+  );
 }
 
 // Diagnostic callers observe the same step without adding observers to saved or input state.
@@ -1445,11 +1465,21 @@ export function stepZoneObserved(
   input: ZoneInput,
   zone: ZoneState,
 ): ZoneState {
-  return stepZoneInternal(observer, skillProfiles, tuning, layout, seconds, input, zone);
+  return stepZoneInternal(
+    observer,
+    preparedZone(layout),
+    skillProfiles,
+    tuning,
+    layout,
+    seconds,
+    input,
+    zone,
+  );
 }
 
 function stepZoneInternal(
   observer: BehaviourObserver | undefined,
+  prepared: PreparedZone,
   skillProfiles: readonly BirdTuning[],
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -1463,6 +1493,7 @@ function stepZoneInternal(
   const area = areaOf(layout, zone.area);
   const body = stepZoneBodiesInternal(
     observer,
+    prepared,
     skillProfiles,
     tuning,
     layout,

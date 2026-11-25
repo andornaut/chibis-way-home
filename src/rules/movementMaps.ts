@@ -511,14 +511,12 @@ function groundPursuitMotion(object: ObjectLayout) {
 }
 
 // A ground pursuer's route map: its pursuit physics without climbing, which pursuit never uses,
-// clipped to the columns its leash allows (the whole area when the leash covers it). Cached per
-// area, profile and window, so every boss sharing them shares one map. With `build` false it
-// only reads the cache. A map is a pure function of the area, profile and window, so when it is
-// built never changes its content.
+// clipped to the columns its leash allows (the whole area when the leash covers it). Memoized per
+// area, profile and window, so every boss sharing them shares one map. A map is a pure function
+// of the area, profile and window, so when it is built never changes its content.
 export function pursuitGroundMap(
   area: AreaLayout,
   object: ObjectLayout,
-  build = true,
 ): PursuitGroundMap | undefined {
   const motion = groundPursuitMotion(object);
   const leash = object.behaviour?.pursuit?.distance;
@@ -546,7 +544,7 @@ export function pursuitGroundMap(
       : { height: area.height, width: right - left, x: left, y: 0 };
   const key = `${groundKey(profile)} ${window ? `${left},${right}` : "-"}`;
   let entry = cached.maps.get(key);
-  if (!entry && build) {
+  if (!entry) {
     entry = {
       map: groundMap(
         { jumps: BOSS_JUMP_SCRIPTS, ...(window && { window }) },
@@ -560,14 +558,52 @@ export function pursuitGroundMap(
   return entry;
 }
 
-// Builds every ground pursuer's map in every area of a zone, at zone start, so play steps only
-// read the cache.
-export function preparePursuitMaps(layout: ZoneLayout): void {
-  for (const area of Object.values(layout.areas)) {
-    for (const object of area.objects) {
-      pursuitGroundMap(area, object);
+// An area's ground pursuit maps by object index, undefined where the object is no ground pursuer.
+export type PreparedArea = readonly (PursuitGroundMap | undefined)[];
+
+// What a zone start prepares for play steps, by area. An area no zone start prepared has no
+// entry, and its pursuers step without a map.
+export interface PreparedZone {
+  readonly areas: ReadonlyMap<AreaLayout, PreparedArea>;
+}
+
+const PREPARED_AREAS = new WeakMap<AreaLayout, PreparedArea>();
+const PREPARED_ZONES = new WeakMap<ZoneLayout, PreparedZone>();
+
+// Builds every ground pursuer's map in every area of a zone, once per area, at zone start, so
+// play steps receive built maps.
+export function prepareZone(layout: ZoneLayout): PreparedZone {
+  let prepared = PREPARED_ZONES.get(layout);
+  if (!prepared) {
+    for (const area of Object.values(layout.areas)) {
+      if (!PREPARED_AREAS.has(area)) {
+        PREPARED_AREAS.set(
+          area,
+          area.objects.map((object) => pursuitGroundMap(area, object)),
+        );
+      }
     }
+    prepared = preparedAreas(layout);
+    PREPARED_ZONES.set(layout, prepared);
   }
+  return prepared;
+}
+
+function preparedAreas(layout: ZoneLayout): PreparedZone {
+  return {
+    areas: new Map(
+      Object.values(layout.areas).flatMap((area): [AreaLayout, PreparedArea][] => {
+        const maps = PREPARED_AREAS.get(area);
+        return maps ? [[area, maps]] : [];
+      }),
+    ),
+  };
+}
+
+// What zone starts have prepared for a layout's areas. It builds nothing: it is the one read of
+// the memo that `prepareZone` fills, and the zone step hands its value on explicitly.
+export function preparedZone(layout: ZoneLayout): PreparedZone {
+  return PREPARED_ZONES.get(layout) ?? preparedAreas(layout);
 }
 
 interface DependencyMaskOptions {
