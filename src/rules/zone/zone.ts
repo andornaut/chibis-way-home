@@ -1,7 +1,5 @@
-import { randomStream } from "@andornaut/game-kit/runtime/random";
 import { rectsOverlap } from "@andornaut/game-kit/runtime/rect";
 
-import { namedStreams } from "../../ai/index.ts";
 import {
   collisionCandidates,
   contactFrameAt,
@@ -107,6 +105,7 @@ import {
   supportPresent,
   type ZoneCrumblingWorld,
 } from "./zoneCrumbling.ts";
+import { zoneDecisionStreams, zoneStream } from "./zoneStreams.ts";
 
 interface ObjectFrame {
   readonly orbitLegs?: readonly OrbitLeg[];
@@ -392,7 +391,7 @@ function pathAt(object: ObjectLayout, track: Track, seconds: number): Point {
 }
 
 // He arrives at the entry `link` names, the area's objects at the start of their tracks. The
-// tracks' random draws come from the seed and the attempt, so each attempt rolls them afresh.
+// tracks draw from the attempt's motion streams, so each attempt rolls them afresh.
 export function enterArea(
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -407,11 +406,7 @@ export function enterArea(
   }
   const bird = startBird(tuning, entry);
   const tracks = area.objects.map((object, index) =>
-    motionTrack(
-      object.motion,
-      object.phase,
-      randomStream(zone.seed + zone.attempt, `${link.area}:${index}`),
-    ),
+    motionTrack(object.motion, object.phase, zoneStream(zone, "motion", link.area, index)),
   );
   tracks.forEach((track, index) => {
     const motion = area.objects[index]!.motion;
@@ -1217,7 +1212,7 @@ function resolveObjectFrames(
                 objectIndex: index,
                 tick: zone.steps,
               },
-              streams: namedStreams(zone.seed + zone.attempt, `idle-roam:${zone.area}:${index}`),
+              streams: zoneDecisionStreams(zone, zone.area, index),
               supports: traverses ? futureSupports : undefined,
               tuning,
             },

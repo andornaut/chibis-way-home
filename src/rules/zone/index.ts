@@ -29,4 +29,11 @@ export {
   zoneStoryForStage,
 } from "./zoneFlow.ts";
 export { zoneStepRecord } from "./zoneRecords.ts";
+export {
+  zoneDecisionStreams,
+  type ZoneDraws,
+  zoneStream,
+  zoneStreamName,
+  type ZoneStreamPurpose,
+} from "./zoneStreams.ts";
 export { stepTips, tipsInView } from "./zoneTips.ts";

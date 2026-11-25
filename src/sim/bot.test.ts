@@ -158,7 +158,8 @@ describe("local bot decisions", () => {
     ]) {
       const zone = { ...initial, attempt, bird: { ...initial.bird, grounded: true }, transients };
       expect(
-        botInput(BIRD, sensors, layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, newBot(1)).jumpHeld,
+        botInput(BIRD, sensors, layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, newBot(1, 0))
+          .jumpHeld,
       ).toBe(jump);
     }
   });
@@ -244,7 +245,7 @@ describe("local bot decisions", () => {
         DIAGNOSTIC_SKILL,
         FORWARD_POLICY,
         zone,
-        newBot(1),
+        newBot(1, 0),
       ),
     ).toEqual({ jumpHeld: false, move: 1, useHeld: false });
   });
@@ -253,7 +254,7 @@ describe("local bot decisions", () => {
       const layout = fixture([ground, { height, width: 12, x: 100, y: 120 - height }]);
       const initial = startZone(BIRD, layout, 1);
       const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
-      const bot = newBot(1);
+      const bot = newBot(1, 0);
       expect(
         botInput(BIRD, prepareSensors(layout), layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, bot)
           .jumpHeld,
@@ -267,12 +268,12 @@ describe("local bot decisions", () => {
     const sensors = prepareSensors(layout);
     const initial = startZone(BIRD, layout, 1);
     const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
-    const bot = newBot(1);
+    const bot = newBot(1, 0);
     const skill = { ...DIAGNOSTIC_SKILL, maxWaitTicks: 2 };
     expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, bot).move).toBe(0);
     const aligned = { ...zone, objects: [{ x: 108, y: 120 }] };
     expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, aligned, bot).move).toBe(1);
-    const waiting = newBot(1);
+    const waiting = newBot(1, 0);
     expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(0);
     expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(0);
     expect(botInput(BIRD, sensors, layout, skill, FORWARD_POLICY, zone, waiting).move).toBe(1);
@@ -320,7 +321,7 @@ describe("adaptive ordinary jump holds", () => {
         { jumpHeld: false, move: 0 },
         startBird(BIRD, { x: 60, y: ground.y }),
       );
-      const bot = newBot(1);
+      const bot = newBot(1, 0);
       const input = botInput(
         BIRD,
         sensors,
@@ -362,7 +363,7 @@ describe("adaptive ordinary jump holds", () => {
     const layout = fixture([ground, { height, width: 12, x: 100, y: ground.y - height }]);
     const initial = startZone(BIRD, layout, 1);
     const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
-    const bot = newBot(1);
+    const bot = newBot(1, 0);
     const input = botInput(
       BIRD,
       prepareSensors(layout),
@@ -393,7 +394,7 @@ it("preserves full-cap holds for a gap or hazard instead of adapting to their ob
   ]) {
     const initial = startZone(BIRD, layout, 1);
     const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
-    const bot = newBot(1);
+    const bot = newBot(1, 0);
     expect(
       botInput(BIRD, prepareSensors(layout), layout, DIAGNOSTIC_SKILL, FORWARD_POLICY, zone, bot)
         .jumpHeld,
@@ -411,7 +412,7 @@ it("keeps the observed-height early release and draws randomness only for the in
   const zone = { ...initial, bird: { ...initial.bird, grounded: true } };
   let draws = 0;
   const bot = {
-    ...newBot(1),
+    ...newBot(1, 0),
     random: () => {
       draws++;
       return 1;

@@ -320,7 +320,7 @@ function executeStage(
       throw new Error("Invalid section goal");
     }
   }
-  let bot = newBot(seeds.bot);
+  let bot = newBot(seeds.bot, zone.attempt);
   const trace: TraceEvent[] = [];
   let traceDropped = 0;
   let attemptTick = 0;
@@ -588,7 +588,7 @@ function executeStage(
       for (const key of Object.keys(priorPlanning) as (keyof NavigationCounters)[]) {
         priorPlanning[key] += counters[key];
       }
-      bot = newBot((seeds.bot + retries) >>> 0);
+      bot = newBot(seeds.bot, zone.attempt);
       if (memory) {
         restoreNavigationMemory(memory, bot);
       }

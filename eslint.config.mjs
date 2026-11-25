@@ -159,7 +159,7 @@ const SIZE_CEILINGS = {
   "src/rules/stage/assemble.ts": { file: 1507, function: 253 },
   "src/rules/stage/chunk.ts": { function: 175 },
   "src/rules/stage/tiles.ts": { file: 504, function: 276 },
-  "src/rules/zone/zone.ts": { file: 1832, function: 227 },
+  "src/rules/zone/zone.ts": { file: 1827, function: 227 },
   "src/save/pageSave.ts": { file: 674 },
   "src/scenes/MapScene.ts": { file: 616, function: 184 },
   "src/scenes/PauseScene.ts": { file: 924 },

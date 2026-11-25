@@ -284,7 +284,8 @@ export function scriptedChibi(script: (tick: number) => ZoneInput): BossControll
   return (tick) => script(tick);
 }
 
-// The reactive bot with its own seeded stream.
+// The reactive bot with its own seeded stream: one bot for the scenario, drawing its first
+// attempt's stream across retries.
 export function botChibi(
   tuning: BirdTuning,
   layout: ZoneLayout,
@@ -293,7 +294,7 @@ export function botChibi(
   seed: number,
 ): BossController {
   const sensors = prepareSensors(layout);
-  const bot = newBot(seed);
+  const bot = newBot(seed, 0);
   return (_, zone) => botInput(tuning, sensors, layout, skill, policy, zone, bot);
 }
 

@@ -1304,6 +1304,10 @@ describe("random motion", () => {
   ])("on %s, repeats the first attempt's path: %s", (_, attempt, seed, same) => {
     expect(JSON.stringify(pathOf(attempt, seed)) === JSON.stringify(pathOf(0))).toBe(same);
   });
+
+  it("draws a retry's path apart from the next seed's first attempt", () => {
+    expect(pathOf(1, SEED)).not.toEqual(pathOf(0, SEED + 1));
+  });
 });
 
 describe("entry-created world state", () => {

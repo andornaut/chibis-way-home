@@ -140,7 +140,7 @@ export function controlledRequiredRoute<
   const prepared = prepareRequiredRouteIntent(ORDINARY, resolved);
   let unavailable = "unavailable" in prepared ? prepared.unavailable : undefined;
   const sensors = prepareSensors(layout);
-  const bot = newBot(1);
+  const bot = newBot(1, 0);
   const witnesses: ContinuousRouteResult["witnesses"][number][] = [];
   const assistWitnesses: ContinuousRouteResult["assistWitnesses"][number][] = [];
   const assisted = new Set<number>();

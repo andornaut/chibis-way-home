@@ -105,7 +105,7 @@ export function registerNavigationDockCase(): void {
     expect(unsafe.steps).toBe(6589);
     expect(unsafe.death?.reason).toBe("hazard");
     expect(unsafe.bird.x).toBeCloseTo(1539.6, 8);
-    const bot = newBot(1);
+    const bot = newBot(1, 0);
     let input = plannedInput(tuning, layout, NAVIGATION_VALIDATION, 1, zone, bot);
     const decision = navigationSnapshot(bot)!;
     const dock = decision.candidates.find((candidate) => candidate.inputLabel === "approach")!;

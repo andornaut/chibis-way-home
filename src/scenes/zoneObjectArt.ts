@@ -1,5 +1,5 @@
 import { type AnimationFrame, animationKey } from "@andornaut/game-kit/runtime/art/aseprite";
-import { type Random, randomStream } from "@andornaut/game-kit/runtime/random";
+import type { Random } from "@andornaut/game-kit/runtime/random";
 import type { GameObjects, Scene } from "phaser";
 
 import type { ArtManifest } from "../assets/index.ts";
@@ -53,7 +53,7 @@ import {
   removalProgress,
   timedHazardRect,
 } from "../rules/boss/index.ts";
-import { areaOf, type ZoneState } from "../rules/zone/index.ts";
+import { areaOf, type ZoneState, zoneStream } from "../rules/zone/index.ts";
 import { sceneryParallax, type Tileset, worldScenery } from "../stage/index.ts";
 import { reducedMotion } from "../ui/index.ts";
 import { backdropBottomFrame } from "./backdropBottomFrame.ts";
@@ -442,7 +442,7 @@ class ZoneObjectArt {
           });
         }
         const [quirk] = object.quirks;
-        const random = randomStream(zone.seed + zone.attempt, `${zone.area}:${index}:quirk`);
+        const random = zoneStream(zone, "quirk", zone.area, index);
         return {
           item: sprite,
           offset,

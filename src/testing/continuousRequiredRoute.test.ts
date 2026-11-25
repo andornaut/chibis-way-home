@@ -203,7 +203,7 @@ it("does not cancel native committed holding or its observed-height release", ()
     jump: intent.inhibitNewJump ? ("never" as const) : ("reactive" as const),
     move: intent.move,
   };
-  const bot = newBot(1);
+  const bot = newBot(1, 0);
   bot.holding = 2;
   const sensors = prepareSensors(layout);
   expect(botInput(ORDINARY, sensors, layout, DIAGNOSTIC_SKILL, policy, grounded, bot)).toEqual({

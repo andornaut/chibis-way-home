@@ -256,7 +256,7 @@ it("inhibits a new jump for the bank seam rather than the far goal and preserves
   if ("unavailable" in intent) {
     throw new Error("Expected a descent intent");
   }
-  const bot = newBot(1);
+  const bot = newBot(1, 0);
   bot.holding = 2;
   const input = botInput(
     ORDINARY,
@@ -328,7 +328,7 @@ it("delegates positively static red hazards to the existing native reactive jump
       DIAGNOSTIC_SKILL,
       FORWARD_POLICY,
       approach,
-      newBot(1),
+      newBot(1, 0),
     ),
   ).toEqual({ jumpHeld: true, move: 1, useHeld: false });
 });

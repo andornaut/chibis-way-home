@@ -1,7 +1,6 @@
 import { findTraversal } from "@andornaut/game-kit/runtime/terrain/traversal";
 import { expect, it, vi } from "vitest";
 
-import { namedStreams } from "../ai/randomStreams.ts";
 import { BIRD_FRAME } from "../assets/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
@@ -17,6 +16,7 @@ import { chunkProblems } from "../rules/stage/chunk.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
 import { preparedZone, standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
+import { zoneDecisionStreams } from "../rules/zone/zoneStreams.ts";
 import { stepBehaviour } from "../testing/behaviourStep.ts";
 import { withInstances } from "../testing/encounterLayouts.ts";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";
@@ -167,10 +167,7 @@ it.each([{ actor: "ferret-antagonist", name: "Fert", theme: "apartment-lobby" }]
     vi.mocked(findTraversal).mockClear();
     for (let tick = 0; tick < 600; tick++) {
       const world: BehaviourWorld = {
-        decisions: namedStreams(
-          initial.seed + initial.attempt,
-          `idle-roam:${initial.area}:${area.objects.indexOf(object)}`,
-        ),
+        decisions: zoneDecisionStreams(initial, initial.area, area.objects.indexOf(object)),
         hazards,
         platforms: platforms.map(({ after, collision, owner }) => ({
           collision,

@@ -113,11 +113,13 @@ interface Bot {
   waited: number;
   noticed: number;
 }
-export function newBot(seed: number): Bot {
+// A bot for one attempt: its stream is named by the attempt, so no two seed and attempt pairs share
+// draws.
+export function newBot(seed: number, attempt: number): Bot {
   return {
     holding: 0,
     noticed: 0,
-    random: randomStream(seed, "simulation-bot"),
+    random: randomStream(seed, `simulation-bot:${attempt}`),
     targetY: undefined,
     waited: 0,
   };
