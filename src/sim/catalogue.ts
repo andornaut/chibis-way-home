@@ -19,6 +19,7 @@ import type { SpriteSilhouettes, ZonePlan } from "../data/types/index.ts";
 import {
   planStage,
   recipeKey,
+  requirePlanned,
   STAGE_CONTEXT,
   stageTarget,
   zoneLayout,
@@ -99,7 +100,7 @@ export function stageLoader(
     if (previous?.seed === seed) {
       return previous.stage;
     }
-    const { plan } = planStage(STAGE_CONTEXT, { avoid: [], seed, target });
+    const { plan } = requirePlanned(planStage(STAGE_CONTEXT, { avoid: [], seed, target }));
     const stage = preparedPlan({ ...art, seed }, plan);
     previous = { seed, stage };
     return stage;

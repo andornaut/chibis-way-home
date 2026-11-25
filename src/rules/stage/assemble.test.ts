@@ -3,17 +3,18 @@ import { describe, expect, it } from "vitest";
 import { RECENT_STAGES } from "../../data/stageProgress.ts";
 import type { AreaPlan, ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../../data/types/index.ts";
 import { FIXTURE_LIBRARY, FIXTURE_RECIPE } from "../../testing/chunks.ts";
+import { assembleZone } from "../../testing/stageAssembly.ts";
 import {
   ASSEMBLED_AREA,
-  assembleZone,
+  assembleStage,
   assembleZoneAvoiding,
   type ChunkLibrary,
-  NoAssemblyError,
   requiredSteps,
   runLoops,
   zonePlanOf,
 } from "./assemble.ts";
 import { recipeProblems } from "./chunk.ts";
+import { requirePlanned } from "./stagePlans.ts";
 
 const ROWS = 60;
 const SEEDS = Array.from({ length: 20 }, (_, i) => i + 1);
@@ -82,7 +83,7 @@ const middleIds = (area: AreaPlan) => (area.chunks ?? []).slice(1, -1).map(({ ch
 const runs = (lib: ChunkLibrary, zone: ZoneRecipe) =>
   new Set(SEEDS.map((seed) => middleIds(areaOf(assembleZone(lib, seed, "z", zone))).join(" ")));
 
-describe("assembleZone", () => {
+describe("assembleStage", () => {
   it("places the configured spawn on the opening entry row", () => {
     const lib = library({
       a: chunk(50, 50),
@@ -1018,21 +1019,18 @@ describe("assembleZoneAvoiding", () => {
   it.each([
     ["no entry", []],
     ["entries that name no chunk", [[], []]],
-  ])("assembles as assembleZone with %s to avoid", (_, avoid) => {
+  ])("assembles as assembleStage with %s to avoid", (_, avoid) => {
     expect(assembleZoneAvoiding(FIXTURE_LIBRARY, avoid, 7, "fixture", FIXTURE_RECIPE)).toEqual({
       avoidance: "honoured",
+      outcome: "planned",
       plan: assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE),
     });
   });
 
   it("leaves avoided chunks out while a run fits without them", () => {
     const avoid = middles(assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE)).slice(0, 1);
-    const { avoidance, plan } = assembleZoneAvoiding(
-      FIXTURE_LIBRARY,
-      [avoid],
-      7,
-      "fixture",
-      FIXTURE_RECIPE,
+    const { avoidance, plan } = requirePlanned(
+      assembleZoneAvoiding(FIXTURE_LIBRARY, [avoid], 7, "fixture", FIXTURE_RECIPE),
     );
     expect(avoidance).toBe("honoured");
     expect(middles(plan).filter((id) => avoid.includes(id))).toEqual([]);
@@ -1042,6 +1040,7 @@ describe("assembleZoneAvoiding", () => {
     const avoid = [Object.keys(FIXTURE_LIBRARY.chunks)];
     expect(assembleZoneAvoiding(FIXTURE_LIBRARY, avoid, 7, "fixture", FIXTURE_RECIPE)).toEqual({
       avoidance: "fallback",
+      outcome: "planned",
       plan: assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE),
     });
   });
@@ -1055,12 +1054,8 @@ describe("assembleZoneAvoiding", () => {
     };
     const zone = recipe(3);
     for (const seed of SEEDS) {
-      const { avoidance, plan } = assembleZoneAvoiding(
-        library(chunks),
-        [["down", "flat-a"], ["up"]],
-        seed,
-        "z",
-        zone,
+      const { avoidance, plan } = requirePlanned(
+        assembleZoneAvoiding(library(chunks), [["down", "flat-a"], ["up"]], seed, "z", zone),
       );
       expect(avoidance).toBe("honoured");
       expect(middles(plan)).toEqual(["up", "flat-b", "down"]);
@@ -1089,7 +1084,9 @@ describe("assembleZoneAvoiding", () => {
       ["the lowest id among equals", TWO, [["down-b", "down-a"]], "down-a"],
     ])("keeps %s when every source is avoided", (_, downs, avoid, kept) => {
       for (const seed of SEEDS) {
-        const { avoidance, plan } = assembleZoneAvoiding(pool(downs), avoid, seed, "z", zone);
+        const { avoidance, plan } = requirePlanned(
+          assembleZoneAvoiding(pool(downs), avoid, seed, "z", zone),
+        );
         expect(avoidance).toBe("honoured");
         expect(middles(plan).at(-1)).toBe(kept);
       }
@@ -1097,12 +1094,8 @@ describe("assembleZoneAvoiding", () => {
 
     it("leaves an avoided source out while another is not avoided", () => {
       for (const seed of SEEDS) {
-        const { avoidance, plan } = assembleZoneAvoiding(
-          pool(TWO),
-          [["down-a", "up"]],
-          seed,
-          "z",
-          zone,
+        const { avoidance, plan } = requirePlanned(
+          assembleZoneAvoiding(pool(TWO), [["down-a", "up"]], seed, "z", zone),
         );
         expect(avoidance).toBe("honoured");
         expect(middles(plan).at(-1)).toBe("down-b");
@@ -1113,7 +1106,9 @@ describe("assembleZoneAvoiding", () => {
       let recent: (readonly string[])[] = [];
       const downs: string[] = [];
       for (const seed of SEEDS) {
-        const { avoidance, plan } = assembleZoneAvoiding(pool(TWO), recent, seed, "z", zone);
+        const { avoidance, plan } = requirePlanned(
+          assembleZoneAvoiding(pool(TWO), recent, seed, "z", zone),
+        );
         expect(avoidance).toBe("honoured");
         downs.push(middles(plan).at(-1)!);
         recent = [middles(plan), ...recent].slice(0, RECENT_STAGES);
@@ -1125,15 +1120,16 @@ describe("assembleZoneAvoiding", () => {
     });
   });
 
-  it("falls back when the narrowed pool has no run, and throws when the whole pool has none", () => {
+  it("falls back when the narrowed pool has no run, and nothing fits when the whole pool has none", () => {
     // A chunk never follows itself, so two middle chunks need both.
     const chunks = { a: chunk(50, 50), b: chunk(50, 50) };
-    expect(assembleZoneAvoiding(library(chunks), [["a"]], 1, "z", recipe(2)).avoidance).toBe(
-      "fallback",
-    );
-    expect(() =>
-      assembleZoneAvoiding(library({ a: chunks.a }), [["a"]], 1, "z", recipe(2)),
-    ).toThrow(NoAssemblyError);
+    expect(
+      requirePlanned(assembleZoneAvoiding(library(chunks), [["a"]], 1, "z", recipe(2))),
+    ).toMatchObject({ avoidance: "fallback" });
+    expect(assembleZoneAvoiding(library({ a: chunks.a }), [["a"]], 1, "z", recipe(2))).toEqual({
+      outcome: "nothing-fits",
+      reason: expect.stringContaining("No assembly of zone z fits its recipe"),
+    });
   });
 
   it("throws on an error other than no assembly fitting without the avoided chunks", () => {
@@ -1172,7 +1168,9 @@ describe("a recipe's loop cap", () => {
 
   it("rejects a run of more loops when no other run fits", () => {
     expect(runOf(library(climb), 1)).toEqual(["up", "down", "up", "down"]);
-    expect(() => runOf(library(climb), 1, capped)).toThrow(NoAssemblyError);
+    expect(assembleStage(library(climb), 1, "z", capped)).toMatchObject({
+      outcome: "nothing-fits",
+    });
   });
 
   it("finds a run within the cap, and leaves a run already within it as it is", () => {

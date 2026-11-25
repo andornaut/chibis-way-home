@@ -7,10 +7,10 @@ import { expect, it } from "vitest";
 import { STEP_SECONDS } from "../core/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { type BehaviourObservation, createBehaviourObserver } from "../rules/boss/index.ts";
-import { planStage } from "../rules/stage/stagePlans.ts";
+import { planStage, requirePlanned } from "../rules/stage/stagePlans.ts";
 import { STAGE_CONTEXT } from "../rules/stage/zonePlans.ts";
 import { retryZone, stepZone, stepZoneObserved, type ZoneState } from "../rules/zone/zone.ts";
-import { activateAll, bossStart, type BossScenario, placeChibi } from "../sim/bossSimulator.ts";
+import { activateAll, type BossScenario, bossStart, placeChibi } from "../sim/bossSimulator.ts";
 import { BOSS_SCENARIOS } from "./bossScenarios.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
 
@@ -43,8 +43,10 @@ function planDigest(): string {
   for (const key of Object.keys(STAGE_CONTEXT.recipes).sort()) {
     for (const seed of PLAN_SEEDS) {
       const target = { recipe: key };
-      const fresh = planStage(STAGE_CONTEXT, { avoid: [], seed, target });
-      const avoiding = planStage(STAGE_CONTEXT, { avoid: [fresh.middle], seed, target });
+      const fresh = requirePlanned(planStage(STAGE_CONTEXT, { avoid: [], seed, target }));
+      const avoiding = requirePlanned(
+        planStage(STAGE_CONTEXT, { avoid: [fresh.middle], seed, target }),
+      );
       for (const { avoidance, middle, plan } of [fresh, avoiding]) {
         parts.push(canonical({ avoidance, key, middle, plan, seed }));
       }
@@ -90,8 +92,12 @@ it("plans every recipe as before the refactor", () => {
 it.each([
   ["encounters", false],
   ["observed", true],
-] as const)("steps the encounter scenarios as before the refactor: %s", (name, observed) => {
-  const each = BOSS_SCENARIOS.map(({ scenario }) => encounterDigest(scenario, observed));
-  const all = digest(each);
-  expect(all).toBe(GOLDEN[name]);
-}, 600_000);
+] as const)(
+  "steps the encounter scenarios as before the refactor: %s",
+  (name, observed) => {
+    const each = BOSS_SCENARIOS.map(({ scenario }) => encounterDigest(scenario, observed));
+    const all = digest(each);
+    expect(all).toBe(GOLDEN[name]);
+  },
+  600_000,
+);

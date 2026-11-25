@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { ARENAS } from "../data/arenas/index.ts";
 import type { ChunkArena } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
-import { assembleZone } from "../rules/stage/assemble.ts";
 import { STAGE_RECIPES } from "../rules/stage/zonePlans.ts";
 import {
   arenaCoverage,
@@ -14,6 +13,7 @@ import {
   gameArenaCase,
 } from "./arenas.ts";
 import { ARENA_SAMPLES } from "./arenaSamples.ts";
+import { assembleZone } from "./stageAssembly.ts";
 
 const SEEDS = 8;
 

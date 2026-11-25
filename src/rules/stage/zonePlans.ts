@@ -21,7 +21,7 @@ import { arenaApproachRelations } from "./arenaApproaches.ts";
 import { arenaChunk } from "./arenas.ts";
 import type { AvoidEntries, ChunkLibrary } from "./assemble.ts";
 import { certifiedChunks } from "./modules.ts";
-import { planStage, type StageContext } from "./stagePlans.ts";
+import { planStage, requirePlanned, type StageContext } from "./stagePlans.ts";
 
 // The certified lists as a build loads them: only their pool fields.
 const POOLS: readonly CertifiedPool[] = CERTIFIED_LISTS;
@@ -113,5 +113,5 @@ export function zonePlanFor(seed: number, key: string): ZonePlan {
 // zonePlanFor without the avoided middle chunks while an assembly fits without them
 // (assembleZoneAvoiding), the same for the same seed and avoided entries.
 export function zonePlanAvoiding(avoid: AvoidEntries, seed: number, key: string): ZonePlan {
-  return planStage(STAGE_CONTEXT, { avoid, seed, target: { recipe: key } }).plan;
+  return requirePlanned(planStage(STAGE_CONTEXT, { avoid, seed, target: { recipe: key } })).plan;
 }

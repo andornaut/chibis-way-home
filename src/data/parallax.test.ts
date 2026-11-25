@@ -6,12 +6,12 @@ import largeDeerSheet from "../../public/art/sprites/background-deer-large.json"
 import reedSheet from "../../public/art/sprites/background-reeds.json" with { type: "json" };
 import swallowSheet from "../../public/art/sprites/background-swallow.json" with { type: "json" };
 import { artOffset, backgroundGroundOffset } from "../presentation/index.ts";
-import { assembleZone } from "../rules/stage/assemble.ts";
 import { objectLayout, zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
 import { nodeArt, stageLoader } from "../sim/catalogue.ts";
 import type { PreparedStage } from "../sim/simulate.ts";
 import { sceneryParallax, worldScenery } from "../stage/index.ts";
+import { assembleZone } from "../testing/stageAssembly.ts";
 import { ARCHETYPES } from "./archetypes.ts";
 import { BACKGROUND_SECTIONS } from "./backgrounds.ts";
 import { CAMERA } from "./camera.ts";

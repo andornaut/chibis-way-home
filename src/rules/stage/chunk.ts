@@ -378,7 +378,7 @@ export function chunkProblems(
 // Why a recipe cannot be assembled as written, if it can't: its theme, start and finish chunks
 // exist, both chunks are drawn in its theme, its length range holds them, and its counts are
 // whole numbers, and its difficulty is an ordered band from 1 to 5. Whether any assembly fits
-// is assembleZone's to find.
+// is assembleStage's to find.
 export function recipeProblems(library: ChunkLibrary, recipe: StageRecipe): string[] {
   if ("sections" in recipe) {
     return orderedRecipeProblems(library, recipe);

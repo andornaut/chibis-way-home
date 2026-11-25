@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
 import { RECIPES } from "../data/zones.ts";
-import { planStage } from "../rules/stage/stagePlans.ts";
+import { planStage, requirePlanned } from "../rules/stage/stagePlans.ts";
 import { STAGE_CONTEXT } from "../rules/stage/zonePlans.ts";
 
 const save = vi.hoisted(() => ({
@@ -44,14 +44,18 @@ it("plans a map entry without its saved recent chunks, then records its own midd
       return false;
     }
     const target = { node: node.id };
-    const { middle } = planStage(STAGE_CONTEXT, { avoid: [], seed: SEED, target });
-    const avoiding = planStage(STAGE_CONTEXT, { avoid: [middle], seed: SEED, target });
+    const { middle } = requirePlanned(planStage(STAGE_CONTEXT, { avoid: [], seed: SEED, target }));
+    const avoiding = requirePlanned(
+      planStage(STAGE_CONTEXT, { avoid: [middle], seed: SEED, target }),
+    );
     return avoiding.middle.join() !== middle.join();
   })!.id;
   const target = { node: stage };
-  const recent = [planStage(STAGE_CONTEXT, { avoid: [], seed: SEED, target }).middle];
+  const recent = [
+    requirePlanned(planStage(STAGE_CONTEXT, { avoid: [], seed: SEED, target })).middle,
+  ];
   save.recentStageChunks.mockReturnValue(recent);
-  const expected = planStage(STAGE_CONTEXT, { avoid: recent, seed: SEED, target });
+  const expected = requirePlanned(planStage(STAGE_CONTEXT, { avoid: recent, seed: SEED, target }));
   const loadPlan = start(`?assembly=${SEED}`, { node: stage });
   expect(save.recentStageChunks).toHaveBeenCalledExactlyOnceWith(stage);
   expect(loadPlan).toHaveBeenCalledExactlyOnceWith(expected.plan);
@@ -67,7 +71,7 @@ it.each([
 ])("plans %s with no recent chunks read or recorded", (_, search, data, target) => {
   const loadPlan = start(`${search}${search ? "&" : "?"}assembly=${SEED}`, data);
   expect(loadPlan).toHaveBeenCalledExactlyOnceWith(
-    planStage(STAGE_CONTEXT, { avoid: [], seed: SEED, target }).plan,
+    requirePlanned(planStage(STAGE_CONTEXT, { avoid: [], seed: SEED, target })).plan,
   );
   expect(save.recentStageChunks).not.toHaveBeenCalled();
   expect(save.recordStageChunks).not.toHaveBeenCalled();

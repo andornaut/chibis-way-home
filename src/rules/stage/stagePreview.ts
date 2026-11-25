@@ -2,7 +2,7 @@ import { clamp } from "@andornaut/game-kit/runtime/numbers";
 
 import type { Point, Size, ZonePlan } from "../../data/types/index.ts";
 import { askedSeed } from "./pageParams.ts";
-import { planStage, type StageContext, stageTarget } from "./stagePlans.ts";
+import { planStage, requirePlanned, type StageContext, stageTarget } from "./stagePlans.ts";
 
 export interface StagePreview {
   readonly area?: string;
@@ -54,5 +54,7 @@ export function stagePreviewScroll(view: Size, area: Size, scroll: Point): Point
 // The plan a preview shows: a map stage's zone, or a recipe key itself, assembled for seed with no
 // chunks avoided.
 export function stagePreviewPlan(context: StageContext, seed: number, key: string): ZonePlan {
-  return planStage(context, { avoid: [], seed, target: stageTarget(context.map, key) }).plan;
+  return requirePlanned(
+    planStage(context, { avoid: [], seed, target: stageTarget(context.map, key) }),
+  ).plan;
 }

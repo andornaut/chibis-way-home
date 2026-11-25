@@ -4,6 +4,7 @@ import {
   type Avoidance,
   type AvoidEntries,
   type ChunkLibrary,
+  type NothingFits,
 } from "./assemble.ts";
 
 // What a stage plan is assembled from.
@@ -31,7 +32,20 @@ export interface PlannedStage {
   readonly avoidance: Avoidance;
   readonly key: string;
   readonly middle: readonly string[];
+  readonly outcome: "planned";
   readonly plan: ZonePlan;
+}
+
+// A stage request's outcome: its planned stage, or that nothing fits even with every pool whole.
+export type StagePlan = NothingFits | PlannedStage;
+
+// A planned outcome, or else the nothing-fits reason thrown, for a caller with nothing to degrade
+// to, such as the scene starting a stage the certified lists prove feasible.
+export function requirePlanned<Planned>(outcome: NothingFits | Planned): Planned {
+  if ((outcome as NothingFits).outcome === "nothing-fits") {
+    throw new Error((outcome as NothingFits).reason);
+  }
+  return outcome as Planned;
 }
 
 // The ids of plan's middle chunks: each area's placed chunks but its first and last, which are
@@ -71,20 +85,18 @@ export function recipeKey(map: ZoneMap, target: StageTarget): string {
 }
 
 // The stage request asks for, assembled from its recipe without the avoided middle chunks it can
-// do without while an assembly fits without them (assembleZoneAvoiding): the same for the same
-// context and request. Throws on a target with no recipe.
-export function planStage(context: StageContext, request: StageRequest): PlannedStage {
+// do without while an assembly fits without them (assembleZoneAvoiding), or that nothing fits:
+// the same for the same context and request. Throws on a target with no recipe.
+export function planStage(context: StageContext, request: StageRequest): StagePlan {
   const key = recipeKey(context.map, request.target);
   const recipe = context.recipes[key];
   if (!recipe) {
     throw new Error(`No recipe ${key}`);
   }
-  const { avoidance, plan } = assembleZoneAvoiding(
-    context.library,
-    request.avoid,
-    request.seed,
-    key,
-    recipe,
-  );
-  return { avoidance, key, middle: middleChunkIds(plan), plan };
+  const assembly = assembleZoneAvoiding(context.library, request.avoid, request.seed, key, recipe);
+  if (assembly.outcome === "nothing-fits") {
+    return assembly;
+  }
+  const { avoidance, plan } = assembly;
+  return { avoidance, key, middle: middleChunkIds(plan), outcome: "planned", plan };
 }

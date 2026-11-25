@@ -8,6 +8,7 @@ import {
   type PlannedStage,
   planStage,
   recipeKey,
+  requirePlanned,
   stageTarget,
 } from "./stagePlans.ts";
 import { CHUNK_LIBRARY, STAGE_CONTEXT, zoneOfTheme, zonePlanAvoiding } from "./zonePlans.ts";
@@ -42,23 +43,30 @@ describe("a plan's middle chunks", () => {
 
 describe("the stage a request plans", () => {
   it("plans a map node as its zone's recipe, with the recipe key and the plan's middle", () => {
-    const byNode = planStage(CONTEXT, { avoid: [], seed: SEED, target: { node: STAGE.id } });
+    const byNode = requirePlanned(
+      planStage(CONTEXT, { avoid: [], seed: SEED, target: { node: STAGE.id } }),
+    );
     expect(byNode).toEqual(
-      planStage(CONTEXT, { avoid: [], seed: SEED, target: { recipe: STAGE.zone! } }),
+      requirePlanned(
+        planStage(CONTEXT, { avoid: [], seed: SEED, target: { recipe: STAGE.zone! } }),
+      ),
     );
     expect(byNode).toEqual({
       avoidance: "honoured",
       key: STAGE.zone,
       middle: middleChunkIds(byNode.plan),
+      outcome: "planned",
       plan: zonePlanAvoiding([], SEED, STAGE.zone!),
     });
   });
 
   it("passes the avoided chunks to the assembly", () => {
     const whole = (key: string) =>
-      planStage(CONTEXT, { avoid: [], seed: 0, target: { recipe: key } });
+      requirePlanned(planStage(CONTEXT, { avoid: [], seed: 0, target: { recipe: key } }));
     const avoiding = (key: string) =>
-      planStage(CONTEXT, { avoid: [whole(key).middle], seed: 0, target: { recipe: key } });
+      requirePlanned(
+        planStage(CONTEXT, { avoid: [whole(key).middle], seed: 0, target: { recipe: key } }),
+      );
     // A recipe that still assembles without its own middle chunks.
     const key = Object.keys(STAGE_CONTEXT.recipes).find(
       (each) => avoiding(each).middle.join() !== whole(each).middle.join(),
@@ -108,12 +116,16 @@ describe("a stage entered again", () => {
       const required = new Set(steps.flat());
       expect(steps.length).toBeGreaterThan(0);
       for (const seed of AVOID_SEEDS) {
-        const earlier = planStage(STAGE_CONTEXT, { avoid: [], seed, target: { recipe: key } });
-        const again = planStage(STAGE_CONTEXT, {
-          avoid: [earlier.middle],
-          seed: seed + 1,
-          target: { recipe: key },
-        });
+        const earlier = requirePlanned(
+          planStage(STAGE_CONTEXT, { avoid: [], seed, target: { recipe: key } }),
+        );
+        const again = requirePlanned(
+          planStage(STAGE_CONTEXT, {
+            avoid: [earlier.middle],
+            seed: seed + 1,
+            target: { recipe: key },
+          }),
+        );
         for (const sources of steps) {
           expect(sources.some((id) => earlier.middle.includes(id))).toBe(true);
         }
@@ -153,11 +165,13 @@ describe("an outdoor stage entered four times running", () => {
         // The entries so far, newest first; each avoids the latest two.
         const entries: PlannedStage[] = [];
         for (let entry = 0; entry < 4; entry++) {
-          const planned = planStage(STAGE_CONTEXT, {
-            avoid: entries.slice(0, 2).map(({ middle }) => middle),
-            seed: seed + entry,
-            target: { recipe: key },
-          });
+          const planned = requirePlanned(
+            planStage(STAGE_CONTEXT, {
+              avoid: entries.slice(0, 2).map(({ middle }) => middle),
+              seed: seed + entry,
+              target: { recipe: key },
+            }),
+          );
           const run = runOf(planned);
           expect(runLoops(CHUNK_LIBRARY, recipe.start, run)).toBeLessThanOrEqual(1);
           if (planned.avoidance === "honoured") {

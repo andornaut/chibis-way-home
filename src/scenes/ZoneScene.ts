@@ -89,6 +89,7 @@ import { currentScreen } from "../rules/boss/index.ts";
 import {
   createStageBarks,
   planStage,
+  requirePlanned,
   SEED_LIMIT,
   STAGE_CONTEXT,
   type StageEntry,
@@ -1390,7 +1391,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   // middle chunks.
   private startStage(): void {
     const { record, request } = this.entry;
-    const { middle, plan } = planStage(STAGE_CONTEXT, request);
+    const { middle, plan } = requirePlanned(planStage(STAGE_CONTEXT, request));
     this.loadPlan(plan);
     if (record !== undefined) {
       recordStageChunks(record, middle);

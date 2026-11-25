@@ -13,13 +13,14 @@ import {
   type BehaviourTraversalState,
 } from "../rules/boss/behaviourTraversal.ts";
 import { stepBehaviour } from "../rules/boss/encounter.ts";
-import { assembleZone, zonePlanOf } from "../rules/stage/assemble.ts";
+import { zonePlanOf } from "../rules/stage/assemble.ts";
 import { chunkProblems } from "../rules/stage/chunk.ts";
 import { zoneLayout } from "../rules/stage/tiles.ts";
 import { CHUNK_LIBRARY } from "../rules/stage/zonePlans.ts";
 import { standsOn, startZone, stepZone } from "../rules/zone/zone.ts";
 import { withInstances } from "../testing/encounterLayouts.ts";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";
+import { assembleZone } from "../testing/stageAssembly.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import { BIRD } from "./bird.ts";
 import { CHUNKS } from "./chunks.ts";

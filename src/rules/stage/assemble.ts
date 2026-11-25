@@ -42,10 +42,22 @@ export interface ChunkLibrary {
   readonly themes: Readonly<Record<string, ThemePlan>>;
 }
 
-// The outcome of assembleZone when no run of the recipe's chunks fits it.
-export class NoAssemblyError extends Error {
-  override readonly name = "NoAssemblyError";
+// A stage's assembled plan.
+export interface PlannedAssembly {
+  readonly outcome: "planned";
+  readonly plan: ZonePlan;
 }
+
+// The outcome when no run of a recipe's chunks fits it, with why.
+export interface NothingFits {
+  readonly outcome: "nothing-fits";
+  readonly reason: string;
+}
+
+export type StageAssembly = NothingFits | PlannedAssembly;
+
+const nothingFits = (reason: string): NothingFits => ({ outcome: "nothing-fits", reason });
+const planned = (plan: ZonePlan): PlannedAssembly => ({ outcome: "planned", plan });
 
 // An assembled zone's one area, and the entry he starts at.
 export const ASSEMBLED_AREA = "main";
@@ -1247,7 +1259,7 @@ function assembleOrdered(
   seed: number,
   key: string,
   recipe: OrderedZoneRecipe,
-): ZonePlan {
+): StageAssembly {
   const problems = orderedRecipeProblems(library, recipe);
   if (problems.length > 0) {
     throw new Error(problems.join("; "));
@@ -1412,9 +1424,7 @@ function assembleOrdered(
     (remaining !== undefined && remaining < 0) ||
     !choose(start.encounters > 0 ? 0 : minimumGap, 0, undefined, remaining)
   ) {
-    throw new NoAssemblyError(
-      `No ordered assembly of stage ${key} fits its section pools and lengths`,
-    );
+    return nothingFits(`No ordered assembly of stage ${key} fits its section pools and lengths`);
   }
   const order = recipe.sections.map(({ id }) => id);
   const areas = Object.fromEntries(
@@ -1490,35 +1500,35 @@ function assembleOrdered(
       ];
     }),
   );
-  return applyStageGeometry(
-    { ...(recipe.stageExit && { stageExit: recipe.stageExit }) },
-    { areaOrder: order, areas, start: { area: order[0] ?? "", entry: START_ENTRY } },
+  return planned(
+    applyStageGeometry(
+      { ...(recipe.stageExit && { stageExit: recipe.stageExit }) },
+      { areaOrder: order, areas, start: { area: order[0] ?? "", entry: START_ENTRY } },
+    ),
   );
 }
 
 // The zone key's recipe assembled for a seed: its start chunk, a seeded run of its
 // theme's chunks (searchRun), and its finish chunk, with the recipe's events and doors in
-// seeded slots. The same seed always gives the same zone. Throws NoAssemblyError when no
-// assembly fits.
-export function assembleZone(
+// seeded slots, or that nothing fits. The same seed always gives the same outcome.
+export function assembleStage(
   library: ChunkLibrary,
   seed: number,
   key: string,
   recipe: StageRecipe,
-): ZonePlan {
+): StageAssembly {
   if ("sections" in recipe) {
     const themes = Object.fromEntries(recipe.sections.map(({ id, theme }) => [id, theme]));
-    return withRoomBuildings(
-      library,
-      themes,
-      withBackgroundSections(
-        library,
-        seed,
-        key,
-        themes,
-        assembleOrdered(library, seed, key, recipe),
-      ),
-    );
+    const ordered = assembleOrdered(library, seed, key, recipe);
+    return ordered.outcome === "nothing-fits"
+      ? ordered
+      : planned(
+          withRoomBuildings(
+            library,
+            themes,
+            withBackgroundSections(library, seed, key, themes, ordered.plan),
+          ),
+        );
   }
   if (recipe.chunks !== undefined) {
     const problems = chunkPoolProblems(library, recipe, recipe.chunks);
@@ -1555,7 +1565,7 @@ export function assembleZone(
       ? seededRun(library, seed, key, undefined, recipe)
       : arenaRun(library, seed, key, arenaId, predecessors, recipe);
   if (!run) {
-    throw new NoAssemblyError(
+    return nothingFits(
       `No assembly of zone ${key} fits its recipe: its theme's chunks never join from ` +
         `${recipe.start} to ${recipe.finish} within ${recipe.length.min} to ` +
         `${recipe.length.max} columns, the difficulty band and each chunk's maxPerZone, ` +
@@ -1563,29 +1573,23 @@ export function assembleZone(
     );
   }
   const themes = { [ASSEMBLED_AREA]: recipe.theme };
-  return withRoomBuildings(
+  const zone = zonePlanOf(
     library,
-    themes,
-    withBackgroundSections(
+    randomStream(seed, `slots:${key}`),
+    {
+      ...fillsOf(recipe),
+      start: recipe.start,
+      ...(recipe.startDoors && { startDoors: recipe.startDoors }),
+    },
+    recipe.theme,
+    recipe.spawnCol,
+    [recipe.start, ...run, recipe.finish],
+  );
+  return planned(
+    withRoomBuildings(
       library,
-      seed,
-      key,
       themes,
-      applyStageGeometry(
-        recipe,
-        zonePlanOf(
-          library,
-          randomStream(seed, `slots:${key}`),
-          {
-            ...fillsOf(recipe),
-            start: recipe.start,
-            ...(recipe.startDoors && { startDoors: recipe.startDoors }),
-          },
-          recipe.theme,
-          recipe.spawnCol,
-          [recipe.start, ...run, recipe.finish],
-        ),
-      ),
+      withBackgroundSections(library, seed, key, themes, applyStageGeometry(recipe, zone)),
     ),
   );
 }
@@ -1719,20 +1723,17 @@ export type Avoidance = "fallback" | "honoured";
 // newest first.
 export type AvoidEntries = readonly (readonly string[])[];
 
-// A zone assembled with chunks to avoid.
-export interface AvoidingAssembly {
-  readonly avoidance: Avoidance;
-  readonly plan: ZonePlan;
-}
+// A zone assembled with chunks to avoid, or that nothing fits even with every pool whole.
+export type AvoidingAssembly = NothingFits | (PlannedAssembly & { readonly avoidance: Avoidance });
 
-// assembleZone, first with the avoided chunks left out of every middle pool, then, when no
+// assembleStage, first with the avoided chunks left out of every middle pool, then, when no
 // assembly fits without them, with every pool whole. Where every source of a step a flat recipe
 // cannot do without is avoided, the pool keeps the one avoided least recently (keptSources), so
 // a step with one source always keeps it and a step with several takes them in turn. An ordered
 // stage's section pools keep none. Deterministic in (seed, avoid). Recency across stages passes
 // the zone's recent stage entries; no entry, or none that names a chunk, assembles as
-// assembleZone and counts as honoured. Only the outcome that nothing fits falls back: a narrowed
-// pool that is no valid pool, or NoAssemblyError. Any other error is thrown on.
+// assembleStage and counts as honoured. Only the outcome that nothing fits falls back: a narrowed
+// pool that is no valid pool, or nothing fitting the narrowed pools. Errors are thrown on.
 export function assembleZoneAvoiding(
   library: ChunkLibrary,
   avoid: AvoidEntries,
@@ -1741,8 +1742,12 @@ export function assembleZoneAvoiding(
   recipe: StageRecipe,
 ): AvoidingAssembly {
   const avoided = new Set(avoid.flat());
+  const whole = (avoidance: Avoidance): AvoidingAssembly => {
+    const assembly = assembleStage(library, seed, key, recipe);
+    return assembly.outcome === "planned" ? { ...assembly, avoidance } : assembly;
+  };
   if (avoided.size === 0) {
-    return { avoidance: "honoured", plan: assembleZone(library, seed, key, recipe) };
+    return whole("honoured");
   }
   let narrowed: StageRecipe;
   let valid: boolean;
@@ -1763,14 +1768,8 @@ export function assembleZoneAvoiding(
     narrowed = { ...recipe, chunks };
     valid = chunks.length > 0;
   }
-  if (valid) {
-    try {
-      return { avoidance: "honoured", plan: assembleZone(library, seed, key, narrowed) };
-    } catch (error) {
-      if (!(error instanceof NoAssemblyError)) {
-        throw error;
-      }
-    }
-  }
-  return { avoidance: "fallback", plan: assembleZone(library, seed, key, recipe) };
+  const honoured = valid ? assembleStage(library, seed, key, narrowed) : undefined;
+  return honoured?.outcome === "planned"
+    ? { ...honoured, avoidance: "honoured" }
+    : whole("fallback");
 }

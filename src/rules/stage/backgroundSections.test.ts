@@ -11,8 +11,9 @@ import type {
 } from "../../data/types/index.ts";
 import { chunkBackdropSpan } from "../../presentation/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
+import { assembleZone } from "../../testing/stageAssembly.ts";
 import { enterArea, retryZone, startZone, stepZone } from "../zone/zone.ts";
-import { assembleZone, type ChunkLibrary } from "./assemble.ts";
+import { type ChunkLibrary } from "./assemble.ts";
 import { withBackgroundSections } from "./backgroundSections.ts";
 import { objectLayout, zoneLayout } from "./tiles.ts";
 

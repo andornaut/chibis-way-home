@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { CHUNK_RULES } from "../../data/chunks.ts";
 import type { ChunkPlan, StageRecipe, ZonePlan } from "../../data/types/index.ts";
 import { requiredSteps, runLoops } from "./assemble.ts";
-import { planStage } from "./stagePlans.ts";
+import { planStage, requirePlanned } from "./stagePlans.ts";
 import { CHUNK_LIBRARY, STAGE_CONTEXT, STAGE_RECIPES } from "./zonePlans.ts";
 
 // The rules every assembled plan of every stage recipe keeps, over a fixed seed set, planned
@@ -20,7 +20,7 @@ const chunkOf = (id: string): ChunkPlan => {
 };
 
 const plan = (key: string, seed: number, avoid: readonly (readonly string[])[] = []) =>
-  planStage(STAGE_CONTEXT, { avoid, seed, target: { recipe: key } });
+  requirePlanned(planStage(STAGE_CONTEXT, { avoid, seed, target: { recipe: key } }));
 
 // Each area's placed chunks with its difficulty band: a flat stage's one area, or each section.
 function areasOf(recipe: StageRecipe, zone: ZonePlan) {

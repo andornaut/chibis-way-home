@@ -7,8 +7,10 @@ import type {
   ZoneRecipe,
 } from "../../data/types/index.ts";
 import { FIXTURE_LIBRARY, FIXTURE_RECIPE } from "../../testing/chunks.ts";
+import { assembleZone } from "../../testing/stageAssembly.ts";
 import { arenaApproachPolicyProblems, arenaApproachRelations } from "./arenaApproaches.ts";
-import { assembleZone, assembleZoneAvoiding, type ChunkLibrary } from "./assemble.ts";
+import { assembleZoneAvoiding, type ChunkLibrary } from "./assemble.ts";
+import { requirePlanned } from "./stagePlans.ts";
 
 const policy: ArenaApproachPolicy = { predecessors: ["qualified"], profile: "cold-encounter-v1" };
 const relation: ArenaApproach = { ...policy, arena: "arena", stage: "test-stage" };
@@ -85,12 +87,8 @@ it("rejects unknown profiles, unmeasured multi-predecessor policies and duplicat
 });
 
 it("retains the required approach while excluding other recently used chunks", () => {
-  const ids = assembleZoneAvoiding(
-    lib,
-    [["qualified", "other-0"]],
-    7,
-    "test-stage",
-    recipe,
+  const ids = requirePlanned(
+    assembleZoneAvoiding(lib, [["qualified", "other-0"]], 7, "test-stage", recipe),
   ).plan.areas.main!.chunks!.map(({ chunk }) => chunk);
   expect(ids[ids.indexOf("arena") - 1]).toBe("qualified");
   expect(ids).not.toContain("other-0");

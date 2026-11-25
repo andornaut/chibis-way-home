@@ -5,8 +5,9 @@ import { ARCHETYPES } from "../../data/archetypes.ts";
 import { BIRD } from "../../data/bird.ts";
 import type { ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../../data/types/index.ts";
 import { SKILL_PROFILES } from "../../progress/index.ts";
+import { assembleZone } from "../../testing/stageAssembly.ts";
 import { startZone, stepZone } from "../zone/zone.ts";
-import { assembleZone, type ChunkLibrary } from "./assemble.ts";
+import { type ChunkLibrary } from "./assemble.ts";
 import { chunkProblems, recipeProblems } from "./chunk.ts";
 import { zoneLayout } from "./tiles.ts";
 

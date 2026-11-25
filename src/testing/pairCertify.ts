@@ -31,7 +31,6 @@ import { ZONE_FRAMES } from "../data/zoneFrames.ts";
 import { RECIPES } from "../data/zones.ts";
 import {
   arenaChunks,
-  assembleZone,
   CHUNK_LIBRARY,
   type ChunkLibrary,
   chunkProblems,
@@ -70,6 +69,7 @@ import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 import { chunkThemePlan, planPhysics } from "./chunkWalkCases.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
 import { moduleRouteTargets, REQUIRED_CHUNK_ROUTES, slotFills } from "./requiredRoutes.ts";
+import { assembleZone } from "./stageAssembly.ts";
 
 // Bump when a certification step changes what it proves, forcing a full recertification.
 const CERTIFY_VERSION = 1;

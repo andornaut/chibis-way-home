@@ -2,7 +2,7 @@
 // plans, previews, requests and barks, walk links and the page parameters that pick a stage.
 export { arenaApproachProblems } from "./arenaApproaches.ts";
 export {
-  assembleZone,
+  assembleStage,
   type ChunkLibrary,
   eligibleChunks,
   recipeChunkPool,
@@ -16,7 +16,7 @@ export { SEED_LIMIT } from "./pageParams.ts";
 export { withRoomBuildings } from "./roomBuildings.ts";
 export { createStageBarks } from "./stageBarks.ts";
 export { applyStageGeometry } from "./stageGeometry.ts";
-export { planStage, recipeKey, stageTarget } from "./stagePlans.ts";
+export { planStage, recipeKey, requirePlanned, stageTarget } from "./stagePlans.ts";
 export {
   askedStagePreview,
   type StagePreview,
