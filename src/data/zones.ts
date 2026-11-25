@@ -132,6 +132,8 @@ const outdoorRecipe = (
     events: [],
     finish: capId(`${stage}-finish`),
     length: STAGE_LENGTH,
+    // At most one loop (a return to the start seam row) per outdoor stage.
+    loopCap: 1,
     minEncounterGap: MIN_ENCOUNTER_GAP,
     rows,
     spawnCol: 2,
