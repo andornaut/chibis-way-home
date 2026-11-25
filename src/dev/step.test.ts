@@ -4,7 +4,7 @@ import type { ZoneState } from "../rules/zone.ts";
 import { developmentStep } from "./step.ts";
 
 describe("developer contact protection", () => {
-  it.each(["hazard", "crush", "fall"] as const)(
+  it.each(["boss", "crush", "fall", "hazard"] as const)(
     "preserves physics while treating %s death explicitly",
     (reason) => {
       const state = {

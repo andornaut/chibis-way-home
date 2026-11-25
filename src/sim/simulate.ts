@@ -332,7 +332,7 @@ function executeStage(
   let dialogues = 0;
   let progress = stageProgress(tuning, stage.layout, zone);
   let peakProgress = progress;
-  const deathsByReason = { crush: 0, fall: 0, hazard: 0 };
+  const deathsByReason = { boss: 0, crush: 0, fall: 0, hazard: 0 };
   let status: RunStatus = "step-budget";
   const priorPlanning = {
     budgetExhaustions: 0,
@@ -656,7 +656,8 @@ function executeStage(
       ),
       path,
     },
-    deaths: deathsByReason.crush + deathsByReason.fall + deathsByReason.hazard,
+    deaths:
+      deathsByReason.boss + deathsByReason.crush + deathsByReason.fall + deathsByReason.hazard,
     deathsByReason,
     dialogues,
     failures,

@@ -2,7 +2,9 @@
 
 import type { Point, Rect } from "./geometry.ts";
 
-type DeathReason = "crush" | "fall" | "hazard";
+// How Chibi died: touching a boss or anything a boss emitted, crushed, below the level, or
+// touching any other hazard.
+type DeathReason = "boss" | "crush" | "fall" | "hazard";
 
 export type DeathContact =
   | { readonly contactCue?: "red-hazard"; readonly index: number; readonly kind: "object" }

@@ -379,7 +379,7 @@ it("clears the active watchdog and verified route on a real death retry", () => 
       bird: { ...initial.bird, x: object.origin.x, y: object.origin.y },
     },
   );
-  expect(dead.death?.reason).toBe("hazard");
+  expect(dead.death?.reason).toBe("boss");
   expect(dead.behaviours[0]!.idleWatchdog).toBeDefined();
   const retry = retryZone(BIRD, layout, dead);
   expect(retry.behaviours[0]!.idleWatchdog).toBeUndefined();

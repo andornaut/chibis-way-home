@@ -44,7 +44,7 @@ import {
   startsDash,
   stepBirdWithSupport,
 } from "./bird.ts";
-import { bossDeath } from "./bossDefeat.ts";
+import { bossDeath, isBoss } from "./bossDefeat.ts";
 import { initialCrumblingWorld } from "./crumbling.ts";
 import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame.ts";
 import { deathSupport } from "./death.ts";
@@ -1353,6 +1353,10 @@ function stepZoneBodiesInternal(
             : overlap >= 0
               ? objectContact(hazardIndices[overlap]!)
               : undefined));
+  // A boss's body, or a transient a boss emitted, is boss contact; every other contact is a hazard.
+  const bossContact =
+    contact !== undefined &&
+    isBoss(objects[contact.kind === "object" ? contact.index : contact.emitter]!.object);
   const steps = zone.steps + 1;
   if (observer) {
     recordBehaviourWork(
@@ -1393,7 +1397,13 @@ function stepZoneBodiesInternal(
         death: {
           ...(contact && { contact }),
           position: { x: bird.x, y: bird.y },
-          reason: crushed ? "crush" : bird.y > area.height ? "fall" : "hazard",
+          reason: crushed
+            ? "crush"
+            : bird.y > area.height
+              ? "fall"
+              : bossContact
+                ? "boss"
+                : "hazard",
           support: deathSupport(tuning, layout, frozen, bird),
           velocity: { x: bird.vx, y: bird.vy },
         },
