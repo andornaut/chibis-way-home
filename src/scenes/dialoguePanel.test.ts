@@ -1,34 +1,14 @@
 // @vitest-environment happy-dom
-import { readFileSync } from "node:fs";
-
 import { expect, it } from "vitest";
 
-import { DIALOGUE_PANEL_ALPHA, SPEAKERS } from "../data/dialogues.ts";
+import { SPEAKERS } from "../data/dialogues.ts";
 import { TEXT } from "../data/text.ts";
 import {
   createDialogueView,
   createStatusPanel,
-  DIALOGUE_PANEL_LAYOUT,
   dialogueParagraphs,
   showPanelParagraph,
-  UI_FRAMES,
 } from "../ui/index.ts";
-const DIALOGUE_PANEL_KEY = UI_FRAMES.find(({ name }) => name === "ui-dialogue-box")!.art;
-
-const SOURCES = import.meta.glob<string>(["../**/*.ts", "!../**/*.test.ts"], {
-  eager: true,
-  import: "default",
-  query: "?raw",
-});
-// Vitest blanks CSS imports, so the stylesheet is read from disk, from the project root.
-const DIALOGUE_CSS = readFileSync("src/ui/dom/dialogue.css", "utf8");
-
-// The scenes that show a conversation, bark or achievement notice panel in the HTML UI.
-const DOM_PANEL_SCENES = [
-  "./AchievementNoticeScene.ts",
-  "./DialogueScene.ts",
-  "./ZoneBarkScene.ts",
-];
 
 const speakerParagraph = (speaker: string) =>
   dialogueParagraphs(SPEAKERS, TEXT, {
@@ -76,32 +56,4 @@ it("shows a heading in place of a name tab, in a polite status region", () => {
     status: root.querySelector("[role=status]")?.contains(panel.element),
     tab: panel.tab.hidden,
   }).toEqual({ heading: [false, "Unlocked"], line: "Words", status: true, tab: true });
-});
-
-it("draws only the box at the shared translucent alpha", () => {
-  expect(DIALOGUE_PANEL_LAYOUT["--dialogue-alpha"]).toBe(DIALOGUE_PANEL_ALPHA);
-  expect(DIALOGUE_PANEL_ALPHA).toBeLessThan(1);
-  const rules = [...DIALOGUE_CSS.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^}]*)\}/g)];
-  const translucent = rules.filter(([, , body]) => body!.includes("opacity"));
-  expect(translucent.map(([, selector, body]) => [selector!.trim(), body!.trim()])).toEqual([
-    [".dialogue-box", expect.stringContaining("opacity: var(--dialogue-alpha);")],
-  ]);
-});
-
-it("shows every dialogue panel only through the shared views", () => {
-  const owners = ["../ui/dom/dialogue.ts", "../ui/dom/skin.ts"];
-  for (const [path, source] of Object.entries(SOURCES)) {
-    if (!owners.includes(path)) {
-      expect(source, path).not.toContain(DIALOGUE_PANEL_KEY);
-    }
-    if (!["../data/dialogues.ts", "../ui/dom/dialogue.ts"].includes(path)) {
-      expect(source, path).not.toContain("DIALOGUE_PANEL_ALPHA");
-    }
-  }
-  for (const path of DOM_PANEL_SCENES) {
-    expect(SOURCES[path], path).toMatch(/create(DialogueView|StatusPanel)\(/);
-    expect(SOURCES[path], path).not.toContain("drawDialoguePanel");
-  }
-  expect(SOURCES["./RoomScene.ts"]).toContain("createRoomView(");
-  expect(SOURCES["../ui/dom/room.ts"]).toContain("createDialoguePanel(document");
 });

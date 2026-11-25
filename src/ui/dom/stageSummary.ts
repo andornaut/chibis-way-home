@@ -7,108 +7,51 @@ import { slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT, DEATH_CARD, STAGE_PREVIEW, STAGE_SUMMARY } from "../../data/layout.ts";
 import type { DialogueSpeaker } from "../../data/types/index.ts";
-import { UI_FONT_FAMILY } from "../chrome/uiFonts.ts";
-import { CUTSCENE_CONTINUE } from "../layout/cutscene.ts";
 import { capTop, FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
 import type { StatsMetricRow } from "../layout/runStats.ts";
+import { createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
 import { createRunStats } from "./runStats.ts";
+import { textRole } from "./theme.ts";
 
 // The full-page stage summary in the HTML UI (stageSummary.css, after runStats.css): over a black
 // view, the zone's name, the stage and progress lines, the cleared stage's preview, the stage's
 // metrics beside the totals, the antagonist's clear statement where there is one, and Continue
-// centred in the footer. The cutscene between stages and the departure from a zone show it.
+// centred in the footer, a sole action in its kit action group. The cutscene between stages and
+// the departure from a zone show it.
 
-const { body } = FONT_METRICS;
+const { body, compactMainHeading } = FONT_METRICS;
 // How far a metric's cap height starts below its line box, and its baseline sits above the box's
 // bottom: the statistics' line boxes are CARD_CONTENT.lineHeight tall.
 const STAT_CAP_TOP = capTop({ lineHeight: CARD_CONTENT.lineHeight, size: body.size });
 const STAT_BELOW_BASELINE =
   CARD_CONTENT.lineHeight - STAT_CAP_TOP - UI_FONT_FACE.capHeight * body.size;
+// How far body text's ascenders rise above its cap height.
+const ASCENDER_RISE = (STAGE_SUMMARY.ascender - UI_FONT_FACE.capHeight) * body.size;
 
-// The layout properties stageSummary.css reads, in base px, written on the summary's view with
-// its rows' gaps (stageSummaryGaps).
+// The layout properties stageSummary.css reads, in base px, written on the summary's view. The
+// rows' gaps are the stylesheet's: each text row's box runs from its cap height to the font's
+// descent, the row gap apart, and these offsets from the font's metrics place the ink of the
+// rows whose boxes differ.
 export const STAGE_SUMMARY_LAYOUT: LayoutValues = {
   "--run-stats-divider": slice(DEATH_CARD.dividerWidth),
-  "--summary-continue-hit": CUTSCENE_CONTINUE.hit,
-  "--summary-continue-y": CUTSCENE_CONTINUE.y,
-  "--summary-heading-line": FONT_METRICS.compactMainHeading.lineHeight,
-  "--summary-heading-size": FONT_METRICS.compactMainHeading.size,
+  // The ink a row with ascenders lifts above its cap height.
+  "--summary-ascender": ASCENDER_RISE,
+  // The room a body line's descenders take below its baseline.
+  "--summary-descent": UI_FONT_FACE.descent * body.size,
   "--summary-padding": CARD_CONTENT.padding,
   "--summary-preview-height": STAGE_SUMMARY.previewHeight,
   "--summary-preview-width":
     (STAGE_SUMMARY.previewHeight * STAGE_PREVIEW.width) / STAGE_PREVIEW.height,
+  "--summary-row-gap": CARD_CONTENT.rowGap,
+  // The room a metric's line box holds above its cap height.
+  "--summary-stat-cap-top": STAT_CAP_TOP,
+  // How far a metric's descenders fall below its line box.
+  "--summary-stat-descent": UI_FONT_FACE.descent * body.size - STAT_BELOW_BASELINE,
   "--summary-stats-width": 2 * STAGE_SUMMARY.columnWidth + 2 * CARD_CONTENT.padding,
   "--summary-word-gap": CARD_CONTENT.gap,
+  "--summary-zone-descent": UI_FONT_FACE.descent * compactMainHeading.size,
 };
-
-// How far a line's ink rises above its role's cap height and falls below its baseline, in base px.
-export interface LineInk {
-  readonly fall: number;
-  readonly rise: number;
-}
-
-// The ink of text set in the UI font at a type role.
-export type InkMeasure = (
-  role: { readonly size: number; readonly weight: number },
-  text: string,
-) => LineInk;
-
-const MEASURE_SCALE = 16;
-
-// Measures text's ink in the loaded UI font through a 2D canvas. Without one, a line's ink is
-// taken as its cap height above the baseline and the font's descent below it.
-export function canvasInk(document: Document): InkMeasure {
-  const context = document.createElement("canvas").getContext("2d");
-  return ({ size, weight }, text) => {
-    if (context === null) {
-      return { fall: UI_FONT_FACE.descent * size, rise: 0 };
-    }
-    // Measured MEASURE_SCALE times larger, since a canvas reports whole pixels.
-    context.font = `${weight} ${size * MEASURE_SCALE}px "${UI_FONT_FAMILY}"`;
-    const { actualBoundingBoxAscent, actualBoundingBoxDescent } = context.measureText(text);
-    return {
-      fall: Math.max(0, actualBoundingBoxDescent / MEASURE_SCALE),
-      rise: Math.max(0, actualBoundingBoxAscent / MEASURE_SCALE - UI_FONT_FACE.capHeight * size),
-    };
-  };
-}
-
-const HEADING_ROLE = { size: FONT_METRICS.compactMainHeading.size, weight: 700 };
-const BODY_ROLE = { size: body.size, weight: 400 };
-
-// The margins above each row that leave the rule's gaps between the rows' measured ink, each row
-// box trimmed to its cap height and baseline: a row gap between the zone, stage and progress lines,
-// the preview and the first metrics, and a group gap from the last metrics to the statement.
-export function stageSummaryGaps(measure: InkMeasure, words: StageSummaryWords): LayoutValues {
-  const row = (index: number) =>
-    [words.stats[index], words.totals[index]].flatMap((entry) =>
-      entry === undefined ? [] : [measure(BODY_ROLE, entry.label), measure(BODY_ROLE, entry.value)],
-    );
-  const zone = measure(HEADING_ROLE, words.zone);
-  const stage = measure(BODY_ROLE, words.stage);
-  const progress = measure(BODY_ROLE, words.progress);
-  const first = Math.max(0, ...row(0).map(({ rise }) => rise));
-  const last = Math.max(
-    0,
-    ...row(Math.max(words.stats.length, words.totals.length) - 1).map(({ fall }) => fall),
-  );
-  const statement =
-    words.statement === undefined
-      ? 0
-      : Math.max(
-          measure(BODY_ROLE, `${words.statement.name}:`).rise,
-          measure(BODY_ROLE, words.statement.text).rise,
-        );
-  const { gap, rowGap } = CARD_CONTENT;
-  return {
-    "--summary-preview-gap": rowGap + progress.fall,
-    "--summary-progress-gap": rowGap + stage.fall + progress.rise,
-    "--summary-stage-gap": rowGap + zone.fall + stage.rise,
-    "--summary-statement-gap": gap - STAT_BELOW_BASELINE + last + statement,
-    "--summary-stats-gap": rowGap - STAT_CAP_TOP + first,
-  };
-}
 
 export interface StageSummaryWords {
   readonly continue: string;
@@ -160,15 +103,12 @@ export function createStageSummary(
   };
   const root = element("div", "stage-summary-scene");
   const view = element("div", "ui-view stage-summary-view");
-  writeLayoutProperties(
-    { ...STAGE_SUMMARY_LAYOUT, ...stageSummaryGaps(canvasInk(document), words) },
-    view,
-  );
+  writeLayoutProperties(STAGE_SUMMARY_LAYOUT, view);
   const dialog = element("section", "stage-summary");
   dialog.id = id;
   dialog.setAttribute("role", "dialog");
   dialog.setAttribute("aria-labelledby", `${id}-zone`);
-  const zone = text("h2", "stage-summary-zone", words.zone);
+  const zone = text("h2", `stage-summary-zone ${textRole("summaryZone")}`, words.zone);
   zone.id = `${id}-zone`;
   const preview = element("img", "stage-summary-preview");
   preview.alt = "";
@@ -210,7 +150,7 @@ export function createStageSummary(
   const footer = element("div", "stage-summary-footer");
   const button = textButton(document, words.continue, true);
   button.dataset.continue = "";
-  footer.append(button);
+  footer.append(createActions(document, [button]).element);
   dialog.append(footer);
   view.append(dialog);
   root.append(view);

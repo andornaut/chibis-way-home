@@ -9,9 +9,9 @@
   touch-action: none;
 }
 
-/* The page's rows centred down from its padding: each text row trims to its cap height and
-   alphabetic baseline, and the margins above the rows (stageSummaryGaps) add each line's measured
-   ink past those, so the gaps between rows are the gaps between their ink. */
+/* The page's rows centred down from its padding, the row gap apart. Each text row trims to its
+   cap height and alphabetic baseline and holds the font's descent below it, so the gap is the
+   gap between a row's descenders and the next row's capitals. */
 .stage-summary {
   position: absolute;
   inset: 0;
@@ -19,6 +19,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  row-gap: calc(var(--ui-unit) * var(--summary-row-gap) * 1px);
   padding-top: calc(var(--ui-unit) * var(--summary-padding) * 1px);
   color: var(--colour-lgrey);
   text-align: center;
@@ -36,20 +37,25 @@
   text-box: trim-both cap alphabetic;
 }
 
-/* The zone's name in the compact heading role. */
 .stage-summary-zone {
-  font-size: calc(var(--ui-unit) * var(--summary-heading-size) * 1px);
-  font-weight: 700;
-  line-height: calc(var(--ui-unit) * var(--summary-heading-line) * 1px);
+  padding-bottom: calc(var(--ui-unit) * var(--summary-zone-descent) * 1px);
 }
 
+.stage-summary-stage,
+.stage-summary-progress {
+  padding-bottom: calc(var(--ui-unit) * var(--summary-descent) * 1px);
+}
+
+/* The stage's name has ascenders, which rise above its cap height. */
 .stage-summary-stage {
-  margin-top: calc(var(--ui-unit) * var(--summary-stage-gap) * 1px);
+  margin-top: calc(var(--ui-unit) * var(--summary-ascender) * 1px);
   color: var(--colour-cream);
 }
 
-.stage-summary-progress {
-  margin-top: calc(var(--ui-unit) * var(--summary-progress-gap) * 1px);
+/* The body role sets the theme's ink; the progress line and the metrics' labels are light grey. */
+.stage-summary-progress,
+.stage-summary .ui-run-stats-label {
+  color: var(--colour-lgrey);
 }
 
 /* The cleared stage's preview, whole and sampled nearest. */
@@ -57,36 +63,41 @@
   display: block;
   width: calc(var(--ui-unit) * var(--summary-preview-width) * 1px);
   height: calc(var(--ui-unit) * var(--summary-preview-height) * 1px);
-  margin-top: calc(var(--ui-unit) * var(--summary-preview-gap) * 1px);
   image-rendering: pixelated;
 }
 
-/* The metrics beside the totals, unboxed with a central divider, their first ink a row gap below the
-   preview; labels light grey and values white. */
+/* The metrics beside the totals, unboxed with a central divider, their values white. Their first
+   line box holds room above its cap height, which the gap below the preview takes back, less
+   the labels' ascenders. */
 .stage-summary > .ui-run-stats {
   position: relative;
   width: calc(var(--ui-unit) * var(--summary-stats-width) * 1px);
-  margin-top: calc(var(--ui-unit) * var(--summary-stats-gap) * 1px);
+  margin-top: calc(var(--ui-unit) * (var(--summary-ascender) - var(--summary-stat-cap-top)) * 1px);
 }
 
 /* The shared divider occupies the existing gap without changing either metric column. */
 .stage-summary .ui-run-stats-divider {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  translate: -50% 0;
+  inset: 0;
+  margin-inline: auto;
 }
 
 .stage-summary .ui-run-stats-value {
   color: var(--colour-white);
 }
 
-/* The statement's ink a gap below the last metric's baseline: the speaker's name in their colour,
-   a gap, then what they say in cream. The space between them, which a screen reader reads, takes
-   no width. */
+/* The statement's ink a group gap below the last metric's descenders: the speaker's name in
+   their colour, a gap, then what they say in cream. The space between them, which a screen
+   reader reads, takes no width. */
 .stage-summary > .stage-summary-statement {
-  margin-top: calc(var(--ui-unit) * var(--summary-statement-gap) * 1px);
+  margin-top: calc(
+    var(--ui-unit) *
+      (
+        var(--card-gap) - var(--summary-row-gap) + var(--summary-stat-descent) +
+          var(--summary-ascender)
+      ) *
+      1px
+  );
   color: var(--colour-cream);
 }
 
@@ -114,12 +125,11 @@
   color: var(--colour-tan);
 }
 
-/* The sole Continue centres in the footer, with the button's box its press area. */
+/* The footer, the page inset in from the view's sides and bottom, where the sole Continue's
+   action group centres it. */
 .stage-summary-footer {
-  --hit: calc(var(--ui-unit) * var(--summary-continue-hit) * 1px);
-
   position: absolute;
-  top: calc(var(--ui-unit) * var(--summary-continue-y) * 1px);
-  left: 50%;
-  translate: -50% 0;
+  right: calc(var(--ui-unit) * var(--summary-padding) * 1px);
+  bottom: calc(var(--ui-unit) * var(--summary-padding) * 1px);
+  left: calc(var(--ui-unit) * var(--summary-padding) * 1px);
 }

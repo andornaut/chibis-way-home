@@ -1,3 +1,5 @@
+import { ACTION_GAPS } from "@andornaut/game-kit/runtime/ui/actionGroup";
+import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
 import {
   type LayoutValues,
   writeLayoutProperties,
@@ -13,15 +15,17 @@ import {
   DIALOGUE_SCREEN,
   dialogueSpeakerLayout,
 } from "../layout/dialogueScreen.ts";
+import { type ActionsView, measuredActions } from "./actions.ts";
 import { textButton } from "./card.ts";
-import { mountUiLayout } from "./layoutTree.ts";
+import { registerLayout, rendered } from "./layout.ts";
+import { textRole } from "./theme.ts";
 
 // The dialogue panel in the HTML UI (dialogue.css, on ui.css): art's ui-dialogue-box at the
 // panel's alpha across the top of the view, the portrait in art's ui-portrait-frame at the
 // speaker's end, the speaker's name tab in art's ui-name-tab of their colour above the panel's
 // other end, and the paragraph's text column. Conversations, barks and unlock notices share it;
-// a conversation adds Skip and Continue below it, and the room's gift panel still draws it on the
-// canvas (src/scenes/dialogueParagraph.ts).
+// a conversation adds Skip and Continue below it in a kit action group, and a gift room shows it
+// above its card (room.ts).
 
 const { box } = DIALOGUE_SCREEN;
 const { footer, nameTab } = DIALOGUE_LAYOUT;
@@ -32,7 +36,6 @@ export const DIALOGUE_PANEL_LAYOUT: LayoutValues = {
   "--dialogue-frame": dialogueSpeakerLayout("left").portraitFrame.width,
   "--dialogue-frame-inset": DIALOGUE_LAYOUT.portraitInset,
   "--dialogue-height": box.height,
-  "--dialogue-line": DIALOGUE_SCREEN.text.pitch,
   "--dialogue-padding": DIALOGUE_SCREEN.padding,
   "--dialogue-portrait": DIALOGUE_PORTRAIT_SIZE,
   "--dialogue-tab-end": nameTab.endInset,
@@ -48,8 +51,8 @@ export const DIALOGUE_PANEL_LAYOUT: LayoutValues = {
   "--dialogue-y": box.y,
 };
 
-// The action row's position below the panel and its inset on departure. Its controls use
-// the shared height, width and press outset.
+// The action row's top below the panel, its right edge in from the view's at the panel's right
+// edge, and its inset from the view's right and bottom on departure.
 export const DIALOGUE_FOOTER_LAYOUT: LayoutValues = {
   "--dialogue-departure-inset": DIALOGUE_LAYOUT.departureInset,
   "--dialogue-footer-right": SCREEN.width - box.x - box.width,
@@ -96,13 +99,13 @@ export function createDialoguePanel(document: Document, id: string): DialoguePan
   const portrait = element(document, "img", "dialogue-portrait");
   portrait.alt = "";
   frame.append(portrait);
-  const tab = element(document, "h2", "dialogue-name-tab ui-frame");
+  const tab = element(document, "h2", `dialogue-name-tab ui-frame ${textRole("dialogueName")}`);
   tab.id = `${id}-name`;
   tab.hidden = true;
   const words = element(document, "div", "dialogue-words");
-  const heading = element(document, "p", "dialogue-heading");
+  const heading = element(document, "p", `dialogue-heading ${textRole("dialogueHeading")}`);
   heading.hidden = true;
-  const line = element(document, "p", "dialogue-line");
+  const line = element(document, "p", `dialogue-line ${textRole("dialogueLine")}`);
   line.id = `${id}-line`;
   words.append(heading, line);
   const column = element(document, "div", "dialogue-text");
@@ -130,6 +133,32 @@ export function showPanelParagraph(panel: DialoguePanelView, paragraph: PanelPar
   }
 }
 
+// A row of actions on the kit's action group, as wide as its shown faces and the gaps between
+// them, so CSS places it by an edge or centres it. elements are in their focus order; the
+// arrangement shows a primary action last. Each press area reaches the hit margin past its face
+// and half the gap toward a neighbour.
+export function createActionRow(
+  document: Document,
+  className: string,
+  elements: readonly HTMLElement[],
+): ActionsView {
+  const group = createActionGroup(document, { className });
+  group.element.append(...elements);
+  const arrange = () => {
+    if (!rendered(group.element.parentElement ?? group.element)) {
+      return undefined;
+    }
+    const actions = measuredActions(group, elements);
+    const shown = actions.filter((action) => !action.element.hidden);
+    const width =
+      shown.reduce((sum, { size }) => sum + size.width, 0) +
+      Math.max(0, shown.length - 1) * ACTION_GAPS.standard.row;
+    return group.arrange({ axis: "row", width }, actions);
+  };
+  registerLayout(arrange, group.element);
+  return { arrange, element: group.element, group };
+}
+
 export interface DialogueWords {
   readonly continue: string;
   // The conversation's accessible name.
@@ -143,7 +172,7 @@ export interface DialogueView {
   readonly buttons: Readonly<Record<DialogueControl, HTMLButtonElement>>;
   // The conversation: role dialog, named by its label, holding the panel and the buttons.
   readonly dialog: HTMLElement;
-  // The row of Skip and Continue.
+  // The row of Skip and Continue, a kit action group.
   readonly footer: HTMLElement;
   readonly panel: DialoguePanelView;
   // The cleared stage's preview, filling the view behind a departure's panel; the caller sets its
@@ -154,8 +183,8 @@ export interface DialogueView {
 }
 
 // A conversation's view: the panel, and Continue then Skip in the keyboard's focus order, which
-// dialogue.css shows with Skip on the left. A departure (departure true) fills the view with the
-// cleared stage's preview and puts the buttons at its bottom-right corner.
+// the action group shows with Skip on the left. A departure (departure true) fills the view with
+// the cleared stage's preview and puts the buttons at its bottom-right corner.
 export function createDialogueView(
   document: Document,
   departure: boolean,
@@ -181,15 +210,11 @@ export function createDialogueView(
   };
   buttons.continue.dataset.control = "continue";
   buttons.skip.dataset.control = "skip";
-  const footer = element(document, "div", "ui-card-actions dialogue-footer");
-  mountUiLayout(document, document.createElement("div"), {
-    component: "Native",
-    key: "actions",
-    kind: "component",
-    props: { element: footer },
-  });
+  const { element: footer } = createActionRow(document, "dialogue-footer", [
+    buttons.continue,
+    buttons.skip,
+  ]);
   footer.toggleAttribute("data-departure", departure);
-  footer.append(buttons.continue, buttons.skip);
   dialog.append(panel.element, footer);
   view.append(preview, dialog);
   root.append(backdrop, view);

@@ -16,5 +16,4 @@ export const ROOM_SCREEN = {
     y: frameY,
   } satisfies Rect,
   leave: { rightInset: leaveRightInset, y: leaveY },
-  nameCentre: ROOM_LAYOUT.nameCentre,
 } as const;

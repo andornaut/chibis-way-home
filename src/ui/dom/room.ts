@@ -3,22 +3,30 @@ import {
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import { SKILL_DETAILS } from "../../data/layout.ts";
+import { CARD_SCREEN_MARGIN, SKILL_DETAILS } from "../../data/layout.ts";
+import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
 import { PAGE_TITLE } from "../layout/pageTitle.ts";
 import { ROOM_SCREEN } from "../layout/roomScreen.ts";
 import { SKILL_ROOM } from "../layout/skillDetails.ts";
 import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";
-import { setCardWidth } from "./card.ts";
+import { createActions } from "./actions.ts";
+import { createCardFrame, textButton } from "./card.ts";
 import {
+  createActionRow,
   createDialoguePanel,
   DIALOGUE_PANEL_LAYOUT,
   type DialoguePanelView,
   type PanelParagraph,
   showPanelParagraph,
 } from "./dialogue.ts";
-import { mountUiLayout, type UiLayoutNode } from "./layoutTree.ts";
+import { registerLayout } from "./layout.ts";
 import { createSkillDisc } from "./skillDisc.ts";
+
+// A room's text and controls in the HTML UI (room.css, on ui.css). An ordinary room shows its
+// name as the page title and a sole secondary Leave at the top right. A gift room shows the
+// helper's dialogue panel, the skill's card between the panel and the footer, and a sole primary
+// action centred in the footer. Each action sits in its own kit action group.
 
 export interface RoomViewColours {
   readonly cream: number;
@@ -46,6 +54,15 @@ export interface RoomView {
   readonly root: HTMLElement;
 }
 
+// The rect a gift card is centred in: the area between the panel and the footer, with the card
+// frame's screen margin added above and below, so the card may be as tall as the area.
+export const ROOM_GIFT_CONTENT: Rect = {
+  height: SKILL_ROOM.bounds.height + 2 * CARD_SCREEN_MARGIN,
+  width: SCREEN.width,
+  x: 0,
+  y: SKILL_ROOM.bounds.y - CARD_SCREEN_MARGIN,
+};
+
 export function roomPortraitProperties(size: Pick<Rect, "height" | "width">): LayoutValues {
   return { "--room-portrait-height": size.height, "--room-portrait-width": size.width };
 }
@@ -54,9 +71,7 @@ export function roomProperties(): LayoutValues {
   return {
     ...DIALOGUE_PANEL_LAYOUT,
     "--room-description-width": SKILL_DETAILS.descriptionWidth,
-    "--room-footer-width": SKILL_ROOM.footer.width,
-    "--room-gift-height": SKILL_ROOM.bounds.height,
-    "--room-gift-top": SKILL_ROOM.bounds.y,
+    "--room-gift-shift": 0,
     "--room-leave-right": ROOM_SCREEN.leave.rightInset,
     "--room-leave-y": ROOM_SCREEN.leave.y,
     "--room-name-x": PAGE_TITLE.x,
@@ -82,116 +97,52 @@ export function createRoomView(
   root.toggleAttribute("data-gift", words.gift !== undefined);
   writeLayoutProperties(roomProperties(), root);
   const view = make("div", "ui-view room-view");
-  const title: UiLayoutNode = {
-    component: "Text",
-    key: "title",
-    kind: "component",
-    props: {
-      className: words.gift === undefined ? "room-name ui-text-heading" : "ui-card-title",
-      id: "room-title",
-      tag: "h1",
-      text: words.gift?.title ?? words.name,
-    },
-  };
-  const children: UiLayoutNode[] = [];
-  let panel: DialoguePanelView | undefined;
-  let glyph: HTMLImageElement | undefined;
+  const leave = textButton(document, words.action, words.gift !== undefined);
   if (words.gift === undefined) {
-    children.push(title);
-  } else {
-    const gift = words.gift;
-    panel = createDialoguePanel(document, "room-helper");
-    showPanelParagraph(panel, gift.paragraph);
-    const area = make("div", "room-gift-area");
-    const card = make("section", "ui-card ui-frame room-gift-card");
-    // The skill details card's body.
-    setCardWidth("large", card);
-    card.setAttribute("aria-labelledby", "room-title");
-    card.setAttribute("aria-describedby", "room-description");
-    const body = make("div", "room-skill-body");
-    const disc = createSkillDisc(document, colours, { ready: true }, gift.disc);
-    glyph = disc.glyph;
-    const description = make("p", "room-description ui-text-body");
-    description.id = "room-description";
-    description.append(...createActionHelp(document, colours, words, gift.description));
-    children.push(
-      { component: "Native", key: "helper", kind: "component", props: { element: panel.element } },
-      {
-        component: "Native",
-        key: "gift-area",
-        kind: "component",
-        props: { element: area },
-        slots: {
-          content: [
-            {
-              component: "Native",
-              key: "gift-card",
-              kind: "component",
-              props: { element: card },
-              slots: {
-                content: [
-                  title,
-                  {
-                    component: "Native",
-                    key: "body",
-                    kind: "component",
-                    props: { element: body },
-                    slots: {
-                      content: [
-                        {
-                          component: "Native",
-                          key: "disc",
-                          kind: "component",
-                          props: { element: disc.element },
-                        },
-                        {
-                          component: "Native",
-                          key: "description",
-                          kind: "component",
-                          props: { element: description },
-                        },
-                      ],
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      },
-    );
+    const title = make("h1", "room-name ui-text-heading");
+    title.id = "room-title";
+    title.textContent = words.name;
+    view.append(title, createActionRow(document, "room-leave", [leave]).element);
+    root.append(view);
+    return { glyph: undefined, leave, panel: undefined, root };
   }
-  let leave!: HTMLButtonElement;
-  children.push({
-    component: "Button",
-    key: "leave",
-    kind: "component",
-    props: {
-      label: words.action,
-      primary: words.gift !== undefined,
-      ref: (button) => {
-        leave = button;
-        button.classList.add("room-leave");
-      },
-      ...(words.gift !== undefined && { sizing: "authored" }),
-    },
-  });
-  mountUiLayout(document, document.createElement("div"), {
-    component: "Native",
-    key: "room",
-    kind: "component",
-    props: { element: root },
-    slots: {
-      content: [
-        {
-          component: "Native",
-          key: "view",
-          kind: "component",
-          props: { element: view },
-          slots: { content: children },
-        },
-      ],
-    },
-  });
-  return { glyph, leave, panel, root };
+  const gift = words.gift;
+  const panel = createDialoguePanel(document, "room-helper");
+  showPanelParagraph(panel, gift.paragraph);
+  // The skill details card's body, in the same width family. The card frame takes the rect it
+  // centres the card in as content.
+  const options = {
+    className: "room-gift-card",
+    content: ROOM_GIFT_CONTENT,
+    id: "room",
+    title: gift.title,
+    width: "large",
+  } as const;
+  const frame = createCardFrame(document, options);
+  // The card is part of the room, not a modal: it takes no presses outside itself.
+  frame.backdrop.hidden = true;
+  frame.dialog.setAttribute("role", "region");
+  frame.dialog.setAttribute("aria-describedby", "room-description");
+  const body = make("div", "room-skill-body");
+  const disc = createSkillDisc(document, colours, { ready: true }, gift.disc);
+  const description = make("p", "room-description ui-text-body");
+  description.id = "room-description";
+  description.append(...createActionHelp(document, colours, words, gift.description));
+  body.append(disc.element, description);
+  frame.content.append(body);
+  // CLEANUP (added 2026-11-25): remove this shift, --room-gift-shift and its rule in room.css once
+  // createCardFrame centres the card in its content option; until then the frame centres it in
+  // the whole view and the shift moves it to its place in ROOM_GIFT_CONTENT.
+  registerLayout(() => {
+    const card = frame.layout()?.card;
+    if (card !== undefined) {
+      const y = ROOM_GIFT_CONTENT.y + Math.floor((ROOM_GIFT_CONTENT.height - card.height) / 2);
+      writeLayoutProperties({ "--room-gift-shift": y - card.y }, frame.root);
+    }
+  }, frame.root);
+  const footer = make("div", "room-footer");
+  footer.append(createActions(document, [leave]).element);
+  view.append(panel.element, footer);
+  root.append(frame.root, view);
+  return { glyph: disc.glyph, leave, panel, root };
 }

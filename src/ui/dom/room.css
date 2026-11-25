@@ -1,32 +1,60 @@
-/* Room text overlays its canvas world. Geometry is in base pixels from the scene's room layout. */
-.room-scene .dialogue-portrait {
-  top: calc(var(--ui-unit) * (var(--dialogue-frame-inset) + var(--dialogue-portrait) / 2) * 1px);
-  left: calc(var(--ui-unit) * (var(--dialogue-frame-inset) + var(--dialogue-portrait) / 2) * 1px);
-  width: calc(var(--ui-unit) * var(--room-portrait-width) * 1px);
-  height: calc(var(--ui-unit) * var(--room-portrait-height) * 1px);
-  translate: -50% -50%;
+/* A room's text and controls (room.ts) over its canvas world, after ui.css and dialogue.css.
+   Lengths are base pixels times --ui-unit, from the layer's layout properties and roomProperties
+   on the scene's view. */
+
+/* The view clips its content, so a press area that reaches past an edge of the view ends there. */
+.room-view {
+  overflow: clip;
 }
 
+/* The helper's portrait at its native size, centred in the portrait slot. */
+.room-scene .dialogue-portrait {
+  top: calc(
+    var(--ui-unit) *
+      (
+        var(--dialogue-frame-inset) +
+          (var(--dialogue-portrait) - var(--room-portrait-height, var(--dialogue-portrait))) / 2
+      ) *
+      1px
+  );
+  left: calc(
+    var(--ui-unit) *
+      (
+        var(--dialogue-frame-inset) +
+          (var(--dialogue-portrait) - var(--room-portrait-width, var(--dialogue-portrait))) / 2
+      ) *
+      1px
+  );
+  width: calc(var(--ui-unit) * var(--room-portrait-width, var(--dialogue-portrait)) * 1px);
+  height: calc(var(--ui-unit) * var(--room-portrait-height, var(--dialogue-portrait)) * 1px);
+}
+
+/* The room's name in cream, centred in the page title's box at the top of the view. */
 .room-name {
-  max-width: calc(var(--ui-unit) * var(--room-title-width) * 1px);
   position: absolute;
   top: calc(var(--ui-unit) * var(--room-name-y) * 1px);
-  left: calc(var(--ui-unit) * var(--room-name-x) * 1px);
+  left: calc(var(--ui-unit) * (var(--room-name-x) - var(--room-title-width) / 2) * 1px);
+  width: calc(var(--ui-unit) * var(--room-title-width) * 1px);
   margin: 0;
   color: var(--colour-cream);
   text-align: center;
-  translate: -50% 0;
 }
 
-.room-gift-area {
+/* Leave's action group, as wide as its face: the face's top and right edge at its navigation
+   anchor. */
+.room-view > .room-leave {
   position: absolute;
-  top: calc(var(--ui-unit) * var(--room-gift-top) * 1px);
-  width: 100%;
-  height: calc(var(--ui-unit) * var(--room-gift-height) * 1px);
-  display: grid;
-  place-items: center;
+  top: calc(var(--ui-unit) * var(--room-leave-y) * 1px);
+  right: calc(var(--ui-unit) * var(--room-leave-right) * 1px);
 }
 
+/* CLEANUP (added 2026-11-25): remove once createCardFrame centres the gift card in its content
+   option (room.ts). */
+.room-scene .ui-modal-frame {
+  top: calc(var(--ui-unit) * var(--room-gift-shift) * 1px);
+}
+
+/* The disc beside the description, a gap apart, both centred on the body's height. */
 .room-skill-body {
   display: flex;
   align-items: center;
@@ -36,40 +64,14 @@
 
 .room-description {
   max-width: calc(var(--ui-unit) * var(--room-description-width) * 1px);
-  margin: 0;
   text-align: start;
 }
 
-.room-leave {
-  --hit: calc(var(--ui-unit) * var(--button-hit) * 1px);
-
+/* The footer, the card padding in from the view's sides and bottom, where the sole gift action's
+   group centres it. */
+.room-footer {
   position: absolute;
-  width: max-content;
-}
-
-/* Leave's face stays at its navigation anchor while the shared hit outset stops at each edge. */
-.room-scene:not([data-gift]) .room-leave {
-  --leave-top: calc(var(--ui-unit) * var(--room-leave-y) * 1px);
-  --leave-right: calc(var(--ui-unit) * var(--room-leave-right) * 1px);
-  --leave-hit-top: min(var(--hit), var(--leave-top));
-  --leave-hit-right: min(var(--hit), var(--leave-right));
-
-  top: calc(var(--leave-top) - var(--leave-hit-top));
-  right: calc(var(--leave-right) - var(--leave-hit-right));
-  padding: var(--leave-hit-top) var(--leave-hit-right) var(--hit) var(--hit);
-}
-
-/* The sole gift action centres in its footer with its press outset and native text width. */
-.room-scene[data-gift] .room-leave {
-  bottom: calc(var(--ui-unit) * var(--card-padding) * 1px - var(--hit));
-  left: 50%;
-  max-width: calc(var(--ui-unit) * var(--room-footer-width) * 1px + 2 * var(--hit));
-  padding: var(--hit);
-  translate: -50% 0;
-}
-
-.room-scene[data-gift] .room-leave > .ui-text-button-face {
-  position: relative;
-  width: auto;
-  height: calc(var(--ui-unit) * var(--button-height) * 1px);
+  right: calc(var(--ui-unit) * var(--card-padding) * 1px);
+  bottom: calc(var(--ui-unit) * var(--card-padding) * 1px);
+  left: calc(var(--ui-unit) * var(--card-padding) * 1px);
 }

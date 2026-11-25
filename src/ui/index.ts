@@ -176,7 +176,6 @@ export {
   contactWorldOffset,
 } from "./layout/contactFeedback.ts";
 export { PAUSE_VISIBLE_DIAMETER } from "./layout/controlChrome.ts";
-export { CUTSCENE_CONTINUE } from "./layout/cutscene.ts";
 export {
   DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,

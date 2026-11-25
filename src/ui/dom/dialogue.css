@@ -1,6 +1,6 @@
 /* The dialogue panel and a conversation's buttons (dialogue.ts), after ui.css. Lengths are base
    pixels times --ui-unit, from the layer's layout properties and DIALOGUE_PANEL_LAYOUT and
-   DIALOGUE_FOOTER_LAYOUT on the scene's view. */
+   DIALOGUE_FOOTER_LAYOUT on the scene's view. Text takes its role's class (theme.ts). */
 
 /* A conversation's region over its backdrop. Only its buttons take presses; a press anywhere else
    lands on the backdrop. */
@@ -93,11 +93,8 @@
   height: calc(var(--ui-unit) * var(--dialogue-tab-height) * 1px);
   margin: 0;
   padding: 0 calc(var(--ui-unit) * (var(--dialogue-tab-inset) - var(--tab-edge)) * 1px);
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  font-weight: 700;
-  line-height: calc(var(--ui-unit) * var(--dialogue-tab-height) * 1px);
   white-space: nowrap;
-  color: var(--colour-ink);
+  color: var(--ui-colour-text-primary);
 }
 
 .dialogue-panel[data-side="right"] .dialogue-name-tab {
@@ -160,40 +157,30 @@
 .dialogue-heading,
 .dialogue-line {
   margin: 0;
-  font-size: calc(var(--ui-unit) * var(--text-size) * 1px);
-  line-height: calc(var(--ui-unit) * var(--dialogue-line) * 1px);
   text-align: start;
 }
 
-.dialogue-heading {
-  font-weight: 700;
-}
-
-.dialogue-line {
-  font-weight: 400;
-}
-
-/* The content-sized actions keep their row below the panel and aligned to its right edge. */
-.ui-card-actions.dialogue-footer {
+/* The action group, as wide as its faces, starts below the panel with its right edge on the
+   panel's. */
+.dialogue-region .dialogue-footer {
   position: absolute;
-  top: calc(var(--ui-unit) * var(--dialogue-footer-top) * 1px - var(--hit));
-  right: calc(var(--ui-unit) * var(--dialogue-footer-right) * 1px - var(--hit));
-  margin: 0;
+  top: calc(var(--ui-unit) * var(--dialogue-footer-top) * 1px);
+  right: calc(var(--ui-unit) * var(--dialogue-footer-right) * 1px);
 }
 
 /* A departure's row sits its inset in from the view's bottom-right corner. */
-.ui-card-actions.dialogue-footer[data-departure] {
+.dialogue-region .dialogue-footer[data-departure] {
   top: auto;
-  right: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px - var(--hit));
-  bottom: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px - var(--hit));
+  right: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px);
+  bottom: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px);
 }
 
-.ui-card-actions.dialogue-footer:not(
-    :has(> .ui-text-button:not([hidden]) ~ .ui-text-button:not([hidden]))
-  ) {
-  right: auto;
-  left: 50%;
-  translate: -50% 0;
+/* A sole shown action is centred across the view. */
+.dialogue-region
+  .dialogue-footer:not(:has(> .ui-text-button:not([hidden]) ~ .ui-text-button:not([hidden]))) {
+  right: 0;
+  left: 0;
+  margin-inline: auto;
 }
 
 /* A bark's or notice's status region, which takes no presses. */
