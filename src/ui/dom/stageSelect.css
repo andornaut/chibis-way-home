@@ -117,9 +117,12 @@
   mix-blend-mode: multiply;
 }
 
-/* Previous, the page count and Next, the card gap below the faces; the card's press context
-   meets both rows' press areas midway. The page count is as wide as its text until the pager
-   first places it. */
+/* Previous, the page count and Next, below the faces so both rows' press areas stay the card
+   gap apart. The page count is as wide as its text until the pager first places it. */
+.stage-select-pager {
+  margin-top: calc(var(--ui-unit) * var(--stage-pager-inset) * 1px);
+}
+
 .stage-select-pager > .ui-pager-count:not(.ui-action) {
   width: max-content;
 }

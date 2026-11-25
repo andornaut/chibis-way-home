@@ -46,6 +46,9 @@ export const STAGES_PER_PAGE = Math.max(
 // clear the close X's press target by the card gap: a face's press area reaches further, so the
 // row starts lower by the difference.
 export const STAGE_ROW_INSET = FACE_HIT - BUTTON_HIT;
+// The pager below the faces' row, past the card gap: the faces' and the pager buttons' press
+// areas reach toward each other and stay the card gap apart.
+export const STAGE_PAGER_INSET = FACE_HIT + BUTTON_HIT;
 
 export function stagePageOf(stages: readonly string[], stage: string): number {
   return Math.floor(Math.max(0, stages.indexOf(stage)) / STAGES_PER_PAGE);
@@ -60,6 +63,7 @@ export const STAGE_SELECT_LAYOUT: LayoutValues = {
   "--stage-name-top": NAME_TOP,
   "--stage-number-height": NUMBER_HEIGHT,
   "--stage-number-top": NUMBER_TOP,
+  "--stage-pager-inset": STAGE_PAGER_INSET,
   "--stage-preview-height": STAGE_PREVIEW.height,
   "--stage-preview-top": PREVIEW_TOP,
   "--stage-preview-width": STAGE_PREVIEW.width,
