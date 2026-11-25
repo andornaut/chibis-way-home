@@ -384,7 +384,8 @@ export function layoutBehaviour(tile: number, plan: BehaviourPlan): BehaviourPla
             condition.kind === "visible" ||
             condition.kind === "line-of-sight" ||
             condition.kind === "alignment-blocked" ||
-            condition.kind === "pursuit-ended"
+            condition.kind === "pursuit-ended" ||
+            condition.kind === "target-above"
           ) {
             return condition;
           }

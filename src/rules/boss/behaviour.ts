@@ -597,6 +597,9 @@ function matches(
           );
     return condition.kind === "reachable" ? reachable === true : reachable === false;
   }
+  if (condition.kind === "target-above") {
+    return feetHeightDelta(object, at, birdBox(tuning, bird)) >= object.height - EDGE;
+  }
   if (condition.kind === "same-ground") {
     return (
       bird.grounded &&
@@ -614,8 +617,9 @@ function matches(
   );
 }
 
-// Whether the gate admitted a transition. A refused transition into a tell is recorded with its
-// reason, so every tell can be checked against its gate; the record never changes the step.
+// Whether the gate admitted a transition. A refused scored attack or transition into a tell is
+// recorded with its reason, so every attack can be checked against its gate; the record never
+// changes the step.
 function admitted(
   observation: BehaviourObservationContext | undefined,
   object: ObjectLayout,
@@ -623,7 +627,11 @@ function admitted(
   transition: BehaviourTransition,
   result: AttackGateResult,
 ): boolean {
-  if (!result.admitted && observation && nodeOf(object, transition.to).attack?.phase === "tell") {
+  if (
+    !result.admitted &&
+    observation &&
+    (transition.score || nodeOf(object, transition.to).attack?.phase === "tell")
+  ) {
     observation.observer.record({
       kind: "gate",
       ...(observation.metadata && { metadata: observation.metadata }),

@@ -78,8 +78,8 @@ export interface BehaviourChoiceObservation extends BehaviourObservationBase {
   readonly state: string;
 }
 
-// A transition into a tell that the attack gate refused. Admissions are not recorded: the tell
-// itself shows them.
+// A scored attack or a transition into a tell that the attack gate refused. Admissions are not
+// recorded: the attack itself shows them.
 export interface BehaviourGateObservation extends BehaviourObservationBase {
   readonly kind: "gate";
   readonly reason: AttackGateRefusal;

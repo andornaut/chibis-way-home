@@ -76,6 +76,8 @@ export type BehaviourCondition =
       // Tiles between the boss's feet and the bottom of Chibi's collision box, above or below.
       readonly distance: number;
     }
+  // The bottom of Chibi's collision box is at or above the top of the boss.
+  | { readonly kind: "target-above" }
   | { readonly kind: "same-ground"; readonly tolerance: number }
   | { readonly kind: "reachable" | "lost-target"; readonly tolerance: number };
 

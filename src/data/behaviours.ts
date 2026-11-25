@@ -776,7 +776,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
         ],
       },
       // Kiwi climbs only for her drop: it starts with the walk to her climb's foot once she is
-      // lined up under Chibi with a clear climb.
+      // lined up under Chibi, who is above her, with a clear climb.
       pursuit: {
         ...chaseNode(GROUND_CHASE, [
           scored("prepare-charge", chargeScore(KIWI_CHARGE_REACH), [ENGAGEMENT]),
@@ -784,6 +784,7 @@ export const RACCOON_BEHAVIOUR: BehaviourPlan = attackProfile(
             ...DETECTION,
             { kind: "attack-ready" },
             { comparison: "below", distance: KIWI_DROP_ALIGNMENT, kind: "horizontal-gap" },
+            { kind: "target-above" },
             RACCOON_CLIMB_CLEAR,
           ]),
         ]),

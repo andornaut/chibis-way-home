@@ -107,7 +107,8 @@ function chibiAt(object: ObjectLayout, at: Point, facing: -1 | 1, gap: number, r
   };
 }
 
-// One engaged step from the pursuit state, with the refusals the gate recorded for the attack.
+// One engaged step from the pursuit state, with the refusals the gate recorded for the attack,
+// or for the scored transition into `to`.
 function decide(
   object: ObjectLayout,
   solids: readonly Rect[],
@@ -115,8 +116,10 @@ function decide(
   facing: -1 | 1,
   bird: ReturnType<typeof chibiAt>,
   id = "charge",
+  to?: string,
 ) {
-  const { engaged, tell } = attackOf(object, id);
+  const engaged = object.behaviour!.scorer!.engaged;
+  const tell = to ?? attackOf(object, id).tell;
   const state: BehaviourState = {
     ...startBehaviour(BIRD, object, bird),
     active: true,
@@ -266,4 +269,38 @@ it("starts Archie's charge tell when the gate admits it", () => {
     expect(result.state.stateKey).toBe(result.tell);
     expect(result.state.activeAttack).toEqual({ id: "charge", phase: "tell" });
   }
+});
+
+describe("Kiwi's drop", () => {
+  const object = boss("raccoon-antagonist");
+  const plan = object.behaviour!;
+  const at = object.origin;
+  const floor: Rect = { height: 240, width: 24000, x: -12000, y: at.y + object.height };
+  // Her drop starts with the scored walk to her climb's foot, outside any attack sequence.
+  const start = plan.states[plan.scorer!.engaged]!.transitions.find(
+    ({ score, to }) => score && !plan.states[to]!.attack,
+  )!;
+  const lined = limitOf(start, "horizontal-gap", "below");
+  const engaged = plan.scorer!.engaged;
+  const drop = (bird: ReturnType<typeof chibiAt>) =>
+    decide(object, [floor], at, 1, bird, undefined, start.to);
+
+  it("is refused beside Chibi on her own floor, however close", () => {
+    const result = drop(chibiAt(object, at, 1, lined / 2));
+    expect(result.refusals).toEqual(["condition"]);
+    expect(result.state.stateKey).toBe(engaged);
+  });
+
+  it("is refused with Chibi lower than her top", () => {
+    const result = drop(chibiAt(object, at, 1, -object.width / 2, object.height - 1));
+    expect(result.refusals).toEqual(["condition"]);
+    expect(result.state.stateKey).toBe(engaged);
+  });
+
+  it("starts lined up under a Chibi above her", () => {
+    const result = drop(chibiAt(object, at, 1, -object.width / 2, object.height));
+    expect(result.refusals).toEqual([]);
+    expect(result.state.stateKey).not.toBe(engaged);
+    expect(plan.states[result.state.stateKey]!.motion.kind).toBe("move");
+  });
 });
