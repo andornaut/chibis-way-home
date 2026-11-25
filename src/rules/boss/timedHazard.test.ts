@@ -96,6 +96,26 @@ it.each([
   expect(sampler()(start as number, end as number)).toBeUndefined();
 });
 
+it("answers a query the same however many queries ran before it", () => {
+  const near = [snapshotTime, activeTime + 0.1] as const;
+  const alone = sampler()(...near);
+  expect(alone).toHaveLength(1);
+  const busy = sampler();
+  // Each costs four transitions, together more than one query's budget.
+  for (let index = 0; index < 1100; index++) {
+    busy(snapshotTime, snapshotTime + 1.5);
+  }
+  expect(busy(...near)).toEqual(alone);
+});
+
+it("bounds each query by its own cost from the snapshot, not by earlier checkpoints", () => {
+  const sample = sampler();
+  expect(sample(snapshotTime, snapshotTime + 2400)).toBeDefined();
+  expect(sample(snapshotTime, snapshotTime + 2500)).toBeUndefined();
+  expect(sample(snapshotTime + 1300, snapshotTime + 1300)).toBeDefined();
+  expect(sample(snapshotTime + 1300, snapshotTime + 2500)).toBeUndefined();
+});
+
 const motion: Extract<BehaviourMotion, { mode: "ground" }> = {
   kind: "pursue",
   mode: "ground",

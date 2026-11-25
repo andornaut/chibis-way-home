@@ -79,16 +79,11 @@ export function createTimedHazardSampler(
   // The clock perceives no terrain, and Chibi where it stands.
   const solids: readonly Rect[] = [];
   const bird = startBird(tuning, at);
-  let remaining = MAX_TRANSITIONS;
-  const advance = (seconds: number, prior: BehaviourState) => {
-    const cost = Math.ceil(seconds / minimumDuration) + 1;
-    if (cost > remaining) {
-      return undefined;
-    }
-    remaining -= cost;
-    return step(tuning, object, solids, seconds, bird, at, prior);
-  };
-  const stateAt = (offset: number): BehaviourState | undefined => {
+  // The most transitions a clock can take in this many seconds.
+  const cost = (seconds: number) => (seconds === 0 ? 0 : Math.ceil(seconds / minimumDuration) + 1);
+  const advance = (seconds: number, prior: BehaviourState) =>
+    step(tuning, object, solids, seconds, bird, at, prior);
+  const stateAt = (offset: number): BehaviourState => {
     const cached = checkpoints.get(offset);
     if (cached) {
       return cached;
@@ -101,16 +96,14 @@ export function createTimedHazardSampler(
         prior = candidate;
       }
     }
-    const next = advance(offset - before, prior)?.state;
-    if (next) {
-      if (checkpoints.size >= MAX_CHECKPOINTS) {
-        const oldest = [...checkpoints.keys()].find((time) => time !== 0);
-        if (oldest !== undefined) {
-          checkpoints.delete(oldest);
-        }
+    const next = advance(offset - before, prior).state;
+    if (checkpoints.size >= MAX_CHECKPOINTS) {
+      const oldest = [...checkpoints.keys()].find((time) => time !== 0);
+      if (oldest !== undefined) {
+        checkpoints.delete(oldest);
       }
-      checkpoints.set(offset, next);
     }
+    checkpoints.set(offset, next);
     return next;
   };
   return (startSeconds, endSeconds) => {
@@ -122,19 +115,18 @@ export function createTimedHazardSampler(
       return undefined;
     }
     const offset = startSeconds - timeSeconds;
-    const initial = stateAt(offset);
-    if (!initial) {
+    // Each query gets its own budget, charged as if it advanced from the snapshot, so checkpoints
+    // left by earlier queries save work without changing the answer.
+    if (cost(offset) + cost(endSeconds - startSeconds) > MAX_TRANSITIONS) {
       return undefined;
     }
+    const initial = stateAt(offset);
     if (startSeconds === endSeconds) {
       return effectiveHazardPhase(object, initial) === "active"
         ? [{ endSeconds, rect, startSeconds }]
         : [];
     }
     const result = advance(endSeconds - startSeconds, initial);
-    if (!result) {
-      return undefined;
-    }
     const contacts = result.segments.flatMap((segment) => {
       const start = startSeconds + segment.start;
       const end = startSeconds + segment.end;
