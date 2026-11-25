@@ -132,14 +132,15 @@ const AMBIENT_SITES = ["src/data/verticalRoutes.test.ts"];
 
 // The size ratchet: every shipped and support module stays within SIZE_LIMIT lines and each of
 // its functions within FUNCTION_LIMIT, except the modules SIZE_CEILINGS names, held at their
-// present size. A ceiling only falls: lower it when its module shrinks, and remove it once the
-// module is within the limit. A file ceiling above its module's present size fails the config.
+// present size, and Gameplay's data value files, which grow with authored content. A ceiling
+// only falls: lower it when its module shrinks, and remove it once the module is within the limit.
+// A file ceiling above its module's present size fails the config.
 const SIZE_LIMIT = 500;
 const FUNCTION_LIMIT = 150;
+// Gameplay's data value files: src/data/*.ts but the screen and UI layout geometry and the tests.
+const DATA_VALUE_FILES = ["src/data/!(layout|screen).ts"];
 const SIZE_CEILINGS = {
   "src/ai/agentProperties.ts": { file: 659 },
-  "src/data/behaviours.ts": { file: 1302 },
-  "src/data/chunks.ts": { file: 1858 },
   "src/data/types/behaviour.ts": { file: 519 },
   "src/data/types/stage.ts": { file: 558 },
   "src/progress/save/stats.ts": { function: 249 },
@@ -328,10 +329,10 @@ export default defineConfig(
       ],
     },
   },
-  // The size ratchet, over every module of src/ but the tests.
+  // The size ratchet, over every module of src/ but the tests and the data value files.
   {
     files: SOURCE_FILES,
-    ignores: TEST_FILES,
+    ignores: [...TEST_FILES, ...DATA_VALUE_FILES],
     rules: sizeRules(),
   },
   ...Object.entries(SIZE_CEILINGS).map(([path, { file, function: fn }]) => ({
