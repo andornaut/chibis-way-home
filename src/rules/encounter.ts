@@ -1,6 +1,11 @@
 import type { RandomStreams } from "../ai/randomStreams.ts";
-import type { BirdTuning, ObjectLayout, Point } from "../data/types/index.ts";
-import { advanceBehaviour, type BehaviourState, type BehaviourStep } from "./behaviour.ts";
+import type { BirdTuning, DialogueLine, ObjectLayout, Point } from "../data/types/index.ts";
+import {
+  advanceBehaviour,
+  type BehaviourEvent,
+  type BehaviourState,
+  type BehaviourStep,
+} from "./behaviour.ts";
 import type { BehaviourObservationContext } from "./behaviourObserver.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import type { BirdState } from "./bird.ts";
@@ -28,13 +33,25 @@ export interface EncounterInput {
   readonly world: BehaviourWorld;
 }
 
+// What happened to the object on one step, in order. The caller applies them; the step itself
+// changes nothing outside its result.
+export type EncounterEvent =
+  // An entry action, which the zone turns into a force pulse or a spawn.
+  | { readonly action: BehaviourEvent; readonly kind: "action" }
+  // Its pursuit ended by distance or a give-up, with its escape line.
+  | { readonly bark: DialogueLine; readonly cause: "distance"; readonly kind: "escaped" };
+
+export interface EncounterStep extends BehaviourStep {
+  readonly events: readonly EncounterEvent[];
+}
+
 // One fixed step of one behaviour-driven object: perceive, decide and act. Pure: it reads only
 // its arguments, so equal arguments replay an equal step.
 export function stepEncounter(
   context: EncounterContext,
   state: BehaviourState,
   input: EncounterInput,
-): BehaviourStep {
+): EncounterStep {
   const { groundMap, object, observation, streams, tuning } = context;
   const { at, seconds, target } = input;
   const world: BehaviourWorld = {
@@ -43,5 +60,10 @@ export function stepEncounter(
     ...(streams && { decisions: streams }),
     ...(observation && { observation }),
   };
-  return advanceBehaviour({ target, tuning, world }, object, seconds, at, state);
+  const step = advanceBehaviour({ target, tuning, world }, object, seconds, at, state);
+  const events: EncounterEvent[] = step.actions.map((action) => ({ action, kind: "action" }));
+  if (step.escaped) {
+    events.push({ bark: step.escaped, cause: "distance", kind: "escaped" });
+  }
+  return { ...step, events };
 }

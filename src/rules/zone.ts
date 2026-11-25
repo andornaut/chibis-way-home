@@ -25,13 +25,7 @@ import type {
   ZoneDeath,
   ZoneLayout,
 } from "../data/types/index.ts";
-import {
-  advanceBehaviour,
-  type BehaviourState,
-  type BehaviourStep,
-  contactBox,
-  startBehaviour,
-} from "./behaviour.ts";
+import { advanceBehaviour, type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
 import { behaviourEffect } from "./behaviourEffects.ts";
 import { type BehaviourObserver, recordBehaviourWork } from "./behaviourObserver.ts";
 import { perceiveBehaviour } from "./behaviourPerception.ts";
@@ -60,7 +54,7 @@ import {
   effectiveCollision,
   effectiveHazardPhase,
 } from "./effectiveCollision.ts";
-import { stepEncounter } from "./encounter.ts";
+import { type EncounterEvent, type EncounterStep, stepEncounter } from "./encounter.ts";
 import { type ForcePulse, forcePulseVelocity } from "./force.ts";
 import {
   forcedTransitBankAdmissions,
@@ -106,7 +100,7 @@ interface ObjectFrame {
   readonly orbitLegs?: readonly OrbitLeg[];
   readonly after: Rect;
   readonly before: Rect;
-  readonly behaviour: BehaviourStep | undefined;
+  readonly behaviour: EncounterStep | undefined;
   readonly object: ObjectLayout;
 }
 interface AreaObjects {
@@ -669,8 +663,8 @@ export function objectStep(
 // decide and act, crumbling, forced transit, Chibi's body, transients, contact and death.
 // stepZone adds spotting and escape barks, walk links and the stage exit to it.
 interface ZoneBodyStep {
-  // The objects whose pursuit ended this step by distance, each with its escape bark.
-  readonly escapes: readonly { readonly bark: DialogueLine; readonly index: number }[];
+  // Each behaviour object's events this step, by object index.
+  readonly events: readonly (readonly EncounterEvent[] | undefined)[];
   // The behaviour world the objects perceived at the start of the step.
   readonly geometry: BehaviourWorld;
   // The zone after the step, without its barks, walk link or exit; a death freezes it.
@@ -1028,7 +1022,7 @@ function stepZoneBodiesInternal(
       // Perceive once per object per tick; deciding and acting read only this snapshot.
       const prior = zone.behaviours[index];
       const behaviour = prior?.defeat
-        ? holdDefeated(seconds, before, prior)
+        ? { ...holdDefeated(seconds, before, prior), events: [] }
         : object.behaviour
           ? stepEncounter(
               {
@@ -1064,9 +1058,7 @@ function stepZoneBodiesInternal(
     return frame;
   };
   const objects = area.objects.map((_, index) => resolveFrame(index));
-  let escapes = objects.flatMap((frame, index) =>
-    frame.behaviour?.escaped ? [{ bark: frame.behaviour.escaped, index }] : [],
-  );
+  let events = objects.map((frame) => frame.behaviour?.events);
   const positions = objects.map((frame, index): Point =>
     frame === kinds.fixed[index] ? frame.object.origin : { x: frame.after.x, y: frame.after.y },
   );
@@ -1127,7 +1119,11 @@ function stepZoneBodiesInternal(
     behaviours = behaviours.map((state, index) =>
       state && deaths.includes(index) ? defeatBoss(state) : state,
     );
-    escapes = escapes.filter(({ index }) => !deaths.includes(index));
+    events = events.map((entries, index) =>
+      entries && deaths.includes(index)
+        ? entries.filter(({ kind }) => kind !== "escaped")
+        : entries,
+    );
     defeated = { ...defeated, [zone.area]: [...(defeated?.[zone.area] ?? []), ...deaths] };
   }
   const fixedLedges =
@@ -1139,9 +1135,12 @@ function stepZoneBodiesInternal(
   const pulses: ZonePulse[] = [...zone.pulses];
   let nextPulseId = zone.nextPulseId;
   const spawns: SpawnEvent[] = [];
-  objects.forEach(({ behaviour, object }, emitter) => {
-    for (const event of behaviour?.actions ?? []) {
-      const effect = behaviourEffect({ emitter, object }, event);
+  objects.forEach(({ object }, emitter) => {
+    for (const event of events[emitter] ?? []) {
+      if (event.kind !== "action") {
+        continue;
+      }
+      const effect = behaviourEffect({ emitter, object }, event.action);
       if (effect.kind === "pulse") {
         pulses.push({ id: nextPulseId++, ...effect.pulse });
       } else {
@@ -1347,7 +1346,7 @@ function stepZoneBodiesInternal(
       useHeld: input.useHeld,
     };
     return {
-      escapes,
+      events,
       geometry,
       zone: {
         ...frozen,
@@ -1386,7 +1385,7 @@ function stepZoneBodiesInternal(
         )
       : undefined;
   return {
-    escapes,
+    events,
     geometry,
     zone: {
       ...zone,
@@ -1500,17 +1499,19 @@ function stepZoneInternal(
     attempt: zone.attempt,
     objectIndex,
   });
-  for (const { bark, index } of body.escapes) {
-    barks.push({ ...bark, owner: ownerOf(index) });
-  }
+  const escapes: ZoneEscape[] = [];
+  body.events.forEach((events, index) => {
+    for (const event of events ?? []) {
+      if (event.kind === "escaped") {
+        barks.push({ ...event.bark, owner: ownerOf(index) });
+        escapes.push({ cause: event.cause, owner: ownerOf(index) });
+      }
+    }
+  });
   // An escape on a death step does not count.
   if (body.zone.death) {
     return { ...body.zone, barks, escapes: [], spotted };
   }
-  const escapes: ZoneEscape[] = body.escapes.map(({ index }) => ({
-    cause: "distance",
-    owner: ownerOf(index),
-  }));
   const { bird, steps } = body.zone;
   const box = birdBox(tuning, bird);
   const atStageExit =
