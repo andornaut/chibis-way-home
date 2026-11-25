@@ -60,6 +60,7 @@ import {
   effectiveCollision,
   effectiveHazardPhase,
 } from "./effectiveCollision.ts";
+import { stepEncounter } from "./encounter.ts";
 import { type ForcePulse, forcePulseVelocity } from "./force.ts";
 import {
   forcedTransitBankAdmissions,
@@ -1029,10 +1030,14 @@ function stepZoneBodiesInternal(
       const behaviour = prior?.defeat
         ? holdDefeated(seconds, before, prior)
         : object.behaviour
-          ? advanceBehaviour(
-              perceiveBehaviour(
-                tuning,
-                {
+          ? stepEncounter(
+              { object, tuning },
+              zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
+              {
+                at: before,
+                seconds,
+                target: zone.bird,
+                world: {
                   ...(kinds.traversal[index] ? traversalGeometry(object) : geometry),
                   ...(object.behaviour.pursuit && {
                     groundMap: () => pursuitGroundMap(area, object, false),
@@ -1053,12 +1058,7 @@ function stepZoneBodiesInternal(
                     },
                   }),
                 },
-                zone.bird,
-              ),
-              object,
-              seconds,
-              before,
-              zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
+              },
             )
           : undefined;
       const path = pathAt(object, zone.tracks[index] as Track, time);
