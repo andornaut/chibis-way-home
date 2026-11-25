@@ -53,3 +53,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0293 | Simplify Cheats into one compact column                                 | [cwh-0293.md](../work/cwh-0293.md) |
 | cwh-0294 | Use one Install action in Settings                                      | [cwh-0294.md](../work/cwh-0294.md) |
 | cwh-0295 | Let letterbox taps return from the map                                  | [cwh-0295.md](../work/cwh-0295.md) |
+| cwh-0298 | Place Use 70 px left and 70 px up from Jump                             | [cwh-0298.md](../work/cwh-0298.md) |
