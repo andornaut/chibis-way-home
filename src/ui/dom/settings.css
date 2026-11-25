@@ -60,10 +60,10 @@
   stroke: currentColor;
 }
 
-/* One standard Install face holds its decorative icon and its label, at the right column's
-   start. The face is its press target. */
+/* One standard Install face holds its decorative icon and its label, centred in the right column
+   as a lone action. The face is its press target. */
 .settings-install {
-  align-self: flex-start;
+  align-self: center;
 }
 
 .settings-install .ui-text-button-label {
