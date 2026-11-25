@@ -9,6 +9,7 @@ import { zoneLayout } from "../rules/tiles.ts";
 import { standsOn, startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone.ts";
 import { CHUNK_LIBRARY, zonePlanFor } from "../rules/zonePlans.ts";
 import { surfaceAt, zoneSurfaces } from "../sim/zoneWalk.ts";
+import { ORDINARY } from "../testing/encounterLayouts.ts";
 import { REQUIRED_CHUNK_ROUTES } from "../testing/requiredRoutes.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "../testing/walkSuite.ts";
 import { BIRD } from "./bird.ts";
@@ -81,94 +82,99 @@ it("keeps every eligible underground seam connected to the surface finish", () =
     }
   }
   expect(chunks.every((chunk) => reachable.has(chunk.entry.row))).toBe(true);
-  expect(chunks.filter(({ entry }) => entry.row === 50).map(({ exit }) => exit.row)).toEqual([80]);
+  expect(chunks.filter(({ entry }) => entry.row === 50).map(({ exit }) => exit.row)).toEqual([
+    80, 80,
+  ]);
   const plan = assembleZone(CHUNK_LIBRARY, 1, "freight-terminal", recipe);
   const selected = plan.areas.main!.chunks!;
-  expect(selected[1]!.chunk).toBe("industrial-descent");
-  expect(selected.at(-2)!.chunk).toBe("industrial-ascent");
+  expect(selected[1]!.chunk).toBe("industrial-drop-descent");
+  expect(selected.at(-2)!.chunk).toBe("industrial-lift-ascent");
   expect(selected.reduce((sum, { cols }) => sum + cols, 0)).toBeGreaterThanOrEqual(
     recipe.length.min,
   );
   expect(selected.reduce((sum, { cols }) => sum + cols, 0)).toBeLessThanOrEqual(recipe.length.max);
 });
 
-it.each([...INDUSTRIAL_CONNECTORS, "outdoor-terrace-ascent"] as const)(
-  "crosses %s with ordinary jumps and no movement abilities",
-  (id) => {
-    const chunk = CHUNKS[id]!;
-    const plan = zonePlanOf(
-      CHUNK_LIBRARY,
-      () => 0,
-      { door: [], event: [] },
-      id === "outdoor-terrace-ascent" ? "farmland" : "warehouse-district",
-      2,
-      [id],
-    );
-    const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
-    const targets = chunk.solids.slice(1);
-    let index = 0;
-    let jumpAt: number | undefined;
-    let release = false;
-    let zone: ZoneState = startZone(BIRD, layout, 1);
-    let highest = zone.bird.y;
-    for (let tick = 0; tick < 600 && !zone.death && !zone.cleared; tick++) {
-      const target = targets[index];
-      let control: ZoneInput = { jumpHeld: false, move: 1, useHeld: false };
-      if (release) {
-        release = false;
+// The lift ascent crosses with the lift phase controller below.
+it.each([
+  ...INDUSTRIAL_CONNECTORS.filter((id) => id !== "industrial-lift-ascent"),
+  "outdoor-terrace-ascent",
+] as const)("crosses %s with ordinary jumps and no movement abilities", (id) => {
+  const chunk = CHUNKS[id]!;
+  const plan = zonePlanOf(
+    CHUNK_LIBRARY,
+    () => 0,
+    { door: [], event: [] },
+    id === "outdoor-terrace-ascent" ? "farmland" : "warehouse-district",
+    2,
+    [id],
+  );
+  const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+  const targets = chunk.solids.slice(1);
+  let index = 0;
+  let jumpAt: number | undefined;
+  let release = false;
+  let zone: ZoneState = startZone(BIRD, layout, 1);
+  let highest = zone.bird.y;
+  for (let tick = 0; tick < 600 && !zone.death && !zone.cleared; tick++) {
+    const target = targets[index];
+    let control: ZoneInput = { jumpHeld: false, move: 1, useHeld: false };
+    if (release) {
+      release = false;
+      control = { ...control, move: 0 };
+    } else if (target) {
+      const feet = zone.bird.y + BIRD.height;
+      if (
+        zone.bird.grounded &&
+        Math.abs(feet - target.row * TILE) < 0.01 &&
+        zone.bird.x >= target.col * TILE
+      ) {
+        index++;
+        jumpAt = undefined;
+        release = true;
         control = { ...control, move: 0 };
-      } else if (target) {
-        const feet = zone.bird.y + BIRD.height;
-        if (
-          zone.bird.grounded &&
-          Math.abs(feet - target.row * TILE) < 0.01 &&
-          zone.bird.x >= target.col * TILE
-        ) {
-          index++;
-          jumpAt = undefined;
-          release = true;
-          control = { ...control, move: 0 };
-        } else if (feet > target.row * TILE) {
-          if (zone.bird.grounded) {
-            jumpAt ??= tick;
-          }
-          control = {
-            ...control,
-            jumpHeld: jumpAt !== undefined && (tick - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime,
-          };
+      } else if (feet > target.row * TILE) {
+        if (zone.bird.grounded) {
+          jumpAt ??= tick;
         }
+        control = {
+          ...control,
+          jumpHeld: jumpAt !== undefined && (tick - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime,
+        };
       }
-      zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, control, zone);
-      highest = Math.min(highest, zone.bird.y);
     }
-    expect(zone.death).toBeUndefined();
-    expect(zone.cleared).toBe(true);
-    if (chunk.exit.row < chunk.entry.row) {
-      expect(highest + BIRD.height).toBeLessThanOrEqual(chunk.exit.row * TILE);
-    }
-  },
-);
+    zone = stepZone(SKILL_PROFILES, BIRD, layout, STEP_SECONDS, control, zone);
+    highest = Math.min(highest, zone.bird.y);
+  }
+  expect(zone.death).toBeUndefined();
+  expect(zone.cleared).toBe(true);
+  if (chunk.exit.row < chunk.entry.row) {
+    expect(highest + BIRD.height).toBeLessThanOrEqual(chunk.exit.row * TILE);
+  }
+});
 
 it.each([
   {
-    ascents: ["outdoor-lift-ascent", "outdoor-upper-ascent"],
+    ascents: ["outdoor-lift-ascent", "outdoor-ferry-ascent"],
     assembled: "city-boundary",
     connectors: BLUE_CONNECTORS,
     name: "Blue",
+    surfaceReturn: "outdoor-guarded-return",
     stages: ["street", "city-streets", "city-boundary"],
     verticalId: blueVerticalId,
   },
   {
-    ascents: COUNTRYSIDE_CONNECTORS.filter((id) => id.includes("ascent") && !id.includes("deep")),
+    ascents: ["outdoor-lift-ascent", "outdoor-ferry-ascent"],
     assembled: "river-crossing",
     connectors: COUNTRYSIDE_CONNECTORS,
     name: "Countryside",
+    surfaceReturn: "outdoor-surface-return",
     stages: ["farmland", "country-lanes", "river-crossing"],
     verticalId: countrysideVerticalId,
   },
 ])(
   "connects $name vertical pools through lower space and the upper ascents without moving the opening",
-  ({ ascents, assembled, connectors, name, stages, verticalId }) => {
+  ({ ascents, assembled, connectors, name, stages, surfaceReturn, verticalId }) => {
     for (const stage of stages) {
       const recipe = RECIPES[stage]!;
       if ("sections" in recipe) {
@@ -191,8 +197,7 @@ it.each([
     const plan = zonePlanFor(1, assembled);
     const ids = plan.areas.main!.chunks!.map(({ chunk }) => chunk);
     expect(ids[1]).toBe("outdoor-descent");
-    expect(ids.at(-2)).toBe("outdoor-surface-return");
-    expect(ascents).not.toEqual([]);
+    expect(ids.at(-2)).toBe(surfaceReturn);
     for (const id of ascents) {
       expect(ids).toContain(id);
     }
@@ -200,147 +205,144 @@ it.each([
   },
 );
 
-it.each(["outdoor-lift-ascent", "outdoor-upper-ascent"])(
-  "crosses %s with an ordinary no-ability route",
-  (id) => {
-    const chunk = CHUNKS[id]!;
-    const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, "street", 2, [id]);
-    const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
-    const area = layout.areas.main!;
-    const targets = chunk.solids.slice(1);
-    const fixtureIndex = area.objects.findIndex((object) =>
-      id === "outdoor-lift-ascent" ? object.collision === "ledge" : object.collision === "hazard",
-    );
-    const fixture = area.objects[fixtureIndex];
-    let index = 0;
-    let jumpAt: number | undefined;
-    let crossing = false;
-    let boardedAt: number | undefined;
-    let carried = 0;
-    let zone = startZone(BIRD, layout, 1);
-    let ticks = 0;
-    let phase = id === "outdoor-lift-ascent" ? 0 : 1;
-    let phaseTicks = 0;
-    let approachTicks: number | undefined;
-    let approachEnd: ZoneState | undefined;
-    for (; phaseTicks < 600 && !zone.death && !zone.cleared; ticks++, phaseTicks++) {
-      const target = targets[index];
-      const feet = zone.bird.y + BIRD.height;
-      let move: -1 | 0 | 1 = 1;
-      let held = false;
+it.each([
+  ["outdoor-lift-ascent", "street", BIRD],
+  ["outdoor-upper-ascent", "street", BIRD],
+  ["industrial-lift-ascent", "warehouse-district", ORDINARY],
+  ["outdoor-lift-ascent", "farmland", ORDINARY],
+  ["outdoor-upper-ascent", "farmland", ORDINARY],
+] as const)("crosses %s in %s with an ordinary no-ability route", (id, theme, tuning) => {
+  const chunk = CHUNKS[id]!;
+  const lift = id.endsWith("-lift-ascent");
+  const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, theme, 2, [id]);
+  const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+  const area = layout.areas.main!;
+  const targets = chunk.solids.slice(1);
+  const fixtureIndex = area.objects.findIndex((object) =>
+    lift ? object.collision === "ledge" : object.collision === "hazard",
+  );
+  const fixture = area.objects[fixtureIndex];
+  let index = 0;
+  let jumpAt: number | undefined;
+  let crossing = false;
+  let boardedAt: number | undefined;
+  let carried = 0;
+  let zone = startZone(tuning, layout, 1);
+  let ticks = 0;
+  let phase = lift ? 0 : 1;
+  let phaseTicks = 0;
+  let approachTicks: number | undefined;
+  let approachEnd: ZoneState | undefined;
+  for (; phaseTicks < 600 && !zone.death && !zone.cleared; ticks++, phaseTicks++) {
+    const target = targets[index];
+    const feet = zone.bird.y + BIRD.height;
+    let move: -1 | 0 | 1 = 1;
+    let held = false;
+    if (
+      target &&
+      zone.bird.grounded &&
+      Math.abs(feet - target.row * TILE) < 0.01 &&
+      zone.bird.x >= target.col * TILE
+    ) {
+      index++;
+      jumpAt = undefined;
+    } else if (target) {
+      const at = zone.objects[fixtureIndex];
       if (
-        target &&
-        zone.bird.grounded &&
-        Math.abs(feet - target.row * TILE) < 0.01 &&
-        zone.bird.x >= target.col * TILE
+        lift &&
+        fixture &&
+        at &&
+        target.col * TILE > fixture.origin.x &&
+        target.col === targets[3]!.col
       ) {
-        index++;
-        jumpAt = undefined;
-      } else if (target) {
-        const at = zone.objects[fixtureIndex];
-        if (
-          id === "outdoor-lift-ascent" &&
-          fixture &&
-          at &&
-          target.col * TILE > fixture.origin.x &&
-          target.col === targets[3]!.col
-        ) {
-          const deck = { ...at, height: fixture.height, width: fixture.width };
-          if (zone.bird.grounded && standsOn(BIRD, zone.bird, deck)) {
-            boardedAt ??= at.y;
-            carried = Math.max(carried, boardedAt - at.y);
-            move = 0;
-            jumpAt = undefined;
-            if (at.y - target.row * TILE <= 5 * TILE) {
-              crossing = true;
-              jumpAt = ticks;
-              move = 1;
-            }
-          } else if (!crossing && jumpAt === undefined) {
-            const bank = chunk.solids[3]!;
-            const hold = (bank.col + bank.cols) * TILE - BIRD.width - TILE;
-            if (zone.bird.x >= hold) {
-              move = 0;
-              if (phase === 1 && feet - at.y >= 0 && feet - at.y <= 5 * TILE) {
-                jumpAt = ticks;
-                move = 1;
-              }
-            }
+        const deck = { ...at, height: fixture.height, width: fixture.width };
+        if (zone.bird.grounded && standsOn(BIRD, zone.bird, deck)) {
+          boardedAt ??= at.y;
+          carried = Math.max(carried, boardedAt - at.y);
+          move = 0;
+          jumpAt = undefined;
+          if (at.y - target.row * TILE <= 5 * TILE) {
+            crossing = true;
+            jumpAt = ticks;
+            move = 1;
           }
-        } else if (
-          id === "outdoor-upper-ascent" &&
-          fixture &&
-          at &&
-          target.row === 25 &&
-          !crossing
-        ) {
-          const hold = fixture.origin.x - BIRD.width - TILE;
-          if (zone.bird.x >= hold && zone.bird.grounded) {
+        } else if (!crossing && jumpAt === undefined) {
+          const bank = chunk.solids[3]!;
+          const hold = (bank.col + bank.cols) * TILE - BIRD.width - TILE;
+          if (zone.bird.x >= hold) {
             move = 0;
-            if (
-              at.y + fixture.height <=
-              fixture.origin.y + fixture.behaviour!.distance + fixture.height + 0.01
-            ) {
-              crossing = true;
+            if (phase === 1 && feet - at.y >= 0 && feet - at.y <= 5 * TILE) {
               jumpAt = ticks;
               move = 1;
             }
           }
-        } else if (zone.bird.grounded && feet > target.row * TILE) {
-          jumpAt ??= ticks;
         }
-        held = jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime;
+      } else if (id === "outdoor-upper-ascent" && fixture && at && target.row === 25 && !crossing) {
+        const hold = fixture.origin.x - BIRD.width - TILE;
+        if (zone.bird.x >= hold && zone.bird.grounded) {
+          move = 0;
+          if (
+            at.y + fixture.height <=
+            fixture.origin.y + fixture.behaviour!.distance + fixture.height + 0.01
+          ) {
+            crossing = true;
+            jumpAt = ticks;
+            move = 1;
+          }
+        }
+      } else if (zone.bird.grounded && feet > target.row * TILE) {
+        jumpAt ??= ticks;
       }
-      zone = stepZone(
-        SKILL_PROFILES,
-        BIRD,
-        layout,
-        STEP_SECONDS,
-        { jumpHeld: held, move, useHeld: false },
-        zone,
-      );
-      if (phase === 0 && index === 3 && zone.bird.grounded && zone.bird.vx === 0) {
-        const bank = chunk.solids[3]!;
-        const hold = (bank.col + bank.cols) * TILE - BIRD.width - TILE;
-        if (zone.bird.x >= hold && Math.abs(zone.bird.y + BIRD.height - bank.row * TILE) < 0.01) {
-          expect(
-            standsOn(BIRD, zone.bird, {
-              height: bank.rows * TILE,
-              width: bank.cols * TILE,
-              x: bank.col * TILE,
-              y: bank.row * TILE,
-            }),
-          ).toBe(true);
-          approachTicks = ticks + 1;
-          approachEnd = zone;
-          phase = 1;
-          phaseTicks = -1;
-        }
+      held = jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS < BIRD.jumpRiseTime;
+    }
+    zone = stepZone(
+      SKILL_PROFILES,
+      tuning,
+      layout,
+      STEP_SECONDS,
+      { jumpHeld: held, move, useHeld: false },
+      zone,
+    );
+    if (phase === 0 && index === 3 && zone.bird.grounded && zone.bird.vx === 0) {
+      const bank = chunk.solids[3]!;
+      const hold = (bank.col + bank.cols) * TILE - BIRD.width - TILE;
+      if (zone.bird.x >= hold && Math.abs(zone.bird.y + BIRD.height - bank.row * TILE) < 0.01) {
+        expect(
+          standsOn(BIRD, zone.bird, {
+            height: bank.rows * TILE,
+            width: bank.cols * TILE,
+            x: bank.col * TILE,
+            y: bank.row * TILE,
+          }),
+        ).toBe(true);
+        approachTicks = ticks + 1;
+        approachEnd = zone;
+        phase = 1;
+        phaseTicks = -1;
       }
     }
-    expect(
-      zone.death,
-      JSON.stringify({ id, ticks, x: zone.bird.x, y: zone.bird.y }),
-    ).toBeUndefined();
-    expect(
-      zone.cleared,
-      JSON.stringify({ carried, id, index, ticks, x: zone.bird.x, y: zone.bird.y }),
-    ).toBe(true);
-    if (id === "outdoor-lift-ascent") {
-      expect(approachEnd).toBeDefined();
-      expect(approachTicks).toBeLessThanOrEqual(600);
-      expect(phaseTicks).toBeLessThanOrEqual(600);
-      expect(zone.seconds).toBeGreaterThan(approachEnd!.seconds);
-      console.info("Blue lift phase ticks", {
-        approach: approachTicks,
-        boardingThroughExit: phaseTicks,
-        total: ticks,
-      });
-      expect(boardedAt).toBeDefined();
-      expect(carried).toBeGreaterThan(0);
-    }
-  },
-);
+  }
+  expect(zone.death, JSON.stringify({ id, ticks, x: zone.bird.x, y: zone.bird.y })).toBeUndefined();
+  expect(
+    zone.cleared,
+    JSON.stringify({ carried, id, index, ticks, x: zone.bird.x, y: zone.bird.y }),
+  ).toBe(true);
+  if (lift) {
+    expect(approachEnd).toBeDefined();
+    expect(approachTicks).toBeLessThanOrEqual(600);
+    expect(phaseTicks).toBeLessThanOrEqual(600);
+    expect(zone.seconds).toBeGreaterThan(approachEnd!.seconds);
+    console.info("Lift phase ticks", {
+      approach: approachTicks,
+      boardingThroughExit: phaseTicks,
+      id,
+      theme,
+      total: ticks,
+    });
+    expect(boardedAt).toBeDefined();
+    expect(carried).toBeGreaterThan(0);
+  }
+});
 
 it("boards, rides and leaves the upper bank ferry from the actual approach phase", () => {
   const id = "outdoor-ferry-ascent";
@@ -505,9 +507,9 @@ it("keeps Woodland canopy pools connected and preserves authored depth planes", 
   }
   const plan = assembleZone(CHUNK_LIBRARY, 1, "ravine", recipe);
   const ids = plan.areas.main!.chunks!.map(({ chunk }) => chunk);
-  expect(ids[1]).toBe("woodland-timed-descent");
-  expect(ids.at(-2)).toBe("woodland-timed-return");
-  for (const id of ["outdoor-lift-ascent", "outdoor-upper-ascent"]) {
+  expect(ids[1]).toBe("woodland-drop-descent");
+  expect(ids.at(-2)).toBe("woodland-walled-return");
+  for (const id of ["outdoor-lift-ascent", "outdoor-ferry-ascent"]) {
     expect(ids).toContain(id);
   }
   expect(recipe.start).toBe(woodlandVerticalId("ravine-start"));
@@ -589,6 +591,135 @@ it.each(["woodland-timed-descent", "woodland-deep-ascent"])(
   },
 );
 
+// Each authored connector the lift and ferry controllers do not cross, in a theme of every
+// zone that lists it.
+const ORDINARY_CONNECTORS = [
+  ["home-drop-descent", "back-streets"],
+  ["home-terrace-ascent", "back-streets"],
+  ["home-walled-return", "back-streets"],
+  ["industrial-drop-descent", "warehouse-district"],
+  ["outdoor-drop-descent", "farmland"],
+  ["outdoor-drop-descent", "street"],
+  ["outdoor-guarded-return", "farmland"],
+  ["outdoor-guarded-return", "street"],
+  ["outdoor-terrace-ascent", "street"],
+  ["woodland-drop-descent", "forest-paths"],
+  ["woodland-terrace-ascent", "forest-paths"],
+  ["woodland-walled-return", "forest-paths"],
+] as const;
+
+it.each(ORDINARY_CONNECTORS)(
+  "clears %s in %s within 600 ordinary ticks, passing a gate only when it hangs clear and is not falling",
+  (id, theme) => {
+    const chunk = CHUNKS[id]!;
+    const plan = zonePlanOf(CHUNK_LIBRARY, () => 0, { door: [], event: [] }, theme, 2, [id]);
+    const layout = zoneLayout(TILE, BIRD_FRAME, CATALOGUE, HITBOXES, TILESETS, new Set(), plan);
+    const area = layout.areas.main!;
+    // The floors Chibi may stand on, left to right: every full-depth solid but a red pit floor.
+    const floors = chunk.solids.filter(
+      (solid) =>
+        solid.row + solid.rows === chunk.rows &&
+        !chunk.objects.some(
+          (object) =>
+            object.role === "edge-top" && object.col === solid.col && object.row === solid.row - 1,
+        ),
+    );
+    const guardIndex = area.objects.findIndex(
+      ({ behaviour, collision }) => collision === "hazard" && behaviour !== undefined,
+    );
+    const guard = area.objects[guardIndex];
+    // Whether Chibi at x on the gate's floor has yet to leave the gate's columns behind.
+    const underGate = (
+      gate: NonNullable<typeof guard>,
+      floor: (typeof floors)[number],
+      x: number,
+    ) =>
+      gate.origin.x >= floor.col * TILE &&
+      gate.origin.x < (floor.col + floor.cols) * TILE &&
+      x < gate.origin.x + gate.width;
+    let zone: ZoneState = startZone(ORDINARY, layout, 1);
+    let index = 1;
+    let jumpAt: number | undefined;
+    let passed = false;
+    // The gate's height on the tick before, to tell a rising gate from a falling one.
+    let observed: { readonly step: number; readonly y: number } | undefined;
+    let ticks = 0;
+    for (; ticks < 600 && !zone.death && !zone.cleared; ticks++) {
+      const target = floors[index];
+      const feet = zone.bird.y + ORDINARY.height;
+      const support = floors.find(
+        (solid) =>
+          Math.abs(feet - solid.row * TILE) < 0.01 &&
+          solid.col * TILE <= zone.bird.x &&
+          (solid.col + solid.cols) * TILE > zone.bird.x,
+      );
+      let move: -1 | 0 | 1 = 1;
+      if (
+        target &&
+        zone.bird.grounded &&
+        Math.abs(feet - target.row * TILE) < 0.01 &&
+        zone.bird.x >= target.col * TILE
+      ) {
+        index++;
+        jumpAt = undefined;
+      } else if (
+        target &&
+        zone.bird.grounded &&
+        feet > target.row * TILE &&
+        // Chibi walks under a gate and jumps only once clear of it.
+        !(guard && support && underGate(guard, support, zone.bird.x))
+      ) {
+        // A jump that fell short is released for a tick, then taken again.
+        jumpAt =
+          jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS >= ORDINARY.jumpRiseTime
+            ? undefined
+            : (jumpAt ?? ticks);
+      }
+      let held = jumpAt !== undefined && (ticks - jumpAt) * STEP_SECONDS < ORDINARY.jumpRiseTime;
+      if (guard && support && !passed && zone.bird.grounded) {
+        const supportRight = (support.col + support.cols) * TILE;
+        const hold = Math.min(guard.origin.x, supportRight) - ORDINARY.width - TILE;
+        const braking = zone.bird.vx ** 2 / (2 * ORDINARY.brakeAccel);
+        if (
+          guard.origin.x - supportRight <= ORDINARY.width + TILE &&
+          guard.origin.x >= support.col * TILE &&
+          zone.bird.x + braking >= hold
+        ) {
+          move = 0;
+          held = false;
+          jumpAt = undefined;
+          // The gate is clear while it hangs a tile above Chibi's head and is not coming down.
+          const gateY = zone.objects[guardIndex]!.y;
+          if (
+            gateY + guard.height <= zone.bird.y - TILE &&
+            gateY <= (zone.steps === observed?.step ? observed.y : Infinity)
+          ) {
+            passed = true;
+            move = 1;
+          }
+        }
+      }
+      if (guard) {
+        observed = { step: zone.steps + 1, y: zone.objects[guardIndex]!.y };
+      }
+      zone = stepZone(
+        SKILL_PROFILES,
+        ORDINARY,
+        layout,
+        STEP_SECONDS,
+        { jumpHeld: held, move, useHeld: false },
+        zone,
+      );
+      expect(zone.bird.airJumpUsed).toBe(false);
+    }
+    const witness = JSON.stringify({ id, index, theme, ticks, x: zone.bird.x, y: zone.bird.y });
+    expect(zone.death, witness).toBeUndefined();
+    expect(zone.cleared, witness).toBe(true);
+    expect(passed).toBe(guard !== undefined);
+    console.info("Ordinary connector ticks", { id, theme, ticks });
+  },
+);
+
 it("connects Home city lower climbing yards through the proven lift and upper gate", () => {
   for (const stage of ["city-outskirts", "back-streets", "familiar-neighbourhood"]) {
     const recipe = RECIPES[stage]!;
@@ -614,10 +745,10 @@ it("connects Home city lower climbing yards through the proven lift and upper ga
   }
   const plan = assembleZone(CHUNK_LIBRARY, 1, "familiar-neighbourhood", recipe);
   const ids = plan.areas.main!.chunks!.map(({ chunk }) => chunk);
-  expect(ids[1]).toBe("home-timed-descent");
-  expect(ids.at(-2)).toBe("home-timed-return");
+  expect(ids[1]).toBe("home-drop-descent");
+  expect(ids.at(-2)).toBe("home-walled-return");
   expect(ids).toContain("outdoor-lift-ascent");
-  expect(ids).toContain("outdoor-upper-ascent");
+  expect(ids).toContain("outdoor-ferry-ascent");
 });
 
 it.each(["apartment-floor-start", "apartment-penthouse-start"])(
