@@ -29,6 +29,7 @@ Native development commands use Node 24.22.2 from `.nvmrc`, dependencies install
 | `make lint`                                 | Type-check, then check ShellCheck 0.11.0, Prettier, ESLint, the source layers and Markdownlint          |
 | `make test`                                 | Run Vitest with four workers, then verify certified lists with the 20-second sample                     |
 | `make build`                                | Build with Vite and check art reproduction, then replace the ignored host `dist/`                       |
+| `make acceptance`                           | Prove the seven admitted boss arenas once against their acceptance targets, about 70 seconds            |
 | `npm run check`                             | Run the lint, test and build recipes in the current environment                                         |
 | `npm run typecheck`                         | Type-check with TypeScript                                                                              |
 | `npm run lint`                              | Check ShellCheck 0.11.0, Prettier, ESLint, the source layers and Markdownlint                           |
