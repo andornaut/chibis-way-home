@@ -33,3 +33,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0300 | Adopt Game Kit 0.72                                                                           | [cwh-0300.md](../work/cwh-0300.md) |
 | cwh-0304 | Adopt Game Kit 0.74 with compressed group archives                                            | [cwh-0304.md](../work/cwh-0304.md) |
 | cwh-0311 | Adopt Game Kit 0.86 and drop the local crash and disc fixes                                   | [cwh-0311.md](../work/cwh-0311.md) |
+| cwh-0312 | Adopt Art Kit 0.34                                                                            | [cwh-0312.md](../work/cwh-0312.md) |
