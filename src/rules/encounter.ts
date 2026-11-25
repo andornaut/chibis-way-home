@@ -11,9 +11,11 @@ import {
 import type { BehaviourObservationContext } from "./behaviourObserver.ts";
 import type { BehaviourPerception } from "./behaviourPerception.ts";
 import { type BehaviourGeometry, type BehaviourWorld, behaviourWorld } from "./behaviourReach.ts";
-import type { BirdState } from "./bird.ts";
+import { contactBox } from "./behaviourTrack.ts";
+import { birdBox, type BirdState } from "./bird.ts";
 import { defeatBoss, holdDefeated } from "./bossDefeat.ts";
 import type { PursuitGroundMap } from "./movementMaps.ts";
+import { targetVisible } from "./perception.ts";
 
 // What the caller hands one behaviour-driven object besides the tick's input. The step reads no
 // cache, clock or random source of its own.
@@ -34,6 +36,8 @@ export interface EncounterInput {
   readonly at: Point;
   readonly seconds: number;
   readonly target: BirdState;
+  // Its spotted line has not been said this attempt.
+  readonly unspotted?: true;
   readonly world: BehaviourWorld;
 }
 
@@ -47,7 +51,9 @@ export type EncounterEvent =
   // Its pursuit ended by distance or a give-up, with its escape line.
   | { readonly bark: DialogueLine; readonly cause: "distance"; readonly kind: "escaped" }
   // Its engaged pursuit ended because Chibi left through a room door.
-  | { readonly cause: "door"; readonly kind: "escaped" };
+  | { readonly cause: "door"; readonly kind: "escaped" }
+  // It saw Chibi for the first time this attempt, with its spotted line.
+  | { readonly bark: DialogueLine; readonly kind: "spotted" };
 
 export interface EncounterStep {
   readonly at: Point;
@@ -71,27 +77,46 @@ export type EncounterResult = Pick<EncounterStep, "events" | "state">;
 
 // One fixed step of one behaviour-driven object. Pure: it reads only its arguments, so equal
 // arguments replay an equal step. Its stages run in this order:
-// 1. hold: a dead boss holds still while its removal plays, and the other stages are skipped.
-// 2. perceive: one snapshot of Chibi and the world, with the context's map, streams and observer.
-// 3. act: the pursuit update, recovery, then decide and act slices through the ability table.
-// 4. keep clear: after an ended chase, movement toward Chibi within the escape distance is
+// 1. spot: an active, living object with an unsaid spotted line says it on a clear line of sight
+//    from where the step starts.
+// 2. hold: a dead boss holds still while its removal plays, and stages 3 to 6 are skipped.
+// 3. perceive: one snapshot of Chibi and the world, with the context's map, streams and observer.
+// 4. act: the pursuit update, recovery, then decide and act slices through the ability table.
+// 5. keep clear: after an ended chase, movement toward Chibi within the escape distance is
 //    cancelled.
-// 5. stamp preparation: a takeoff preparation records its start once.
-// 6. events: the entry actions and a distance escape, in order.
+// 6. stamp preparation: a takeoff preparation records its start once.
+// 7. events: the spotted line, the entry actions and a distance escape, in order.
 export function stepEncounter(
   context: EncounterContext,
   state: BehaviourState,
   input: EncounterInput,
 ): EncounterStep {
+  const { object, tuning } = context;
+  const { at, target, world } = input;
+  const bark = object.behaviour?.spotted;
+  const spotted =
+    input.unspotted &&
+    bark &&
+    state.active &&
+    !state.defeat &&
+    targetVisible(
+      world,
+      object,
+      contactBox(object, at, state.facing, state.axis),
+      birdBox(tuning, target),
+    );
   const step = moveEncounter(context, state, input);
-  const events: EncounterEvent[] = step.actions.map((action) => ({ action, kind: "action" }));
+  const events: EncounterEvent[] = spotted ? [{ bark, kind: "spotted" }] : [];
+  for (const action of step.actions) {
+    events.push({ action, kind: "action" });
+  }
   if (step.escaped) {
     events.push({ bark: step.escaped, cause: "distance", kind: "escaped" });
   }
   return { at: step.at, events, segments: step.segments, state: step.state };
 }
 
-// Stages 1 to 5: the step before its outcomes become events.
+// Stages 2 to 6: the step before its outcomes become events.
 function moveEncounter(
   context: EncounterContext,
   state: BehaviourState,

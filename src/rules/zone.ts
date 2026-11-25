@@ -82,7 +82,7 @@ import {
   orbitSweptContact,
   pathLedge,
 } from "./orbit.ts";
-import { currentScreen, targetVisible } from "./perception.ts";
+import { currentScreen } from "./perception.ts";
 import { finishPlatformBird, preparePlatformBird, standsOn } from "./platformBird.ts";
 export { standsOn } from "./platformBird.ts";
 import { type SceneryPlaybackState, stepSceneryPlayback } from "./sceneryPlayback.ts";
@@ -118,7 +118,6 @@ interface AreaObjects {
   // whether its behaviour perceives the traversal frame.
   readonly predictable: readonly boolean[];
   readonly traversal: readonly boolean[];
-  readonly spotted: readonly number[];
   readonly behaviours: readonly number[];
   readonly emptyBehaviours: readonly (BehaviourState | undefined)[];
   readonly fixed: readonly (ObjectFrame | undefined)[];
@@ -243,7 +242,6 @@ function areaObjects(area: AreaLayout): AreaObjects {
       );
     }),
     solids,
-    spotted: area.objects.flatMap((object, index) => (object.behaviour?.spotted ? [index] : [])),
     traversal: area.objects.map(
       (object) =>
         object.behaviour !== undefined &&
@@ -669,8 +667,6 @@ export function objectStep(
 interface ZoneBodyStep {
   // Each behaviour object's events this step, by object index.
   readonly events: readonly (readonly EncounterEvent[] | undefined)[];
-  // The behaviour world the objects perceived at the start of the step.
-  readonly geometry: BehaviourWorld;
   // The zone after the step, without its barks, walk link or exit; a death freezes it.
   readonly zone: ZoneState;
 }
@@ -971,6 +967,7 @@ function stepZoneBodiesInternal(
       },
     };
   };
+  const spottedBefore = zone.spotted[zone.area];
   const resolveFrame = (index: number): ObjectFrame => {
     const prior = frames[index];
     if (prior) {
@@ -1048,6 +1045,7 @@ function stepZoneBodiesInternal(
                 at: before,
                 seconds,
                 target: zone.bird,
+                ...(prior && !spottedBefore?.includes(index) && { unspotted: true }),
                 world:
                   !prior?.defeat && kinds.traversal[index] ? traversalGeometry(object) : geometry,
               },
@@ -1355,7 +1353,6 @@ function stepZoneBodiesInternal(
     };
     return {
       events,
-      geometry,
       zone: {
         ...frozen,
         death: {
@@ -1394,7 +1391,6 @@ function stepZoneBodiesInternal(
       : undefined;
   return {
     events,
-    geometry,
     zone: {
       ...zone,
       ...(defeated && { defeated }),
@@ -1465,7 +1461,6 @@ function stepZoneInternal(
     return zone;
   }
   const area = areaOf(layout, zone.area);
-  const kinds = areaObjects(area);
   const body = stepZoneBodiesInternal(
     observer,
     skillProfiles,
@@ -1475,38 +1470,22 @@ function stepZoneInternal(
     input,
     zone,
   );
-  const { geometry } = body;
-  const barks: ZoneBark[] = [];
-  const seen = new Set(zone.spotted[zone.area] ?? []);
-  kinds.spotted.forEach((index) => {
-    const object = area.objects[index]!;
-    const bark = object.behaviour?.spotted;
-    const state = zone.behaviours[index];
-    if (
-      bark &&
-      state?.active &&
-      !state.defeat &&
-      !seen.has(index) &&
-      targetVisible(
-        geometry,
-        object,
-        contactBox(object, zone.objects[index] ?? object.origin, state.facing, state.axis),
-        birdBox(tuning, zone.bird),
-      )
-    ) {
-      seen.add(index);
-      barks.push({
-        ...bark,
-        owner: { area: zone.area, attempt: zone.attempt, objectIndex: index },
-      });
-    }
-  });
-  const spotted = barks.length ? { ...zone.spotted, [zone.area]: [...seen] } : zone.spotted;
   const ownerOf = (objectIndex: number) => ({
     area: zone.area,
     attempt: zone.attempt,
     objectIndex,
   });
+  const barks: ZoneBark[] = [];
+  const seen = new Set(zone.spotted[zone.area] ?? []);
+  body.events.forEach((events, index) => {
+    for (const event of events ?? []) {
+      if (event.kind === "spotted") {
+        seen.add(index);
+        barks.push({ ...event.bark, owner: ownerOf(index) });
+      }
+    }
+  });
+  const spotted = barks.length ? { ...zone.spotted, [zone.area]: [...seen] } : zone.spotted;
   const escapes: ZoneEscape[] = [];
   body.events.forEach((events, index) => {
     for (const event of events ?? []) {
