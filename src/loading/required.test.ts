@@ -57,7 +57,10 @@ it("refits only the native presentation while preserving resource ownership and 
   expect(firstButton.style.width).toBe("max-content");
   expect(firstButton.style.maxWidth).toBe("100%");
   expect(firstButton.style.minHeight).toBe("0");
-  expect(firstButton.style.fontSize).toBe("18px");
+  // The presentation's size, where the page's theme sets no label role.
+  expect(firstButton.style.fontSize).toContain(
+    `${LOADING_FAILURE_PRESENTATION.text.action.sizePx}px`,
+  );
   expect(first.style.padding).toBe("24px 16px 16px");
   expect(first.style.maxWidth).toBe(`${LOADING_FAILURE_PRESENTATION.panel.maxWidthPx}px`);
   expect(host.style.getPropertyValue("--failure-frame-width")).toBe("1080px");
@@ -101,7 +104,9 @@ it("refits only the native presentation while preserving resource ownership and 
   expect(host.querySelector(".loading-failure")).toBe(second);
   expect(secondButton.disabled).toBe(true);
   expect(secondButton.style.height).toBe("144px");
-  expect(secondButton.style.fontSize).toBe("18px");
+  expect(secondButton.style.fontSize).toContain(
+    `${LOADING_FAILURE_PRESENTATION.text.action.sizePx}px`,
+  );
   const repeat = new KeyboardEvent("keydown", {
     bubbles: true,
     cancelable: true,

@@ -93,6 +93,47 @@ export const TEXT_BUTTON = {
 // The play mark drawn before a label such as Resume's: its gap to the label's ink, and its size.
 export const PLAY_MARK = { gap: 6, height: 10, width: 5 } as const;
 
+// Theme
+
+// The four text roles the kit's theme names, in base px: body and supporting text, a card's
+// heading and a control's label.
+export const THEME_TEXT = {
+  body: { lineHeight: 20, size: 16, weight: 400 },
+  heading: { lineHeight: 28, size: 24, weight: 700 },
+  label: { lineHeight: 20, size: 16, weight: 700 },
+  supporting: { lineHeight: 20, size: 16, weight: 400 },
+} as const;
+
+// Each kit theme colour slot's palette colour in the game's interface. Art's nine-slice frames
+// draw the idle, primary and disabled button faces there, so those face slots are clear.
+export const THEME_COLOURS = {
+  accent: "yellow",
+  buttonDisabledFace: "clear",
+  buttonDisabledText: "dslate",
+  buttonFace: "clear",
+  buttonFocusFace: "yellow",
+  buttonFocusText: "ink",
+  buttonPressedFace: "amber",
+  buttonPressedText: "ink",
+  buttonPrimaryFace: "clear",
+  buttonPrimaryText: "white",
+  buttonText: "ink",
+  cardFace: "lgrey",
+  frame: "ink",
+  textPrimary: "ink",
+  textSecondary: "dslate",
+} as const;
+
+// The slots on the page itself, for the crash, startup failure and capability screens outside
+// the interface: plain dark slate buttons with white labels on the card's face.
+export const PAGE_THEME_COLOURS = {
+  ...THEME_COLOURS,
+  buttonDisabledFace: "lgrey",
+  buttonFace: "dslate",
+  buttonPrimaryFace: "dslate",
+  buttonText: "white",
+} as const;
+
 // Modal cards
 
 // Each modal card takes one width family's width, held CARD_SCREEN_MARGIN in from the view's sides

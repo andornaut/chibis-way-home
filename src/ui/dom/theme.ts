@@ -1,32 +1,19 @@
-import {
-  colourProperties,
-  TEXT_ROLES,
-  type UiColourRole,
-} from "@andornaut/game-kit/runtime/ui/uiTheme";
+import { colourProperties, TEXT_ROLES } from "@andornaut/game-kit/runtime/ui/uiTheme";
 import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 import { setTextRoles, setUiColours } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
+import { THEME_COLOURS } from "../../data/layout.ts";
 import { TEXT_ROLE_STYLES } from "../layout/fontRoles.ts";
 
-// The interface's theme on the kit's (uiTheme.css): each colour slot's palette colour, and the
-// text roles. Art's nine-slice frames draw the idle, primary and disabled button faces, so those
-// face slots stay unset; the focus and pressed slots fill the face inside its frame.
-export const THEME_COLOURS = {
-  accent: "yellow",
-  buttonDisabledText: "dslate",
-  buttonFocusFace: "yellow",
-  buttonFocusText: "ink",
-  buttonPressedFace: "amber",
-  buttonPressedText: "ink",
-  buttonPrimaryText: "white",
-  buttonText: "ink",
-  frame: "ink",
-  textPrimary: "ink",
-  textSecondary: "dslate",
-} as const satisfies Partial<Record<UiColourRole, string>>;
+// The interface's theme on the kit's (uiTheme.css): each colour slot's palette colour
+// (THEME_COLOURS in src/data/layout.ts) and the text roles. The focus and pressed slots fill a
+// button's face inside its frame.
+
+// A clear slot's colour: art draws that face.
+const CLEAR = "#00000000";
 
 type Role = keyof typeof TEXT_ROLE_STYLES;
 
@@ -39,19 +26,22 @@ export function textRole(role: Role): string {
   return `ui-text-${kebab(role)}`;
 }
 
+// Each slot's colour from a palette's #rrggbb colours by name.
+function slotColours(colours: Readonly<Record<string, string>>): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(THEME_COLOURS).map(([role, name]) => {
+      const colour = name === "clear" ? CLEAR : colours[name];
+      if (colour === undefined) {
+        throw new Error(`The palette has no ${name}`);
+      }
+      return [role, colour];
+    }),
+  );
+}
+
 // The slots' custom properties for a palette's #rrggbb colours by name.
 export function themeColours(colours: Readonly<Record<string, string>>): Record<string, string> {
-  return colourProperties(
-    Object.fromEntries(
-      Object.entries(THEME_COLOURS).map(([role, name]) => {
-        const colour = colours[name];
-        if (colour === undefined) {
-          throw new Error(`The palette has no ${name}`);
-        }
-        return [role, colour];
-      }),
-    ),
-  );
+  return colourProperties(slotColours(colours));
 }
 
 // Marks root as the theme's and writes its colour slots.
@@ -59,10 +49,7 @@ export function setThemeColours(
   colours: Readonly<Record<string, string>>,
   root: HTMLElement,
 ): void {
-  setUiColours(
-    Object.fromEntries(Object.entries(THEME_COLOURS).map(([role, name]) => [role, colours[name]!])),
-    root,
-  );
+  setUiColours(slotColours(colours), root);
 }
 
 // Writes every text role's size, line height and weight on root: the kit's through its theme,

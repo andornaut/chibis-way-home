@@ -9,9 +9,10 @@ import { installCrashScreen } from "@andornaut/game-kit/runtime/web/crash/dom/cr
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CRASH_TEXT } from "../data/crashText.ts";
 import { bindFactoryAction } from "../ui/input/actionBinding.ts";
-import { CRASH_COLOURS, installCrashTheme } from "./theme.ts";
+import { CRASH_COLOURS, installCrashTheme, installPageTheme } from "./theme.ts";
 
 installCrashTheme(document.documentElement.style);
+installPageTheme(document.documentElement);
 
 // ?dev=1 shows the error's message and stack, with a Copy button.
 export const CRASH_SCREEN = installCrashScreen(
