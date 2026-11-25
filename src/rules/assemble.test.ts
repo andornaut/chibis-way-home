@@ -1147,18 +1147,15 @@ describe("assembleZoneAvoiding", () => {
   });
 });
 
-describe("a library's loop cap", () => {
+describe("a recipe's loop cap", () => {
   const CAP = 1;
   // Up to row 40 and back down to the start's row 50: twice over, or once around two flats.
   const climb = { down: chunk(40, 50), up: chunk(50, 40) };
   const flats = { "flat-a": chunk(40, 40), "flat-b": chunk(40, 40) };
   const zone = recipe(4);
-  const capped = (chunks: Readonly<Record<string, ChunkPlan>>): ChunkLibrary => ({
-    ...library(chunks),
-    loopCap: CAP,
-  });
-  const runOf = (lib: ChunkLibrary, seed: number) =>
-    middleIds(areaOf(assembleZone(lib, seed, "z", zone)));
+  const capped = recipe(4, { loopCap: CAP });
+  const runOf = (lib: ChunkLibrary, seed: number, each = zone) =>
+    middleIds(areaOf(assembleZone(lib, seed, "z", each)));
 
   it("counts a run's returns to the start's exit row from another row", () => {
     const lib = library({ ...climb, ...flats, level: chunk(50, 50) });
@@ -1175,7 +1172,7 @@ describe("a library's loop cap", () => {
 
   it("rejects a run of more loops when no other run fits", () => {
     expect(runOf(library(climb), 1)).toEqual(["up", "down", "up", "down"]);
-    expect(() => runOf(capped(climb), 1)).toThrow(NoAssemblyError);
+    expect(() => runOf(library(climb), 1, capped)).toThrow(NoAssemblyError);
   });
 
   it("finds a run within the cap, and leaves a run already within it as it is", () => {
@@ -1185,7 +1182,7 @@ describe("a library's loop cap", () => {
     );
     expect(new Set(loops)).toEqual(new Set([CAP, CAP + 1]));
     for (const [index, seed] of SEEDS.entries()) {
-      const run = runOf(capped(whole), seed);
+      const run = runOf(library(whole), seed, capped);
       expect(runLoops(library(whole), "start", run)).toBe(CAP);
       if (loops[index] === CAP) {
         expect(run).toEqual(runOf(library(whole), seed));

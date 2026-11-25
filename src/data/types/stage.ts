@@ -377,6 +377,9 @@ export interface ZoneRecipe {
   readonly events: readonly { readonly count: number; readonly id: string }[];
   readonly finish: string;
   readonly length: { readonly max: number; readonly min: number };
+  // The most loops its run holds: the times the run's seam row returns to the start cap's exit
+  // row after leaving it. Omit for any number.
+  readonly loopCap?: number;
   readonly spawnCol: number;
   readonly start: string;
   // Each room occurrence reserves one requested door in this recipe's fixed start cap.

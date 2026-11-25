@@ -29,15 +29,13 @@ import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry.ts";
 
 // What zones are assembled from: the chunks and themes by key, the chunk rules, the seam rows,
 // a zone's height in rows, and the characters by key, for the size of each theme's door.
-// arenas: the chunk id of each stage's arena, by stage key. loopCap: the most loops a flat
-// stage's run holds (runLoops); absent means any number.
+// arenas: the chunk id of each stage's arena, by stage key.
 export interface ChunkLibrary {
   readonly approaches?: Readonly<Record<string, ArenaApproach>>;
   readonly arenas?: Readonly<Record<string, string>>;
   readonly backgrounds?: Readonly<Record<string, BackgroundSection>>;
   readonly characters: Readonly<Record<string, Pick<Character, "cols" | "rows">>>;
   readonly chunks: Readonly<Record<string, ChunkPlan>>;
-  readonly loopCap?: number;
   readonly rows: number;
   readonly rules: ChunkRules;
   readonly seams: readonly number[];
@@ -709,7 +707,7 @@ function searchRun(
 }
 
 // The zone key's run for a seed: the exact search's, or when that exceeds its bounds, the class
-// search's from a fresh stream of the same seed. The run is searched without the library's loop
+// search's from a fresh stream of the same seed. The run is searched without the recipe's loop
 // cap first; only one that holds more loops is searched again, from fresh streams of the same
 // seed, with the cap enforced. A run within the cap is therefore the same with and without it.
 function seededRun(
@@ -730,7 +728,7 @@ function seededRun(
     return fallback === EXCEEDED ? undefined : fallback;
   };
   const run = search(undefined);
-  const { loopCap } = library;
+  const { loopCap } = recipe;
   return run === undefined ||
     loopCap === undefined ||
     runLoops(library, recipe.start, run) <= loopCap
