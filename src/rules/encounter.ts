@@ -7,6 +7,7 @@ import {
   type BehaviourStep,
   keepClear,
   stampPreparation,
+  startBehaviour,
 } from "./behaviour.ts";
 import type { BehaviourObservationContext } from "./behaviourObserver.ts";
 import type { BehaviourPerception } from "./behaviourPerception.ts";
@@ -18,7 +19,7 @@ import {
 } from "./behaviourReach.ts";
 import { contactBox } from "./behaviourTrack.ts";
 import { birdBox, type BirdState } from "./bird.ts";
-import { defeatBoss, holdDefeated } from "./bossDefeat.ts";
+import { defeatBoss, holdDefeated, removedBoss } from "./bossDefeat.ts";
 import type { PursuitGroundMap } from "./movementMaps.ts";
 import { targetVisible } from "./perception.ts";
 
@@ -82,6 +83,28 @@ export interface EncounterOutcome {
 
 // The state and events of one object's step, which the tick's outcome settles.
 export type EncounterResult = Pick<EncounterStep, "events" | "state">;
+
+// How an object's encounter begins when Chibi enters its area.
+export interface EncounterEntry {
+  // The boss died earlier in the attempt.
+  readonly defeated?: true;
+  readonly target: BirdState;
+}
+
+// The state a behaviour-driven object enters its area with: its plan's initial state, inactive
+// while a conversation holds it. A boss that died earlier in the attempt enters already removed.
+export function enterEncounter(
+  context: Pick<EncounterContext, "object" | "tuning">,
+  entry: EncounterEntry,
+): BehaviourState {
+  const state = startBehaviour(context.tuning, context.object, entry.target);
+  return entry.defeated ? removedBoss(state) : state;
+}
+
+// A closed conversation activates the object. An active object is returned unchanged.
+export function activateEncounter(state: BehaviourState): BehaviourState {
+  return state.active ? state : { ...state, active: true };
+}
 
 // One fixed step of one behaviour-driven object. Pure: it reads only its arguments, so equal
 // arguments replay an equal step. Its stages run in this order:

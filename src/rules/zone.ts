@@ -25,7 +25,7 @@ import type {
   ZoneDeath,
   ZoneLayout,
 } from "../data/types/index.ts";
-import { type BehaviourState, contactBox, startBehaviour } from "./behaviour.ts";
+import { type BehaviourState, contactBox } from "./behaviour.ts";
 import { behaviourEffect } from "./behaviourEffects.ts";
 import { type BehaviourObserver, recordBehaviourWork } from "./behaviourObserver.ts";
 import type {
@@ -44,7 +44,7 @@ import {
   startsDash,
   stepBirdWithSupport,
 } from "./bird.ts";
-import { bossDeath, removedBoss } from "./bossDefeat.ts";
+import { bossDeath } from "./bossDefeat.ts";
 import { initialCrumblingWorld } from "./crumbling.ts";
 import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame.ts";
 import { deathSupport } from "./death.ts";
@@ -55,8 +55,10 @@ import {
   effectiveHazardPhase,
 } from "./effectiveCollision.ts";
 import {
+  activateEncounter,
   type EncounterEvent,
   type EncounterStep,
+  enterEncounter,
   settleEncounter,
   stepBehaviour,
   stepEncounter,
@@ -432,10 +434,17 @@ export function enterArea(
     area: link.area,
     barks: [],
     behaviours: area.objects.some((object) => object.behaviour)
-      ? area.objects.map((object, index) => {
-          const state = object.behaviour && startBehaviour(tuning, object, bird);
-          return state && zone.defeated?.[link.area]?.includes(index) ? removedBoss(state) : state;
-        })
+      ? area.objects.map((object, index) =>
+          object.behaviour
+            ? enterEncounter(
+                { object, tuning },
+                {
+                  ...(zone.defeated?.[link.area]?.includes(index) && { defeated: true }),
+                  target: bird,
+                },
+              )
+            : undefined,
+        )
       : [],
     bird,
     cleared: false,
@@ -468,13 +477,12 @@ export function leaveRoom(zone: ZoneState): ZoneState {
 // fresh inactive state again for every patrol with a scene.
 export function activateBehaviour(index: number, zone: ZoneState): ZoneState {
   const behaviour = zone.behaviours[index];
-  return behaviour === undefined || behaviour.active
+  const active = behaviour && activateEncounter(behaviour);
+  return active === behaviour
     ? zone
     : {
         ...zone,
-        behaviours: zone.behaviours.map((state, at) =>
-          at === index ? { ...behaviour, active: true } : state,
-        ),
+        behaviours: zone.behaviours.map((state, at) => (at === index ? active : state)),
       };
 }
 
@@ -1069,7 +1077,7 @@ function stepZoneBodiesInternal(
               supports: traverses ? futureSupports : undefined,
               tuning,
             },
-            prior ?? startBehaviour(tuning, object, zone.bird),
+            prior ?? enterEncounter({ object, tuning }, { target: zone.bird }),
             {
               at: before,
               seconds,
