@@ -11,7 +11,7 @@ import {
   BASE_FRAME,
 } from "../../assets/index.ts";
 import { TILE } from "../../data/screen.ts";
-import { FILE_READ_CONCURRENCY, mapBounded } from "../../pwa/mapBounded.ts";
+import { FILE_READ_CONCURRENCY, mapBounded } from "../mapBounded.ts";
 import { EXTRUDE, layoutAtlas } from "./atlasLayout.ts";
 
 // A PNG of art's, with its frames' rects in it and, for a sprite, its tags.

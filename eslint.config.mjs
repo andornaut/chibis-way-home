@@ -42,20 +42,20 @@ const BOUNDARIES = [
 // Tests are exempt, so a test may build its fixtures from any context.
 // Each context imports only contexts below it, bottom first: data; core; ai and
 // assets; camera and stage; rules; progress; presentation and ui; crash; loading; pwa; the
-// side pages (headers, homePage, gallery, tuningPage); scenes; then the tooling (dev, sim,
+// side pages (homePage, gallery, tuningPage); scenes; then the tooling (dev, sim, build,
 // tools). "folder/module.ts" allows one module of a folder ("folder/index.ts" its index):
 // each is an import that a later move removes, by moving the module into a context or the
 // importer out of one. The boundaries above govern src/testing/.
 const CONTEXTS = {
   ai: [],
   assets: ["core", "data"],
+  build: ["assets", "data", "homePage", "loading", "pwa", "ui"],
   camera: ["data"],
   core: ["data"],
   crash: ["assets", "data", "ui/input/actionBinding.ts"],
   data: [],
   dev: ["data", "progress", "rules", "ui/input/actionBinding.ts"],
   gallery: ["assets"],
-  headers: [],
   homePage: ["data", "ui"],
   loading: ["crash", "data", "presentation", "ui"],
   presentation: ["assets", "camera", "core", "data", "progress", "rules", "stage"],
@@ -79,7 +79,7 @@ const CONTEXTS = {
   ],
   sim: ["ai", "assets", "core", "data", "presentation", "progress", "rules", "stage"],
   stage: ["data"],
-  tools: ["assets", "data", "headers", "homePage", "loading", "pwa", "rules", "sim"],
+  tools: ["assets", "data", "rules", "sim"],
   tuningPage: ["data", "gallery"],
   ui: ["data", "progress", "rules"],
 };

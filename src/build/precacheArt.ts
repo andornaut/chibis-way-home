@@ -11,7 +11,7 @@ export const ART_MANIFEST_URL = `${ART_PATH}${ART_MANIFEST_FILE}`;
 
 // The art files BootScene's file load reads besides the atlas pages: the data files the code does
 // not bundle, tileset descriptions and standalone images. The manifest and bundled data ship
-// inside the code; other PNGs are on the build's atlas pages (src/tools/atlas/atlasPlugin.ts),
+// inside the code; other PNGs are on the build's atlas pages (src/build/atlas/atlasPlugin.ts),
 // which the build lists apart.
 export function bootArtUrls(packedKeys: ReadonlySet<string>, manifest: ArtManifest): string[] {
   return [

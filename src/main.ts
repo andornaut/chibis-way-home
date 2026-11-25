@@ -150,7 +150,7 @@ function startGame(attempt: LoadingAttempt): void {
       StageSelectScene,
       UpdateScene,
     ],
-    // WebGL only: the build's Phaser has no Canvas renderer (src/tools/phaserBuild.ts).
+    // WebGL only: the build's Phaser has no Canvas renderer (src/build/phaserBuild.ts).
     type: WEBGL,
     width: SCREEN.width,
   });

@@ -10,7 +10,7 @@ export const CACHE_POLICY: CachePolicy = {
 };
 
 // The game's sounds, each with its format alternatives, which the build lists in its manifest:
-// none, since the game has no sound (Phaser is built without it, src/tools/phaserBuild.ts).
+// none, since the game has no sound (Phaser is built without it, src/build/phaserBuild.ts).
 export const SOUNDS: Readonly<Record<string, readonly string[]>> = {};
 // The sound format the launch installs, the extension of the alternatives the game plays. With no
 // sounds there is no format to choose, so it is undefined, which installs every listed file.

@@ -9,7 +9,7 @@ import type {
 } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import { PHASER_BUILD } from "../tools/phaserBuild.ts";
+import { PHASER_BUILD } from "../build/phaserBuild.ts";
 import { SOUND_FORMAT, SOUNDS } from "./cachePolicy.ts";
 
 const kit = vi.hoisted(() => {

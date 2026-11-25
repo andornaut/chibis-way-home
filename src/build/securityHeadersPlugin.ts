@@ -11,7 +11,7 @@ import {
 } from "./securityPolicy.ts";
 
 const HEADING =
-  "Written by the build from src/headers/securityPolicy.ts and the hashes of each page's inline " +
+  "Written by the build from src/build/securityPolicy.ts and the hashes of each page's inline " +
   "blocks.";
 
 // The kit's security headers plugin with the game's policy (securityPolicy.ts): writes

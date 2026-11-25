@@ -7,13 +7,13 @@ import { describe, expect, it, vi } from "vitest";
 
 import manifest from "../../public/art/manifest.json" with { type: "json" };
 import palette from "../../public/art/palette.json" with { type: "json" };
+import { gameNameHtml, homePageHtml, webManifestJson } from "../build/homePageHtml.ts";
 import { CHUNKS } from "../data/chunks.ts";
 import { TEXT } from "../data/text.ts";
 import { RECIPES } from "../data/zones.ts";
 import { SERVICE_WORKER_URL } from "../pwa/cachePolicy.ts";
 import { themesOf } from "../rules/assemble.ts";
 import { escaped } from "./actionHelp.ts";
-import { gameNameHtml, homePageHtml, webManifestJson } from "./html.ts";
 
 // The home page and the nav bar are static files, so what they state is checked against the
 // game here.

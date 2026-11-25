@@ -5,7 +5,7 @@ import { globSync, readFileSync } from "node:fs";
 
 import { gameViteConfig } from "@andornaut/game-kit/build/gameConfig";
 
-import type * as ConfigModules from "./src/tools/viteConfigModules.ts";
+import type * as ConfigModules from "./src/build/index.ts";
 
 const TESTS = "src/**/*.test.ts";
 const DOM_ENVIRONMENT = "// @vitest-environment happy-dom\n";
@@ -20,7 +20,7 @@ const DOM_TESTS = globSync(TESTS, { cwd: import.meta.dirname }).filter((path) =>
 
 export default gameViteConfig<typeof ConfigModules>({
   chunkSizeWarningLimit: 1100,
-  configModules: "src/tools/viteConfigModules.ts",
+  configModules: "src/build/index.ts",
   // The player's pages. The development server also serves the gallery (pages/art/) and tuning
   // (pages/tuning/), which the build leaves out.
   pages: {

@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-import { LOADING_CSS } from "./html.ts";
+import { LOADING_CSS } from "../build/loadingHtml.ts";
 import { LOADING_TIMING, modalProgressStyle, stageProgressStyle } from "./style.ts";
 
 beforeEach(() => {

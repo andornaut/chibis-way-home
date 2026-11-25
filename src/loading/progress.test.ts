@@ -2,7 +2,7 @@ import { progressBarLayout } from "@andornaut/game-kit/runtime/progress";
 import { progressBarPixelProperties } from "@andornaut/game-kit/runtime/web/progress/dom/progressBar";
 import { describe, expect, it, vi } from "vitest";
 
-import { LOADING_CSS, loadingHtml } from "./html.ts";
+import { LOADING_CSS, loadingHtml } from "../build/loadingHtml.ts";
 import { afterLoadingPaint } from "./progress.ts";
 import { LOADING_TIMING, PROGRESS_RECT, stageProgressStyle } from "./style.ts";
 
