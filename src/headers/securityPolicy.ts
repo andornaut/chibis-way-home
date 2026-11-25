@@ -13,6 +13,8 @@ import { BUILD_POINTER_URL } from "@andornaut/game-kit/runtime/web/pwa/buildCont
 export const HASHED_ASSET_PATH = "/assets/*";
 // The kit's build manifests (buildContract's buildManifestUrl), as a _headers path pattern.
 const BUILD_MANIFEST_PATH = "/.game-kit/manifest-*";
+// The kit's gzip group archives (buildContract's buildGroupUrl), as a _headers path pattern.
+const BUILD_GROUP_PATH = "/.game-kit/group-*.bin";
 
 // On every response. No Cache-Control: every file FILE_RULES does not name keeps the platform
 // default (max-age=0, must-revalidate), so the router worker sees a new /sw.js on the next launch.
@@ -66,6 +68,16 @@ export const FILE_RULES = [
     comment: "Each build's manifest, named by its version, so its content never changes.",
     headers: [["Cache-Control", "public, max-age=31536000, immutable"]] satisfies HeaderList,
     path: BUILD_MANIFEST_PATH,
+  },
+  {
+    comment:
+      "Each gzip group archive, named by its digest. The page decodes it, so it is served as " +
+      "opaque bytes that no intermediary may recode.",
+    headers: [
+      ["Content-Type", "application/octet-stream"],
+      ["Cache-Control", "public, max-age=31536000, immutable, no-transform"],
+    ] satisfies HeaderList,
+    path: BUILD_GROUP_PATH,
   },
 ] as const;
 

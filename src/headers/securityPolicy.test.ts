@@ -1,6 +1,7 @@
 import { pageRules, pathMatches } from "@andornaut/game-kit/build/securityHeaders";
 import {
   BUILD_POINTER_URL,
+  buildGroupUrl,
   buildManifestUrl,
 } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import { describe, expect, it } from "vitest";
@@ -73,4 +74,19 @@ it("never lets a cache keep the build pointer, and keeps each build manifest for
     "public, max-age=31536000, immutable",
   ]);
   expect(cacheControl("/sw.js")).toEqual([]);
+});
+
+it("serves each gzip group archive as opaque bytes that are never recoded", () => {
+  const sha256 = "0123456789abcdef".repeat(4);
+  const headersOf = (path: string) =>
+    FILE_RULES.filter((rule) => pathMatches(rule.path, path)).flatMap(({ headers }) => headers);
+  const archive = { byteSize: 2, schema: 1, sha256 } as const;
+  const group = { ...archive, encodedByteSize: 1, encoding: "gzip" } as const;
+  expect(headersOf(buildGroupUrl(group))).toEqual([
+    ["Content-Type", "application/octet-stream"],
+    ["Cache-Control", "public, max-age=31536000, immutable, no-transform"],
+  ]);
+  // The decoded copies and the build records keep the platform defaults.
+  expect(headersOf(buildGroupUrl(archive))).toEqual([]);
+  expect(headersOf("/.game-kit/group-record-0123456789abcdef.json")).toEqual([]);
 });
