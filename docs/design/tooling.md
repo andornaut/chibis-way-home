@@ -32,3 +32,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0297 | Adopt Game Kit 0.71 with archive-first startup                                                | [cwh-0297.md](../work/cwh-0297.md) |
 | cwh-0300 | Adopt Game Kit 0.72                                                                           | [cwh-0300.md](../work/cwh-0300.md) |
 | cwh-0304 | Adopt Game Kit 0.74 with compressed group archives                                            | [cwh-0304.md](../work/cwh-0304.md) |
+| cwh-0311 | Adopt Game Kit 0.86 and drop the local crash and disc fixes                                   | [cwh-0311.md](../work/cwh-0311.md) |
