@@ -68,16 +68,19 @@ html > body {
 
 /* The FPS counter tool (src/ui/dom/fpsCounter.ts) sits on <body>, outside the game's view: in the
    bottom-right corner of the device viewport, inset from the safe area on the frame's own edges
-   (the kit's --inset-*), and above every layer, the letterbox bars included. */
+   (the kit's --inset-*), and above every layer, the letterbox bars included. Its text is the
+   interface's label role (its class) in the UI font, and its colours are the palette's, all
+   from properties the counter sets on itself. */
 .fps-counter {
   position: fixed;
   z-index: 2147483647;
   right: calc(var(--inset-right) + 8px);
   bottom: calc(var(--inset-bottom) + 8px);
   padding: 2px 6px;
-  color: #eee6d4;
-  background: rgb(24 20 37 / 80%);
-  font: 14px/1 monospace;
+  color: var(--colour-cream);
+  background: var(--colour-ink);
+  font-family: var(--ui-font-family), sans-serif;
+  font-variant-numeric: tabular-nums;
   pointer-events: none;
 }
 
