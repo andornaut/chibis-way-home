@@ -36,7 +36,7 @@ export const PAUSE_GLYPH = {
 
 // The top-corner HUD's drawn edge in from the view's sides: Pause's disc in from the left and the
 // skill row's rightmost disc in from the right, so the two corners mirror. Both centre on the top
-// section's middle (src/ui/layout/topBar.ts).
+// section's middle on whole pixels, the spare pixel below (src/ui/layout/topBar.ts).
 export const HUD_EDGE = 12;
 
 // Use, Jump and the move hint are placed from the full game canvas's edges (the navigation
@@ -68,7 +68,7 @@ export const TOUCH_LAYOUT = {
 export const SKILL_HUD = {
   // art: the skill glyph's frame side.
   glyph: 16,
-  // A button's square press target side, centred on its disc.
+  // A button's square press target side, about its disc with the spare pixel right and below.
   target: 48,
 } as const;
 

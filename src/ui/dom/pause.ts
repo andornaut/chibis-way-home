@@ -1,44 +1,53 @@
 import { BUTTON_GAP, STACK_BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
+import { createActionGroup } from "@andornaut/game-kit/runtime/web/ui/dom/actionGroup";
+import { HUD_DISC_ART_CLASS } from "@andornaut/game-kit/runtime/web/ui/dom/hudDisc";
 import {
   type LayoutValues,
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
-import type { GameText, Point, SkillId } from "../../data/types/index.ts";
+import { CARD_CONTENT, HUD_EDGE, TEXT_BUTTON } from "../../data/layout.ts";
+import type { GameText, SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
-import { PAUSE_CHROME_FRAME, type PauseChromePose } from "../chrome/pauseChrome.ts";
-import { createGameButton } from "../input/actionBinding.ts";
+import type { PauseChromePose } from "../chrome/pauseChrome.ts";
+import { createGameHudDisc } from "../input/actionBinding.ts";
 import { cardWidth } from "../layout/contentCard.ts";
-import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
-import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import { HUD_DISC_SIZES } from "../layout/controlChrome.ts";
+import { ENTRY_ORIGIN, ENTRY_WIDTH } from "../layout/pauseCard.ts";
+import {
+  SKILL_HUD_GROUP,
+  SKILL_HUD_TOP,
+  skillHudItems,
+  skillHudWidth,
+} from "../layout/skillHud.ts";
 import { type ActionsContext, type ActionsView, createActions } from "./actions.ts";
 import { type CardFrame, createCardFrame, setTextButtonLabel, textButton } from "./card.ts";
 import { UI_COVERED } from "./layer.ts";
+import { registerLayout } from "./layout.ts";
 import { createNavigationDisc } from "./navigationDisc.ts";
 import {
-  createSkillDisc,
+  createSkillDiscFace,
   paintSkillDisc,
   type SkillDiscLook,
   type SkillDiscView,
 } from "./skillDisc.ts";
 
 // The pause scene's view in the HTML UI (pause.css, on ui.css and skillDisc.css): the pause card,
-// the pause button at the view's top-left corner and the skill HUD along its top-right, each
-// button's box its press area. While the card is open the entry and the HUD stay painted over its
-// backdrop, dimmed and inert, so a press on them passes to the backdrop: a tap outside the card,
-// which closes it. A card under this view (a conversation, its choice or a summary) covers the HUD
-// and entry the same way: they stay painted but dim and take no presses beneath the top card.
+// the entry disc at the view's top-left corner and the skill HUD along its top-right. The entry
+// and each skill are the kit's HUD discs, each one's box its face, in two action groups that own
+// the gaps and the press areas: the entry alone, and the skills in a row of small buttons. While
+// the card is open the entry and the HUD stay painted over its backdrop, dimmed and inert, so a
+// press on them passes to the backdrop: a tap outside the card, which closes it. A card under this
+// view (a conversation, its choice or a summary) covers the HUD and entry the same way: they stay
+// painted but dim and take no presses beneath the top card.
 
-// The layout properties pause.css reads, in base px.
+// The layout properties pause.css anchors the two groups by, in base px: the entry group's
+// top-left corner in the view, and the skill row's top and its inset from the view's right.
 export const PAUSE_LAYOUT: LayoutValues = {
-  "--pause-button-inset": PAUSE_BUTTON.art.x - PAUSE_BUTTON.hit.x,
-  "--pause-button-inset-y": PAUSE_BUTTON.art.y - PAUSE_BUTTON.hit.y,
-  "--pause-button-size": PAUSE_BUTTON.hit.width,
-  "--pause-button-x": PAUSE_BUTTON.hit.x,
-  "--pause-button-y": PAUSE_BUTTON.hit.y,
-  "--pause-disc-size": PAUSE_CHROME_FRAME,
-  "--skill-button-size": SKILL_BUTTON.target,
+  "--pause-entry-x": ENTRY_ORIGIN.x,
+  "--pause-entry-y": ENTRY_ORIGIN.y,
+  "--skill-hud-right": HUD_EDGE,
+  "--skill-hud-y": SKILL_HUD_TOP,
 };
 
 // The palette colours the pause button and the skill discs are drawn in, as 0xrrggbb.
@@ -90,6 +99,7 @@ export interface PauseCardView {
 }
 export interface SkillButtonView {
   readonly button: HTMLButtonElement;
+  // The disc's face art and its glyph, the button's icon.
   readonly disc: SkillDiscView;
 }
 
@@ -97,7 +107,11 @@ export interface PauseView {
   // The card in its own wrapper, hidden while the card is closed: the backdrop that takes taps
   // outside the card, and the dialog.
   readonly card: PauseCardView;
-  // The skill HUD remains painted while modal cover disables its controls.
+  // The entry's action group, which holds pauseButton alone and is what the UI layer mounts as
+  // the global menu entry.
+  readonly entry: HTMLElement;
+  // The skill HUD, the skills' action group, remains painted while modal cover disables its
+  // controls.
   readonly hud: HTMLElement;
   readonly pauseButton: HTMLButtonElement;
   // The descriptions of the selected skill's readiness, by whether it is ready.
@@ -105,6 +119,9 @@ export interface PauseView {
   // The scene's view, which the UI layer mounts.
   readonly root: HTMLElement;
   readonly skills: Readonly<Record<SkillId, SkillButtonView>>;
+  // Places the shown discs in their groups. The UI layer runs it when a disc shows or hides; call
+  // it to place them at once.
+  arrange(): void;
 }
 
 // The view, with the card's dialog identified by id, which its parts' ids extend. Everything
@@ -157,16 +174,23 @@ export function createPauseView(
   };
   card.root.hidden = true;
   const view = element("div", "ui-view pause-hud-view");
-  const { element: pauseButton } = createGameButton(
-    document,
-    { className: "pause-button ui-button-reset" },
-    { kind: "icon", name: words.button },
-  );
-  writeLayoutProperties(PAUSE_LAYOUT, pauseButton);
+  const { element: pauseButton } = createGameHudDisc(document, {
+    art: element("span", "pause-disc-poses"),
+    className: "pause-button ui-button-reset",
+    name: words.button,
+    size: "entry",
+    sizes: HUD_DISC_SIZES,
+  });
   pauseButton.tabIndex = -1;
   pauseButton.hidden = true;
   showPauseDisc(colours, { expanded: false, tag: "rest" }, pauseButton);
-  const hud = element("div", "skill-hud");
+  const entry = createActionGroup(document, { className: "pause-entry" });
+  writeLayoutProperties(PAUSE_LAYOUT, entry.element);
+  entry.element.append(pauseButton);
+  const face = { height: HUD_DISC_SIZES.entry.face, width: HUD_DISC_SIZES.entry.face };
+  const hudGroup = createActionGroup(document, { className: "skill-hud" });
+  const hud = hudGroup.element;
+  writeLayoutProperties(PAUSE_LAYOUT, hud);
   hud.toggleAttribute(UI_COVERED, true);
   const readiness = {
     ready: element("span", "skill-hud-readiness"),
@@ -179,12 +203,15 @@ export function createPauseView(
   }
   const skills = Object.fromEntries(
     SKILL_IDS.map((skill) => {
-      const disc = createSkillDisc(document, colours, { ready: false }, undefined);
-      const { element: button } = createGameButton(
-        document,
-        { className: "skill-button ui-button-reset" },
-        { icon: disc.element, kind: "icon", name: words.skills[skill] },
-      );
+      const disc = createSkillDiscFace(document, colours, { ready: false });
+      const { element: button } = createGameHudDisc(document, {
+        art: disc.element,
+        className: "skill-button ui-button-reset",
+        icon: disc.glyph,
+        name: words.skills[skill],
+        size: "skill",
+        sizes: HUD_DISC_SIZES,
+      });
       button.tabIndex = -1;
       button.hidden = true;
       button.dataset.skill = skill;
@@ -192,11 +219,28 @@ export function createPauseView(
       return [skill, { button, disc }];
     }),
   ) as Record<SkillId, SkillButtonView>;
-  hud.append(...SKILL_IDS.map((skill) => skills[skill].button), ...Object.values(readiness));
-  view.append(pauseButton, hud);
+  hud.append(...SKILL_IDS.map((skill) => skills[skill].button));
+  view.append(entry.element, hud, ...Object.values(readiness));
   root.append(card.root, view);
+  // A hidden disc has no place, so each group is arranged again when one shows or hides. The
+  // skill row is as wide as its shown discs and their gaps, and pause.css holds its right edge
+  // HUD_EDGE in from the view's right, so the discs pack against it.
+  const arrange = () => {
+    entry.arrange({ axis: "row", width: ENTRY_WIDTH }, [
+      { element: pauseButton, role: "navigation", size: face },
+    ]);
+    const items = skillHudItems(SKILL_IDS.filter((skill) => !skills[skill].button.hidden));
+    hudGroup.arrange(
+      { ...SKILL_HUD_GROUP, width: skillHudWidth(items.filter((item) => !item.hidden).length) },
+      items.map(({ key, role, size }) => ({ element: skills[key].button, role, size })),
+    );
+  };
+  registerLayout(arrange, entry.element);
+  registerLayout(arrange, hud);
   return {
+    arrange,
     card,
+    entry: entry.element,
     hud,
     pauseButton,
     readiness,
@@ -205,8 +249,8 @@ export function createPauseView(
   };
 }
 
-// Shows the pause button's art in pose. Each pose is its own SVG, drawn the first time it shows
-// and kept, so a pose change never replaces the element a press is on.
+// Shows the entry's art in pose. Each pose is its own SVG in the disc's face art, drawn the first
+// time it shows and kept, so a pose change never replaces the element a press is on.
 export function showPauseDisc(
   colours: PauseColours,
   pose: PauseDiscPose,
@@ -214,29 +258,25 @@ export function showPauseDisc(
   mode: "menu" | "pause" = "pause",
 ): void {
   const key = `${mode}-${pose.tag}${pose.expanded ? "-expanded" : ""}`;
-  const poses = [...button.querySelectorAll<SVGSVGElement>(".pause-disc")];
+  const art = button.querySelector(`.${HUD_DISC_ART_CLASS}`)!;
+  const poses = [...art.querySelectorAll<SVGSVGElement>(".pause-disc")];
   let shown = poses.find((svg) => svg.dataset.pose === key);
   if (shown === undefined) {
     shown = createNavigationDisc(button.ownerDocument, colours, pose.tag, mode);
     shown.classList.add("pause-disc");
     shown.dataset.pose = key;
-    button.append(shown);
+    art.append(shown);
   }
   for (const svg of [...poses, shown]) {
     svg.toggleAttribute("data-shown", svg === shown);
   }
 }
 
-// The layout properties that place a skill button's target at at, in the base view.
-export function skillPlace(at: Point): LayoutValues {
-  return { "--skill-x": at.x, "--skill-y": at.y };
-}
-
-// How a skill button shows: its place in the base view where shown, its disc's look, and whether
-// the keyboard's focus may reach it.
+// How a skill button shows: whether it has a slot in the row, its disc's look, and whether the
+// keyboard's focus may reach it.
 export interface SkillButtonState extends SkillDiscLook {
-  readonly at: Point | undefined;
   readonly selected: boolean;
+  readonly shown: boolean;
   readonly tabbable: boolean;
 }
 
@@ -249,10 +289,7 @@ export function showSkillButton(
   view: SkillButtonView,
 ): void {
   const { button } = view;
-  button.hidden = state.at === undefined;
-  if (state.at !== undefined) {
-    writeLayoutProperties(skillPlace(state.at), button);
-  }
+  button.hidden = !state.shown;
   button.tabIndex = state.tabbable ? 0 : -1;
   button.setAttribute("aria-pressed", String(state.selected));
   if (state.selected) {

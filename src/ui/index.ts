@@ -111,7 +111,6 @@ export {
   showPauseDisc,
   showPauseMenu,
   showSkillButton,
-  skillPlace,
 } from "./dom/pause.ts";
 export { refuseControl } from "./dom/refusal.ts";
 export {

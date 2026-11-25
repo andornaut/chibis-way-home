@@ -2,10 +2,13 @@
 import { expect, it } from "vitest";
 
 import palette from "../../../public/art/palette.json" with { type: "json" };
+import { DEV_TEXT } from "../../data/dev.ts";
+import { TEXT } from "../../data/text.ts";
+import type { SkillId } from "../../data/types/index.ts";
+import { SKILL_IDS } from "../../progress/index.ts";
 import { svgLayers } from "../../testing/chromeSvg.ts";
-import { showPauseDisc } from "../dom/pause.ts";
+import { createPauseView, showPauseDisc } from "../dom/pause.ts";
 import { PAUSE_DISC, PAUSE_VISIBLE_DIAMETER } from "../layout/controlChrome.ts";
-import { PAUSE_BUTTON } from "../layout/pauseCard.ts";
 import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./pauseChrome.ts";
 
 const colour = (key: keyof typeof palette.colours) => parseInt(palette.colours[key].slice(1), 16);
@@ -18,6 +21,18 @@ const colours = {
   yellow: colour("yellow"),
 };
 
+// The entry disc of a pause view, whose face art holds the poses.
+const entryButton = () =>
+  createPauseView(document, colours, "pause-card", {
+    button: TEXT.pause.button,
+    card: { ...TEXT.pause, achievements: TEXT.start.achievements, cheats: DEV_TEXT.openCheats },
+    ready: TEXT.skillHud.ready,
+    recharging: TEXT.skillHud.recharging,
+    skills: Object.fromEntries(
+      SKILL_IDS.map((skill) => [skill, TEXT.skills[skill].title]),
+    ) as Record<SkillId, string>,
+  }).pauseButton;
+
 it.each<{ pose: PauseChromePose; expanded: boolean; face: string; core: string }>([
   { core: "cream", expanded: false, face: "navy", pose: "rest" },
   { core: "white", expanded: true, face: "dslate", pose: "press" },
@@ -26,7 +41,7 @@ it.each<{ pose: PauseChromePose; expanded: boolean; face: string; core: string }
 ])(
   "shows the $pose pose as inline SVG in its frame, painted in palette colours by name",
   ({ core, expanded, face, pose }) => {
-    const button = document.createElement("button");
+    const button = entryButton();
     showPauseDisc(colours, { expanded, tag: pose }, button);
     const svg = button.querySelector<SVGSVGElement>("svg[data-shown]")!;
     expect({
@@ -45,11 +60,6 @@ it.each<{ pose: PauseChromePose; expanded: boolean; face: string; core: string }
     expect(button.querySelectorAll("svg[data-shown]")).toHaveLength(1);
   },
 );
-
-it("retains the existing 52.5px Pause target", () => {
-  expect(PAUSE_BUTTON.hit.width).toBe(52.5);
-  expect(PAUSE_BUTTON.hit.height).toBe(52.5);
-});
 
 it("keeps the same disc and border across all poses, changing the face and glyph paint", () => {
   const centre = { x: 17.5, y: 17.5 };
@@ -79,7 +89,7 @@ it("keeps the same disc and border across all poses, changing the face and glyph
 });
 
 it("uses the shared three-bar menu glyph without changing the Pause poses or button geometry", () => {
-  const button = document.createElement("button");
+  const button = entryButton();
   showPauseDisc(colours, { expanded: false, tag: "rest" }, button, "menu");
   const menu = svgLayers(button.querySelector("svg[data-shown]")!);
   expect(menu.slice(0, 3)).toEqual(pauseChromeLayers(colours, "rest").slice(0, 3));

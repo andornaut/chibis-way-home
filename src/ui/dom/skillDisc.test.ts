@@ -5,7 +5,7 @@ import palette from "../../../public/art/palette.json" with { type: "json" };
 import { svgLayers } from "../../testing/chromeSvg.ts";
 import { skillChromeLayers } from "../chrome/skillChrome.ts";
 import { SKILL_BUTTON } from "../layout/skillHud.ts";
-import { createSkillDisc, paintSkillDisc } from "./skillDisc.ts";
+import { createSkillDisc, createSkillDiscFace, paintSkillDisc } from "./skillDisc.ts";
 
 const colour = (name: keyof typeof palette.colours) =>
   Number.parseInt(palette.colours[name].slice(1), 16);
@@ -36,8 +36,6 @@ it.each(LOOKS)(
       paints: [look.ready ? "yellow" : "navy"],
       viewBox: `0 0 ${SKILL_BUTTON.target} ${SKILL_BUTTON.target}`,
     });
-    expect(element.style.getPropertyValue("--skill-disc-target")).toBe(String(SKILL_BUTTON.target));
-    expect(element.style.getPropertyValue("--skill-disc-glyph")).toBe(String(SKILL_BUTTON.glyph));
   },
 );
 
@@ -51,5 +49,20 @@ it("leaves an unnamed disc to the control it is in, and repaints it for a new lo
     paintSkillDisc(COLOURS, look, view);
     expect(view.element.querySelectorAll("svg")).toHaveLength(1);
     expect(svgLayers(view.element.querySelector("svg")!)).toEqual(layersFor(look));
+  }
+});
+
+it("crops a HUD disc's face art to the drawn circle, apart from its glyph, through a repaint", () => {
+  const view = createSkillDiscFace(document, COLOURS, LOOKS[0]!);
+  const margin = (SKILL_BUTTON.target - SKILL_BUTTON.disc) / 2;
+  const crop = `${margin} ${margin} ${SKILL_BUTTON.disc} ${SKILL_BUTTON.disc}`;
+  expect(view.element.contains(view.glyph)).toBe(false);
+  expect([view.glyph.alt, view.glyph.hasAttribute("src")]).toEqual(["", false]);
+  for (const look of LOOKS) {
+    paintSkillDisc(COLOURS, look, view);
+    const svg = view.element.querySelector("svg")!;
+    expect(view.element.querySelectorAll("svg")).toHaveLength(1);
+    expect(svgLayers(svg)).toEqual(layersFor(look));
+    expect(svg.getAttribute("viewBox")).toBe(crop);
   }
 });

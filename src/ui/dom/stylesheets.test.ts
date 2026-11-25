@@ -13,7 +13,7 @@ import { DIALOGUE_FOOTER_LAYOUT, DIALOGUE_PANEL_LAYOUT } from "./dialogue.ts";
 import { UI_LAYOUT } from "./layer.ts";
 import { MAP_PROPERTIES, MAP_TITLE_PROPERTIES } from "./map.ts";
 import { OPENING_PROPERTIES } from "./opening.ts";
-import { PAUSE_LAYOUT, skillPlace } from "./pause.ts";
+import { PAUSE_LAYOUT } from "./pause.ts";
 import { roomPortraitProperties, roomProperties } from "./room.ts";
 import { runStatsProperties } from "./runStats.ts";
 import { SKILL_DETAILS_LAYOUT } from "./skillDetails.ts";
@@ -75,7 +75,6 @@ const WRITTEN = new Set(
     SKILL_DETAILS_LAYOUT,
     SKILL_DISC_LAYOUT,
     PAUSE_LAYOUT,
-    skillPlace({ x: 0, y: 0 }),
   ].flatMap(Object.keys),
 );
 

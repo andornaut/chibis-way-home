@@ -1,6 +1,6 @@
-/* The pause scene's view (pause.ts), after ui.css and skillDisc.css: lengths are base px times
-   --ui-unit, from the layer's layout properties, PAUSE_LAYOUT on the view and each skill button's
-   place. */
+/* The pause scene's view (pause.ts), after ui.css, skillDisc.css and the kit's hudDisc.css and
+   actionGroup.css: lengths are base px times --ui-unit, from the layer's layout properties and
+   PAUSE_LAYOUT on the two disc groups. */
 
 /* The card's action groups, the stacked gap apart (pause.ts). */
 .pause-actions {
@@ -10,20 +10,25 @@
   gap: var(--ui-stack-button-gap);
 }
 
-/* The pause button and the skill HUD over the card's backdrop. They take presses only while they
-   act: a press on the HUD while it takes none goes on to the canvas under it. */
+/* The entry and the skill HUD over the card's backdrop. They take presses only while they act: a
+   press on the HUD while it takes none goes on to the canvas under it. */
 .pause-hud-view {
   pointer-events: none;
 }
 
-/* The pause button's box is its press area, with its art the inset in from each side. */
-.pause-button {
+/* The entry's group at the view's top-left corner, its one face the group's box. */
+.ui-action-group.pause-entry {
   position: absolute;
-  top: calc(var(--ui-unit) * var(--pause-button-y) * 1px);
-  left: calc(var(--ui-unit) * var(--pause-button-x) * 1px);
-  box-sizing: border-box;
-  width: calc(var(--ui-unit) * var(--pause-button-size) * 1px);
-  height: calc(var(--ui-unit) * var(--pause-button-size) * 1px);
+  top: calc(var(--ui-unit) * var(--pause-entry-y) * 1px);
+  left: calc(var(--ui-unit) * var(--pause-entry-x) * 1px);
+}
+
+/* The skill row, as wide as its shown discs, with its right edge held in from the view's right:
+   the discs pack against it. */
+.ui-action-group.skill-hud {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--skill-hud-y) * 1px);
+  right: calc(var(--ui-unit) * var(--skill-hud-right) * 1px);
 }
 
 .pause-button[hidden],
@@ -31,18 +36,30 @@
   display: none;
 }
 
-/* Each Menu/Pause pose has its own disc. Exit uses the same disc with its own glyph. */
-.pause-disc:not([data-shown]) {
-  display: none;
+/* Art's SVG paints each disc in every state, so the face keeps no fill of its own and the art
+   stays opaque over it. */
+button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button) > .ui-hud-disc-face {
+  background-color: transparent;
 }
 
+button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
+  > .ui-hud-disc-face
+  > :is(.ui-hud-disc-art, .ui-hud-disc-icon) {
+  opacity: 1;
+}
+
+/* Each Menu/Pause pose has its own disc in the face's art, which is art's frame. Exit uses the
+   same disc with its own glyph. */
 .pause-disc {
   position: absolute;
-  top: calc(var(--ui-unit) * var(--pause-button-inset-y) * 1px);
-  left: calc(var(--ui-unit) * var(--pause-button-inset) * 1px);
+  inset: 0;
   display: block;
-  width: calc(var(--ui-unit) * var(--pause-disc-size) * 1px);
-  height: calc(var(--ui-unit) * var(--pause-disc-size) * 1px);
+  width: 100%;
+  height: 100%;
+}
+
+.pause-disc:not([data-shown]) {
+  display: none;
 }
 
 :is(.pause-button, .start-icon-button):is(:focus-visible, [data-pressed], [data-ui-pressed])
@@ -67,13 +84,8 @@
   fill: var(--navigation-glyph, var(--colour-white));
 }
 
-/* A skill button's box is its square target, at its place in the HUD row. */
+/* A skill takes presses only while the HUD is live. */
 .skill-button {
-  position: absolute;
-  top: calc(var(--ui-unit) * var(--skill-y) * 1px);
-  left: calc(var(--ui-unit) * var(--skill-x) * 1px);
-  width: calc(var(--ui-unit) * var(--skill-button-size) * 1px);
-  height: calc(var(--ui-unit) * var(--skill-button-size) * 1px);
   pointer-events: none;
 }
 
@@ -85,14 +97,16 @@
   fill: var(--skill-disc-fill, var(--colour-dslate));
 }
 
+/* Focus and press recolour the disc and its glyph from the theme's slots. A focused disc is
+   cream, since the focus slot's yellow is a ready skill's face. */
 .skill-button:not(:disabled):focus-visible {
   --skill-disc-fill: var(--colour-cream);
-  --skill-disc-ink: var(--button-focus-ink);
+  --skill-disc-ink: var(--ui-button-focus-text);
 }
 
 .skill-button:not(:disabled)[data-ui-pressed] {
-  --skill-disc-fill: var(--button-press-fill);
-  --skill-disc-ink: var(--button-press-ink);
+  --skill-disc-fill: var(--ui-colour-button-pressed-face);
+  --skill-disc-ink: var(--ui-colour-button-pressed-text);
 }
 
 .skill-button .ui-skill-disc-chrome circle {
@@ -103,11 +117,14 @@
   fill: var(--skill-disc-fill, var(--colour-yellow));
 }
 
+/* A recoloured glyph is its image as a mask over the icon box, filled with the state's ink. */
 .skill-button:is(:focus-visible, [data-ui-pressed]):not(:disabled) .ui-skill-disc-glyph {
   visibility: hidden;
 }
 
-.skill-button:is(:focus-visible, [data-ui-pressed]):not(:disabled) .ui-skill-disc::after {
+.skill-button:is(:focus-visible, [data-ui-pressed]):not(:disabled) .ui-hud-disc-icon::after {
+  position: absolute;
+  inset: 0;
   background: var(--skill-disc-ink);
   mask: var(--skill-glyph-image, none) center / 100% 100% no-repeat;
   content: "";
@@ -117,6 +134,11 @@
   .navigation-disc,
   .skill-button {
     forced-color-adjust: none;
+  }
+
+  /* The art carries the system colours, so it stays where the kit would hide it. */
+  :is(.pause-button, .skill-button) > .ui-hud-disc-face > .ui-hud-disc-art {
+    display: block;
   }
 
   .navigation-disc {
@@ -133,8 +155,8 @@
   }
 
   .navigation-disc[data-pose]:not([data-pose$="-rest"]) {
-    --navigation-face: var(--button-press-fill);
-    --navigation-glyph: var(--button-press-ink);
+    --navigation-face: var(--ui-colour-button-pressed-face);
+    --navigation-glyph: var(--ui-colour-button-pressed-text);
   }
 
   .skill-button {
@@ -148,8 +170,8 @@
   }
 
   .skill-button:not(:disabled):is(:focus-visible, [data-ui-pressed]) {
-    --skill-disc-fill: var(--button-focus-fill);
-    --skill-disc-ink: var(--button-focus-ink);
+    --skill-disc-fill: var(--ui-button-focus-fill);
+    --skill-disc-ink: var(--ui-button-focus-text);
   }
 
   .skill-button:disabled {
@@ -161,7 +183,9 @@
     visibility: hidden;
   }
 
-  .skill-button .ui-skill-disc::after {
+  .skill-button .ui-hud-disc-icon::after {
+    position: absolute;
+    inset: 0;
     background: var(--skill-disc-ink);
     mask: var(--skill-glyph-image, none) center / 100% 100% no-repeat;
     content: "";

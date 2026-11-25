@@ -26,7 +26,6 @@ import {
   showPauseMenu,
   showSkillButton,
   SKILL_ART,
-  skillHud,
   type TouchSetting,
   touchSettings,
 } from "../ui/index.ts";
@@ -164,14 +163,16 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
       ) as Record<SkillId, string>,
     });
     this.view = view;
-    const unmountEntry = sceneDomUi(this)?.menuEntry(view.pauseButton);
+    // CLEANUP (added 2026-11-25): drop the cast once the UI layer's menuEntry takes the entry's
+    // element, the action group that holds the button.
+    const unmountEntry = sceneDomUi(this)?.menuEntry(view.entry as HTMLButtonElement);
     this.events.once("shutdown", () => {
       this.live = false;
       this.menuGeneration++;
       unmountEntry?.();
     });
     // The delegated guard must see native clicks before the button renderer sees them.
-    const entryRoot = view.pauseButton.parentElement ?? view.pauseButton;
+    const entryRoot = view.entry.parentElement ?? view.entry;
     this.watchPresses(entryRoot, view);
     modalInput(this).subscribe(() => {
       this.cancelPresses();
@@ -577,37 +578,44 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
       "aria-label",
       mode === "pause" ? TEXT.pause.button : TEXT.menu.button,
     );
+    // Whether a disc showed or hid, which leaves its group to place.
+    let moved = false;
     if (view.pauseButton.hidden === pauseShown) {
       view.pauseButton.hidden = !pauseShown;
+      moved = true;
     }
     const live = this.skillHudLive();
     if (view.hud.hasAttribute("data-live") !== live) {
       view.hud.toggleAttribute("data-live", live);
     }
-    const row = skillHud(this.enabledSkills());
+    const row = this.enabledSkills();
     const shown = this.skillHudShown();
     const selected = activeSkill();
     const tabbable = live && this.state === "open";
     for (const skill of SKILL_IDS) {
-      const at = shown ? row.get(skill) : undefined;
+      const slot = shown && row.includes(skill);
       const look = {
         ready: skill === selected && this.skillReady(skill),
         selected: skill === selected,
       };
       const glyph = this.glyphs.get(skill);
       view.skills[skill].button.disabled = !live;
-      const key = [at?.x, at?.y, glyph?.ready, look.ready, look.selected, tabbable].join();
+      const key = [slot, glyph?.ready, look.ready, look.selected, tabbable].join();
       if (this.shownSkills.get(skill) === key) {
         continue;
       }
       this.shownSkills.set(skill, key);
       const button = view.skills[skill];
-      showSkillButton(this.colours, view.readiness, { ...look, at, tabbable }, button);
+      moved ||= button.button.hidden === slot;
+      showSkillButton(this.colours, view.readiness, { ...look, shown: slot, tabbable }, button);
       if (glyph !== undefined) {
         const src = look.ready ? glyph.ready : glyph.muted;
         button.disc.glyph.src = src;
-        button.disc.element.style.setProperty("--skill-glyph-image", `url("${src}")`);
+        button.button.style.setProperty("--skill-glyph-image", `url("${src}")`);
       }
+    }
+    if (moved) {
+      view.arrange();
     }
   }
 

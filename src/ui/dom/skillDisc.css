@@ -1,5 +1,5 @@
 /* A skill's disc (skillDisc.ts): lengths are base px times --ui-unit, from SKILL_DISC_LAYOUT on
-   each disc. */
+   each disc. A HUD disc's parts take their boxes from the kit's hudDisc.css instead. */
 
 /* The button's square target, its SVG circle filling it and the glyph at its native size centred
    on it, drawn pixelated. */
@@ -19,7 +19,7 @@
   height: 100%;
 }
 
-.ui-skill-disc-glyph,
+.ui-skill-disc > .ui-skill-disc-glyph,
 .ui-skill-disc::after {
   position: absolute;
   top: calc(var(--ui-unit) * (var(--skill-disc-target) - var(--skill-disc-glyph)) / 2 * 1px);

@@ -103,9 +103,10 @@ describe("the controls' edges", () => {
         pauseCentre: near((pause.top + pause.bottom + 1) / 2 - view.y),
         pauseLeft: near(pause.left - view.x),
       }).toEqual({
-        hudCentres: SKILL_IDS.map(() => START_SCREEN.navHeight / 2),
+        // The odd discs sit on whole pixels, their spare pixel below the section's centre.
+        hudCentres: SKILL_IDS.map(() => START_SCREEN.navHeight / 2 - 0.5),
         hudRight: HUD_EDGE,
-        pauseCentre: START_SCREEN.navHeight / 2,
+        pauseCentre: START_SCREEN.navHeight / 2 - 0.5,
         pauseLeft: HUD_EDGE,
       });
     },
