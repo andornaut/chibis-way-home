@@ -1268,9 +1268,50 @@ export const INDUSTRIAL_ROOF_ROW = 35;
 export const INDUSTRIAL_THEMES = ["freight-terminal", "loading-yards", "warehouse-district"];
 export const industrialCapId = (id: string): string => `industrial-tall-${id}`;
 export const industrialTunnelId = (id: string): string => `industrial-tunnel-${id}`;
+const blueFloor = (col: number, cols: number, row: number): TerrainRect => ({
+  col,
+  cols,
+  look: "ground",
+  row,
+  rows: FOUR_SCREEN_ROWS - row,
+});
+// The red top of a pit floor across `cols` columns at `row`.
+const pitEdge = (col: number, cols: number, row: number): Instance => ({
+  character: "red-edge-top",
+  col,
+  cols,
+  role: "edge-top",
+  row: row - 1,
+});
+// Three 10-row drops from row 50 onto 5-column landings at rows 60 and 70, then the row-80
+// floor, over red pits. Walking off each edge at full speed lands on the next surface.
+function dropDescent(theme: readonly string[]): ChunkPlan {
+  return {
+    cols: CHUNK_COLS,
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 50 },
+    exit: { row: 80 },
+    maxPerZone: 1,
+    objects: [pitEdge(12, 8, 90), pitEdge(25, 8, 90), pitEdge(38, 8, 90)],
+    rows: FOUR_SCREEN_ROWS,
+    solids: [
+      blueFloor(0, 12, 50),
+      blueFloor(12, 8, 90),
+      blueFloor(20, 5, 60),
+      blueFloor(25, 8, 90),
+      blueFloor(33, 5, 70),
+      blueFloor(38, 8, 90),
+      blueFloor(46, 14, 80),
+    ],
+    theme,
+  };
+}
 export const INDUSTRIAL_CONNECTORS = [
   "industrial-descent",
+  "industrial-drop-descent",
   "industrial-ascent",
+  "industrial-lift-ascent",
   "industrial-deep-descent",
   "industrial-deep-ascent",
 ] as const;
@@ -1384,20 +1425,51 @@ const INDUSTRIAL_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
     scenery: tunnelWalls().map((band) => ({ ...band, role: "underwater-tunnel-wall" })),
   },
   "industrial-descent": industrialStairs([50, 45, 50, 55, 60, 65, 70, 75, 80]),
+  "industrial-drop-descent": { ...dropDescent(INDUSTRIAL_THEMES), scenery: tunnelWalls() },
+  // Stairs climb to row 65, where the lift carries Chibi to the surface bank at row 50.
+  "industrial-lift-ascent": withValleyFloors({
+    cols: CHUNK_COLS,
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 50 },
+    maxPerZone: 1,
+    objects: [
+      {
+        ...lift(27, 65),
+        behaviour: { ...CITY_LIFT_BEHAVIOUR, initial: "wait-far" },
+        forcedTransit: OUTDOOR_LIFT_ASCENT_TRANSIT,
+      },
+    ],
+    rows: INDUSTRIAL_ROWS,
+    scenery: tunnelWalls(),
+    solids: [
+      blueFloor(0, 8, 80),
+      blueFloor(8, 6, 75),
+      blueFloor(14, 6, 70),
+      blueFloor(20, 6, 65),
+      blueFloor(34, 26, 50),
+    ],
+    theme: INDUSTRIAL_THEMES,
+  }),
 };
 
 export const BLUE_THEMES = ["street", "city-streets", "city-boundary"];
 export const COUNTRYSIDE_THEMES = ["country-lanes", "farmland", "river-crossing"];
 export const WOODLAND_ROUTE_THEMES = ["deep-woods", "forest-paths", "ravine"];
 export const HOME_ROUTE_THEMES = ["back-streets", "city-outskirts", "familiar-neighbourhood"];
-const LIFT_GATE_THEMES = [...BLUE_THEMES, ...WOODLAND_ROUTE_THEMES, ...HOME_ROUTE_THEMES];
 const OPEN_ROUTE_THEMES = [...BLUE_THEMES, ...COUNTRYSIDE_THEMES];
+const OUTDOOR_THEMES = [...OPEN_ROUTE_THEMES, ...WOODLAND_ROUTE_THEMES, ...HOME_ROUTE_THEMES];
 export const blueVerticalId = (id: string): string => `blue-vertical-${id}`;
 export const BLUE_CONNECTORS = [
   "outdoor-descent",
+  "outdoor-drop-descent",
   "outdoor-lift-ascent",
+  "outdoor-terrace-ascent",
   "outdoor-upper-ascent",
+  "outdoor-ferry-ascent",
   "outdoor-surface-return",
+  "outdoor-guarded-return",
   "outdoor-deep-descent",
   "outdoor-deep-ascent",
 ] as const;
@@ -1405,13 +1477,6 @@ export const BLUE_CONNECTORS = [
 function outdoorStairs(rows: readonly number[]): ChunkPlan {
   return { ...industrialStairs(rows), scenery: [], theme: OPEN_ROUTE_THEMES };
 }
-const blueFloor = (col: number, cols: number, row: number): TerrainRect => ({
-  col,
-  cols,
-  look: "ground",
-  row,
-  rows: FOUR_SCREEN_ROWS - row,
-});
 const BLUE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...Object.fromEntries(
     Object.entries(BASE_CHUNKS)
@@ -1433,6 +1498,12 @@ const BLUE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   "outdoor-deep-ascent": outdoorStairs([100, 95, 90, 85, 80]),
   "outdoor-deep-descent": outdoorStairs([80, 75, 80, 85, 90, 95, 100]),
   "outdoor-descent": outdoorStairs([50, 45, 50, 55, 60, 65, 70, 75, 80]),
+  "outdoor-drop-descent": dropDescent(OPEN_ROUTE_THEMES),
+  // Woodland's timed return in the open route themes.
+  "outdoor-guarded-return": {
+    ...guardedWoodlandStairs(17, [20, 15, 20, 25, 30, 35, 40, 45, 50]),
+    theme: OPEN_ROUTE_THEMES,
+  },
   "outdoor-lift-ascent": withValleyFloors({
     cols: CHUNK_COLS,
     difficulty: 4,
@@ -1457,7 +1528,7 @@ const BLUE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       blueFloor(40, 6, 45),
       blueFloor(46, 14, 40),
     ],
-    theme: LIFT_GATE_THEMES,
+    theme: OUTDOOR_THEMES,
   }),
   "outdoor-surface-return": {
     ...outdoorStairs([20, 15, 20, 25, 30, 35, 40, 45, 50]),
@@ -1487,16 +1558,20 @@ const BLUE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       blueFloor(32, 12, 25),
       blueFloor(44, 16, 20),
     ],
-    theme: LIFT_GATE_THEMES,
+    theme: OUTDOOR_THEMES,
   },
 };
 
 export const countrysideVerticalId = (id: string): string => `countryside-vertical-${id}`;
 export const COUNTRYSIDE_CONNECTORS = [
   "outdoor-descent",
+  "outdoor-drop-descent",
   "outdoor-terrace-ascent",
+  "outdoor-lift-ascent",
   "outdoor-ferry-ascent",
+  "outdoor-upper-ascent",
   "outdoor-surface-return",
+  "outdoor-guarded-return",
   "outdoor-deep-descent",
   "outdoor-deep-ascent",
 ] as const;
@@ -1542,7 +1617,7 @@ const COUNTRYSIDE_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       blueFloor(52, 4, 25),
       blueFloor(56, 4, 20),
     ],
-    theme: OPEN_ROUTE_THEMES,
+    theme: OUTDOOR_THEMES,
   },
   "outdoor-terrace-ascent": outdoorStairs([80, 75, 70, 65, 60, 55, 50, 45, 40]),
 };
@@ -1553,9 +1628,12 @@ export const WOODLAND_VERTICAL_ALIASES: Readonly<Record<string, string>> = Objec
 );
 export const WOODLAND_CONNECTORS = [
   "woodland-timed-descent",
+  "woodland-drop-descent",
   "outdoor-lift-ascent",
   "outdoor-upper-ascent",
+  "outdoor-ferry-ascent",
   "woodland-timed-return",
+  "woodland-walled-return",
   "woodland-deep-descent",
   "woodland-deep-ascent",
 ] as const;
@@ -1597,6 +1675,62 @@ function guardedWoodlandStairs(col: number, rows: readonly number[]): ChunkPlan 
   };
 }
 
+// The drop descent with a wide second landing, where a red gate holds Chibi before the last drop.
+function guardedDropDescent(): ChunkPlan {
+  return {
+    ...dropDescent(WOODLAND_ROUTE_THEMES),
+    difficulty: 4,
+    objects: [
+      pitEdge(12, 8, 90),
+      pitEdge(25, 8, 90),
+      pitEdge(45, 5, 90),
+      ...BASE_CHUNKS["vertical-red-gate"]!.objects.map((object) => ({
+        ...object,
+        col: 41,
+        row: 70 - object.rows!,
+      })),
+    ],
+    solids: [
+      blueFloor(0, 12, 50),
+      blueFloor(12, 8, 90),
+      blueFloor(20, 5, 60),
+      blueFloor(25, 8, 90),
+      blueFloor(33, 12, 70),
+      blueFloor(45, 5, 90),
+      blueFloor(50, 10, 80),
+    ],
+  };
+}
+// A descent under two hanging walls, each 6 rows above its landing, with a red gate on the wide
+// walled landing at row 30.
+function gatedWalledReturn(): ChunkPlan {
+  return {
+    cols: CHUNK_COLS,
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 20 },
+    exit: { row: 50 },
+    maxPerZone: 1,
+    objects: BASE_CHUNKS["vertical-red-gate"]!.objects.map((object) => ({
+      ...object,
+      col: 38,
+      row: 30 - object.rows!,
+    })),
+    rows: FOUR_SCREEN_ROWS,
+    solids: [
+      blueFloor(0, 8, 20),
+      blueFloor(8, 6, 15),
+      blueFloor(14, 6, 20),
+      blueFloor(20, 6, 25),
+      blueFloor(26, 16, 30),
+      blueFloor(42, 8, 40),
+      blueFloor(50, 10, 50),
+      { col: 29, cols: 4, look: "raised", row: 0, rows: 24 },
+      { col: 45, cols: 4, look: "raised", row: 0, rows: 34 },
+    ],
+    theme: WOODLAND_ROUTE_THEMES,
+  };
+}
 const WOODLAND_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ...Object.fromEntries(
     Object.entries(BASE_CHUNKS)
@@ -1613,16 +1747,21 @@ const WOODLAND_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
   ),
   "woodland-deep-ascent": guardedWoodlandStairs(36, [100, 95, 90, 85, 80]),
   "woodland-deep-descent": guardedWoodlandStairs(17, [80, 75, 80, 85, 90, 95, 100]),
+  "woodland-drop-descent": guardedDropDescent(),
   "woodland-timed-descent": guardedWoodlandStairs(17, [50, 45, 50, 55, 60, 65, 70, 75, 80]),
   "woodland-timed-return": guardedWoodlandStairs(17, [20, 15, 20, 25, 30, 35, 40, 45, 50]),
+  "woodland-walled-return": gatedWalledReturn(),
 };
 
 export const homeVerticalId = (id: string): string => `home-vertical-${id}`;
 export const HOME_CONNECTORS = [
   "home-timed-descent",
+  "home-drop-descent",
   "outdoor-lift-ascent",
   "outdoor-upper-ascent",
+  "outdoor-ferry-ascent",
   "home-timed-return",
+  "home-walled-return",
   "home-deep-descent",
   "home-deep-ascent",
 ] as const;
@@ -1647,7 +1786,14 @@ const HOME_VERTICAL_CHUNKS: Readonly<Record<string, ChunkPlan>> = {
       ]),
   ),
   ...Object.fromEntries(
-    ["timed-descent", "timed-return", "deep-descent", "deep-ascent"].map((kind) => [
+    [
+      "deep-ascent",
+      "deep-descent",
+      "drop-descent",
+      "timed-descent",
+      "timed-return",
+      "walled-return",
+    ].map((kind) => [
       `home-${kind}`,
       { ...WOODLAND_VERTICAL_CHUNKS[`woodland-${kind}`]!, theme: HOME_ROUTE_THEMES },
     ]),
