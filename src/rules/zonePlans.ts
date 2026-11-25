@@ -7,6 +7,7 @@ import { ZONE_MAP } from "../data/map.ts";
 import { MODULE_RULES, MODULES, PAIR_GRADES } from "../data/modules/index.ts";
 import { ZONE_ROWS } from "../data/screen.ts";
 import { SEAM_ROWS } from "../data/seams.ts";
+import { STAGE_LOOP_CAP } from "../data/stageProgress.ts";
 import type {
   CertifiedPool,
   ChunkArena,
@@ -76,6 +77,7 @@ export const CHUNK_LIBRARY: ChunkLibrary = {
   backgrounds: BACKGROUND_SECTIONS,
   characters: CHARACTERS,
   chunks: { ...CHUNKS, ...CERTIFIED.chunks, ...ADMITTED.chunks },
+  loopCap: STAGE_LOOP_CAP,
   rows: ZONE_ROWS,
   rules: CHUNK_RULES,
   seams: SEAM_ROWS,
