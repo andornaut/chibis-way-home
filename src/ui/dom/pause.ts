@@ -40,12 +40,13 @@ import type { SkillDiscLook } from "./skillDisc.ts";
 // painted but dim and take no presses beneath the top card.
 
 // The layout properties pause.css anchors the two groups by, in base px: the entry group's
-// top-left corner in the view, the entry's ink ring and its inset inside the face, and the skill
-// row's top and its inset from the view's right.
+// top-left corner in the view, the kit ring that draws the entry's ink ring and its inset inside
+// the face, and the skill row's top and its inset from the view's right. The kit ring runs a
+// unit under the art's rim, so the rim's anti-aliased edge lies on ink.
 export const PAUSE_LAYOUT: LayoutValues = {
   "--pause-entry-x": ENTRY_ORIGIN.x,
   "--pause-entry-y": ENTRY_ORIGIN.y,
-  "--pause-ring": PAUSE_DISC.ring,
+  "--pause-ring": PAUSE_DISC.ring + 1,
   "--pause-ring-inset": PAUSE_DISC.inset,
   "--skill-hud-right": HUD_EDGE,
   "--skill-hud-y": SKILL_HUD_TOP,

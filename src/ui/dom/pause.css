@@ -42,7 +42,7 @@ button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
 }
 
 /* The kit draws the entry's ink ring, the same in every state, PAUSE_DISC.inset inside the face
-   with no fill, so the corners outside the ring stay clear. */
+   with no fill, so the corners outside the ring stay clear; the art's rim covers its inner unit. */
 .pause-button {
   --ui-hud-disc-ring: var(--pause-ring);
   --ui-hud-disc-ring-colour: var(--colour-ink);
