@@ -27,8 +27,17 @@ afterEach(() => {
   vi.resetModules();
 });
 
-// localStorage holding a map save with completed done, standing on the last of them or the start.
-function storage(done: readonly string[]): Map<string, string> {
+// localStorage holding a map save with completed done, standing on the last of them or the start,
+// or no save without done.
+function storage(done?: readonly string[]): Map<string, string> {
+  const values = new Map<string, string>();
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+  });
+  if (done === undefined) {
+    return values;
+  }
   const raw = encodeSave(progressFormat(ZONE_MAP, RECIPES, new Set(Object.keys(CHUNKS))), {
     ...BEGINNING,
     at: "map",
@@ -39,11 +48,7 @@ function storage(done: readonly string[]): Map<string, string> {
   if (!raw.ok) {
     throw new Error(raw.reason);
   }
-  const values = new Map<string, string>([[PROGRESS_KEYS.save, raw.value]]);
-  vi.stubGlobal("localStorage", {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => values.set(key, value),
-  });
+  values.set(PROGRESS_KEYS.save, raw.value);
   return values;
 }
 
@@ -97,4 +102,19 @@ it("a run link's clear of a recipe with no catalogued stage records nothing", as
   await settle();
   expect(values).toEqual(before);
   expect(save.savedMap()).toEqual({ completed: [], stand: ZONE_MAP.start });
+});
+
+it("a fresh save's run link of a closed stage leaves its stand, so later writes save", async () => {
+  const values = storage();
+  const save = await import("./pageSave.ts");
+  await save.loadProgress();
+  save.beginStageRun(LAST);
+  save.saveOpeningSeen();
+  await settle();
+  const stored = JSON.parse(values.get(PROGRESS_KEYS.save) ?? "{}") as Record<string, unknown>;
+  expect(save.savedMap()).toEqual({ completed: [], stand: ZONE_MAP.start });
+  expect({ at: stored.at, openingSeen: stored.openingSeen }).toEqual({
+    at: "beginning",
+    openingSeen: true,
+  });
 });

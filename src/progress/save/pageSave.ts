@@ -218,9 +218,16 @@ export function achievementCard(): AchievementEntry[] {
 export function beginZoneVisit(zone: string): void {
   stats.beginVisit(zone);
 }
+// Whether the map opens stage, the rule the save format holds a completed stage and the stand to.
+function opensOnMap(stage: string): boolean {
+  const { completed } = savedMap();
+  return openMap(ZONE_MAP, new Set(completed), progress.allZonesUnlocked).zones.includes(stage);
+}
+
+// A fresh save stands him on stage where the map opens it.
 export function beginStageRun(stage: string): void {
   if (STAGES.has(stage)) {
-    if (progress.at === "beginning") {
+    if (progress.at === "beginning" && opensOnMap(stage)) {
       writeStand(stage);
     }
     stats.beginRun(stage);
@@ -440,8 +447,7 @@ export function completeRunLinkStage(stage: string): void {
     return;
   }
   completeStageRun(stage);
-  const { completed } = savedMap();
-  if (openMap(ZONE_MAP, new Set(completed), progress.allZonesUnlocked).zones.includes(stage)) {
+  if (opensOnMap(stage)) {
     saveCompleted(stage);
   }
 }
