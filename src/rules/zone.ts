@@ -44,7 +44,7 @@ import {
   startsDash,
   stepBirdWithSupport,
 } from "./bird.ts";
-import { bossDeath, defeatBoss, holdDefeated, removedBoss } from "./bossDefeat.ts";
+import { bossDeath, removedBoss } from "./bossDefeat.ts";
 import { initialCrumblingWorld } from "./crumbling.ts";
 import { beginCrumblingFrame, endCrumblingFrame } from "./crumblingFrame.ts";
 import { deathSupport } from "./death.ts";
@@ -54,7 +54,12 @@ import {
   effectiveCollision,
   effectiveHazardPhase,
 } from "./effectiveCollision.ts";
-import { type EncounterEvent, type EncounterStep, stepEncounter } from "./encounter.ts";
+import {
+  type EncounterEvent,
+  type EncounterStep,
+  settleEncounter,
+  stepEncounter,
+} from "./encounter.ts";
 import { type ForcePulse, forcePulseVelocity } from "./force.ts";
 import {
   forcedTransitBankAdmissions,
@@ -1019,14 +1024,14 @@ function stepZoneBodiesInternal(
       ) {
         return fixed;
       }
-      // Perceive once per object per tick; deciding and acting read only this snapshot.
+      // Perceive once per object per tick; deciding and acting read only this snapshot. A dead
+      // boss perceives nothing.
       const prior = zone.behaviours[index];
-      const behaviour = prior?.defeat
-        ? { ...holdDefeated(seconds, before, prior), events: [] }
-        : object.behaviour
+      const behaviour =
+        object.behaviour || prior?.defeat
           ? stepEncounter(
               {
-                groundMap: object.behaviour.pursuit && pursuitGroundMap(area, object, false),
+                groundMap: object.behaviour?.pursuit && pursuitGroundMap(area, object, false),
                 object,
                 observation: observer && {
                   metadata: {
@@ -1040,12 +1045,13 @@ function stepZoneBodiesInternal(
                 streams: namedStreams(zone.seed + zone.attempt, `idle-roam:${zone.area}:${index}`),
                 tuning,
               },
-              zone.behaviours[index] ?? startBehaviour(tuning, object, zone.bird),
+              prior ?? startBehaviour(tuning, object, zone.bird),
               {
                 at: before,
                 seconds,
                 target: zone.bird,
-                world: kinds.traversal[index] ? traversalGeometry(object) : geometry,
+                world:
+                  !prior?.defeat && kinds.traversal[index] ? traversalGeometry(object) : geometry,
               },
             )
           : undefined;
@@ -1101,28 +1107,32 @@ function stepZoneBodiesInternal(
   });
   // A boss on a red hazard or below the level dies as Chibi does; its pursuit ends without an
   // escape, and it stays dead for the rest of the attempt.
-  const deaths = kinds.behaviours.filter((index) => {
+  const killed = kinds.behaviours.flatMap((index) => {
     const state = behaviours[index];
-    return (
-      state !== undefined &&
+    const killedBy =
+      state &&
       bossDeath(
         area,
         hazards.filter((_, at) => hazardIndices[at] !== index),
         area.objects[index]!,
         positions[index]!,
         state,
-      ) !== undefined
-    );
+      );
+    return killedBy ? [{ index, killedBy, state }] : [];
   });
   let defeated = zone.defeated;
-  if (deaths.length > 0) {
-    behaviours = behaviours.map((state, index) =>
-      state && deaths.includes(index) ? defeatBoss(state) : state,
-    );
-    events = events.map((entries, index) =>
-      entries && deaths.includes(index)
-        ? entries.filter(({ kind }) => kind !== "escaped")
-        : entries,
+  if (killed.length > 0) {
+    const settledBehaviours = behaviours.slice();
+    const settledEvents = events.slice();
+    for (const { index, killedBy, state } of killed) {
+      const settled = settleEncounter({ killedBy }, { events: events[index]!, state });
+      settledBehaviours[index] = settled.state;
+      settledEvents[index] = settled.events;
+    }
+    behaviours = settledBehaviours;
+    events = settledEvents;
+    const deaths = events.flatMap((entries, index) =>
+      entries?.some(({ kind }) => kind === "defeated") ? [index] : [],
     );
     defeated = { ...defeated, [zone.area]: [...(defeated?.[zone.area] ?? []), ...deaths] };
   }
@@ -1502,7 +1512,7 @@ function stepZoneInternal(
   const escapes: ZoneEscape[] = [];
   body.events.forEach((events, index) => {
     for (const event of events ?? []) {
-      if (event.kind === "escaped") {
+      if (event.kind === "escaped" && event.cause === "distance") {
         barks.push({ ...event.bark, owner: ownerOf(index) });
         escapes.push({ cause: event.cause, owner: ownerOf(index) });
       }
@@ -1553,19 +1563,16 @@ function stepZoneInternal(
     door === undefined
       ? body.zone.behaviours
       : body.zone.behaviours.map((state, index) => {
-          if (state?.pursuit?.phase !== "engaged") {
+          if (!state) {
             return state;
           }
-          escapes.push({ cause: "door", owner: ownerOf(index) });
-          return {
-            ...state,
-            pursuit: {
-              ...state.pursuit,
-              home: true as const,
-              phase: "escaped" as const,
-              settled: false,
-            },
-          };
+          const settled = settleEncounter({ door: true }, { events: [], state });
+          for (const event of settled.events) {
+            if (event.kind === "escaped") {
+              escapes.push({ cause: event.cause, owner: ownerOf(index) });
+            }
+          }
+          return settled.state;
         });
   return {
     ...body.zone,

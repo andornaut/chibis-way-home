@@ -9,6 +9,7 @@ import {
 import type { BehaviourObservationContext } from "./behaviourObserver.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import type { BirdState } from "./bird.ts";
+import { defeatBoss, holdDefeated } from "./bossDefeat.ts";
 import type { PursuitGroundMap } from "./movementMaps.ts";
 
 // What the caller hands one behaviour-driven object besides the tick's input. The step reads no
@@ -38,15 +39,32 @@ export interface EncounterInput {
 export type EncounterEvent =
   // An entry action, which the zone turns into a force pulse or a spawn.
   | { readonly action: BehaviourEvent; readonly kind: "action" }
+  // It died on a red hazard or below the level.
+  | { readonly cause: "fall" | "hazard"; readonly kind: "defeated" }
   // Its pursuit ended by distance or a give-up, with its escape line.
-  | { readonly bark: DialogueLine; readonly cause: "distance"; readonly kind: "escaped" };
+  | { readonly bark: DialogueLine; readonly cause: "distance"; readonly kind: "escaped" }
+  // Its engaged pursuit ended because Chibi left through a room door.
+  | { readonly cause: "door"; readonly kind: "escaped" };
 
 export interface EncounterStep extends BehaviourStep {
   readonly events: readonly EncounterEvent[];
 }
 
-// One fixed step of one behaviour-driven object: perceive, decide and act. Pure: it reads only
-// its arguments, so equal arguments replay an equal step.
+// What a tick decides about the object from every object's finished step, so it follows the step
+// instead of entering it: the death test reads where the step left the object and the other
+// hazards, and the door test where it left the doors.
+export interface EncounterOutcome {
+  // Chibi left the area through a room door.
+  readonly door?: true;
+  // The object died this step.
+  readonly killedBy?: "fall" | "hazard";
+}
+
+// The state and events of one object's step, which the tick's outcome settles.
+export type EncounterResult = Pick<EncounterStep, "events" | "state">;
+
+// One fixed step of one behaviour-driven object: perceive, decide and act, or hold still when
+// dead. Pure: it reads only its arguments, so equal arguments replay an equal step.
 export function stepEncounter(
   context: EncounterContext,
   state: BehaviourState,
@@ -54,6 +72,9 @@ export function stepEncounter(
 ): EncounterStep {
   const { groundMap, object, observation, streams, tuning } = context;
   const { at, seconds, target } = input;
+  if (state.defeat) {
+    return { ...holdDefeated(seconds, at, state), events: [] };
+  }
   const world: BehaviourWorld = {
     ...input.world,
     ...(groundMap && { groundMap }),
@@ -66,4 +87,29 @@ export function stepEncounter(
     events.push({ bark: step.escaped, cause: "distance", kind: "escaped" });
   }
   return { ...step, events };
+}
+
+// Applies the tick's outcome to a stepped object. A death ends its pursuit without an escape and
+// starts its removal; a door ends an engaged pursuit as an escape without a bark. An outcome that
+// does not apply returns the result unchanged.
+export function settleEncounter(
+  outcome: EncounterOutcome,
+  result: EncounterResult,
+): EncounterResult {
+  let { events, state } = result;
+  if (outcome.killedBy) {
+    events = [
+      ...events.filter(({ kind }) => kind !== "escaped"),
+      { cause: outcome.killedBy, kind: "defeated" },
+    ];
+    state = defeatBoss(state);
+  }
+  if (outcome.door && state.pursuit?.phase === "engaged") {
+    events = [...events, { cause: "door", kind: "escaped" }];
+    state = {
+      ...state,
+      pursuit: { ...state.pursuit, home: true, phase: "escaped", settled: false },
+    };
+  }
+  return events === result.events ? result : { events, state };
 }
