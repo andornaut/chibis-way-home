@@ -26,12 +26,12 @@ Native development commands use Node 24.22.2 from `.nvmrc`, dependencies install
 | Command                                     | Does                                                                                                    |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `make check`                                | Run the lint, test and build categories in isolated containers, without exporting generated files       |
-| `make lint`                                 | Type-check, then check ShellCheck 0.11.0, Prettier, ESLint and Markdownlint                             |
+| `make lint`                                 | Type-check, then check ShellCheck 0.11.0, Prettier, ESLint, the source layers and Markdownlint          |
 | `make test`                                 | Run Vitest with four workers, then verify certified lists with the 20-second sample                     |
 | `make build`                                | Build with Vite and check art reproduction, then replace the ignored host `dist/`                       |
 | `npm run check`                             | Run the lint, test and build recipes in the current environment                                         |
 | `npm run typecheck`                         | Type-check with TypeScript                                                                              |
-| `npm run lint`                              | Check ShellCheck 0.11.0, Prettier, ESLint and Markdownlint                                              |
+| `npm run lint`                              | Check ShellCheck 0.11.0, Prettier, ESLint, the source layers and Markdownlint                           |
 | `npm test`                                  | Run Vitest with four workers, then verify certified lists; `npm test -- <arguments>` forwards to Vitest |
 | `npm run build`                             | Build with Vite                                                                                         |
 | `npm run pairs -- verify --sample-ms 20000` | Verify certified chunk lists with the 20-second sample                                                  |
