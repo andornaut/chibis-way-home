@@ -2,8 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
 import type { ZoneMap, ZonePlan, ZoneRecipe } from "../data/types/index.ts";
-import { requiredSteps } from "./assemble.ts";
-import { middleChunkIds, planStage, recipeKey, stageTarget } from "./stagePlans.ts";
+import { requiredSteps, runLoops } from "./assemble.ts";
+import {
+  middleChunkIds,
+  type PlannedStage,
+  planStage,
+  recipeKey,
+  stageTarget,
+} from "./stagePlans.ts";
 import { CHUNK_LIBRARY, STAGE_CONTEXT, zoneOfTheme, zonePlanAvoiding } from "./zonePlans.ts";
 
 const STAGE = ZONE_MAP.nodes.find((node) => node.kind === "zone" && node.zone !== undefined)!;
@@ -132,4 +138,41 @@ describe("a stage entered again", () => {
   it("has an outdoor recipe with a certified arena approach", () => {
     expect(OUTDOOR.some(([, recipe]) => recipe.arenaApproach !== undefined)).toBe(true);
   });
+});
+
+const VARIETY_SEEDS = Array.from({ length: 16 }, (_, seed) => seed);
+// A plan's middle chunks in order, repeats included.
+const runOf = ({ plan }: PlannedStage) => plan.areas.main!.chunks!.slice(1, -1).map((c) => c.chunk);
+
+describe("an outdoor stage entered four times running", () => {
+  it.each(OUTDOOR)(
+    "plans %s in at most one loop, each honoured entry opening unlike the entry before",
+    (key, recipe: ZoneRecipe) => {
+      let fallbacks = 0;
+      for (const seed of VARIETY_SEEDS) {
+        // The entries so far, newest first; each avoids the latest two.
+        const entries: PlannedStage[] = [];
+        for (let entry = 0; entry < 4; entry++) {
+          const planned = planStage(STAGE_CONTEXT, {
+            avoid: entries.slice(0, 2).map(({ middle }) => middle),
+            seed: seed + entry,
+            target: { recipe: key },
+          });
+          const run = runOf(planned);
+          expect(runLoops(CHUNK_LIBRARY, recipe.start, run)).toBeLessThanOrEqual(1);
+          if (planned.avoidance === "honoured") {
+            expect(run[0], `${key} seed ${seed} entry ${entry}`).not.toBe(
+              entries[0] && runOf(entries[0])[0],
+            );
+          } else {
+            fallbacks++;
+          }
+          entries.unshift(planned);
+        }
+      }
+      // Home's small pool leaves a rare chain no layout without its latest two entries.
+      expect(fallbacks).toBeLessThanOrEqual(zoneOfTheme(recipe.theme) === "home" ? 1 : 0);
+    },
+    120_000,
+  );
 });
