@@ -28,47 +28,41 @@ import type {
   OrdinaryProofProfile,
   ZoneKey,
 } from "../data/types/index.ts";
-import type { RunResult } from "../sim/simulate.ts";
-import { canonicalApproachTrace } from "../testing/arenaApproaches.ts";
+import type { RunResult } from "../sim/index.ts";
 import {
   ARENA_COST,
-  certifiedArena,
-  gameArenaOf,
-  proveArena,
-  verifyArenas,
-  zoneArenas,
-} from "../testing/arenaCertify.ts";
-import {
-  completeCurrentListProposal,
-  type CurrentListResult,
-  prepareCurrentListProposal,
-} from "../testing/currentListCertification.ts";
-import {
   type Candidate,
+  canonicalApproachTrace,
   certificateFeasibilityProblems,
+  certifiedArena,
   completeArenaApproachQualification,
+  completeCurrentListProposal,
+  completePairProposal,
+  type CurrentListResult,
   dataHash,
   distinctLayouts,
   entryOf,
   feasibilityProblems,
   GAME_CONTEXT,
+  gameArenaOf,
   hashOf,
   layoutOf,
+  newEntryProofProfile,
   ORDINARY_PROOF_PROFILE,
+  prepareCurrentListProposal,
+  preparePairProposal,
   type Proof,
   proofsHash,
+  proveArena,
   proveForProfile,
   routeHash,
   structuralProblems,
+  verifyArenas,
   verifyStructure,
+  zoneArenas,
   zoneCandidates,
   ZONES,
-} from "../testing/pairCertify.ts";
-import {
-  completePairProposal,
-  newEntryProofProfile,
-  preparePairProposal,
-} from "../testing/selectedCertification.ts";
+} from "../testing/index.ts";
 
 const DEFAULT_SAMPLE_MS = 20_000;
 

@@ -17,7 +17,7 @@ import {
   validateHazardPhases,
 } from "../rules/boss/index.ts";
 import type { ZoneState } from "../rules/zone/index.ts";
-import type { Surface } from "../sim/zoneWalk.ts";
+import type { Surface } from "../sim/index.ts";
 
 export const REQUIRED_ROUTE_CONTROLLER = "required-route-intent-v3";
 

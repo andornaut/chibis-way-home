@@ -9,9 +9,15 @@ import type {
   ZoneRecipe,
 } from "../data/types/index.ts";
 import { arenaApproachProblems } from "../rules/stage/index.ts";
-import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_DEFAULTS } from "../sim/bot.ts";
-import type { PreparedStage, RunResult, SimulationConfig } from "../sim/simulate.ts";
-import type { SimulationStart } from "../sim/start.ts";
+import {
+  DIAGNOSTIC_SKILL,
+  FORWARD_POLICY,
+  NAVIGATION_DEFAULTS,
+  type PreparedStage,
+  type RunResult,
+  type SimulationConfig,
+  type SimulationStart,
+} from "../sim/index.ts";
 
 export interface ColdEncounter {
   readonly area: string;

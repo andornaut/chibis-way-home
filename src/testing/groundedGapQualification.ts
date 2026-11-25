@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import ts from "typescript";
 
 import type { ZoneLayout } from "../data/types/index.ts";
-import type { WalkRouteTarget } from "../sim/zoneWalk.ts";
+import type { WalkRouteTarget } from "../sim/index.ts";
 import { controlledRequiredRoute } from "./continuousRequiredRoute.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
 import { createGroundedGapController, GROUNDED_GAP_CONTROLLER } from "./groundedGapController.ts";

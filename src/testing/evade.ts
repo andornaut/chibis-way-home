@@ -86,9 +86,16 @@ import {
   type ZoneInput,
   type ZoneState,
 } from "../rules/zone/index.ts";
-import { activateAll, bossSample, type BossTick, supportWorld } from "../sim/bossSimulator.ts";
-import { ALLOW, hitboxAt, standingAt } from "../sim/pathOut.ts";
-import { zoneTraceLine } from "../sim/zoneTrace.ts";
+import {
+  activateAll,
+  ALLOW,
+  bossSample,
+  type BossTick,
+  hitboxAt,
+  standingAt,
+  supportWorld,
+  zoneTraceLine,
+} from "../sim/index.ts";
 import { type ArenaCase, type ArenaMaps, isLoop, pixelOf } from "./arenas.ts";
 import { DODGES, type DodgeView } from "./dodges.ts";
 import { ORDINARY } from "./encounterLayouts.ts";

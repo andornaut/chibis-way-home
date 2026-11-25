@@ -3,14 +3,18 @@ import { TILE } from "../data/screen.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { startZone, stepZone, type ZoneInput, type ZoneState } from "../rules/zone/index.ts";
-import { botInput, DIAGNOSTIC_SKILL, FORWARD_POLICY, newBot, prepareSensors } from "../sim/bot.ts";
 import {
+  botInput,
+  DIAGNOSTIC_SKILL,
+  FORWARD_POLICY,
+  newBot,
+  prepareSensors,
   requiredRouteObservation,
   requiredRouteTargetReached,
   surfaceAt,
   type WalkRouteTarget,
   zoneSurfaces,
-} from "../sim/zoneWalk.ts";
+} from "../sim/index.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
 import {
   type FlatCrossing,

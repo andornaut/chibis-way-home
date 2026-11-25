@@ -2,7 +2,7 @@ import { Scene } from "phaser";
 
 import { DEV_TEXT } from "../data/dev.ts";
 import { TEXT } from "../data/text.ts";
-import { invulnerabilityEnabled, setInvulnerability } from "../dev/mode.ts";
+import { invulnerabilityEnabled, setInvulnerability } from "../dev/index.ts";
 import {
   type CheatAction,
   type CheatsCardView,

@@ -2,7 +2,7 @@ import { EDGE, rectAt, STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, Rect, ZoneLayout } from "../data/types/index.ts";
 import { ordinaryHorizontalVelocity } from "../rules/bird/index.ts";
 import { standsOn, type ZoneInput, type ZoneState } from "../rules/zone/index.ts";
-import { requiredRouteObservation, type Surface, zoneSurfaces } from "../sim/zoneWalk.ts";
+import { requiredRouteObservation, type Surface, zoneSurfaces } from "../sim/index.ts";
 import type { QualificationController, QualificationDecision } from "./continuousRequiredRoute.ts";
 import type { RequiredRouteIntentTarget } from "./requiredRouteIntent.ts";
 // Layout geometry remains current only for this positively static domain.

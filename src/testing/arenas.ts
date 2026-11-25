@@ -33,7 +33,7 @@ import {
   zoneLayout,
   zoneOfTheme,
 } from "../rules/stage/index.ts";
-import { ALLOW, chibiMap, type Encounter, pathOutEncounter, standingAt } from "../sim/pathOut.ts";
+import { ALLOW, chibiMap, type Encounter, pathOutEncounter, standingAt } from "../sim/index.ts";
 import { ARENA_SAMPLES } from "./arenaSamples.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 import { chunkThemePlan } from "./chunkWalkCases.ts";

@@ -7,24 +7,23 @@ import type { AntagonistKind, Instance, ObjectLayout, ZoneLayout } from "../data
 import { startBird } from "../rules/bird/index.ts";
 import type { ZoneInput } from "../rules/zone/index.ts";
 import {
-  committedHold,
-  crossesAfterSettle,
-  leavesSpawn,
-  movesAtLeast,
-  movesWhileEngaged,
-  pacesNearest,
-  risesToRow,
-  tellPauseLasts,
-} from "../sim/bossProperties.ts";
-import {
   type BossController,
   type BossCoverage,
   type BossScenario,
   type BossTick,
   botChibi,
+  committedHold,
+  crossesAfterSettle,
+  DIAGNOSTIC_SKILL,
+  FORWARD_POLICY,
+  leavesSpawn,
+  movesAtLeast,
+  movesWhileEngaged,
+  pacesNearest,
+  risesToRow,
   scriptedChibi,
-} from "../sim/bossSimulator.ts";
-import { DIAGNOSTIC_SKILL, FORWARD_POLICY } from "../sim/bot.ts";
+  tellPauseLasts,
+} from "../sim/index.ts";
 import { sampleArenaCase } from "./arenas.ts";
 import {
   chunkLayout,

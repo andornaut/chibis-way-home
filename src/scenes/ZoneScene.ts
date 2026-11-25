@@ -59,8 +59,7 @@ import type {
   ZonePlan,
 } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
-import { invulnerabilityEnabled } from "../dev/mode.ts";
-import { developmentStep } from "../dev/step.ts";
+import { developmentStep, invulnerabilityEnabled } from "../dev/index.ts";
 import { afterLoadingPaint, beginStageLoading } from "../loading/progress.ts";
 import {
   barkOwnerOnscreen,

@@ -10,9 +10,14 @@ import { BIRD } from "../data/bird.ts";
 import { TILE } from "../data/screen.ts";
 import type { CertifiedArena, CertifiedChunks, ChunkArena, ZoneKey } from "../data/types/index.ts";
 import { CHUNK_LIBRARY, zoneLayout } from "../rules/stage/index.ts";
-import { NO_DISABLED_EDGES, pathOut } from "../sim/pathOut.ts";
-import { zoneTraceLine } from "../sim/zoneTrace.ts";
-import { crosses, surfaceAt, walkRequiredRoutes } from "../sim/zoneWalk.ts";
+import {
+  crosses,
+  NO_DISABLED_EDGES,
+  pathOut,
+  surfaceAt,
+  walkRequiredRoutes,
+  zoneTraceLine,
+} from "../sim/index.ts";
 import {
   type ArenaCase,
   arenaCase,

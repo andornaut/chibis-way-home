@@ -17,10 +17,16 @@ import {
   stepZone,
   type ZoneState,
 } from "../rules/zone/index.ts";
-import { DIAGNOSTIC_SKILL, FORWARD_POLICY, NAVIGATION_DEFAULTS } from "../sim/bot.ts";
-import { stageLoader } from "../sim/catalogue.ts";
-import { type RunResult, simulateStage } from "../sim/simulate.ts";
-import { walkRequiredRoutes, walkZone } from "../sim/zoneWalk.ts";
+import {
+  DIAGNOSTIC_SKILL,
+  FORWARD_POLICY,
+  NAVIGATION_DEFAULTS,
+  type RunResult,
+  simulateStage,
+  stageLoader,
+  walkRequiredRoutes,
+  walkZone,
+} from "../sim/index.ts";
 import {
   type ColdEncounter as CityEncounter,
   coldEncounterConfig,

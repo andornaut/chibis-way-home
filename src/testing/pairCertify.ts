@@ -46,11 +46,19 @@ import {
   zoneLayout,
   zoneOfTheme,
 } from "../rules/stage/index.ts";
-import { nodeArt, preparedPlan } from "../sim/catalogue.ts";
-import { NO_DISABLED_EDGES, pathOut, pathOutEncounter } from "../sim/pathOut.ts";
-import type { RunResult } from "../sim/simulate.ts";
-import { zoneTraceLine } from "../sim/zoneTrace.ts";
-import { crosses, surfaceAt, walkRequiredRoutes, type WalkRouteTarget } from "../sim/zoneWalk.ts";
+import {
+  crosses,
+  NO_DISABLED_EDGES,
+  nodeArt,
+  pathOut,
+  pathOutEncounter,
+  preparedPlan,
+  type RunResult,
+  surfaceAt,
+  walkRequiredRoutes,
+  type WalkRouteTarget,
+  zoneTraceLine,
+} from "../sim/index.ts";
 import {
   arenaApproachCertificateProblems,
   arenaApproachContext,

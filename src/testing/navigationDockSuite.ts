@@ -4,18 +4,18 @@ import { STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, ZoneLayout } from "../data/types/index.ts";
 import { SKILL_PROFILES } from "../progress/index.ts";
 import { enterArea, stepZone } from "../rules/zone/index.ts";
-import { newBot } from "../sim/bot.ts";
-import capturedDock from "../sim/fixtures/sharedDock.json" with { type: "json" };
 import {
   NAVIGATION_DEFAULTS,
   NAVIGATION_VALIDATION,
   navigationSnapshot,
+  newBot,
   plannedInput,
-} from "../sim/navigation.ts";
+  SHARED_DOCK,
+} from "../sim/index.ts";
 
 export function registerNavigationDockCase(): void {
   it("requires settled static dock landings near moving supports", () => {
-    const { layout, tuning } = capturedDock as unknown as {
+    const { layout, tuning } = SHARED_DOCK as unknown as {
       layout: ZoneLayout;
       tuning: BirdTuning;
     };

@@ -2,14 +2,14 @@ import { type AgentSample, tellStarts } from "../ai/index.ts";
 import { STEP_SECONDS } from "../core/index.ts";
 import type { BirdTuning, BossFairness, DodgeName, ZoneLayout } from "../data/types/index.ts";
 import type { ZoneInput, ZoneState } from "../rules/zone/index.ts";
-import { maximumTellSeconds } from "../sim/bossProperties.ts";
 import {
   areaExit,
   bossModel,
   bossSample,
   type BossScenario,
   bossStart,
-} from "../sim/bossSimulator.ts";
+  maximumTellSeconds,
+} from "../sim/index.ts";
 import { DODGES } from "./dodges.ts";
 
 // Dodge witnesses (attack fairness): at each tell start in a boss scenario the zone is forked

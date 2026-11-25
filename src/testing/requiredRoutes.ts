@@ -4,8 +4,7 @@ import { ROOMS } from "../data/rooms.ts";
 import { TILE } from "../data/screen.ts";
 import type { ChunkPlan, ModuleRouteProfile } from "../data/types/index.ts";
 import { bindElement, type ChunkLibrary, objectLayout, themesOf } from "../rules/stage/index.ts";
-import { hasDynamicMotion } from "../sim/behaviourBounds.ts";
-import type { WalkRouteTarget } from "../sim/zoneWalk.ts";
+import { hasDynamicMotion, type WalkRouteTarget } from "../sim/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 import { ALL_CHUNKS, FIXTURE_RECIPE } from "./chunks.ts";
 

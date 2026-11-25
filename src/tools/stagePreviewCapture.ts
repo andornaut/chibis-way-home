@@ -25,7 +25,7 @@ import {
   zoneLayout,
 } from "../rules/stage/index.ts";
 import { areaOf, enterArea, startZone } from "../rules/zone/index.ts";
-import { nodeArt } from "../sim/catalogue.ts";
+import { nodeArt } from "../sim/index.ts";
 
 export interface CaptureFile {
   readonly path: string;

@@ -14,7 +14,7 @@ import {
   type WalkRouteQuery,
   walkZone,
   type ZoneWalk,
-} from "../sim/zoneWalk.ts";
+} from "../sim/index.ts";
 import { CATALOGUE, HITBOXES, TILESETS } from "./art.ts";
 
 export { CATALOGUE, HITBOXES, TILESETS };
