@@ -5,9 +5,9 @@ import { expect, it, vi } from "vitest";
 import { traceRecorder } from "../ai/index.ts";
 import { BIRD } from "../data/bird.ts";
 import {
+  COLD_ENCOUNTER_CASE,
   coldEncounterConfig,
   coldEncounterFacts,
-  COLD_ENCOUNTER_CASE,
   firstArenaEncounter,
 } from "../testing/arenaApproaches.ts";
 import { TRACE } from "../testing/behaviourTraceHook.ts";

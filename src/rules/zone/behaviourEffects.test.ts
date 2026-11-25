@@ -44,6 +44,10 @@ function effects(id: string, theme: string, offset: number): number {
   return count;
 }
 
-it.each(CHUNKS)("applies %s's entry effects to the zone beside Chibi in %s", (id, theme) => {
-  expect([-6, -3, 3, 6].some((offset) => effects(id, theme, offset) > 0)).toBe(true);
-}, 600_000);
+it.each(CHUNKS)(
+  "applies %s's entry effects to the zone beside Chibi in %s",
+  (id, theme) => {
+    expect([-6, -3, 3, 6].some((offset) => effects(id, theme, offset) > 0)).toBe(true);
+  },
+  600_000,
+);

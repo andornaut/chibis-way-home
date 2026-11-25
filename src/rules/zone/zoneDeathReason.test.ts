@@ -60,28 +60,31 @@ describe("death reason", () => {
   });
 
   // Cooldown permits pursuit and leaves the body lethal.
-  it.each(CHARACTERS)("reports %s's body as boss contact through its attack cooldown", (character) => {
-    const { index, layout, zone } = encounter(character);
-    const object = layout.areas[zone.area]!.objects[index]!;
-    const behaviour = zone.behaviours[index]!;
-    const box = contactBox(object, zone.objects[index]!, behaviour.facing);
-    const cooling = zone.behaviours.map((state, at) =>
-      at === index
-        ? { ...state!, attackCooldownRemainingSeconds: object.behaviour!.attackCooldownSeconds! }
-        : state,
-    );
-    const dead = step(layout, {
-      ...zone,
-      behaviours: cooling,
-      bird: {
-        ...zone.bird,
-        x: box.x + (box.width - BIRD.width) / 2,
-        y: box.y + (box.height - BIRD.height) / 2,
-      },
-    });
-    expect(dead.behaviours[index]!.attackCooldownRemainingSeconds).toBeGreaterThan(0);
-    expect(dead.death?.reason).toBe("boss");
-  });
+  it.each(CHARACTERS)(
+    "reports %s's body as boss contact through its attack cooldown",
+    (character) => {
+      const { index, layout, zone } = encounter(character);
+      const object = layout.areas[zone.area]!.objects[index]!;
+      const behaviour = zone.behaviours[index]!;
+      const box = contactBox(object, zone.objects[index]!, behaviour.facing);
+      const cooling = zone.behaviours.map((state, at) =>
+        at === index
+          ? { ...state!, attackCooldownRemainingSeconds: object.behaviour!.attackCooldownSeconds! }
+          : state,
+      );
+      const dead = step(layout, {
+        ...zone,
+        behaviours: cooling,
+        bird: {
+          ...zone.bird,
+          x: box.x + (box.width - BIRD.width) / 2,
+          y: box.y + (box.height - BIRD.height) / 2,
+        },
+      });
+      expect(dead.behaviours[index]!.attackCooldownRemainingSeconds).toBeGreaterThan(0);
+      expect(dead.death?.reason).toBe("boss");
+    },
+  );
 
   const emitters = CHARACTERS.flatMap((character) => {
     const { index, layout, zone } = encounter(character);

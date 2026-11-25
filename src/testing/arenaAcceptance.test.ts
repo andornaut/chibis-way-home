@@ -5,8 +5,8 @@ import {
   ACCEPTANCE_ARENAS,
   ACCEPTANCE_FAILURES,
   ACCEPTANCE_TARGETS,
-  type AcceptanceTarget,
   acceptanceProblems,
+  type AcceptanceTarget,
   missedTargets,
 } from "./arenaAcceptance.ts";
 import { summariseArenaEvidence } from "./arenaCertify.ts";

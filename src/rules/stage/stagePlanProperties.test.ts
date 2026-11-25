@@ -55,7 +55,9 @@ function planProblems(key: string, recipe: StageRecipe, zone: ZonePlan): string[
       }
       uses.set(placed.chunk, (uses.get(placed.chunk) ?? 0) + 1);
       if (chunk.difficulty < band.min || chunk.difficulty > band.max) {
-        problems.push(`${placed.chunk} grade ${chunk.difficulty} is outside ${band.min} to ${band.max}`);
+        problems.push(
+          `${placed.chunk} grade ${chunk.difficulty} is outside ${band.min} to ${band.max}`,
+        );
       }
       if (index > 1 && previous!.chunk === placed.chunk) {
         problems.push(`${placed.chunk} twice in a row`);
@@ -77,35 +79,42 @@ function planProblems(key: string, recipe: StageRecipe, zone: ZonePlan): string[
   return problems;
 }
 
-describe.each(RECIPES)("stage %s", (key, recipe) => {
-  it("plans the same stage for the same seed", () => {
-    for (const seed of SEEDS.slice(0, 2)) {
-      expect(plan(key, seed)).toEqual(plan(key, seed));
-    }
-  });
-
-  it("joins one-screen chunks at matching seams, within band, limits and loop cap", () => {
-    for (const seed of SEEDS) {
-      expect(planProblems(key, recipe, plan(key, seed).plan), `seed ${seed}`).toEqual([]);
-    }
-  });
-
-  it("leaves out the avoided chunks it honours, but the arena and required step sources", () => {
-    const avoided = plan(key, 0).middle;
-    const kept = new Set<string>(
-      "sections" in recipe
-        ? []
-        : [...requiredSteps(CHUNK_LIBRARY, key, recipe).flat(), CHUNK_LIBRARY.arenas?.[key] ?? ""],
-    );
-    for (const seed of SEEDS) {
-      const again = plan(key, seed, [avoided]);
-      expect(planProblems(key, recipe, again.plan), `seed ${seed}`).toEqual([]);
-      if (again.avoidance === "honoured") {
-        expect(
-          again.middle.filter((id) => avoided.includes(id) && !kept.has(id)),
-          `seed ${seed}`,
-        ).toEqual([]);
+describe.each(RECIPES)(
+  "stage %s",
+  (key, recipe) => {
+    it("plans the same stage for the same seed", () => {
+      for (const seed of SEEDS.slice(0, 2)) {
+        expect(plan(key, seed)).toEqual(plan(key, seed));
       }
-    }
-  });
-}, 120_000);
+    });
+
+    it("joins one-screen chunks at matching seams, within band, limits and loop cap", () => {
+      for (const seed of SEEDS) {
+        expect(planProblems(key, recipe, plan(key, seed).plan), `seed ${seed}`).toEqual([]);
+      }
+    });
+
+    it("leaves out the avoided chunks it honours, but the arena and required step sources", () => {
+      const avoided = plan(key, 0).middle;
+      const kept = new Set<string>(
+        "sections" in recipe
+          ? []
+          : [
+              ...requiredSteps(CHUNK_LIBRARY, key, recipe).flat(),
+              CHUNK_LIBRARY.arenas?.[key] ?? "",
+            ],
+      );
+      for (const seed of SEEDS) {
+        const again = plan(key, seed, [avoided]);
+        expect(planProblems(key, recipe, again.plan), `seed ${seed}`).toEqual([]);
+        if (again.avoidance === "honoured") {
+          expect(
+            again.middle.filter((id) => avoided.includes(id) && !kept.has(id)),
+            `seed ${seed}`,
+          ).toEqual([]);
+        }
+      }
+    });
+  },
+  120_000,
+);

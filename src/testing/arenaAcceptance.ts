@@ -14,17 +14,14 @@ export const ACCEPTANCE_ARENAS: readonly string[] = [
 ];
 
 export type AcceptanceTarget =
-  | "alive-exits"
-  | "evade-runs"
-  | "path-out"
-  | "required-routes"
-  | "slowed"
-  | "static";
+  "alive-exits" | "evade-runs" | "path-out" | "required-routes" | "slowed" | "static";
 
 // ACCEPTANCE TARGETS: what every arena's proof meets, from the Evidence rule of
 // gameplay/bosses.md.
 export const ACCEPTANCE_TARGETS: Readonly<Record<AcceptanceTarget, string>> = {
-  "alive-exits": `every run exits alive within ${EVADE_LIMIT_SECONDS} s of the boss first acquiring Chibi, with a route switch or loop level change`,
+  "alive-exits":
+    `every run exits alive within ${EVADE_LIMIT_SECONDS} s of the boss first acquiring Chibi, ` +
+    "with a route switch or loop level change",
   "evade-runs": `${EVADE_SEEDS.length} seeds from each of ${EVADE_STARTS.length} starts`,
   "path-out": "every boss spawn, reachable spot and Chibi refuge has a path out",
   "required-routes": "the encounter profile's required walks clear, slots empty and filled",
