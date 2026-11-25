@@ -14,6 +14,7 @@ import type {
   Point,
   Rect,
 } from "../data/types/index.ts";
+import { attackGate } from "./attackGate.ts";
 import {
   BEHAVIOUR_ABILITIES,
   type BehaviourAbilityParams,
@@ -27,7 +28,6 @@ import {
   attackProtected,
   attackReady,
   type BehaviourAttackState,
-  canEnterAttack,
   clearTellCancels,
   enterAttack,
 } from "./behaviourAttack.ts";
@@ -1171,13 +1171,16 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
                   !fallback.motion.selection
                 );
               })())) &&
-          canEnterAttack(nodeOf(object, to), next) &&
           !(supportMotion && !supported && nodeOf(object, to).attack?.phase === "completed") &&
-          when.every((condition) =>
-            condition.kind === "arrived" && supportMotion
-              ? supported
-              : matches(supportPerception, object, current, next, condition),
-          ),
+          attackGate(
+            (condition) =>
+              condition.kind === "arrived" && supportMotion
+                ? supported
+                : matches(supportPerception, object, current, next, condition),
+            object,
+            next,
+            { to, when },
+          ).admitted,
       );
   if (transition) {
     if (instant.has(next.stateKey)) {
@@ -1242,15 +1245,16 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     }
     // Attacks are scored only at a slice that did not arrive here through instant transitions,
     // so a scored attack never closes an instant cycle.
-    const clearance = relief?.pause.tellClearanceSeconds ?? 0;
-    const sincePause = next.scorer?.sincePauseSeconds;
     const gated = node.transitions.filter(
-      ({ score, to, when }) =>
-        score &&
+      (transition) =>
+        transition.score &&
         instant.size === 0 &&
-        (sincePause === undefined || sincePause >= clearance - EDGE) &&
-        canEnterAttack(nodeOf(object, to), next) &&
-        when.every((condition) => matches(supportPerception, object, current, next, condition)),
+        attackGate(
+          (condition) => matches(supportPerception, object, current, next, condition),
+          object,
+          next,
+          transition,
+        ).admitted,
     );
     if (capture || gated.length > 0) {
       if (!world.decisions) {
@@ -1378,8 +1382,12 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
         return node.transitions.some(
           ({ to, when }) =>
             when.some((condition) => condition.kind === "arrived") &&
-            canEnterAttack(nodeOf(object, to), future) &&
-            when.every((condition) => matches(perception, object, point, future, condition)),
+            attackGate(
+              (condition) => matches(perception, object, point, future, condition),
+              object,
+              future,
+              { to, when },
+            ).admitted,
         );
       },
       frame,
