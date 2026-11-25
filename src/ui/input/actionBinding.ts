@@ -13,6 +13,11 @@ import {
   createButton,
 } from "@andornaut/game-kit/runtime/web/ui/dom/button";
 import { guardClicks, type PressGuard } from "@andornaut/game-kit/runtime/web/ui/dom/domPress";
+import {
+  createFormRow,
+  type FormRowOptions,
+  type FormRowView,
+} from "@andornaut/game-kit/runtime/web/ui/dom/formRow";
 import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { TOUCH } from "../../data/touch.ts";
@@ -33,7 +38,10 @@ interface ActionRegistration {
 }
 
 const registrations = new WeakMap<HTMLElement, Set<ActionRegistration>>();
-const standardButtons = new WeakMap<HTMLElement, ButtonView>();
+// A standard control's part in the binding: a button's, or a form row's.
+type StandardControl = Pick<ButtonView, "dispose" | "holdAction" | "setPressed">;
+
+const standardButtons = new WeakMap<HTMLElement, StandardControl>();
 const DISCRETE_CONTROLS = [
   "button",
   'input:is([type="button"],[type="submit"],[type="reset"],[type="checkbox"],[type="radio"])',
@@ -82,6 +90,17 @@ function currentButtonAction(button: HTMLElement): GameAction | null {
   return null;
 }
 
+// The hold rule of the standard control that mounted holds once it is created.
+function gameHoldRule(mounted: { element?: HTMLButtonElement }): HoldRule {
+  return {
+    holdMs: TOUCH.actionHoldMilliseconds,
+    get slopPx() {
+      const { element } = mounted;
+      return TOUCH.tapMaxDistance * (element === undefined ? 1 : readUnit(element));
+    },
+  };
+}
+
 export function createGameButton(
   document: Document,
   appearance: ButtonAppearance,
@@ -103,13 +122,23 @@ export function createGameButton(
       };
     },
     ...state,
-    rule: {
-      holdMs: TOUCH.actionHoldMilliseconds,
-      get slopPx() {
-        const { element } = mounted;
-        return TOUCH.tapMaxDistance * (element === undefined ? 1 : readUnit(element));
-      },
-    },
+    rule: gameHoldRule(mounted),
+  });
+  mounted.element = view.element;
+  standardButtons.set(view.element, view);
+  return view;
+}
+
+// A kit form row as a standard control: the whole row takes the action its scene binds to it.
+export function createGameFormRow(
+  document: Document,
+  options: Omit<FormRowOptions, "getAction" | "rule">,
+): FormRowView {
+  const mounted: { element?: HTMLButtonElement } = {};
+  const view = createFormRow(document, {
+    ...options,
+    getAction: currentButtonAction,
+    rule: gameHoldRule(mounted),
   });
   mounted.element = view.element;
   standardButtons.set(view.element, view);
@@ -190,7 +219,7 @@ function resolved(action: GameAction | null): HoldAction | null {
 
 // Pointer taps and holds share the kit's lifecycle; native keyboard activation keeps its guard.
 export function bindGameActions(options: GameActionOptions, root: HTMLElement): HoldActionsBinding {
-  let pressed: ButtonView | undefined;
+  let pressed: StandardControl | undefined;
   const binding = bindHoldActions(
     {
       activation: "pointer-release",
