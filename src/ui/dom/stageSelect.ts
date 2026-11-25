@@ -156,7 +156,7 @@ function stageButton(
   lockedReason: string,
   stage: StageFace,
 ): HTMLButtonElement {
-  const button = element("button", "stage-select-stage ui-press");
+  const button = element("button", "stage-select-stage");
   button.type = "button";
   button.dataset.stage = stage.id;
   button.dataset.look = stage.look;

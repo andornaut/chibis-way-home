@@ -30,23 +30,18 @@ const rule = (sheet: string, selector: string) =>
   ).exec(readFileSync(new URL(sheet, import.meta.url), "utf8"))?.[1];
 
 // The view's one row is the view's height and a card is no taller than that less the screen margin
-// above and below, so a card taller than that shrinks its scroll body and keeps the rest in view.
+// above and below.
 it("bounds every card at the view less the screen margin above and below", () => {
   expect(rule("ui.css", ".ui-card-view")).toContain("grid-template-rows: minmax(0, 1fr);");
   expect(rule("ui.css", ".ui-card")).toContain(
     "max-height: calc(100% - 2 * var(--ui-unit) * var(--card-screen-margin) * 1px);",
   );
   expect(UI_LAYOUT["--card-screen-margin"]).toBe(CARD_SCREEN_MARGIN);
-  const scroll = rule("ui.css", ".ui-card-scroll");
-  expect(scroll).toContain("flex: 1 1 auto;");
-  expect(scroll).toContain("min-height: 0;");
-  expect(scroll).toContain("overflow-y: auto;");
 });
 
 it("fits Cheats as one Medium column with only its two actions, switch, status and navigation", () => {
   const view = createCheatsCard(document, "cheats", WORDS);
   expect(view.dialog.dataset.cardWidth).toBe("medium");
-  expect(view.dialog.querySelector(".ui-card-scroll")).toBeNull();
   expect(rule("cheats.css", ".cheats-status:empty + .cheats-footer")).toContain("margin-top: 0;");
   const header = view.dialog.querySelector(".ui-card-header")!;
   expect([...header.children].map((element) => element.className)).toEqual(["ui-card-title"]);
@@ -69,8 +64,6 @@ it("fits Settings in two non-scrolling columns with fixed navigation", () => {
     install: true,
     switches: [...TOUCH_SETTINGS, "fps", "reducedMotion"],
   });
-  const scrollers = view.dialog.querySelectorAll(".ui-card-scroll");
-  expect(scrollers).toHaveLength(0);
   expect(view.back).toBeInstanceOf(HTMLButtonElement);
   expect(view.back.closest(".ui-card-actions.settings-footer")?.parentElement).toBe(view.dialog);
   expect(view.back.classList.contains("ui-text-button-primary")).toBe(true);

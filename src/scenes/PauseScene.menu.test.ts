@@ -234,7 +234,6 @@ it("opens the same Cheats from Pause and restores its invoker before resuming", 
   const resume = f.pause.button(TEXT.pause.resume);
   expect(f.pause.dialog.hasAttribute("data-home-shown")).toBe(true);
   expect(cheats.parentElement).toBe(resume.parentElement);
-  expect(f.pause.dialog.querySelector(".ui-card-scroll")).toBeNull();
   resume.focus();
   press(cheats, 1, { pointerType: "touch" }).lift();
   expect(f.scenes.launch).toHaveBeenCalledExactlyOnceWith("cheats", { opener: "pause" });

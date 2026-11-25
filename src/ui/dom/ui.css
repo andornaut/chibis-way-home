@@ -84,22 +84,6 @@
   outline: none;
 }
 
-/* A card's body that scrolls once the card reaches its greatest height: it shrinks first, so the
-   card's title and bottom actions stay in view. Rows pan the body as well as press. */
-.ui-card-scroll {
-  flex: 1 1 auto;
-  align-self: stretch;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  touch-action: pan-y;
-}
-
-.ui-card-scroll .settings-row,
-.ui-card-scroll .ui-text-button {
-  touch-action: pan-y;
-}
-
 /* Text boxes trim to the ink's cap height and baseline where the browser supports it, so the
    gaps between them are the gaps between their ink. */
 .ui-card-title,

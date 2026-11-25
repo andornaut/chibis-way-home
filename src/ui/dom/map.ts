@@ -131,7 +131,7 @@ export function createMap(document: Document, words: MapWords, faces: readonly M
     );
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "map-destination ui-press";
+    button.className = "map-destination";
     button.dataset.destination = id;
     button.dataset.state = state;
     button.tabIndex = -1;

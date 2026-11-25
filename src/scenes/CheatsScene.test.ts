@@ -117,7 +117,6 @@ it.each([false, true])("shows only the current cheat controls in app mode %s", (
     null,
   ]);
   expect(card.dataset.cardWidth).toBe("medium");
-  expect(card.querySelector(".ui-card-scroll")).toBeNull();
   expect(document.querySelector("[role=alertdialog]")).toBeNull();
   expect(saves.resetSave).not.toHaveBeenCalled();
 });

@@ -104,7 +104,7 @@ export function createStart(
     const icon = createNavigationDisc(document, colours, "rest", "exit");
     const { element: button, face } = createGameButton(
       document,
-      { className: "start-icon-button ui-press", face: { className: "start-icon-face" } },
+      { className: "start-icon-button", face: { className: "start-icon-face" } },
       { icon, kind: "icon", name: words[control] },
     );
     button.dataset.control = control;

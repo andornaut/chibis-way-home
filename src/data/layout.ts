@@ -97,7 +97,7 @@ export const PLAY_MARK = { gap: 6, height: 10, width: 5 } as const;
 
 // Each modal card takes one width family's width, held CARD_SCREEN_MARGIN in from the view's sides
 // (src/ui/layout/contentCard.ts cardWidth); its height follows its content up to the view's height
-// less CARD_SCREEN_MARGIN above and below, past which its body scrolls (ui.css .ui-card-scroll).
+// less CARD_SCREEN_MARGIN above and below (ui.css .ui-card).
 export const CARD_WIDTH = { large: 688, medium: 500, small: 400 } as const;
 export const CARD_SCREEN_MARGIN = 16;
 
@@ -243,8 +243,8 @@ export const MAP_LAYOUT = {
   },
   // art: the paper map, filling the screen.
   paper: { height: 360, width: 720, x: 0, y: 0 } satisfies Rect,
-  // The title's top-left.
-  title: { x: 24, y: 16 } satisfies Point,
+  // The title's top.
+  title: { y: 16 },
   // art: a zone marker frame's side.
   zoneMarker: 35,
 } as const;
