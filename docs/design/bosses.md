@@ -18,3 +18,4 @@ Reference: [boss behaviour](../../gameplay/design.md#boss-behaviour), [boss enco
 | cwh-0263 | Gate boss charges by reach and room to move                  | [cwh-0263.md](../work/cwh-0263.md) |
 | cwh-0276 | Refactor boss AI for repeatable decisions and diagnosis      | [cwh-0276.md](../work/cwh-0276.md) |
 | cwh-0278 | Use one two-second arena slowdown standard                   | [cwh-0278.md](../work/cwh-0278.md) |
+| cwh-0309 | Record boss contact as its own death reason                  | [cwh-0309.md](../work/cwh-0309.md) |
