@@ -1,6 +1,10 @@
 {
   "arenas": [
-    { "hash": "f2ca0c3c81dc57f3", "id": "arena-dog-city-boundary", "stage": "city-boundary" }
+    {
+      "hash": "40caa30ca77daadd",
+      "id": "arena-dog-city-boundary",
+      "stage": "city-boundary"
+    }
   ],
   "entries": [
     {
@@ -10,9 +14,16 @@
       "kind": "pair",
       "layout": "de4d62e5fd1bbfaf",
       "modules": ["city-crossbeam-recovery", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "7de5ba1fbbd237b7",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "d66db4dd9830289a:666",
       "work": 666
     },
@@ -23,9 +34,16 @@
       "kind": "pair",
       "layout": "d89b51c3362aae93",
       "modules": ["city-crossbeam-recovery", "city-crumbling-climb"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "e6b5ca8399207a79",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "571b2d2362e7e63d:798",
       "work": 798
     },
@@ -36,9 +54,16 @@
       "kind": "pair",
       "layout": "63fab95b1132894e",
       "modules": ["city-crossbeam-recovery", "city-crumbling-offset-bridge"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "3312789fd49a3359",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b4139db029872518:669",
       "work": 669
     },
@@ -49,9 +74,16 @@
       "kind": "pair",
       "layout": "ec253aa93f43a934",
       "modules": ["city-crossbeam-recovery", "city-crumbling-perch"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "27d38e4271cb8847",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "14554ad743d492ee:855",
       "work": 855
     },
@@ -62,9 +94,16 @@
       "kind": "pair",
       "layout": "83ee09282e990314",
       "modules": ["city-crossbeam-recovery", "city-crumbling-pit"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "ab68ca2c4ed8cddb",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "c6d0713f9ab4b6e4:608",
       "work": 608
     },
@@ -75,9 +114,16 @@
       "kind": "pair",
       "layout": "a06c0db9e7ab5438",
       "modules": ["city-crossbeam-recovery", "city-gap-climb"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "1cd84993aa3793e6",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "d1e383bf2747329d:444",
       "work": 444
     },
@@ -88,9 +134,16 @@
       "kind": "pair",
       "layout": "a0a34d86367c45de",
       "modules": ["city-crossbeam-recovery", "city-ledge-climb"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "906a111adda0e56a",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "af66e854defa017f:456",
       "work": 456
     },
@@ -101,9 +154,16 @@
       "kind": "pair",
       "layout": "8caeba6af4d37474",
       "modules": ["city-crossbeam-recovery", "city-ledge-pit"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "ab68ca2c4ed8cddb",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "fec3a04b5417d992:625",
       "work": 625
     },
@@ -114,9 +174,16 @@
       "kind": "pair",
       "layout": "61357bc66d5eb7a2",
       "modules": ["city-crossbeam-recovery", "city-pillar-climb"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "0038f2dbee67295e",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "b6bc30ad596c20da:825",
       "work": 825
     },
@@ -127,9 +194,16 @@
       "kind": "pair",
       "layout": "25f579fd839e40b2",
       "modules": ["city-crossbeam-recovery", "city-tap-strip"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "6676c1afd4634ca5",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "9701ab056ff903bf:986",
       "work": 986
     },
@@ -140,9 +214,16 @@
       "kind": "pair",
       "layout": "65529c7b3c737ef0",
       "modules": ["city-crumbling-descent", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "9eb34de308a4fd27",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "d64b6eea36bdeb9d:993",
       "work": 993
     },
@@ -153,9 +234,16 @@
       "kind": "pair",
       "layout": "5d0444b1ad68e80e",
       "modules": ["city-crumbling-offset-bridge", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "749b70b9a8327ff4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "6810e1910d022744:547",
       "work": 547
     },
@@ -166,9 +254,16 @@
       "kind": "pair",
       "layout": "970d64d3eb056674",
       "modules": ["city-crumbling-offset-bridge", "city-gap-climb"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "18eba37236cc0b78",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7d812b4b345a44d1:444",
       "work": 444
     },
@@ -179,9 +274,16 @@
       "kind": "pair",
       "layout": "5316c42219579dc4",
       "modules": ["city-crumbling-offset-bridge", "city-ledge-climb"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "ff1c52ba115cc528",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "480000ab2fb29739:456",
       "work": 456
     },
@@ -192,9 +294,16 @@
       "kind": "pair",
       "layout": "0b7b3e0e7c253264",
       "modules": ["city-crumbling-offset-bridge", "city-ledge-pit"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "5ed5982c4c85678c",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "3a9849748cf9e446:799",
       "work": 799
     },
@@ -205,9 +314,16 @@
       "kind": "pair",
       "layout": "35fe748be01b5b86",
       "modules": ["city-crumbling-offset-bridge", "city-pillar-climb"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "66b0e4d1b1cd37ef",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "ccd266c421e0e4dc:456",
       "work": 456
     },
@@ -218,9 +334,16 @@
       "kind": "pair",
       "layout": "96b495d8148ea3d6",
       "modules": ["city-crumbling-offset-bridge", "city-tap-strip"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "04bfd59277b0b6d7",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "48e7fe86fc8f896d:1976",
       "work": 1976
     },
@@ -231,9 +354,16 @@
       "kind": "pair",
       "layout": "8c6b0eb741bca9a7",
       "modules": ["city-crumbling-perch", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "c77d1e206f5a3957",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4fee957fcb5fa29d:548",
       "work": 548
     },
@@ -244,9 +374,16 @@
       "kind": "pair",
       "layout": "aecc94feea1e471f",
       "modules": ["city-crumbling-pit", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "e989600193ad392d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9af5213d9beb98f7:459",
       "work": 459
     },
@@ -257,9 +394,16 @@
       "kind": "pair",
       "layout": "1c96fca73d32824e",
       "modules": ["city-drop-gap", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "377d91155b48f129",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9b812d85ff78c38b:1092",
       "work": 1092
     },
@@ -270,9 +414,16 @@
       "kind": "pair",
       "layout": "a3df7973341b1eed",
       "modules": ["city-drop-gap", "city-crumbling-offset-bridge"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "df9b4efbee2ef2ed",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9e1ed5ff292dad92:1092",
       "work": 1092
     },
@@ -283,9 +434,16 @@
       "kind": "pair",
       "layout": "050c7e0fbcc9f147",
       "modules": ["city-ledge-climb", "city-long-drop-gap"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "b541affff2f24fed",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "ce567963b28bb7cd:391",
       "work": 391
     },
@@ -296,9 +454,16 @@
       "kind": "pair",
       "layout": "04127207ee6fb3f4",
       "modules": ["city-ledge-pit", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "e989600193ad392d",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "9af5213d9beb98f7:459",
       "work": 459
     },
@@ -309,9 +474,16 @@
       "kind": "pair",
       "layout": "e7388160345bd782",
       "modules": ["city-ledge-pit", "city-crumbling-offset-bridge"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "5d4889e42280fc9a",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "730ae538941d6cf8:459",
       "work": 459
     },
@@ -322,9 +494,16 @@
       "kind": "pair",
       "layout": "09705ff9f9023211",
       "modules": ["city-long-drop-gap", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "86737755ca5f2f43",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "15b8320919d29faa:962",
       "work": 962
     },
@@ -335,9 +514,16 @@
       "kind": "pair",
       "layout": "7c16c786c9c682de",
       "modules": ["city-long-drop-gap", "city-crumbling-offset-bridge"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "31b4532f65bb5834",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "4b43556253a65d43:962",
       "work": 962
     },
@@ -348,9 +534,16 @@
       "kind": "pair",
       "layout": "df37a9b0fe43ca00",
       "modules": ["city-pillar-climb", "city-long-drop-gap"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "0d962461052d4731",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "1859998fbec995c8:479",
       "work": 479
     },
@@ -361,9 +554,16 @@
       "kind": "pair",
       "layout": "4a843316f8bb38c3",
       "modules": ["city-planter", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "51cee65bede4a3b4",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "7483d8584a1c86c8:459",
       "work": 459
     },
@@ -374,9 +574,16 @@
       "kind": "pair",
       "layout": "876acc03a6b5e25c",
       "modules": ["city-planter", "city-crumbling-offset-bridge"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "3aeaf869457572c2",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "99f6cc7714a48432:459",
       "work": 459
     },
@@ -387,9 +594,16 @@
       "kind": "pair",
       "layout": "1390b3ff8c85c321",
       "modules": ["city-roof-stair-ascent", "city-roof-drop-channel"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "adbe1fb4bb54b8e2",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "13f454deb910b43a:697",
       "work": 697
     },
@@ -400,9 +614,16 @@
       "kind": "pair",
       "layout": "5383c2bdbf43ff87",
       "modules": ["city-tap-step", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "15ae86ff755234e7",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "37b5a032bf9eec50:976",
       "work": 976
     },
@@ -413,9 +634,16 @@
       "kind": "pair",
       "layout": "382e8016fde5efdf",
       "modules": ["city-tap-step", "city-crumbling-climb"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "c585807b2aa701a8",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "5b36cba46c4e286c:1034",
       "work": 1034
     },
@@ -426,9 +654,16 @@
       "kind": "pair",
       "layout": "f887218310b9c458",
       "modules": ["city-tap-step", "city-crumbling-offset-bridge"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "10955c5a09079bc8",
-      "slots": { "door": 0, "event": 0 },
+      "slots": {
+        "door": 0,
+        "event": 0
+      },
       "trace": "f65f71bce48799f4:905",
       "work": 905
     },
@@ -439,9 +674,16 @@
       "kind": "pair",
       "layout": "bfbe0565bd9b124d",
       "modules": ["city-tap-strip", "city-crossbeam-recovery"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "d774b35794e3ecf8",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "3d63e8b66a78e1b7:1486",
       "work": 1486
     },
@@ -452,28 +694,41 @@
       "kind": "pair",
       "layout": "b3479eb6ec103380",
       "modules": ["city-tap-strip", "city-crumbling-offset-bridge"],
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "proof": {
+        "kind": "ordinary",
+        "tuning": "63028676eb5663ac",
+        "version": 1
+      },
       "route": "928fa7a487e979c6",
-      "slots": { "door": 1, "event": 0 },
+      "slots": {
+        "door": 1,
+        "event": 0
+      },
       "trace": "0aeccb87ec80d555:1486",
       "work": 1486
     }
   ],
-  "inputs": { "data": "c2de1acf21b858d4", "proofs": "d4ad7b8a6d597900" },
+  "inputs": {
+    "data": "9af2c2a4ffd9f5d7",
+    "proofs": "b298be7cd63f3426"
+  },
   "version": 1,
   "zone": "blue",
   "approaches": [
     {
       "arena": "arena-dog-city-boundary",
       "evidence": {
-        "arenaIndex": 8,
-        "bossIndex": 36,
-        "plan": "95bbcd036a77faa0",
-        "retries": 1,
+        "arenaIndex": 7,
+        "bossIndex": 28,
+        "plan": "5f775ad726c495d7",
+        "retries": 0,
         "seed": 2,
-        "trace": "d73ff52a073b0406:40863"
+        "trace": "80fafb472be9303c:37686"
       },
-      "inputs": { "data": "c2de1acf21b858d4", "proofs": "d4ad7b8a6d597900" },
+      "inputs": {
+        "data": "9af2c2a4ffd9f5d7",
+        "proofs": "b298be7cd63f3426"
+      },
       "predecessors": ["outdoor-deep-ascent"],
       "profile": "cold-encounter-v1",
       "stage": "city-boundary"
