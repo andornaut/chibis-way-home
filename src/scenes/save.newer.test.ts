@@ -1,8 +1,14 @@
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
+
+import { createPageSave } from "../progress/save/pageSave.ts";
+import { createSave } from "./save.ts";
+
+// A page save of its own over the stubbed localStorage.
+const openSave = () => createSave(createPageSave(localSaveStorage(), () => false));
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.resetModules();
 });
 
 // Storage holding initial, recording every write.
@@ -21,7 +27,7 @@ function storage(initial: readonly (readonly [string, string])[]): [string, stri
 
 it("reports the saves current when no newer version wrote them", async () => {
   storage([]);
-  const save = await import("./save.ts");
+  const save = openSave();
   expect(await save.loadProgress()).toBe("current");
 });
 
@@ -29,7 +35,7 @@ it.each(["chibis-way-home.achievements", "chibis-way-home.save", "chibis-way-hom
   "reports a newer %s and writes nothing",
   async (key) => {
     const writes = storage([[key, '{"version":999999}']]);
-    const save = await import("./save.ts");
+    const save = openSave();
     expect(await save.loadProgress()).toBe("newer");
     await save.flushStats();
     await new Promise((resolve) => {

@@ -1,10 +1,15 @@
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
+import { createPageSave } from "../progress/save/pageSave.ts";
+import { createSave } from "./save.ts";
+
+// A page save of its own over the stubbed localStorage.
+const openSave = () => createSave(createPageSave(localSaveStorage(), () => false));
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.resetModules();
 });
 
 function storage(): void {
@@ -17,7 +22,7 @@ function storage(): void {
 
 it("keeps confirmed Restart cleared across map browsing and reopen until real stage entry", async () => {
   storage();
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   save.beginStageRun(stage);
@@ -49,7 +54,7 @@ it("keeps confirmed Restart cleared across map browsing and reopen until real st
 
 it("does not begin saved progress for a non-catalogued diagnostic stage", async () => {
   storage();
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   save.beginStageRun("diagnostic-fixture");
   save.saveStand(ZONE_MAP.start);

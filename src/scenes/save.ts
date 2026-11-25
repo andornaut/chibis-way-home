@@ -1,15 +1,8 @@
-import type { StoreSaveResult } from "@andornaut/game-kit/runtime/save/saveStore";
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 
-import type { AchievementId, Rect, SkillId, ZoneLayout } from "../data/types/index.ts";
-import type {
-  AchievementEntry,
-  Progress,
-  QueuedTip,
-  RunStatsSummary,
-  WholeRunStatsSummary,
-  ZoneStatsSummary,
-} from "../progress/index.ts";
-import * as pageSave from "../progress/save/pageSave.ts";
+import type { Rect, ZoneLayout } from "../data/types/index.ts";
+import type { Progress } from "../progress/index.ts";
+import { createPageSave, type PageSave, type SaveAge } from "../progress/save/pageSave.ts";
 import { activeStepSeconds } from "../rules/death.ts";
 import { areaOf, type ZoneState } from "../rules/zone.ts";
 import { zoneStepRecord } from "../rules/zoneRecords.ts";
@@ -17,166 +10,129 @@ import { stepTips, tipsInView } from "../rules/zoneTips.ts";
 
 export type { Progress };
 
-// Whether the map opens every zone and stage (Unlock all zones).
-export function mapFullyOpen(): boolean {
-  return pageSave.savedProgress().allZonesUnlocked;
+/**
+ * The scenes' save operations over one page save: its own, and those that read a zone step for
+ * it.
+ */
+export function createSave(page: PageSave) {
+  return {
+    ...page,
+    // Whether the map opens every zone and stage (Unlock all zones).
+    mapFullyOpen(): boolean {
+      return page.savedProgress().allZonesUnlocked;
+    },
+    probeSaveAge(): Promise<SaveAge | "unavailable"> {
+      return page.probeSaveAge();
+    },
+    recordActiveStageStep(
+      stage: string,
+      seconds: number,
+      before: ZoneState,
+      after: ZoneState,
+    ): void {
+      page.recordActiveStageStep(
+        stage,
+        () => activeStepSeconds(seconds, before, after),
+        before.death === undefined && after.death !== undefined,
+      );
+    },
+    // Active seconds spent in a room behind one of stage's doors, on the same clock as live steps.
+    recordRoomTime(stage: string, seconds: number): void {
+      page.recordActiveStageStep(stage, () => seconds, false);
+    },
+    // The escapes and skill use of one live step in layout, for the achievements.
+    recordStepAchievements(
+      layout: ZoneLayout,
+      stage: string,
+      before: ZoneState,
+      after: ZoneState,
+    ): void {
+      const { escaped, skillUsed } = zoneStepRecord(before, after);
+      const objects = areaOf(layout, before.area).objects;
+      page.recordStageStepAchievements(stage, {
+        escaped: escaped.map((index) => objects[index]!.character),
+        skillUsed,
+      });
+    },
+    resetSaveAvailable(): Promise<boolean> {
+      return page.resetSaveAvailable();
+    },
+    // Update now's save: the statistics flushed and every pending progress write settled.
+    settleSaves(): Promise<void> {
+      return page.settleWrites();
+    },
+    // The tips live steps from before to after and the view after them trigger: a boss acquiring
+    // him (stepTips), and a room door or red hazard in view, a rect in the area's pixels
+    // (tipsInView).
+    triggerZoneTips(layout: ZoneLayout, view: Rect, before: ZoneState, after: ZoneState): void {
+      const area = areaOf(layout, after.area);
+      page.triggerTips([...stepTips(area, before, after), ...tipsInView(area, after, view)]);
+    },
+    // The cheat that saves, as normal play does (gameplay/cheats.md).
+    unlockAllPowerUps(): void {
+      page.grantAllSkills();
+    },
+  };
 }
 
-// The cheats that save, as normal play does (gameplay/cheats.md).
-export function unlockAllPowerUps(): void {
-  pageSave.grantAllSkills();
-}
-export function unlockAllZones(): void {
-  pageSave.unlockAllZones();
-}
-
-export function resetSaveAvailable(): Promise<boolean> {
-  return pageSave.resetSaveAvailable();
-}
-
-export function resetSave(): Promise<StoreSaveResult> {
-  return pageSave.resetSave();
-}
-
-export function probeSaveAge(): ReturnType<typeof pageSave.probeSaveAge> {
-  return pageSave.probeSaveAge();
-}
-
-export function loadProgress(): Promise<pageSave.SaveAge> {
-  return pageSave.loadProgress();
-}
-export function beginZoneVisit(zone: string): void {
-  pageSave.beginZoneVisit(zone);
-}
-export function beginStageRun(stage: string): void {
-  pageSave.beginStageRun(stage);
-}
-export function retryStageRun(stage: string): void {
-  pageSave.retryStageRun(stage);
-}
-export function completeStageRun(stage: string): RunStatsSummary {
-  return pageSave.completeStageRun(stage);
-}
-export function completeRunLinkStage(stage: string): void {
-  pageSave.completeRunLinkStage(stage);
-}
-export function stageRunStats(stage: string): RunStatsSummary {
-  return pageSave.stageRunStats(stage);
-}
-export function zoneVisitStats(zone: string): ZoneStatsSummary {
-  return pageSave.zoneVisitStats(zone);
-}
-export function activeStageTime(stage: string): number {
-  return pageSave.activeStageTime(stage);
-}
-export function recordActiveStageStep(
-  stage: string,
-  seconds: number,
-  before: ZoneState,
-  after: ZoneState,
-): void {
-  pageSave.recordActiveStageStep(
-    stage,
-    () => activeStepSeconds(seconds, before, after),
-    before.death === undefined && after.death !== undefined,
-  );
-}
-// Active seconds spent in a room behind one of stage's doors, on the same clock as live steps.
-export function recordRoomTime(stage: string, seconds: number): void {
-  pageSave.recordActiveStageStep(stage, () => seconds, false);
-}
-// The escapes and skill use of one live step in layout, for the achievements.
-export function recordStepAchievements(
-  layout: ZoneLayout,
-  stage: string,
-  before: ZoneState,
-  after: ZoneState,
-): void {
-  const { escaped, skillUsed } = zoneStepRecord(before, after);
-  const objects = areaOf(layout, before.area).objects;
-  pageSave.recordStageStepAchievements(stage, {
-    escaped: escaped.map((index) => objects[index]!.character),
-    skillUsed,
+// Flushes as the page is hidden or left. False where there is no page to watch.
+function watchPageLeaving(flush: () => void): boolean {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    return false;
+  }
+  window.addEventListener("pagehide", flush);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      flush();
+    }
   });
+  return true;
 }
-export function recordStageChunks(stage: string, middle: readonly string[]): void {
-  pageSave.recordStageChunks(stage, middle);
-}
-export function recentStageChunks(stage: string): readonly (readonly string[])[] {
-  return pageSave.recentStageChunks(stage);
-}
-export function savedRecentMiddleChunks(zone: string): readonly (readonly string[])[] {
-  return pageSave.savedRecentMiddleChunks(zone);
-}
-export function nextTip(blocked: () => boolean): QueuedTip | undefined {
-  return pageSave.nextTip(blocked);
-}
-// The tips live steps from before to after and the view after them trigger: a boss acquiring him
-// (stepTips), and a room door or red hazard in view, a rect in the area's pixels (tipsInView).
-export function triggerZoneTips(
-  layout: ZoneLayout,
-  view: Rect,
-  before: ZoneState,
-  after: ZoneState,
-): void {
-  const area = areaOf(layout, after.area);
-  pageSave.triggerTips([...stepTips(area, before, after), ...tipsInView(area, after, view)]);
-}
-export function nextAchievementNotice(blocked: () => boolean): AchievementId | undefined {
-  return pageSave.nextAchievementNotice(blocked);
-}
-export function achievementCard(): AchievementEntry[] {
-  return pageSave.achievementCard();
-}
-export function clearStageTime(stage: string): void {
-  pageSave.clearStageTime(stage);
-}
-export function flushStats(): Promise<void> {
-  return pageSave.flushStats();
-}
-// Update now's save: the statistics flushed and every pending progress write settled.
-export function settleSaves(): Promise<void> {
-  return pageSave.settleWrites();
-}
-export function wholeRunStats(): WholeRunStatsSummary {
-  return pageSave.wholeRunStats();
-}
-export function resetWholeRunStats(): void {
-  pageSave.resetWholeRunStats();
-}
-export function savedSkills(): readonly SkillId[] {
-  return pageSave.savedSkills();
-}
-export function activeSkill(): SkillId | null {
-  return pageSave.activeSkill();
-}
-export function selectActiveSkill(skill: SkillId | null): boolean {
-  return pageSave.selectActiveSkill(skill);
-}
-export function grantSkill(skill: SkillId): boolean {
-  return pageSave.grantSkill(skill);
-}
-export function savedProgress(): Progress {
-  return pageSave.savedProgress();
-}
-export function savedMap(): ReturnType<typeof pageSave.savedMap> {
-  return pageSave.savedMap();
-}
-export function saveOpeningSeen(): void {
-  pageSave.saveOpeningSeen();
-}
-export function seenZoneIntros(): readonly string[] {
-  return pageSave.seenZoneIntros();
-}
-export function saveZoneIntro(zone: string): void {
-  pageSave.saveZoneIntro(zone);
-}
-export function saveStand(stand: string): void {
-  pageSave.saveStand(stand);
-}
-export function saveCompleted(node: string): void {
-  pageSave.saveCompleted(node);
-}
-export function clearProgress(): void {
-  pageSave.clearProgress();
-}
+
+// The page's one save, over its localStorage. Nothing is read until loadProgress.
+const save = createSave(createPageSave(localSaveStorage(), watchPageLeaving));
+
+export const {
+  achievementCard,
+  activeSkill,
+  activeStageTime,
+  beginStageRun,
+  beginZoneVisit,
+  clearProgress,
+  clearStageTime,
+  completeRunLinkStage,
+  completeStageRun,
+  flushStats,
+  grantSkill,
+  loadProgress,
+  mapFullyOpen,
+  nextAchievementNotice,
+  nextTip,
+  probeSaveAge,
+  recentStageChunks,
+  recordActiveStageStep,
+  recordRoomTime,
+  recordStageChunks,
+  recordStepAchievements,
+  resetSave,
+  resetSaveAvailable,
+  resetWholeRunStats,
+  retryStageRun,
+  saveCompleted,
+  saveOpeningSeen,
+  saveStand,
+  saveZoneIntro,
+  savedMap,
+  savedProgress,
+  savedRecentMiddleChunks,
+  savedSkills,
+  seenZoneIntros,
+  selectActiveSkill,
+  settleSaves,
+  stageRunStats,
+  triggerZoneTips,
+  unlockAllPowerUps,
+  unlockAllZones,
+  wholeRunStats,
+  zoneVisitStats,
+} = save;

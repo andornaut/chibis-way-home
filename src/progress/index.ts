@@ -1,6 +1,7 @@
 // Progress through the game: the map and its destinations, stage completion routing, the
 // opening, skill ownership and selection, achievements, first-time tips, and the save formats.
-// src/progress/save/pageSave.ts opens the page's saves on load, so it stays out of this index.
+// src/progress/save/pageSave.ts reads every zone's data, so it stays out of this index and out of
+// the page's first module.
 export {
   ACHIEVEMENT_IDS,
   achievementEntries,

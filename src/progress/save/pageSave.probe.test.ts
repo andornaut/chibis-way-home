@@ -1,4 +1,5 @@
 import { encodeSave, type SaveFormat } from "@andornaut/game-kit/runtime/save/versionedSave";
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { expect, it, vi } from "vitest";
 
 import { CHUNKS } from "../../data/chunks.ts";
@@ -6,9 +7,14 @@ import { ZONE_MAP } from "../../data/map.ts";
 import { RECIPES } from "../../data/zones.ts";
 import { ACHIEVEMENT_IDS } from "../achievements.ts";
 import { ACHIEVEMENT_KEYS, ACHIEVEMENTS_FORMAT } from "./achievements.ts";
-import { probeSaveAge, resetSave, resetSaveAvailable } from "./pageSave.ts";
+import { createPageSave } from "./pageSave.ts";
 import { PROGRESS_KEYS, progressFormat } from "./progress.ts";
 import { STATS_KEYS, statsFormat } from "./stats.ts";
+
+const { probeSaveAge, resetSave, resetSaveAvailable } = createPageSave(
+  localSaveStorage(),
+  () => false,
+);
 
 const encoded = <T>(format: SaveFormat<T>, save = format.fresh()): string => {
   const result = encodeSave(format, save);

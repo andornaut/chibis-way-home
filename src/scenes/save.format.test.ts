@@ -1,7 +1,13 @@
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
+import { createPageSave } from "../progress/save/pageSave.ts";
 import type { ZoneState } from "../rules/zone.ts";
+import { createSave } from "./save.ts";
+
+// A page save of its own over the stubbed localStorage.
+const openSave = () => createSave(createPageSave(localSaveStorage(), () => false));
 
 // Exact storage records for the scripted session from empty storage and reopening its final
 // records. The gifts of Dash and Speedy leave no skill selected, then the player selects Speedy.
@@ -108,7 +114,6 @@ const MOVING = { ...STILL, steps: 1 };
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.resetModules();
 });
 
 function storage(initial: readonly (readonly [string, string])[]): [string, string][] {
@@ -126,7 +131,7 @@ function storage(initial: readonly (readonly [string, string])[]): [string, stri
 
 it("writes the same records under the same keys as before the move", async () => {
   const writes = storage([]);
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   const destination = ZONE_MAP.destinations[0]!;
   const [first, second] = destination.stages;
@@ -165,7 +170,7 @@ it("writes the same records under the same keys as before the move", async () =>
 it("reopens records saved before the move and writes them back byte for byte", async () => {
   const finals = [...new Map(SESSION_WRITES.map(([key, value]) => [key, value]))];
   const writes = storage(finals);
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   expect(save.savedProgress()).toEqual({
     activeSkill: "speedy",

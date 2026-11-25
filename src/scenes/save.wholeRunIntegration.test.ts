@@ -1,11 +1,16 @@
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
+import { createPageSave } from "../progress/save/pageSave.ts";
 import type { ZoneState } from "../rules/zone.ts";
+import { createSave } from "./save.ts";
+
+// A page save of its own over the stubbed localStorage.
+const openSave = () => createSave(createPageSave(localSaveStorage(), () => false));
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.resetModules();
 });
 it("counts active death edges and retains whole-run totals across stage entry and retry", async () => {
   const values = new Map<string, string>();
@@ -13,7 +18,7 @@ it("counts active death edges and retains whole-run totals across stage entry an
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   save.beginStageRun(stage);
@@ -52,7 +57,7 @@ it("shows one attempt's active time in all six statistics for a single entry aft
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   const zone = ZONE_MAP.destinations[0]!.id;
@@ -87,7 +92,7 @@ it("counts leaving a stage uncleared and coming back as another attempt", async 
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   const stage = ZONE_MAP.start;
   const zone = ZONE_MAP.destinations[0]!.id;

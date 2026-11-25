@@ -1,11 +1,17 @@
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { BIRD_FRAME } from "../assets/index.ts";
 import { BIRD } from "../data/bird.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { SKILL_PROFILES, STATS_VERSION } from "../progress/index.ts";
+import { createPageSave } from "../progress/save/pageSave.ts";
 import { zoneLayout } from "../rules/tiles.ts";
 import { startZone, stepZone } from "../rules/zone.ts";
+import { createSave } from "./save.ts";
+
+// A page save of its own over the stubbed localStorage.
+const openSave = () => createSave(createPageSave(localSaveStorage(), () => false));
 
 const LAYOUT = zoneLayout(12, BIRD_FRAME, { archetypes: {}, characters: {} }, {}, {}, new Set(), {
   areas: {
@@ -25,7 +31,6 @@ const ACTIVE = stepZone(SKILL_PROFILES, BIRD, LAYOUT, 0.1, INPUT, INITIAL);
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.resetModules();
 });
 
 it("preserves run statistics across progress restart and completion", async () => {
@@ -42,7 +47,7 @@ it("preserves run statistics across progress restart and completion", async () =
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   expect(values.has("chibis-way-home.stats-backup")).toBe(true);
   expect(save.activeStageTime("street")).toBe(0);
@@ -73,7 +78,7 @@ it("settles the statistics and every pending progress write before Update now sw
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   save.beginZoneVisit(ZONE_MAP.destinations[0]!.id);
   save.beginStageRun("street");

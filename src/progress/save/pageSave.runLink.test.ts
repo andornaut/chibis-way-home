@@ -1,4 +1,5 @@
 import { encodeSave } from "@andornaut/game-kit/runtime/save/versionedSave";
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ACHIEVEMENTS } from "../../data/achievements.ts";
@@ -6,7 +7,11 @@ import { CHUNKS } from "../../data/chunks.ts";
 import { ZONE_MAP } from "../../data/map.ts";
 import type { AchievementCondition } from "../../data/types/index.ts";
 import { RECIPES } from "../../data/zones.ts";
+import { createPageSave } from "./pageSave.ts";
 import { BEGINNING, PROGRESS_KEYS, progressFormat } from "./progress.ts";
+
+// A page save of its own over the stubbed localStorage.
+const openPageSave = () => createPageSave(localSaveStorage(), () => false);
 
 const ACHIEVEMENTS_KEY = "chibis-way-home.achievements";
 const FIRST = ZONE_MAP.destinations[0]!;
@@ -24,7 +29,6 @@ const CLEAR_ACHIEVEMENTS = ACHIEVEMENTS.filter(({ conditions }) => conditions.ev
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.resetModules();
 });
 
 // localStorage holding a map save with completed done, standing on the last of them or the start,
@@ -69,7 +73,7 @@ it.each([
   async ({ done, open }) => {
     expect(CLEAR_ACHIEVEMENTS).not.toHaveLength(0);
     const values = storage(done);
-    const save = await import("./pageSave.ts");
+    const save = openPageSave();
     await save.loadProgress();
     save.beginZoneVisit(FIRST.id);
     save.beginStageRun(LAST);
@@ -90,7 +94,7 @@ it.each([
 it("a run link's clear of a recipe with no catalogued stage records nothing", async () => {
   expect(UNCATALOGUED).not.toHaveLength(0);
   const values = storage([]);
-  const save = await import("./pageSave.ts");
+  const save = openPageSave();
   await save.loadProgress();
   await settle();
   const before = new Map(values);
@@ -106,7 +110,7 @@ it("a run link's clear of a recipe with no catalogued stage records nothing", as
 
 it("a fresh save's run link of a closed stage leaves its stand, so later writes save", async () => {
   const values = storage();
-  const save = await import("./pageSave.ts");
+  const save = openPageSave();
   await save.loadProgress();
   save.beginStageRun(LAST);
   save.saveOpeningSeen();

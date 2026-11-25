@@ -1,12 +1,17 @@
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
 import type { SkillId } from "../data/types/index.ts";
 import { SKILL_IDS } from "../progress/index.ts";
+import { createPageSave } from "../progress/save/pageSave.ts";
+import { createSave } from "./save.ts";
+
+// A page save of its own over the stubbed localStorage.
+const openSave = () => createSave(createPageSave(localSaveStorage(), () => false));
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.resetModules();
 });
 
 it("persists each room grant once through progress writes and reopen, then resets ownership on Restart", async () => {
@@ -16,7 +21,7 @@ it("persists each room grant once through progress writes and reopen, then reset
     getItem: (key: string) => values.get(key) ?? null,
     setItem: write,
   });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   SKILL_IDS.forEach((skill) => expect(save.grantSkill(skill)).toBe(true));
   await save.loadProgress();
@@ -48,7 +53,7 @@ it("leaves the first gift unselected and tipped, turns a selection off and rejec
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   expect(save.activeSkill()).toBeNull();
   expect(save.selectActiveSkill("speedy")).toBe(false);
@@ -80,18 +85,17 @@ it("triggers each tip once a playthrough, behind unlock notices, saved as seen u
   };
   vi.stubGlobal("localStorage", storage);
   const open = () => false;
-  const save = await import("./save.ts");
-  const page = await import("../progress/save/pageSave.ts");
+  const save = openSave();
   await save.loadProgress();
   save.beginStageRun(ZONE_MAP.start);
-  page.triggerTips(["doors", "doors"]);
+  save.triggerTips(["doors", "doors"]);
   expect(save.nextTip(() => true)).toBeUndefined();
   expect([save.nextTip(open), save.nextTip(open), save.nextTip(open)]).toEqual([
     { id: "controls" },
     { id: "doors" },
     undefined,
   ]);
-  page.triggerTips(["doors"]);
+  save.triggerTips(["doors"]);
   save.beginStageRun(ZONE_MAP.start);
   expect(save.nextTip(open)).toBeUndefined();
   SKILL_IDS.forEach((skill) => save.grantSkill(skill));
@@ -107,9 +111,7 @@ it("triggers each tip once a playthrough, behind unlock notices, saved as seen u
     undefined,
   ]);
   await save.loadProgress();
-  vi.resetModules();
-  const reopened = await import("./save.ts");
-  const reopenedPage = await import("../progress/save/pageSave.ts");
+  const reopened = openSave();
   await reopened.loadProgress();
   expect(reopened.savedProgress().seenTips).toEqual([
     "controls",
@@ -119,17 +121,17 @@ it("triggers each tip once a playthrough, behind unlock notices, saved as seen u
     "secondPowerUp",
     `powerUp:${third}`,
   ]);
-  reopenedPage.triggerTips(["doors", "hazards"]);
+  reopened.triggerTips(["doors", "hazards"]);
   expect([reopened.nextTip(open), reopened.nextTip(open)]).toEqual([{ id: "hazards" }, undefined]);
   reopened.clearProgress();
   expect(reopened.savedProgress().seenTips).toEqual([]);
-  reopenedPage.triggerTips(["doors"]);
+  reopened.triggerTips(["doors"]);
   expect(reopened.nextTip(open)).toEqual({ id: "doors" });
 });
 
 it("queues each distinct grant's power-up tip once and none for a duplicate grant", async () => {
   vi.stubGlobal("localStorage", { getItem: () => null, setItem: vi.fn() });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   const open = () => false;
   const [first, second, third] = SKILL_IDS as [SkillId, SkillId, SkillId];
@@ -159,7 +161,7 @@ it("saves Unlock all power-ups as each pickup's grant and keeps the current sele
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   save.grantSkill(owned!);
   save.selectActiveSkill(owned!);
@@ -179,8 +181,7 @@ it("saves Unlock all power-ups as each pickup's grant and keeps the current sele
     ),
   ).toEqual([rest[0], "secondPowerUp", rest[1]]);
 
-  vi.resetModules();
-  const reloaded = await import("./save.ts");
+  const reloaded = openSave();
   await reloaded.loadProgress();
   expect([reloaded.savedSkills(), reloaded.activeSkill()]).toEqual([SKILL_IDS, owned]);
 });
@@ -200,7 +201,7 @@ it("keeps an existing save's selection on load", async () => {
     getItem: (key: string) => (key === "chibis-way-home.save" ? raw : null),
     setItem: vi.fn(),
   });
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   expect(save.activeSkill()).toBe("speedy");
   expect(save.grantSkill("doubleJump")).toBe(true);
@@ -213,7 +214,7 @@ it("restores every permanent grant and the sole selection after a fresh page mod
     getItem: (key: string) => values.get(key) ?? null,
     setItem: (key: string, value: string) => values.set(key, value),
   });
-  const beforeExit = await import("./save.ts");
+  const beforeExit = openSave();
   await beforeExit.loadProgress();
   for (const skill of SKILL_IDS) {
     beforeExit.grantSkill(skill);
@@ -222,8 +223,7 @@ it("restores every permanent grant and the sole selection after a fresh page mod
   beforeExit.beginStageRun(ZONE_MAP.start);
   beforeExit.saveStand(ZONE_MAP.start);
   await beforeExit.loadProgress();
-  vi.resetModules();
-  const afterContinue = await import("./save.ts");
+  const afterContinue = openSave();
   await afterContinue.loadProgress();
   expect(afterContinue.savedSkills()).toEqual(SKILL_IDS);
   expect(afterContinue.activeSkill()).toBe("speedy");

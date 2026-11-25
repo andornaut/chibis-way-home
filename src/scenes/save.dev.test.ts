@@ -1,8 +1,14 @@
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
 import { SKILL_IDS } from "../progress/index.ts";
+import { createPageSave } from "../progress/save/pageSave.ts";
 import type { ZoneState } from "../rules/zone.ts";
+import { createSave } from "./save.ts";
+
+// A page save of its own over the stubbed localStorage.
+const openSave = () => createSave(createPageSave(localSaveStorage(), () => false));
 
 const PROGRESS_KEY = "chibis-way-home.save";
 const ACHIEVEMENTS_KEY = "chibis-way-home.achievements";
@@ -26,7 +32,7 @@ function storage(entries: readonly (readonly [string, string])[] = []) {
 
 const page = async () => ({
   mode: await import("../dev/mode.ts"),
-  save: await import("./save.ts"),
+  save: openSave(),
 });
 
 const stages = ZONE_MAP.destinations.flatMap((zone) => zone.stages);

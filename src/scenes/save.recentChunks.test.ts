@@ -1,11 +1,16 @@
+import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/localSaveStorage";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { CHUNKS } from "../data/chunks.ts";
 import { ZONE_MAP } from "../data/map.ts";
+import { createPageSave } from "../progress/save/pageSave.ts";
+import { createSave } from "./save.ts";
+
+// A page save of its own over the stubbed localStorage.
+const openSave = () => createSave(createPageSave(localSaveStorage(), () => false));
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  vi.resetModules();
 });
 
 it("records a stage entry's middle chunks, avoids them in its zone and clears them on Restart", async () => {
@@ -16,15 +21,14 @@ it("records a stage entry's middle chunks, avoids them in its zone and clears th
   });
   const [known] = Object.keys(CHUNKS);
   const zone = ZONE_MAP.destinations[0]!;
-  const save = await import("./save.ts");
+  const save = openSave();
   await save.loadProgress();
   save.beginStageRun(zone.stages[0]!);
   save.recordStageChunks(zone.stages[0]!, [known!, "renamed-away"]);
   await new Promise((resolve) => {
     setTimeout(resolve, 0);
   });
-  vi.resetModules();
-  const reopened = await import("./save.ts");
+  const reopened = openSave();
   await reopened.loadProgress();
   const kept = reopened.savedRecentMiddleChunks(zone.id);
   const avoided = zone.stages.map((stage) => reopened.recentStageChunks(stage));
