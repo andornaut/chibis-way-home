@@ -8,7 +8,7 @@ import { installCrashScreen } from "@andornaut/game-kit/runtime/web/crash/dom/cr
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CRASH_TEXT } from "../data/crashText.ts";
-import { bindFactoryAction } from "../ui/input/actionBinding.ts";
+import { bindFactoryAction } from "../ui/binding/index.ts";
 import { CRASH_COLOURS, installCrashTheme, installPageTheme } from "./theme.ts";
 
 installCrashTheme(document.documentElement.style);

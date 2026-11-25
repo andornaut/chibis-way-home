@@ -19,8 +19,8 @@ const gate = vi.hoisted(() => ({
 }));
 const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("../ui/input/actionBinding.ts", async (original) => {
-  const actual = await original<typeof import("../ui/input/actionBinding.ts")>();
+vi.mock("../ui/binding/actionBinding.ts", async (original) => {
+  const actual = await original<typeof import("../ui/binding/actionBinding.ts")>();
   return { ...actual, bindGameActions: vi.fn(actual.bindGameActions) };
 });
 vi.mock("./save.ts", () => ({

@@ -3,7 +3,6 @@ import { pagerState } from "@andornaut/game-kit/runtime/ui/pager";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { TEXT } from "../../data/text.ts";
-import { createCard } from "../dom/card.ts";
 import {
   assertGameActions,
   bindGameActions,
@@ -11,7 +10,8 @@ import {
   createGameHudDisc,
   createGamePager,
   type GameAction,
-} from "./actionBinding.ts";
+} from "../binding/actionBinding.ts";
+import { createCard } from "../dom/card.ts";
 
 // Every discrete control a view builds is a kit standard button the shared binding presses: a
 // text button, a close X, a form row, a pager step or a HUD disc.

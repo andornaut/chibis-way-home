@@ -5,7 +5,7 @@ import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/la
 import type { PagerView } from "@andornaut/game-kit/runtime/web/ui/dom/pager";
 import { setTextRole } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
-import { createGamePager, type GameAction } from "../input/actionBinding.ts";
+import { createGamePager, type GameAction } from "../binding/index.ts";
 import {
   STAGE_FACE,
   STAGE_ROW_WIDTH,

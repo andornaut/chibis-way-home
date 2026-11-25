@@ -1,6 +1,6 @@
 import { createFormRows } from "@andornaut/game-kit/runtime/web/ui/dom/formRow";
 
-import { createGameFormRow } from "../input/actionBinding.ts";
+import { createGameFormRow } from "../binding/index.ts";
 import { SWITCH_ROWS } from "../layout/settingsCard.ts";
 import { createActions } from "./actions.ts";
 import { textButton } from "./card.ts";

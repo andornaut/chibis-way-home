@@ -7,8 +7,8 @@ import { LOADING_TIMING as LOADING_TIMING_DATA } from "../data/feedback.ts";
 import { LOADING_LAYOUT } from "../data/layout.ts";
 import { ZONE_MAP } from "../data/map.ts";
 import { SCREEN } from "../data/screen.ts";
-import { zoneTheme } from "../presentation/zoneTheme.ts";
-import { modalColour } from "../ui/chrome/modalDim.ts";
+import { zoneTheme } from "../presentation/zoneTheme/index.ts";
+import { modalColour } from "../ui/dim/index.ts";
 
 export const PROGRESS_RECT = { height: LOADING_LAYOUT.height, width: SCREEN.width, x: 0, y: 0 };
 

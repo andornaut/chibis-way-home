@@ -1,5 +1,5 @@
 // Where each module of src/ sits. A group is a folder of src/, a file directly in it, or an area:
-// a subfolder of a folder that NESTED_GROUPS names.
+// a subfolder of a folder that NESTED_GROUPS names, or a subfolder that AREAS names.
 // CLEANUP (added 2026-11-25): remove when the known-violations table is empty and ESLint guards
 // the layers (cwh-0310).
 
@@ -20,6 +20,7 @@ export const LAYERS: readonly Layer[] = [
   { band: "Model", groups: ["rules/zone"] },
   { band: "Saving", groups: ["progress"] },
   { band: "Saving", groups: ["save"] },
+  { band: "Presentation", groups: ["presentation/zoneTheme", "ui/binding", "ui/dim"] },
   { band: "Presentation", groups: ["presentation", "ui"] },
   { band: "Platform", groups: ["crash", "dev"] },
   { band: "Platform", groups: ["loading"] },
@@ -37,11 +38,20 @@ export const OPEN_GROUPS: readonly string[] = ["data"];
 /** The folders of src/ split into areas: each subfolder is a group with its own entry. */
 export const NESTED_GROUPS: readonly string[] = ["rules"];
 
+/**
+ * The single subfolders that are areas of their own: modules the page's first chunk loads, kept
+ * apart from their folder's entry, which would pull the game's modules into that chunk.
+ */
+export const AREAS: readonly string[] = ["presentation/zoneTheme", "ui/binding", "ui/dim"];
+
 /** The group of a path under src/. */
 export function groupOf(path: string): string {
   const [, folder = "", area, ...rest] = path.split("/");
-  return NESTED_GROUPS.includes(folder) && area !== undefined && rest.length > 0
-    ? `${folder}/${area}`
+  const nested = `${folder}/${area}`;
+  return (NESTED_GROUPS.includes(folder) || AREAS.includes(nested)) &&
+    area !== undefined &&
+    rest.length > 0
+    ? nested
     : folder;
 }
 

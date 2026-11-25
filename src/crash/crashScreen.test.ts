@@ -42,7 +42,7 @@ describe("native crash screen adapter", () => {
       });
       vi.stubGlobal("window", { location: { search: dev ? "?dev=1" : "" } });
       const { CRASH_SCREEN } = await import("./crashScreen.ts");
-      const { bindFactoryAction } = await import("../ui/input/actionBinding.ts");
+      const { bindFactoryAction } = await import("../ui/binding/index.ts");
       expect(CRASH_SCREEN).toBe(screen);
       expect(install).toHaveBeenCalledOnce();
       const [options, page] = install.mock.calls[0]!;

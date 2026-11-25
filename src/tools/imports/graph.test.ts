@@ -12,6 +12,7 @@ import {
   specifiers,
   unplacedGroups,
 } from "./graph.ts";
+import { groupOf } from "./layers.ts";
 
 const NONE = { direction: [], entry: [], unplaced: [] };
 
@@ -95,6 +96,17 @@ it("fails an import sideways, upward or into a group no layer places, outside th
   expect(unplacedGroups(["src/core/step.ts", "src/unknown/thing.ts", "src/stray.ts"])).toEqual([
     "stray.ts",
     "unknown",
+  ]);
+});
+
+it("places each area that AREAS names apart from its folder", () => {
+  expect(groupOf("src/ui/binding/actionBinding.ts")).toBe("ui/binding");
+  expect(groupOf("src/ui/dom/map.ts")).toBe("ui");
+  expect(groupOf("src/ui/index.ts")).toBe("ui");
+  expect(groupOf("src/rules/zone/zone.ts")).toBe("rules/zone");
+  expect(entryFindings([edge("src/loading/style.ts", "src/ui/dim/index.ts")])).toEqual([]);
+  expect(entryFindings([edge("src/loading/style.ts", "src/ui/dim/modalDim.ts")])).toEqual([
+    "loading -> src/ui/dim/modalDim.ts",
   ]);
 });
 

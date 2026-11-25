@@ -9,12 +9,7 @@ export const KNOWN_VIOLATIONS: KnownViolations = {
   // Each import of a group in the same layer, a higher layer or no layer.
   direction: ["src/play.ts -> src/main.ts"],
   // Each importing group and the module it reaches past the entry of the module's group.
-  entry: [
-    "crash -> src/ui/input/actionBinding.ts",
-    "loading -> src/presentation/zoneTheme.ts",
-    "loading -> src/ui/chrome/modalDim.ts",
-    "loading -> src/ui/input/actionBinding.ts",
-  ],
+  entry: [],
   // Each group no layer places.
   unplaced: [],
 };

@@ -12,8 +12,7 @@ import { slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { DEATH_CARD } from "../../data/layout.ts";
 import type { Rect } from "../../data/types/index.ts";
-import type { Palette } from "../chrome/dim.ts";
-import { modalColour } from "../chrome/modalDim.ts";
+import { modalColour, type Palette } from "../dim/index.ts";
 import { refreshTextButtonFrames } from "./buttonLayout.ts";
 import { setThemeColours, themeColours } from "./theme.ts";
 

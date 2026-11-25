@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import themeData from "../../public/art/zone-themes.json" with { type: "json" };
-import { ZONE_MAP } from "../data/map.ts";
+import themeData from "../../../public/art/zone-themes.json" with { type: "json" };
+import { ZONE_MAP } from "../../data/map.ts";
 import { zoneTheme, type ZoneThemes } from "./zoneTheme.ts";
 
 const THEMES = themeData as ZoneThemes;

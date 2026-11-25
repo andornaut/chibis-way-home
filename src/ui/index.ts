@@ -1,9 +1,15 @@
 // The interface: layout of screens and cards, dialogue, input intent, keyboard focus, pause and
 // room input, touch settings, control chrome, the map's drawing and the page frame's turn.
+export {
+  assertGameActions,
+  bindFactoryAction,
+  bindGameActions,
+  bindNativeGameActions,
+  type GameAction,
+  type GameActionOptions,
+} from "./binding/index.ts";
 export { actionHelpParts } from "./chrome/actionHelp.ts";
-export { type Palette } from "./chrome/dim.ts";
 export { helpChromeLayers, helpChromeSvg } from "./chrome/helpChrome.ts";
-export { modalColour } from "./chrome/modalDim.ts";
 export { moveHintView } from "./chrome/moveHint.ts";
 export {
   PAUSE_CHROME_FRAME,
@@ -37,6 +43,7 @@ export {
   type ResolvedDialogueChoice,
 } from "./dialogue/conversation.ts";
 export { statsStatement } from "./dialogue/statsStatement.ts";
+export { modalColour, type Palette } from "./dim/index.ts";
 export {
   type AchievementsCardView,
   createAchievementsCard,
@@ -134,14 +141,6 @@ export {
   type TouchControlVisual,
 } from "./dom/touchControls.ts";
 export { focusKeyAction, stepFocus } from "./focus/index.ts";
-export {
-  assertGameActions,
-  bindFactoryAction,
-  bindGameActions,
-  bindNativeGameActions,
-  type GameAction,
-  type GameActionOptions,
-} from "./input/actionBinding.ts";
 export { DEATH_ACTIONS, type DeathAction, deathKeyAction } from "./input/deathInput.ts";
 export { frameTurn } from "./input/frameTurn.ts";
 export {

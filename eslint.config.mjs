@@ -52,9 +52,9 @@ const CONTEXTS = {
   build: ["assets", "data", "homePage", "loading", "pwa", "ui"],
   camera: ["data"],
   core: ["data"],
-  crash: ["assets", "data", "ui/input/actionBinding.ts"],
+  crash: ["assets", "data", "ui/binding/index.ts"],
   data: [],
-  dev: ["data", "progress", "rules", "ui/input/actionBinding.ts"],
+  dev: ["data", "progress", "rules"],
   gallery: ["assets"],
   homePage: ["data", "ui"],
   loading: ["crash", "data", "presentation", "ui"],
@@ -90,17 +90,16 @@ const CONTEXTS = {
 // indexes, so importing an index has no side effects, and the loading entry imports only what
 // the loading strip draws, which keeps that entry small.
 const INDEXED = {
-  assets: { crash: ["./birdFrame.ts"] },
+  assets: {},
   camera: {},
   core: {},
-  presentation: { loading: ["./zoneTheme.ts"] },
+  presentation: { loading: ["./zoneTheme/index.ts"] },
   progress: {},
   save: {},
   stage: {},
   ui: {
-    crash: ["./input/actionBinding.ts"],
-    dev: ["./input/actionBinding.ts"],
-    loading: ["./chrome/modalDim.ts", "./input/actionBinding.ts"],
+    crash: ["./binding/index.ts"],
+    loading: ["./binding/index.ts", "./dim/index.ts"],
     "*": [
       "./dom/achievements.css",
       "./dom/actionHelp.css",
@@ -123,7 +122,6 @@ const INDEXED = {
       "./dom/start.css",
       "./dom/touchControls.css",
       "./dom/ui.css",
-      "./input/frameTurn.ts",
     ],
   },
 };

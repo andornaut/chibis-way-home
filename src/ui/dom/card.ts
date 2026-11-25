@@ -1,4 +1,4 @@
-import { createGameButton } from "../input/actionBinding.ts";
+import { createGameButton } from "../binding/index.ts";
 import type { CardWidth } from "../layout/contentCard.ts";
 import { type ActionsView, createActions } from "./actions.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";

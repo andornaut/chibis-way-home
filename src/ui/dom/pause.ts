@@ -8,8 +8,8 @@ import {
 import { HUD_EDGE } from "../../data/layout.ts";
 import type { GameText, SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
+import { createGameHudDisc } from "../binding/index.ts";
 import type { PauseChromePose } from "../chrome/pauseChrome.ts";
-import { createGameHudDisc } from "../input/actionBinding.ts";
 import { HUD_DISC_SIZES, PAUSE_DISC } from "../layout/controlChrome.ts";
 import { ENTRY_ORIGIN, ENTRY_WIDTH } from "../layout/pauseCard.ts";
 import {

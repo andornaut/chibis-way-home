@@ -5,8 +5,8 @@ import {
 
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
+import { createGameButton } from "../binding/index.ts";
 import type { PauseChromeColours } from "../chrome/pauseChrome.ts";
-import { createGameButton } from "../input/actionBinding.ts";
 import type { StartScreenLayout } from "../layout/startScreen.ts";
 import { type ActionsView, createActions } from "./actions.ts";
 import { textButton } from "./card.ts";

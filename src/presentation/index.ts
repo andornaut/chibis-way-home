@@ -49,4 +49,4 @@ export {
   terrainTiles,
 } from "./tiles.ts";
 export { barkOwnerOnscreen, proximityDialogue } from "./zoneDialogue.ts";
-export { zoneTheme } from "./zoneTheme.ts";
+export { zoneTheme } from "./zoneTheme/index.ts";
