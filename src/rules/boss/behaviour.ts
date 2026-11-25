@@ -1029,10 +1029,10 @@ type SliceOutcome =
 // scorer's attack or held move, then how long the decision holds before an animation, cooldown
 // or elapsed boundary.
 function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutcome {
-  const { escaped, flyGateway, object, perception, seconds, watchdog } = context;
-  const { target: bird, tuning, world } = perception;
+  const { object, perception, seconds, watchdog } = context;
+  const { world } = perception;
   const plan = object.behaviour!;
-  const { actions, current, instant, segments, time, traversalStep } = run;
+  const { actions, current, instant, segments, time } = run;
   let { capturedIntent, next } = run;
   const save = () => {
     run.capturedIntent = capturedIntent;
@@ -1048,37 +1048,7 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
   const supportPerception = supportWorld ? { ...perception, world: supportWorld } : perception;
   const supported = support.supported;
   const landingTarget = support.target;
-  if (
-    next.pursuit?.phase === "escaped" &&
-    !next.pursuit.settled &&
-    !attackProtected(node, next) &&
-    next.stateKey === plan.initial &&
-    node.motion.kind === "wait" &&
-    flyGateway &&
-    !next.hop &&
-    !supportContact(object, world, current)
-  ) {
-    next = transitionState(perception, object, current, flyGateway, next);
-    node = nodeOf(object, next.stateKey);
-  }
-  if (
-    next.pursuit?.phase === "escaped" &&
-    !next.pursuit.settled &&
-    !attackProtected(node, next) &&
-    (node.motion.kind === "pursue" || next.stateKey === plan.initial) &&
-    !next.hop &&
-    (!next.traversal || next.traversal.physical.grounded) &&
-    (node.motion.kind !== "pursue" ||
-      node.motion.mode !== "fly" ||
-      supportContact(object, world, current))
-  ) {
-    next = transitionState(perception, object, current, plan.initial, {
-      ...next,
-      anchor: current,
-      pursuit: { ...next.pursuit, settled: true },
-    });
-    node = nodeOf(object, next.stateKey);
-  }
+  ({ next, node } = settleEscape(context, current, node, next));
   if (
     time < seconds &&
     next.pursuit?.phase === "escaped" &&
@@ -1098,32 +1068,10 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     node = nodeOf(object, next.stateKey);
   }
   if (watchdog && idleReady(object, world, current, next)) {
-    // Keep the safe graph phase until the next complete physics step can prove its route.
-    const remaining = seconds - time;
-    const hold = [{ end: remaining, from: current, start: 0, to: current }];
-    const animated = animateSegments(object, remaining, next, hold);
-    next = advanceAttackClock(remaining, {
-      ...animated.state,
-      idleWatchdog: observeIdle(watchdog, remaining, hold, next.idleWatchdog!),
-    });
+    const step = watchdogHold(context, current, next, time, actions, segments);
+    next = step.state;
     save();
-    return {
-      kind: "hold",
-      step: {
-        actions,
-        at: current,
-        segments: [
-          ...segments,
-          ...animated.segments.map((segment) => ({
-            ...segment,
-            end: segment.end + time,
-            start: segment.start + time,
-          })),
-        ],
-        state: next,
-        ...(escaped && { escaped }),
-      },
-    };
+    return { kind: "hold", step };
   }
   const settling =
     next.pursuit?.phase === "escaped" &&
@@ -1132,105 +1080,26 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
     node.motion.kind === "pursue" &&
     node.motion.mode === "fly";
   const track = node.motion.kind === "pursue" ? pursuitTrack(object) : (node.track ?? plan);
-  if (
-    next.pendingEntry &&
-    !(supportMotion && next.landing?.status === "pending") &&
-    !(node.motion.kind === "wait" && node.motion.support === "required" && !supported)
-  ) {
-    const entered = transitionState(perception, object, current, next.stateKey, next);
-    next = enterAttack(plan, node, supportMotion ? { ...entered, elapsed: next.elapsed } : entered);
-    for (const action of node.onEnter ?? []) {
-      actions.push({ action, at: current, axis: track.axis, facing: next.facing, time });
-    }
-    next = { ...next, pendingEntry: false };
-  }
-  if (
-    node.motion.kind !== "wait" &&
-    node.motion.kind !== "fly" &&
-    node.motion.kind !== "pursue" &&
-    node.motion.direction === "target"
-  ) {
-    const mine = current[track.axis] + (track.axis === "x" ? object.width : object.height) / 2;
-    const target = bird[track.axis] + (track.axis === "x" ? tuning.width : tuning.height) / 2;
-    if (target !== mine) {
-      next = { ...next, facing: target < mine ? -1 : 1 };
-    }
-  }
-  const selectionFallback =
-    node.motion.kind === "fly" &&
-    node.motion.to === "support" &&
-    node.motion.selection !== undefined &&
-    next.flightSelection?.status === "pending" &&
-    node.attack?.phase !== "committed" &&
-    node.attack?.phase !== "completed" &&
-    next.activeAttack?.phase !== "committed";
-  const fallback = next.traversal;
-  const refreshableGroundFallback =
-    time < seconds &&
-    traversalStep === undefined &&
-    node.motion.kind === "pursue" &&
-    node.motion.mode === "ground" &&
-    plan.scorer?.engaged === next.stateKey &&
-    next.pursuit?.phase === "engaged" &&
-    !next.activeAttack &&
-    !attackProtected(node, next) &&
-    !next.hop &&
-    fallback?.status === "geometry-unavailable" &&
-    fallback.inputs.length === 0 &&
-    !fallback.preparation &&
-    !fallback.physical.grounded &&
-    fallback.physical.x === current.x &&
-    fallback.physical.y === current.y &&
-    Number.isFinite(fallback.physical.vy) &&
-    Math.abs(fallback.physical.vy) <= EDGE &&
-    (!next.intent || next.intent.remainingSeconds <= 0) &&
-    supportContact(object, world, current);
-  const graphHeld =
-    traversalStep !== undefined ||
-    next.traversal?.preparation !== undefined ||
-    settling ||
-    (node.motion.kind === "fly" &&
-      node.motion.to === "support" &&
-      !supported &&
-      !selectionFallback) ||
-    (node.motion.kind === "wait" && node.motion.support === "required" && !supported) ||
-    (node.motion.kind === "pursue" &&
-      next.traversal &&
-      !next.traversal.physical.grounded &&
-      !refreshableGroundFallback);
+  next = enterNode(context, node, supportMotion, supported, track, current, time, actions, next);
+  const { graphHeld, refreshableGroundFallback, selectionFallback } = graphHold(
+    context,
+    node,
+    run,
+    settling,
+    supported,
+    next,
+  );
   const transition = graphHeld
     ? undefined
-    : node.transitions.find(
-        ({ score, to, when }) =>
-          !score &&
-          (!selectionFallback ||
-            (when.length === 1 &&
-              when[0]!.kind === "alignment-blocked" &&
-              (() => {
-                const fallback = nodeOf(object, to);
-                return (
-                  fallback.attack === undefined &&
-                  fallback.motion.kind === "fly" &&
-                  fallback.motion.to === "support" &&
-                  !fallback.motion.selection
-                );
-              })())) &&
-          !(supportMotion && !supported && nodeOf(object, to).attack?.phase === "completed") &&
-          admitted(
-            world.observation,
-            object,
-            next,
-            { to, when },
-            attackGate(
-              (condition) =>
-                condition.kind === "arrived" && supportMotion
-                  ? supported
-                  : matches(supportPerception, object, current, next, condition),
-              object,
-              next,
-              { to, when },
-            ),
-          ),
+    : unscoredTransition(
+        context,
+        node,
+        current,
+        supportMotion,
+        supported,
+        selectionFallback,
+        supportPerception,
+        next,
       );
   if (transition) {
     if (instant.has(next.stateKey)) {
@@ -1273,129 +1142,428 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
   }
   // Attacks are scored at every slice boundary, including the step's end; moves only within it.
   if (sampledMotion && !graphHeld && node.motion.kind === "pursue") {
-    const previous = next.intent;
-    let capture =
-      time < seconds &&
-      (!previous || previous.remainingSeconds <= 0) &&
-      !capturedIntent &&
-      !next.traversal?.preparation &&
-      (!next.traversal || next.traversal.physical.grounded || refreshableGroundFallback);
-    if (capture && node.motion.mode === "fly" && previous) {
-      const target =
-        node.motion.overhead &&
-        overheadFlightGoalForRect(
-          node.motion.overhead,
-          previous.travelDirection,
-          previous.target,
-          object,
-        );
-      capture =
-        safeIntentHover(world, seconds - time, object, current) &&
-        (!target || Math.abs(target.y - current.y) <= EDGE);
-    }
-    // Attacks are scored only at a slice that did not arrive here through instant transitions,
-    // so a scored attack never closes an instant cycle.
-    const gated = node.transitions.filter(
-      (transition) =>
-        transition.score &&
-        instant.size === 0 &&
-        admitted(
-          world.observation,
-          object,
-          next,
-          transition,
-          attackGate(
-            (condition) => matches(supportPerception, object, current, next, condition),
-            object,
-            next,
-            transition,
-          ),
-        ),
+    const scored = scoreSlice(
+      context,
+      scorer,
+      node,
+      node.motion,
+      current,
+      instant,
+      time,
+      capturedIntent,
+      refreshableGroundFallback,
+      supportPerception,
+      next,
     );
-    if (capture || gated.length > 0) {
-      if (!world.decisions) {
-        throw new Error("Scored pursuit requires an object-local decision context");
-      }
-      const prior = next.scorer ?? openingScorerState(scorer);
-      const streamKey = `scorer:${prior.decision}`;
-      const random = world.decisions(streamKey);
-      const { max, min } = scorer.decisionSeconds;
-      const holdSeconds = min + random() * (max - min);
-      const values = scorerValues(perception, object, current, next, prior);
-      const { choice, decision } = decideScored(scorer, random, capture, prior, values, gated);
-      const observation = world.observation;
-      if (observation) {
-        const action =
-          choice.kind === "attack"
-            ? choice.transition.to
-            : choice.kind === "move"
-              ? choice.move.id
-              : prior.move;
-        observation.observer.record({
-          ...(action !== undefined && { action }),
-          choice: choice.kind,
-          kind: "choice",
-          ...(observation.metadata && { metadata: observation.metadata }),
-          scoring: { decision, sampledHoldSeconds: holdSeconds, streamKey, values },
-          state: next.stateKey,
-        });
-      }
-      const counted = { ...prior, decision: prior.decision + 1 };
-      if (choice.kind === "attack") {
-        if (instant.has(next.stateKey)) {
-          throw new Error(`Instant behaviour transition cycle for ${object.character}`);
-        }
-        instant.add(next.stateKey);
-        next = transitionState(perception, object, current, choice.transition.to, {
-          ...next,
-          scorer: scorerAttacked(choice.transition, counted),
-        });
-        save();
-        return { kind: "again" };
-      }
-      next = { ...next, scorer: counted };
-      if (choice.kind === "move") {
-        let intent = moveIntent(
-          tuning,
-          bird,
-          choice.move.move,
-          holdSeconds,
-          next.facing,
-          object,
-          current,
-        );
-        if (node.motion.mode === "fly" && node.motion.overhead) {
-          const goal = overheadFlightGoalForRect(
-            node.motion.overhead,
-            intent.travelDirection,
-            intent.target,
-            object,
-          );
-          intent = {
-            ...intent,
-            facing: goal.x === current.x ? next.facing : goal.x < current.x ? -1 : 1,
-          };
-        }
-        next = {
-          ...next,
-          intent,
-          scorer: { ...counted, heldSeconds: 0, move: choice.move.id },
-          ...(node.motion.mode === "fly" &&
-            node.motion.overhead && { flightApproachDirection: intent.travelDirection }),
-        };
-        if (next.traversal) {
-          const fresh = { ...next.traversal, inputs: [] };
-          delete (fresh as { searchedAt?: Point }).searchedAt;
-          next = { ...next, traversal: fresh };
-        }
-        capturedIntent = true;
-      }
+    next = scored.next;
+    if (scored.kind === "again") {
+      save();
+      return { kind: "again" };
     }
+    capturedIntent = scored.capturedIntent;
   }
   if (time >= seconds) {
     save();
     return { kind: "end" };
   }
+  const { frame, slice } = sliceOf(context, node, current, settling, time, next);
+  save();
+  return {
+    decision: {
+      arrives: arrivalTest(perception, object, node),
+      frame,
+      node,
+      sampled: sampledMotion,
+      settling,
+      slice,
+      support: { supported, target: landingTarget, world: supportWorld },
+      supportMotion,
+      track,
+    },
+    kind: "act",
+  };
+}
+
+// An escaped pursuit that has not settled heads home: a waiting initial state takes its fly
+// gateway, and a pursuer that is grounded, or a flyer in support contact, settles back into the
+// initial state where it stands.
+function settleEscape(
+  context: BehaviourRunContext,
+  current: Point,
+  stateNode: BehaviourNode,
+  state: BehaviourState,
+): { readonly next: BehaviourState; readonly node: BehaviourNode } {
+  const { flyGateway, object, perception } = context;
+  const { world } = perception;
+  const plan = object.behaviour!;
+  let next = state;
+  let node = stateNode;
+  if (
+    next.pursuit?.phase === "escaped" &&
+    !next.pursuit.settled &&
+    !attackProtected(node, next) &&
+    next.stateKey === plan.initial &&
+    node.motion.kind === "wait" &&
+    flyGateway &&
+    !next.hop &&
+    !supportContact(object, world, current)
+  ) {
+    next = transitionState(perception, object, current, flyGateway, next);
+    node = nodeOf(object, next.stateKey);
+  }
+  if (
+    next.pursuit?.phase === "escaped" &&
+    !next.pursuit.settled &&
+    !attackProtected(node, next) &&
+    (node.motion.kind === "pursue" || next.stateKey === plan.initial) &&
+    !next.hop &&
+    (!next.traversal || next.traversal.physical.grounded) &&
+    (node.motion.kind !== "pursue" ||
+      node.motion.mode !== "fly" ||
+      supportContact(object, world, current))
+  ) {
+    next = transitionState(perception, object, current, plan.initial, {
+      ...next,
+      anchor: current,
+      pursuit: { ...next.pursuit, settled: true },
+    });
+    node = nodeOf(object, next.stateKey);
+  }
+  return { next, node };
+}
+
+// Holds the safe graph phase for the rest of the step while the idle watchdog waits for a
+// complete physics step that can prove its route.
+function watchdogHold(
+  context: BehaviourRunContext,
+  current: Point,
+  next: BehaviourState,
+  time: number,
+  actions: BehaviourEvent[],
+  segments: readonly BehaviourSegment[],
+): BehaviourStep {
+  const { escaped, object, seconds, watchdog } = context;
+  const remaining = seconds - time;
+  const hold = [{ end: remaining, from: current, start: 0, to: current }];
+  const animated = animateSegments(object, remaining, next, hold);
+  const state = advanceAttackClock(remaining, {
+    ...animated.state,
+    idleWatchdog: observeIdle(watchdog!, remaining, hold, next.idleWatchdog!),
+  });
+  return {
+    actions,
+    at: current,
+    segments: [
+      ...segments,
+      ...animated.segments.map((segment) => ({
+        ...segment,
+        end: segment.end + time,
+        start: segment.start + time,
+      })),
+    ],
+    state,
+    ...(escaped && { escaped }),
+  };
+}
+
+// Enters a pending state once its support allows it: the attack phase, the entry actions at the
+// current point, then a move toward the target turns to face Chibi.
+function enterNode(
+  context: BehaviourRunContext,
+  node: BehaviourNode,
+  supportMotion: boolean,
+  supported: boolean,
+  track: { readonly axis: "x" | "y" },
+  current: Point,
+  time: number,
+  actions: BehaviourEvent[],
+  state: BehaviourState,
+): BehaviourState {
+  const { object, perception } = context;
+  const { target: bird, tuning } = perception;
+  const plan = object.behaviour!;
+  let next = state;
+  if (
+    next.pendingEntry &&
+    !(supportMotion && next.landing?.status === "pending") &&
+    !(node.motion.kind === "wait" && node.motion.support === "required" && !supported)
+  ) {
+    const entered = transitionState(perception, object, current, next.stateKey, next);
+    next = enterAttack(plan, node, supportMotion ? { ...entered, elapsed: next.elapsed } : entered);
+    for (const action of node.onEnter ?? []) {
+      actions.push({ action, at: current, axis: track.axis, facing: next.facing, time });
+    }
+    next = { ...next, pendingEntry: false };
+  }
+  if (
+    node.motion.kind !== "wait" &&
+    node.motion.kind !== "fly" &&
+    node.motion.kind !== "pursue" &&
+    node.motion.direction === "target"
+  ) {
+    const mine = current[track.axis] + (track.axis === "x" ? object.width : object.height) / 2;
+    const target = bird[track.axis] + (track.axis === "x" ? tuning.width : tuning.height) / 2;
+    if (target !== mine) {
+      next = { ...next, facing: target < mine ? -1 : 1 };
+    }
+  }
+  return next;
+}
+
+// Whether the graph holds its state this slice instead of taking an unscored transition: during a
+// traversal step or its preparation, while settling, or while a support motion lacks support.
+function graphHold(
+  context: BehaviourRunContext,
+  node: BehaviourNode,
+  run: BehaviourRun,
+  settling: boolean,
+  supported: boolean,
+  next: BehaviourState,
+) {
+  const { object, perception, seconds } = context;
+  const { world } = perception;
+  const plan = object.behaviour!;
+  const { current, time, traversalStep } = run;
+  const selectionFallback =
+    node.motion.kind === "fly" &&
+    node.motion.to === "support" &&
+    node.motion.selection !== undefined &&
+    next.flightSelection?.status === "pending" &&
+    node.attack?.phase !== "committed" &&
+    node.attack?.phase !== "completed" &&
+    next.activeAttack?.phase !== "committed";
+  const fallback = next.traversal;
+  const refreshableGroundFallback =
+    time < seconds &&
+    traversalStep === undefined &&
+    node.motion.kind === "pursue" &&
+    node.motion.mode === "ground" &&
+    plan.scorer?.engaged === next.stateKey &&
+    next.pursuit?.phase === "engaged" &&
+    !next.activeAttack &&
+    !attackProtected(node, next) &&
+    !next.hop &&
+    fallback?.status === "geometry-unavailable" &&
+    fallback.inputs.length === 0 &&
+    !fallback.preparation &&
+    !fallback.physical.grounded &&
+    fallback.physical.x === current.x &&
+    fallback.physical.y === current.y &&
+    Number.isFinite(fallback.physical.vy) &&
+    Math.abs(fallback.physical.vy) <= EDGE &&
+    (!next.intent || next.intent.remainingSeconds <= 0) &&
+    supportContact(object, world, current);
+  const graphHeld =
+    traversalStep !== undefined ||
+    next.traversal?.preparation !== undefined ||
+    settling ||
+    (node.motion.kind === "fly" &&
+      node.motion.to === "support" &&
+      !supported &&
+      !selectionFallback) ||
+    (node.motion.kind === "wait" && node.motion.support === "required" && !supported) ||
+    (node.motion.kind === "pursue" &&
+      next.traversal &&
+      !next.traversal.physical.grounded &&
+      !refreshableGroundFallback);
+  return { graphHeld, refreshableGroundFallback, selectionFallback };
+}
+
+// The first unscored transition the attack gate admits; a pending flight selection admits only
+// its alignment-blocked fallback to a plain support flight.
+function unscoredTransition(
+  context: BehaviourRunContext,
+  node: BehaviourNode,
+  current: Point,
+  supportMotion: boolean,
+  supported: boolean,
+  selectionFallback: boolean,
+  supportPerception: BehaviourPerception,
+  next: BehaviourState,
+) {
+  const { object, perception } = context;
+  const { world } = perception;
+  return node.transitions.find(
+    ({ score, to, when }) =>
+      !score &&
+      (!selectionFallback ||
+        (when.length === 1 &&
+          when[0]!.kind === "alignment-blocked" &&
+          (() => {
+            const fallback = nodeOf(object, to);
+            return (
+              fallback.attack === undefined &&
+              fallback.motion.kind === "fly" &&
+              fallback.motion.to === "support" &&
+              !fallback.motion.selection
+            );
+          })())) &&
+      !(supportMotion && !supported && nodeOf(object, to).attack?.phase === "completed") &&
+      admitted(
+        world.observation,
+        object,
+        next,
+        { to, when },
+        attackGate(
+          (condition) =>
+            condition.kind === "arrived" && supportMotion
+              ? supported
+              : matches(supportPerception, object, current, next, condition),
+          object,
+          next,
+          { to, when },
+        ),
+      ),
+  );
+}
+
+// The engaged scorer's decision at a slice boundary: an attack it scores takes its transition at
+// once, and a move it captures within the step becomes the held intent.
+function scoreSlice(
+  context: BehaviourRunContext,
+  scorer: NonNullable<BehaviourPlan["scorer"]>,
+  node: BehaviourNode,
+  motion: Extract<BehaviourNode["motion"], { readonly kind: "pursue" }>,
+  current: Point,
+  instant: Set<string>,
+  time: number,
+  captured: boolean,
+  refreshableGroundFallback: boolean,
+  supportPerception: BehaviourPerception,
+  state: BehaviourState,
+):
+  | { readonly kind: "again"; readonly next: BehaviourState }
+  | { readonly capturedIntent: boolean; readonly kind: "decided"; readonly next: BehaviourState } {
+  const { object, perception, seconds } = context;
+  const { target: bird, tuning, world } = perception;
+  let capturedIntent = captured;
+  let next = state;
+  const previous = next.intent;
+  let capture =
+    time < seconds &&
+    (!previous || previous.remainingSeconds <= 0) &&
+    !capturedIntent &&
+    !next.traversal?.preparation &&
+    (!next.traversal || next.traversal.physical.grounded || refreshableGroundFallback);
+  if (capture && motion.mode === "fly" && previous) {
+    const target =
+      motion.overhead &&
+      overheadFlightGoalForRect(motion.overhead, previous.travelDirection, previous.target, object);
+    capture =
+      safeIntentHover(world, seconds - time, object, current) &&
+      (!target || Math.abs(target.y - current.y) <= EDGE);
+  }
+  // Attacks are scored only at a slice that did not arrive here through instant transitions,
+  // so a scored attack never closes an instant cycle.
+  const gated = node.transitions.filter(
+    (transition) =>
+      transition.score &&
+      instant.size === 0 &&
+      admitted(
+        world.observation,
+        object,
+        next,
+        transition,
+        attackGate(
+          (condition) => matches(supportPerception, object, current, next, condition),
+          object,
+          next,
+          transition,
+        ),
+      ),
+  );
+  if (capture || gated.length > 0) {
+    if (!world.decisions) {
+      throw new Error("Scored pursuit requires an object-local decision context");
+    }
+    const prior = next.scorer ?? openingScorerState(scorer);
+    const streamKey = `scorer:${prior.decision}`;
+    const random = world.decisions(streamKey);
+    const { max, min } = scorer.decisionSeconds;
+    const holdSeconds = min + random() * (max - min);
+    const values = scorerValues(perception, object, current, next, prior);
+    const { choice, decision } = decideScored(scorer, random, capture, prior, values, gated);
+    const observation = world.observation;
+    if (observation) {
+      const action =
+        choice.kind === "attack"
+          ? choice.transition.to
+          : choice.kind === "move"
+            ? choice.move.id
+            : prior.move;
+      observation.observer.record({
+        ...(action !== undefined && { action }),
+        choice: choice.kind,
+        kind: "choice",
+        ...(observation.metadata && { metadata: observation.metadata }),
+        scoring: { decision, sampledHoldSeconds: holdSeconds, streamKey, values },
+        state: next.stateKey,
+      });
+    }
+    const counted = { ...prior, decision: prior.decision + 1 };
+    if (choice.kind === "attack") {
+      if (instant.has(next.stateKey)) {
+        throw new Error(`Instant behaviour transition cycle for ${object.character}`);
+      }
+      instant.add(next.stateKey);
+      next = transitionState(perception, object, current, choice.transition.to, {
+        ...next,
+        scorer: scorerAttacked(choice.transition, counted),
+      });
+      return { kind: "again", next };
+    }
+    next = { ...next, scorer: counted };
+    if (choice.kind === "move") {
+      let intent = moveIntent(
+        tuning,
+        bird,
+        choice.move.move,
+        holdSeconds,
+        next.facing,
+        object,
+        current,
+      );
+      if (motion.mode === "fly" && motion.overhead) {
+        const goal = overheadFlightGoalForRect(
+          motion.overhead,
+          intent.travelDirection,
+          intent.target,
+          object,
+        );
+        intent = {
+          ...intent,
+          facing: goal.x === current.x ? next.facing : goal.x < current.x ? -1 : 1,
+        };
+      }
+      next = {
+        ...next,
+        intent,
+        scorer: { ...counted, heldSeconds: 0, move: choice.move.id },
+        ...(motion.mode === "fly" &&
+          motion.overhead && { flightApproachDirection: intent.travelDirection }),
+      };
+      if (next.traversal) {
+        const fresh = { ...next.traversal, inputs: [] };
+        delete (fresh as { searchedAt?: Point }).searchedAt;
+        next = { ...next, traversal: fresh };
+      }
+      capturedIntent = true;
+    }
+  }
+  return { capturedIntent, kind: "decided", next };
+}
+
+// How long the decision holds: to the step's end, the animation frame's end, the attack cooldown
+// or tell pause, or the next elapsed threshold of a transition whose other conditions match.
+function sliceOf(
+  context: BehaviourRunContext,
+  node: BehaviourNode,
+  current: Point,
+  settling: boolean,
+  time: number,
+  next: BehaviourState,
+) {
+  const { object, perception, seconds } = context;
   const frame = object.contact
     ? contactFrameAt(object.contact, next.animationTag as string, next.animationSeconds ?? 0)
     : undefined;
@@ -1424,38 +1592,34 @@ function decideSlice(context: BehaviourRunContext, run: BehaviourRun): SliceOutc
       }
     }
   }
-  save();
-  return {
-    decision: {
-      arrives: (point: Point, after: number, state: BehaviourState) => {
-        const future = advanceAttackClock(after, {
-          ...state,
-          elapsed: state.elapsed + after,
-          ...(object.contact && {
-            animationSeconds: (state.animationSeconds ?? 0) + after,
-          }),
-        });
-        return node.transitions.some(
-          ({ to, when }) =>
-            when.some((condition) => condition.kind === "arrived") &&
-            attackGate(
-              (condition) => matches(perception, object, point, future, condition),
-              object,
-              future,
-              { to, when },
-            ).admitted,
-        );
-      },
-      frame,
-      node,
-      sampled: sampledMotion,
-      settling,
-      slice,
-      support: { supported, target: landingTarget, world: supportWorld },
-      supportMotion,
-      track,
-    },
-    kind: "act",
+  return { frame, slice };
+}
+
+// Whether the graph would take an arrival transition with the body at a point after that many
+// more seconds of the decided state.
+function arrivalTest(
+  perception: BehaviourPerception,
+  object: ObjectLayout,
+  node: BehaviourNode,
+): SliceDecision["arrives"] {
+  return (point: Point, after: number, state: BehaviourState) => {
+    const future = advanceAttackClock(after, {
+      ...state,
+      elapsed: state.elapsed + after,
+      ...(object.contact && {
+        animationSeconds: (state.animationSeconds ?? 0) + after,
+      }),
+    });
+    return node.transitions.some(
+      ({ to, when }) =>
+        when.some((condition) => condition.kind === "arrived") &&
+        attackGate(
+          (condition) => matches(perception, object, point, future, condition),
+          object,
+          future,
+          { to, when },
+        ).admitted,
+    );
   };
 }
 
