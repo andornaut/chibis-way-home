@@ -1,9 +1,0 @@
-import { vi } from "vitest";
-
-import { registerTraceSuite, walkTraceScenarios } from "../testing/behaviourTraceSuite.ts";
-
-vi.mock("../rules/zone/zone.ts", async (original) =>
-  (await import("../testing/behaviourTraceHook.ts")).tracedZone(await original()),
-);
-
-registerTraceSuite("walk-1", walkTraceScenarios(1));

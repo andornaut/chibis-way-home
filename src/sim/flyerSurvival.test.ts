@@ -1,8 +1,15 @@
 import { expect, it, vi } from "vitest";
 
+import { BIRD } from "../data/bird.ts";
 import type { ZoneLayout } from "../data/types/index.ts";
 import type * as Zone from "../rules/zone/zone.ts";
-import { stageTraceScenarios } from "../testing/behaviourTraceSuite.ts";
+import {
+  DIAGNOSTIC_SKILL,
+  FORWARD_POLICY,
+  NAVIGATION_DEFAULTS,
+  simulateStage,
+  stageLoader,
+} from "./index.ts";
 
 // Every flying boss that dies during a stepped tick.
 const deaths = vi.hoisted(() => [] as string[]);
@@ -32,8 +39,13 @@ vi.mock("../rules/zone/zone.ts", async (original) => {
 // Pebble's planned flight and landings check the hazards he can meet, so a stage run never ends
 // with him dying on one.
 it("keeps Pebble alive through the loading-yards planned run", () => {
-  stageTraceScenarios()
-    .find(({ name }) => name === "stage loading-yards seed 3 planned")!
-    .run();
+  const seed = 3;
+  simulateStage(BIRD, stageLoader("loading-yards")(seed), {
+    maxRetries: 2,
+    maxSteps: 3600,
+    policy: { ...FORWARD_POLICY, jump: "planned" },
+    seed,
+    skill: { ...DIAGNOSTIC_SKILL, navigation: NAVIGATION_DEFAULTS },
+  });
   expect(deaths).toEqual([]);
 }, 120_000);

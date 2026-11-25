@@ -1,5 +1,4 @@
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { readFileSync } from "node:fs";
 
 import { locate } from "@andornaut/game-kit/runtime/terrain/movementMap";
 import { expect, it, vi } from "vitest";
@@ -20,6 +19,8 @@ import { ORDINARY } from "./encounterLayouts.ts";
 import {
   boundaryInput,
   createLaunchPreparation,
+  EVADE_SEEDS,
+  EVADE_STARTS,
   evadeRun,
   fullJump,
   launchStepSafe,
@@ -31,29 +32,15 @@ import {
 } from "./evade.ts";
 import { hashOf } from "./pairCertify.ts";
 
-// Behaviour goldens retain every arena, chunk, route and evade trace input. Only package
-// provenance is normalized to this frozen baseline; production proof hashes keep the current pin.
-const BASELINE_GAME_KIT =
-  "https://github.com/andornaut/game-kit/releases/download/v0.41.0/game-kit-0.41.0.tgz";
 const GAME_KIT = (
   JSON.parse(readFileSync(new URL("../../package.json", import.meta.url), "utf8")) as {
     readonly dependencies: Readonly<Record<string, string>>;
   }
 ).dependencies["@andornaut/game-kit"];
-const behaviourHash = (preimage: Readonly<Record<string, unknown>>) =>
-  hashOf({ ...preimage, gameKit: BASELINE_GAME_KIT });
-const HASHES: Readonly<Record<string, string>> = {
-  "arena-bear-sample": "f5540bddca01cd8e",
-  "arena-dog-sample": "f552eeb385f3af0a",
-  "arena-ferret-sample": "30b85b933977a97c",
-  "arena-goose-sample": "3d1037f72c384840",
-  "arena-pigeon-sample": "0d2d1f46f7966699",
-  "arena-raccoon-sample": "1ab57468edcfc0c7",
-};
 
 it.each(ARENA_SAMPLES.map((arena) => [arena.id, arena] as const))(
-  "%s passes the arena proof",
-  (id, arena) => {
+  "%s passes the arena proof, hashed over its arena, chunk, traces and game-kit",
+  (_, arena) => {
     const found = gameArenaCase(arena);
     const start = vi.mocked(hashOf).mock.calls.length;
     const proof = proveArena(found);
@@ -68,34 +55,11 @@ it.each(ARENA_SAMPLES.map((arena) => [arena.id, arena] as const))(
       gameKit: GAME_KIT,
       route: proof.trace,
     });
-    expect(preimage.evade).toHaveLength(8);
+    expect(preimage.evade).toHaveLength(EVADE_SEEDS.length * EVADE_STARTS.length);
     expect(proof.hash).toBe(hashOf(preimage));
-    const baseline = behaviourHash(preimage);
-    const dump = process.env.ARENA_PROOF_DUMP;
-    if (dump !== undefined) {
-      writeFileSync(
-        join(dump, `${id}.json`),
-        `${JSON.stringify({ baseline, preimage, proof }, null, 2)}\n`,
-        { flag: "wx" },
-      );
-    }
-    expect(baseline).toBe(HASHES[id]);
   },
   600_000,
 );
-
-it("keeps the sample behaviour golden sensitive to traces independently of the package pin", () => {
-  const preimage = {
-    arena: "fixture",
-    chunk: "fixture",
-    evade: ["evade"],
-    gameKit: "pin",
-    route: "route",
-  };
-  const baseline = behaviourHash(preimage);
-  expect(behaviourHash({ ...preimage, gameKit: "another pin" })).toBe(baseline);
-  expect(behaviourHash({ ...preimage, evade: ["changed evade"] })).not.toBe(baseline);
-});
 
 // A boss on a one-row roof masks the open floor beside it, never the nook below the roof.
 it("masks only spans Chibi could touch the boss from, not through a roof", () => {

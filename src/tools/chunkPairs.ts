@@ -83,7 +83,7 @@ const USAGE = `Usage:
   npm run pairs -- qualify-approach --zone ZONE --stage STAGE --input PENDING_CERTIFICATE
       --result CANONICAL_RESULT --trace CANONICAL_RAW_TRACE --out SCRATCH_PATH
       record existing canonical cold-encounter evidence against the explicit pending certificate;
-      validate the complete result and write exclusively; never simulate or overwrite fixtures
+      validate the complete result and write exclusively; never simulate
   npm run pairs -- propose-current --out SCRATCH_PATH
       reprove only the six current lists and their recorded profiles and arenas;
       write scratch evidence, blocking any missing, failed or changed proof

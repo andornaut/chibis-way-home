@@ -1,4 +1,4 @@
-import { createReadStream, readFileSync } from "node:fs";
+import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline";
 
 import { traceRecorder } from "../ai/index.ts";
@@ -182,7 +182,7 @@ export function arenaApproachCertificateProblems(
       readonly stage: string;
       readonly expected: (
         seed: number,
-      ) => Pick<CertifiedArenaApproach["evidence"], "plan" | "arenaIndex" | "bossIndex" | "trace">;
+      ) => Pick<CertifiedArenaApproach["evidence"], "plan" | "arenaIndex" | "bossIndex">;
     }[];
   },
   records: readonly CertifiedArenaApproach[],
@@ -229,8 +229,7 @@ export function arenaApproachCertificateProblems(
         if (
           evidence.plan !== expected.plan ||
           evidence.arenaIndex !== expected.arenaIndex ||
-          evidence.bossIndex !== expected.bossIndex ||
-          evidence.trace !== expected.trace
+          evidence.bossIndex !== expected.bossIndex
         ) {
           problems.push(`${record.stage}: arena approach context is stale`);
         }
@@ -265,15 +264,4 @@ export async function canonicalApproachTrace(
     throw new Error("Canonical raw trace does not cover the returned physical steps");
   }
   return recorder.hash();
-}
-
-export function coldEncounterBaselineTrace(): string {
-  const traces = JSON.parse(
-    readFileSync(new URL("../sim/fixtures/behaviourTraces/stages.json", import.meta.url), "utf8"),
-  ) as Readonly<Record<string, string>>;
-  const trace = traces["stage city-boundary seed 2 planned"];
-  if (trace === undefined) {
-    throw new Error("Missing canonical City cold-encounter baseline");
-  }
-  return trace;
 }

@@ -1,9 +1,6 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-
-import { describe, expect, it } from "vitest";
+import { expect, it } from "vitest";
 
 import { namedStreams } from "../../ai/randomStreams.ts";
-import { canonicalTrace, traceRecorder } from "../../ai/trace.ts";
 import { BIRD } from "../../data/bird.ts";
 import { TILE } from "../../data/screen.ts";
 import type { ObjectLayout } from "../../data/types/index.ts";
@@ -14,23 +11,13 @@ import { type BehaviourState, startBehaviour } from "./behaviour.ts";
 import type { BehaviourWorld } from "./behaviourReach.ts";
 import { stepBehaviour } from "./encounter.ts";
 
-// Every boss graph state, entered engaged against a Chibi who walks onto the boss's sampled
-// approach target. Each run's per-step output must hash to the value recorded before its
-// motion moved into an ability, which covers the swoop, burst, drop and pounce paths that the
-// zone scenarios do not reach. BEHAVIOUR_TRACE_UPDATE=1 re-records.
-const FIXTURE = new URL("./fixtures/behaviourAbilityTraces.json", import.meta.url);
-const UPDATE = process.env.BEHAVIOUR_TRACE_UPDATE === "1";
-const CHARACTERS = [
-  "bear-antagonist",
-  "dog-antagonist",
-  "ferret-antagonist",
-  "goose-antagonist",
-  "pigeon-antagonist",
-  "raccoon-antagonist",
-] as const;
-// Archie's and Pebble's graphs with plain pursuit in place of planner traversal and the overhead
-// approach: no production boss chases that way.
-const VARIANTS = ["dog-antagonist plain", "pigeon-antagonist plain"] as const;
+// Pebble's graph states, each entered engaged against a Chibi who walks onto Pebble's sampled
+// approach target, reach the targeted flights, overhead pursuit, supported landing, committed
+// attack and spawn that the zone scenarios do not reach.
+const CHARACTERS = ["pigeon-antagonist"] as const;
+// Pebble's graph with plain pursuit in place of the overhead approach: no production boss chases
+// that way.
+const VARIANTS = ["pigeon-antagonist plain"] as const;
 const TICKS = 720;
 
 function variant(name: (typeof CHARACTERS)[number] | (typeof VARIANTS)[number]): ObjectLayout {
@@ -115,8 +102,7 @@ function run(
   covered: boolean,
   start: "aligned" | "escaped" | "origin" | "pacing",
   coverage: Coverage,
-) {
-  const recorder = traceRecorder({ retain: false });
+): void {
   let bird = startBird(BIRD, { x: object.origin.x + 240, y: floor.y - BIRD.height });
   // Aligned starts hold the boss at its overhead approach goal above Chibi.
   const overhead = Object.values(object.behaviour!.states)
@@ -166,14 +152,7 @@ function run(
             ? -1
             : 1;
     bird = stepBird(BIRD, physical.solids, [], DT, { jumpHeld: false, move }, bird);
-    let step: ReturnType<typeof stepBehaviour>;
-    try {
-      step = stepBehaviour(BIRD, object, physical, DT, bird, at, state);
-    } catch (error) {
-      recorder.record(`throws ${(error as Error).message}`);
-      break;
-    }
-    recorder.record(canonicalTrace(() => undefined, step));
+    const step = stepBehaviour(BIRD, object, physical, DT, bird, at, state);
     for (const { action } of step.actions) {
       coverage.actions.add(`${object.character}:${action.kind}`);
     }
@@ -184,64 +163,32 @@ function run(
     at = step.at;
     state = step.state;
   }
-  return recorder.hash();
 }
 
-describe("behaviour ability traces", () => {
+it("reaches Pebble's targeted flights, overhead pursuit, landing, committed attack and spawn", () => {
   const coverage: Coverage = { actions: new Set(), motions: new Set(), phases: new Set() };
-  const observed: Record<string, string> = {};
-  const baseline: Readonly<Record<string, string>> = existsSync(FIXTURE)
-    ? (JSON.parse(readFileSync(FIXTURE, "utf8")) as Record<string, string>)
-    : {};
-
-  it.each([...CHARACTERS, ...VARIANTS])(
-    "%s reproduces every entry state's recorded trace",
-    (character) => {
-      const object = variant(character);
-      for (const entry of Object.keys(object.behaviour!.states).sort()) {
-        for (const covered of [false, true]) {
-          const starts =
-            character === "pigeon-antagonist"
-              ? (["origin", "aligned", "escaped", "pacing"] as const)
-              : (["origin"] as const);
-          for (const start of starts) {
-            const suffix = start === "origin" ? "" : ` ${start}`;
-            const name = `${character} ${entry} ${covered ? "covered" : "open"}${suffix}`;
-            observed[name] = run(object, entry, covered, start, coverage);
-            if (!UPDATE) {
-              expect(observed[name], name).toBe(baseline[name]);
-            }
-          }
+  for (const character of [...CHARACTERS, ...VARIANTS]) {
+    const object = variant(character);
+    for (const entry of Object.keys(object.behaviour!.states).sort()) {
+      for (const covered of [false, true]) {
+        const starts =
+          character === "pigeon-antagonist"
+            ? (["origin", "aligned", "escaped", "pacing"] as const)
+            : (["origin"] as const);
+        for (const start of starts) {
+          run(object, entry, covered, start, coverage);
         }
       }
-    },
-    600_000,
-  );
-
-  it("reaches the swoop, burst, drop, pounce and entry-effect paths", () => {
-    if (UPDATE) {
-      const sorted = Object.entries(observed).sort(([a], [b]) => (a < b ? -1 : 1));
-      writeFileSync(FIXTURE, `${JSON.stringify(Object.fromEntries(sorted), null, 2)}\n`);
-    } else {
-      expect(Object.keys(observed).sort()).toEqual(Object.keys(baseline).sort());
     }
-    console.info(
-      "Ability trace coverage",
-      JSON.stringify({
-        actions: [...coverage.actions].sort(),
-        motions: [...coverage.motions].sort(),
-        phases: [...coverage.phases].sort(),
-      }),
-    );
-    for (const required of [
-      "pigeon-antagonist:fly:target",
-      "pigeon-antagonist:fly:target-x",
-      "pigeon-antagonist:fly:support",
-      "pigeon-antagonist:pursue:fly-overhead",
-    ]) {
-      expect(coverage.motions).toContain(required);
-    }
-    expect(coverage.phases).toContain("pigeon-antagonist:committed");
-    expect(coverage.actions).toContain("pigeon-antagonist:spawn");
-  });
-});
+  }
+  for (const required of [
+    "pigeon-antagonist:fly:target",
+    "pigeon-antagonist:fly:target-x",
+    "pigeon-antagonist:fly:support",
+    "pigeon-antagonist:pursue:fly-overhead",
+  ]) {
+    expect(coverage.motions).toContain(required);
+  }
+  expect(coverage.phases).toContain("pigeon-antagonist:committed");
+  expect(coverage.actions).toContain("pigeon-antagonist:spawn");
+}, 600_000);

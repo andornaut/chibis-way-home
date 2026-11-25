@@ -111,10 +111,10 @@ it("rejects stale input headers or a different materialized plan without interpr
     arenaApproachCertificateProblems({ inputs, stages: [stage] }, [
       {
         ...relation,
-        evidence: { ...relation.evidence, trace: "1111111111111111:2" },
+        evidence: { ...relation.evidence, trace: "1111111111111111" },
       },
     ]),
-  ).toContain("city-boundary: arena approach context is stale");
+  ).toContain("city-boundary: invalid arena approach evidence");
   expect(
     arenaApproachCertificateProblems({ inputs, stages: [stage] }, [
       {

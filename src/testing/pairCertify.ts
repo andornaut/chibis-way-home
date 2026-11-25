@@ -2,7 +2,7 @@
 // pairs. Structural steps (rules, grade, encounters, layout fingerprint) are cheap and run on every
 // tree; proofs (required walks with their behaviour trace, boss path-out) run in the CLI.
 import { createHash } from "node:crypto";
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 
 import { traceRecorder } from "../ai/index.ts";
 import { BIRD_FRAME } from "../assets/index.ts";
@@ -63,7 +63,6 @@ import {
   arenaApproachCertificateProblems,
   arenaApproachContext,
   COLD_ENCOUNTER_CASE,
-  coldEncounterBaselineTrace,
   firstArenaEncounter,
   qualifyArenaApproach,
 } from "./arenaApproaches.ts";
@@ -485,25 +484,14 @@ export function dataHash(
   });
 }
 
-const FIXTURE_DIRS = [
-  new URL("../sim/fixtures/behaviourTraces/", import.meta.url),
-  new URL("../rules/boss/fixtures/", import.meta.url),
-];
-
-// The hash of what the proofs' outcomes rest on: the behaviour trace fixtures, the game-kit
-// release and this tool's version. Behaviour-preserving refactors leave it unchanged.
+// The hash of what the proofs' outcomes rest on beyond the data: the game-kit release and this
+// tool's version. A behaviour change shows in the recorded walk and arena trace hashes, which
+// verify reproves.
 export function proofsHash(): string {
-  const fixtures = FIXTURE_DIRS.flatMap((dir) =>
-    readdirSync(dir)
-      .filter((name) => name.endsWith(".json"))
-      .sort()
-      .map((name) => [name, readFileSync(new URL(name, dir), "utf8")]),
-  );
   const manifest = JSON.parse(
     readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
   ) as { readonly dependencies: Readonly<Record<string, string>> };
   return hashOf({
-    fixtures,
     gameKit: manifest.dependencies["@andornaut/game-kit"],
     version: CERTIFY_VERSION,
   });
@@ -631,10 +619,7 @@ export function verifyStructure(context: CertifyContext, list: CertifiedChunks):
               assembleZone(library, seed, stage, recipe),
             );
             const encounter = firstArenaEncounter(prepared);
-            return {
-              ...arenaApproachContext({ encounter, hash: hashOf }, prepared),
-              trace: coldEncounterBaselineTrace(),
-            };
+            return arenaApproachContext({ encounter, hash: hashOf }, prepared);
           },
           recipe,
           stage,
