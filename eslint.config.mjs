@@ -156,7 +156,7 @@ const SIZE_CEILINGS = {
   "src/rules/boss/hazardOccupancy.ts": { function: 237 },
   "src/rules/boss/movementMaps.ts": { file: 642 },
   "src/rules/boss/transients.ts": { function: 155 },
-  "src/rules/stage/assemble.ts": { file: 1775, function: 253 },
+  "src/rules/stage/assemble.ts": { file: 1507, function: 253 },
   "src/rules/stage/chunk.ts": { function: 175 },
   "src/rules/stage/tiles.ts": { file: 504, function: 276 },
   "src/rules/zone/zone.ts": { file: 1838, function: 227 },
