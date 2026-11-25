@@ -109,6 +109,8 @@ export function createSettingsCard(
     return icon;
   };
   const frame = createCardFrame(document, {
+    // The rows are their own press targets, with no margin to clear the close X by.
+    bodyOutset: 0,
     className: "settings-card",
     close: words.close,
     id,
@@ -183,6 +185,7 @@ export function createSettingsCard(
   frame.setFooter([back]);
   // The steps card's view sits over the settings card's, under the one backdrop.
   const steps = createCardFrame(document, {
+    bodyOutset: 0,
     className: "settings-steps",
     close: words.close,
     id: `${id}-steps`,

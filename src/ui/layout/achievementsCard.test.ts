@@ -20,7 +20,6 @@ import {
 } from "./achievementsCard.ts";
 import { cardWidth } from "./contentCard.ts";
 import { FONT_METRICS } from "./fontRoles.ts";
-import { hitMargin } from "./hitAreas.ts";
 
 // The pager's parts as the page measures them: two text buttons and a body line of count.
 const PAGER = {
@@ -46,7 +45,7 @@ function frame(rows: number) {
     },
     {
       body: achievementsListHeight(rows),
-      bodyOutset: hitMargin({ height: BACK.height, width: BACK.height, x: 0, y: 0 }),
+      bodyOutset: 0,
       footer: ACHIEVEMENTS_FOOTER_HEIGHT,
       title: {
         height: FONT_METRICS.mainHeading.lineHeight,

@@ -10,7 +10,6 @@ import {
 import { SCREEN } from "../../data/screen.ts";
 import { CARD_CLOSE } from "./cardClose.ts";
 import { FONT_METRICS } from "./fontRoles.ts";
-import { hitMargin } from "./hitAreas.ts";
 
 // The Achievements card's geometry in base px (src/ui/dom/achievements.css lays it out): on the
 // card's frame, two columns of entries filled down each column then across, a page at a time,
@@ -19,13 +18,9 @@ import { hitMargin } from "./hitAreas.ts";
 // One entry's height: its title line and its description's lines, each a body line box.
 const ENTRY_HEIGHT = FONT_METRICS.body.lineHeight * (1 + ACHIEVEMENTS_CARD.descriptionLines);
 
-// A closeable card's header (cardFrame.ts): it ends where a text button's press area would clear
-// the close X's press target by the gap.
-const HEADER =
-  CARD_CLOSE.hit.y +
-  CARD_CLOSE.hit.height +
-  CARD_CONTENT.gap +
-  hitMargin({ height: TEXT_BUTTON.height, width: TEXT_BUTTON.height, x: 0, y: 0 });
+// The card's header (cardFrame.ts): it ends the gap below the close X's press target, where the
+// list starts.
+const HEADER = CARD_CLOSE.hit.y + CARD_CLOSE.hit.height + CARD_CONTENT.gap;
 
 // The footer: the pager and Back, each a text button's height, the stacked gap apart.
 export const ACHIEVEMENTS_FOOTER_HEIGHT = 2 * TEXT_BUTTON.height + ACTION_GAPS.standard.stack;

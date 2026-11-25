@@ -84,6 +84,7 @@ export function createSkillDetailsCard(
 ): SkillDetailsView {
   // The disc beside a description up to its full width.
   const frame = createCardFrame(document, {
+    bodyOutset: 0,
     className: "skill-details-card",
     close: words.close,
     id,

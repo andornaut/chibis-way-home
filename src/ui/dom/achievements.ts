@@ -82,6 +82,7 @@ export function createAchievementsCard(
   };
   // Two entry columns take the large width family.
   const frame = createCardFrame(document, {
+    bodyOutset: 0,
     className: "achievements-card",
     close: words.close,
     id,

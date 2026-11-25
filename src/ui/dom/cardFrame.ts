@@ -1,15 +1,18 @@
+import { HIT_RULE } from "@andornaut/game-kit/runtime/ui/hitAreas";
 import type { ModalFrameLayout } from "@andornaut/game-kit/runtime/ui/modalFrame";
 import {
   createModalFrame,
   type DomModalFrameContext,
   type ModalFrameView,
 } from "@andornaut/game-kit/runtime/web/ui/dom/modalFrame";
+import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT, CARD_SCREEN_MARGIN, CARD_WIDTH, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
 import { createGameButton } from "../input/actionBinding.ts";
 import type { CardWidth } from "../layout/contentCard.ts";
+import { FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
 import { hitMargin } from "../layout/hitAreas.ts";
 import { type ActionsContext, measuredActions } from "./actions.ts";
 import { registerLayout, rendered } from "./layout.ts";
@@ -39,10 +42,12 @@ const CLOSE = {
 // close X the header is taller than the title by an odd length, whose spare unit goes above.
 const TITLE_INSET = CARD_CONTENT.padding - CARD_CONTENT.frameBorder / 2;
 const TITLE_INK_OFFSET = CARD_CONTENT.frameBorder / 2;
-const CLOSEABLE_TITLE_INK_OFFSET = TITLE_INK_OFFSET + 1;
 
-// A closeable card's body starts where a press area reaching the hit margin above it clears the
-// close X's press target by the gap.
+// A one-line title's box: the heading's cap height, rounded up to a whole base px.
+const TITLE_LINE = FONT_METRICS.mainHeading.size * UI_FONT_FACE.capHeight;
+
+// A closeable card's body starts where its first press area clears the close X's press target by
+// the gap: by default a text button's, which reaches the hit margin above its face.
 const CLOSEABLE_BODY_OUTSET = hitMargin({
   height: TEXT_BUTTON.height,
   width: TEXT_BUTTON.height,
@@ -50,20 +55,37 @@ const CLOSEABLE_BODY_OUTSET = hitMargin({
   y: 0,
 });
 
+// Every closeable card's one-line title sits at one height: centred between the frame's inner
+// edge and where a text button's face would start below the close X.
+const CLOSE_CLEAR =
+  CLOSE.face.y + CLOSE.face.height / 2 + HIT_RULE.minTarget / 2 + CARD_CONTENT.gap;
+const CLOSEABLE_TITLE_TOP = Math.round(
+  (CARD_CONTENT.frameBorder + CLOSE_CLEAR + CLOSEABLE_BODY_OUTSET - TITLE_LINE) / 2,
+);
+
 // What the kit's frame places a card from: its context, its title's insets and how far the
 // body's first press area reaches above the body.
 export function cardFramePlacement(card: {
+  // How far the body's first press area reaches above it, on a closeable card.
+  readonly bodyOutset?: number;
   readonly close: boolean;
   readonly content?: Rect;
   readonly family: CardWidth;
+  // The title's measured height, where it is not one line.
+  readonly titleHeight?: number;
   readonly titled: boolean;
 }): {
   readonly bodyOutset?: number;
   readonly context: DomModalFrameContext;
   readonly title: { readonly inkOffset?: number; readonly inset: number };
 } {
+  const bodyOutset = card.bodyOutset ?? CLOSEABLE_BODY_OUTSET;
+  const height = card.titleHeight ?? Math.ceil(TITLE_LINE);
+  // The header the close X's clearance sets, unless a taller title sets it.
+  const header = CLOSE_CLEAR + bodyOutset;
+  const fits = card.close && height + 2 * TITLE_INSET < header;
   return {
-    ...(card.close ? { bodyOutset: CLOSEABLE_BODY_OUTSET } : {}),
+    ...(card.close ? { bodyOutset } : {}),
     context: {
       ...(card.close ? { close: CLOSE } : {}),
       content: card.content ?? VIEW,
@@ -75,7 +97,9 @@ export function cardFramePlacement(card: {
     },
     title: card.titled
       ? {
-          inkOffset: card.close ? CLOSEABLE_TITLE_INK_OFFSET : TITLE_INK_OFFSET,
+          inkOffset: fits
+            ? CLOSEABLE_TITLE_TOP - Math.floor((header - height) / 2)
+            : TITLE_INK_OFFSET,
           inset: TITLE_INSET,
         }
       : { inset: CARD_CONTENT.padding / 2 },
@@ -87,6 +111,9 @@ export interface CardFrameOptions {
   readonly alert?: boolean;
   // The card's own class names.
   readonly className?: string;
+  // How far the body's first press area reaches above it on a closeable card: a text button's
+  // hit margin by default, and none for a body that starts with text or rows.
+  readonly bodyOutset?: number;
   // The close X's accessible name, for a card with one.
   readonly close?: string;
   // The rect of the play view the card is centred in; the whole view by default.
@@ -172,7 +199,16 @@ export function createCardFrame(document: Document, options: CardFrameOptions): 
       return undefined;
     }
     const placement = cardFramePlacement({
+      ...(options.bodyOutset === undefined ? {} : { bodyOutset: options.bodyOutset }),
       close: close !== undefined,
+      ...(frame.title.hidden
+        ? {}
+        : {
+            titleHeight: Math.max(
+              Math.ceil(TITLE_LINE),
+              Math.ceil(frame.title.getBoundingClientRect().height / readUnit(frame.card) - 1e-6),
+            ),
+          }),
       ...(options.content === undefined ? {} : { content: options.content }),
       family,
       titled: options.title !== undefined,

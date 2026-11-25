@@ -13,7 +13,6 @@ import { CARD_CONTENT, CARD_SCREEN_MARGIN, CARD_WIDTH, TEXT_BUTTON } from "../..
 import { SCREEN } from "../../data/screen.ts";
 import { TEXT } from "../../data/text.ts";
 import { FONT_METRICS, UI_FONT_FACE } from "./fontRoles.ts";
-import { hitMargin } from "./hitAreas.ts";
 import { SETTINGS_ROWS, SWITCH_ROWS } from "./settingsCard.ts";
 
 const WORDS = TEXT.settings;
@@ -37,12 +36,11 @@ const frame = (family: keyof typeof CARD_WIDTH) =>
     margin: CARD_SCREEN_MARGIN,
     padding: CARD_CONTENT.padding,
   }) as const;
-const BUTTON = { height: TEXT_BUTTON.height, width: TEXT_BUTTON.height, x: 0, y: 0 };
 // A text box trimmed to its cap height and baseline, in whole base px.
 const trimmed = (size: number) => size * UI_FONT_FACE.capHeight;
 const parts = (body: number) => ({
   body: Math.ceil(body - 1e-6),
-  bodyOutset: hitMargin(BUTTON),
+  bodyOutset: 0,
   footer: TEXT_BUTTON.height,
   title: {
     height: Math.ceil(trimmed(FONT_METRICS.mainHeading.size)),
