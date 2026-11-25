@@ -49,7 +49,7 @@ export function textButton(document: Document, label: string, primary = false): 
     {
       className: primary ? "ui-text-button ui-text-button-primary" : "ui-text-button",
       contentClassName: "ui-text-button-label",
-      face: { className: "ui-text-button-face ui-text-label ui-frame ui-control-button" },
+      face: { className: "ui-text-button-face ui-frame ui-control-button" },
     },
     { kind: "text", label },
   );
