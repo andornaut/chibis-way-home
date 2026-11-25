@@ -710,7 +710,7 @@
   ],
   "inputs": {
     "data": "34ca8cc56135d25c",
-    "proofs": "31dd738bfda62cc1"
+    "proofs": "d3e8a36d43b448d1"
   },
   "version": 1,
   "zone": "blue",
@@ -727,7 +727,7 @@
       },
       "inputs": {
         "data": "34ca8cc56135d25c",
-        "proofs": "31dd738bfda62cc1"
+        "proofs": "d3e8a36d43b448d1"
       },
       "predecessors": ["outdoor-deep-ascent"],
       "profile": "cold-encounter-v1",
