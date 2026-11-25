@@ -91,7 +91,7 @@ it("retains the required approach while excluding other recently used chunks", (
     7,
     "test-stage",
     recipe,
-  ).areas.main!.chunks!.map(({ chunk }) => chunk);
+  ).plan.areas.main!.chunks!.map(({ chunk }) => chunk);
   expect(ids[ids.indexOf("arena") - 1]).toBe("qualified");
   expect(ids).not.toContain("other-0");
 });

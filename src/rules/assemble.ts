@@ -42,6 +42,11 @@ export interface ChunkLibrary {
   readonly themes: Readonly<Record<string, ThemePlan>>;
 }
 
+// The outcome of assembleZone when no run of the recipe's chunks fits it.
+export class NoAssemblyError extends Error {
+  override readonly name = "NoAssemblyError";
+}
+
 // An assembled zone's one area, and the entry he starts at.
 export const ASSEMBLED_AREA = "main";
 const START_ENTRY = "start";
@@ -1214,7 +1219,9 @@ function assembleOrdered(
     (remaining !== undefined && remaining < 0) ||
     !choose(start.encounters > 0 ? 0 : minimumGap, 0, undefined, remaining)
   ) {
-    throw new Error(`No ordered assembly of stage ${key} fits its section pools and lengths`);
+    throw new NoAssemblyError(
+      `No ordered assembly of stage ${key} fits its section pools and lengths`,
+    );
   }
   const order = recipe.sections.map(({ id }) => id);
   const areas = Object.fromEntries(
@@ -1298,7 +1305,8 @@ function assembleOrdered(
 
 // The zone key's recipe assembled for a seed: its start chunk, a seeded run of its
 // theme's chunks (searchRun), and its finish chunk, with the recipe's events and doors in
-// seeded slots. The same seed always gives the same zone. Throws when no assembly fits.
+// seeded slots. The same seed always gives the same zone. Throws NoAssemblyError when no
+// assembly fits.
 export function assembleZone(
   library: ChunkLibrary,
   seed: number,
@@ -1354,7 +1362,7 @@ export function assembleZone(
       ? seededRun(library, seed, key, undefined, recipe)
       : arenaRun(library, seed, key, arenaId, predecessors, recipe);
   if (!run) {
-    throw new Error(
+    throw new NoAssemblyError(
       `No assembly of zone ${key} fits its recipe: its theme's chunks never join from ` +
         `${recipe.start} to ${recipe.finish} within ${recipe.length.min} to ` +
         `${recipe.length.max} columns, the difficulty band and each chunk's maxPerZone, ` +
@@ -1389,37 +1397,148 @@ export function assembleZone(
   );
 }
 
-// assembleZone, first with avoided optional chunks left out of every middle pool, then, when no
-// assembly fits without them, with every pool whole. Deterministic in (seed, avoid). Recency
+// The pool chunks every run of the zone key's recipe holds, judged on seam rows alone. A run is a
+// walk over seam rows from the start's exit row to the finish's entry row, each chunk one step
+// from its entry row to its exit row. A stage with an arena also walks to the arena's entry row,
+// through one of its approach predecessors when it names them, and on from the arena's exit row.
+// A chunk is required when such a walk exists with it and none without it: the one chunk for a
+// step every walk takes, such as each connector of a single loop of rows, a sole predecessor and
+// the chain that reaches it. Lengths, slots, encounters and maxPerZone are ignored, so the set
+// never names a chunk a run can do without. Only a chunk alone in its step or a predecessor can
+// be required, so the cost is one pass over the pool for each of those.
+export function requiredChunks(
+  library: ChunkLibrary,
+  key: string,
+  recipe: ZoneRecipe,
+): ReadonlySet<string> {
+  const arenaId = library.arenas?.[key];
+  const arena = arenaId === undefined ? undefined : chunkOf(library, arenaId);
+  const predecessors = recipe.arenaApproach?.predecessors;
+  const start = chunkOf(library, recipe.start);
+  const finish = chunkOf(library, recipe.finish);
+  // An arena's run draws only chunks without encounters (arenaRun).
+  const steps = eligibleChunks(library, recipe, recipeChunkPool(library, recipe)).flatMap((id) => {
+    const { encounters, entry, exit } = chunkOf(library, id);
+    return arena !== undefined && (id === arenaId || encounters > 0)
+      ? []
+      : [{ entryRow: entry.row, exitRow: exit.row, id }];
+  });
+  type Step = (typeof steps)[number];
+  // Whether the caps alone make a run: they join and fill the least length.
+  const bare =
+    recipe.start !== recipe.finish &&
+    start.exit.row === finish.entry.row &&
+    start.cols + finish.cols >= recipe.length.min - (arena?.cols ?? 0);
+  // The rows a walk from row reaches, or with backward the rows a walk reaches row from.
+  const reach = (walk: readonly Step[], backward: boolean, row: number) => {
+    const rows = new Set([row]);
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const { entryRow, exitRow } of walk) {
+        const [from, to] = backward ? [exitRow, entryRow] : [entryRow, exitRow];
+        if (rows.has(from) && !rows.has(to)) {
+          rows.add(to);
+          grew = true;
+        }
+      }
+    }
+    return rows;
+  };
+  const fits = (walk: readonly Step[]) => {
+    const fromStart = reach(walk, false, start.exit.row);
+    const toFinish = reach(walk, true, finish.entry.row);
+    if (
+      !bare &&
+      !walk.some(({ entryRow, exitRow }) => fromStart.has(entryRow) && toFinish.has(exitRow))
+    ) {
+      return false;
+    }
+    if (arena === undefined) {
+      return true;
+    }
+    return (
+      toFinish.has(arena.exit.row) &&
+      (predecessors === undefined
+        ? fromStart.has(arena.entry.row)
+        : walk.some(
+            ({ entryRow, exitRow, id }) =>
+              predecessors.includes(id) && fromStart.has(entryRow) && exitRow === arena.entry.row,
+          ))
+    );
+  };
+  if (!fits(steps)) {
+    return new Set();
+  }
+  const sharing = new Map<string, number>();
+  const stepOf = ({ entryRow, exitRow }: Step) => `${entryRow}>${exitRow}`;
+  for (const step of steps) {
+    sharing.set(stepOf(step), (sharing.get(stepOf(step)) ?? 0) + 1);
+  }
+  return new Set(
+    steps
+      .filter(
+        (step) =>
+          (sharing.get(stepOf(step)) === 1 || predecessors?.includes(step.id) === true) &&
+          !fits(steps.filter((other) => other !== step)),
+      )
+      .map(({ id }) => id),
+  );
+}
+
+// Whether a stage's avoided chunks were left out of its plan ("honoured"), or no assembly fitted
+// without them and every pool was used whole ("fallback").
+export type Avoidance = "fallback" | "honoured";
+
+// A zone assembled with chunks to avoid.
+export interface AvoidingAssembly {
+  readonly avoidance: Avoidance;
+  readonly plan: ZonePlan;
+}
+
+// assembleZone, first with the avoided chunks left out of every middle pool except those a flat
+// recipe cannot do without (requiredChunks), then, when no assembly fits without them, with every
+// pool whole. An ordered stage's section pools keep none. Deterministic in (seed, avoid). Recency
 // across stages passes the ids of the zone's recent stages; an empty list assembles as
-// assembleZone.
+// assembleZone and counts as honoured. Only the outcome that nothing fits falls back: a narrowed
+// pool that is no valid pool, or NoAssemblyError. Any other error is thrown on.
 export function assembleZoneAvoiding(
   library: ChunkLibrary,
   avoid: readonly string[],
   seed: number,
   key: string,
   recipe: StageRecipe,
-): ZonePlan {
-  if (avoid.length > 0) {
-    const avoided = new Set(avoid);
-    const required = "sections" in recipe ? undefined : recipe.arenaApproach?.predecessors;
-    const keep = (pool: ChunkPool) =>
-      pool.filter((id) => !avoided.has(id) || required?.includes(id));
-    const narrowed: StageRecipe =
-      "sections" in recipe
-        ? {
-            ...recipe,
-            sections: recipe.sections.map((section) => ({
-              ...section,
-              chunks: keep(section.chunks),
-            })),
-          }
-        : { ...recipe, chunks: keep(recipeChunkPool(library, recipe)) };
+): AvoidingAssembly {
+  if (avoid.length === 0) {
+    return { avoidance: "honoured", plan: assembleZone(library, seed, key, recipe) };
+  }
+  const avoided = new Set(avoid);
+  let narrowed: StageRecipe;
+  let valid: boolean;
+  if ("sections" in recipe) {
+    narrowed = {
+      ...recipe,
+      sections: recipe.sections.map((section) => ({
+        ...section,
+        chunks: section.chunks.filter((id) => !avoided.has(id)),
+      })),
+    };
+    valid = orderedRecipeProblems(library, narrowed).length === 0;
+  } else {
+    const required = requiredChunks(library, key, recipe);
+    const chunks = recipeChunkPool(library, recipe).filter(
+      (id) => !avoided.has(id) || required.has(id),
+    );
+    narrowed = { ...recipe, chunks };
+    valid = chunks.length > 0;
+  }
+  if (valid) {
     try {
-      return assembleZone(library, seed, key, narrowed);
-    } catch {
-      // No assembly fits without the avoided chunks; fall back to the whole pools.
+      return { avoidance: "honoured", plan: assembleZone(library, seed, key, narrowed) };
+    } catch (error) {
+      if (!(error instanceof NoAssemblyError)) {
+        throw error;
+      }
     }
   }
-  return assembleZone(library, seed, key, recipe);
+  return { avoidance: "fallback", plan: assembleZone(library, seed, key, recipe) };
 }

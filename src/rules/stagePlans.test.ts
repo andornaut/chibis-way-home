@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
-import type { ZoneMap, ZonePlan } from "../data/types/index.ts";
+import type { ZoneMap, ZonePlan, ZoneRecipe } from "../data/types/index.ts";
+import { requiredChunks } from "./assemble.ts";
 import { middleChunkIds, planStage, recipeKey, stageTarget } from "./stagePlans.ts";
-import { STAGE_CONTEXT, zonePlanAvoiding } from "./zonePlans.ts";
+import { CHUNK_LIBRARY, STAGE_CONTEXT, zoneOfTheme, zonePlanAvoiding } from "./zonePlans.ts";
 
 const STAGE = ZONE_MAP.nodes.find((node) => node.kind === "zone" && node.zone !== undefined)!;
 const { at } = STAGE;
@@ -40,6 +41,7 @@ describe("the stage a request plans", () => {
       planStage(CONTEXT, { avoid: [], seed: SEED, target: { recipe: STAGE.zone! } }),
     );
     expect(byNode).toEqual({
+      avoidance: "honoured",
       key: STAGE.zone,
       middle: middleChunkIds(byNode.plan),
       plan: zonePlanAvoiding([], SEED, STAGE.zone!),
@@ -80,5 +82,51 @@ describe("the stage a request plans", () => {
       unbuilt: { node: "unbuilt" },
     });
     expect(recipeKey(MAP, stageTarget(MAP, STAGE.id))).toBe(STAGE.zone);
+  });
+});
+
+// Every outdoor recipe: the flat recipes of each zone but the apartment.
+const OUTDOOR = Object.entries(STAGE_CONTEXT.recipes).flatMap(([key, recipe]) => {
+  const zone = "sections" in recipe ? undefined : zoneOfTheme(recipe.theme);
+  return zone === undefined || zone === "apartment" || "sections" in recipe
+    ? []
+    : [[key, recipe] as const];
+});
+const AVOID_SEEDS = Array.from({ length: 8 }, (_, seed) => seed);
+
+describe("a stage entered again", () => {
+  it.each(OUTDOOR)(
+    "plans %s without the earlier plan's middle chunks, but those every plan needs",
+    (key, recipe: ZoneRecipe) => {
+      const required = requiredChunks(CHUNK_LIBRARY, key, recipe);
+      expect(required.size).toBeGreaterThan(0);
+      for (const seed of AVOID_SEEDS) {
+        const earlier = planStage(STAGE_CONTEXT, { avoid: [], seed, target: { recipe: key } });
+        const again = planStage(STAGE_CONTEXT, {
+          avoid: earlier.middle,
+          seed: seed + 1,
+          target: { recipe: key },
+        });
+        expect(earlier.middle).toEqual(expect.arrayContaining([...required]));
+        expect(again.avoidance).toBe("honoured");
+        const arena = CHUNK_LIBRARY.arenas?.[key];
+        expect(
+          again.middle.filter(
+            (id) => id !== arena && earlier.middle.includes(id) && !required.has(id),
+          ),
+        ).toEqual([]);
+        const approach = recipe.arenaApproach?.predecessors ?? [];
+        if (approach.length > 0) {
+          const placed = again.plan.areas.main!.chunks!.map(({ chunk }) => chunk);
+          expect(approach).toContain(placed[placed.indexOf(arena!) - 1]);
+          expect([...required]).toEqual(expect.arrayContaining([...approach]));
+        }
+      }
+    },
+    120_000,
+  );
+
+  it("has an outdoor recipe with a certified arena approach", () => {
+    expect(OUTDOOR.some(([, recipe]) => recipe.arenaApproach !== undefined)).toBe(true);
   });
 });

@@ -1,5 +1,5 @@
 import type { StageRecipe, ZoneMap, ZonePlan } from "../data/types/index.ts";
-import { assembleZoneAvoiding, type ChunkLibrary } from "./assemble.ts";
+import { assembleZoneAvoiding, type Avoidance, type ChunkLibrary } from "./assemble.ts";
 
 // What a stage plan is assembled from.
 export interface StageContext {
@@ -18,8 +18,11 @@ export interface StageRequest {
   readonly target: StageTarget;
 }
 
-// A planned stage: its recipe key, its plan and the plan's middle chunk ids.
+// A planned stage: whether its request's avoided chunks were left out ("honoured") or the whole
+// pools were used because nothing fitted without them ("fallback"), its recipe key, its plan and
+// the plan's middle chunk ids.
 export interface PlannedStage {
+  readonly avoidance: Avoidance;
   readonly key: string;
   readonly middle: readonly string[];
   readonly plan: ZonePlan;
@@ -61,15 +64,21 @@ export function recipeKey(map: ZoneMap, target: StageTarget): string {
   return node.zone;
 }
 
-// The stage request asks for, assembled from its recipe without the avoided middle chunks while
-// an assembly fits without them (assembleZoneAvoiding): the same for the same context and
-// request. Throws on a target with no recipe.
+// The stage request asks for, assembled from its recipe without the avoided middle chunks it can
+// do without while an assembly fits without them (assembleZoneAvoiding): the same for the same
+// context and request. Throws on a target with no recipe.
 export function planStage(context: StageContext, request: StageRequest): PlannedStage {
   const key = recipeKey(context.map, request.target);
   const recipe = context.recipes[key];
   if (!recipe) {
     throw new Error(`No recipe ${key}`);
   }
-  const plan = assembleZoneAvoiding(context.library, request.avoid, request.seed, key, recipe);
-  return { key, middle: middleChunkIds(plan), plan };
+  const { avoidance, plan } = assembleZoneAvoiding(
+    context.library,
+    request.avoid,
+    request.seed,
+    key,
+    recipe,
+  );
+  return { avoidance, key, middle: middleChunkIds(plan), plan };
 }

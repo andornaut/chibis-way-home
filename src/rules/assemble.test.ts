@@ -7,6 +7,8 @@ import {
   assembleZone,
   assembleZoneAvoiding,
   type ChunkLibrary,
+  NoAssemblyError,
+  requiredChunks,
   zonePlanOf,
 } from "./assemble.ts";
 import { recipeProblems } from "./chunk.ts";
@@ -954,26 +956,127 @@ describe("ordered section assembly", () => {
   });
 });
 
+describe("requiredChunks", () => {
+  // One loop of rows 50, 40, 30 and back with a side step at 40; the caps are too narrow to
+  // make a run alone.
+  const loop = {
+    aside: chunk(40, 40),
+    down: chunk(30, 50),
+    "up-high": chunk(40, 30),
+    "up-low": chunk(50, 40),
+  };
+  const ids = (chunks: Readonly<Record<string, ChunkPlan>>, zone: ZoneRecipe, key = "z") => [
+    ...requiredChunks(library(chunks), key, zone),
+  ];
+
+  it("names the one chunk for each seam step every run takes", () => {
+    expect(ids(loop, recipe(3)).sort()).toEqual(["down", "up-high", "up-low"]);
+  });
+
+  it("names no chunk whose step another chunk or route also makes", () => {
+    expect(ids({ ...loop, "down-again": chunk(30, 50) }, recipe(3)).sort()).toEqual([
+      "up-high",
+      "up-low",
+    ]);
+    expect(ids({ ...loop, flat: chunk(50, 50) }, recipe(3))).toEqual([]);
+  });
+
+  it("names none when the caps alone fill the least length, or nothing joins", () => {
+    expect(ids(loop, recipe(0))).toEqual([]);
+    expect(ids({ "up-low": loop["up-low"] }, recipe(1))).toEqual([]);
+  });
+
+  it("names the chain that reaches an arena's sole approach predecessor", () => {
+    const chunks = {
+      ...loop,
+      approach: chunk(30, 40),
+      arena: chunk(40, 40, { encounters: 1 }),
+      flat: chunk(50, 50),
+    };
+    const zone = recipe(6, {
+      arenaApproach: { predecessors: ["approach"], profile: "cold-encounter-v1" },
+    });
+    const lib = { ...library(chunks), arenas: { z: "arena" } };
+    expect([...requiredChunks(lib, "z", zone)].sort()).toEqual([
+      "approach",
+      "down",
+      "up-high",
+      "up-low",
+    ]);
+  });
+});
+
 describe("assembleZoneAvoiding", () => {
   const middles = (plan: ReturnType<typeof assembleZone>) =>
     plan.areas[ASSEMBLED_AREA]!.chunks!.slice(1, -1).map(({ chunk }) => chunk);
 
   it("assembles as assembleZone with nothing to avoid", () => {
-    expect(assembleZoneAvoiding(FIXTURE_LIBRARY, [], 7, "fixture", FIXTURE_RECIPE)).toEqual(
-      assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE),
-    );
+    expect(assembleZoneAvoiding(FIXTURE_LIBRARY, [], 7, "fixture", FIXTURE_RECIPE)).toEqual({
+      avoidance: "honoured",
+      plan: assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE),
+    });
   });
 
   it("leaves avoided chunks out while a run fits without them", () => {
     const avoid = middles(assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE)).slice(0, 1);
-    const plan = assembleZoneAvoiding(FIXTURE_LIBRARY, avoid, 7, "fixture", FIXTURE_RECIPE);
+    const { avoidance, plan } = assembleZoneAvoiding(
+      FIXTURE_LIBRARY,
+      avoid,
+      7,
+      "fixture",
+      FIXTURE_RECIPE,
+    );
+    expect(avoidance).toBe("honoured");
     expect(middles(plan).filter((id) => avoid.includes(id))).toEqual([]);
   });
 
   it("falls back to the whole pool when nothing fits without the avoided chunks", () => {
     const avoid = Object.keys(FIXTURE_LIBRARY.chunks);
-    expect(assembleZoneAvoiding(FIXTURE_LIBRARY, avoid, 7, "fixture", FIXTURE_RECIPE)).toEqual(
-      assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE),
+    expect(assembleZoneAvoiding(FIXTURE_LIBRARY, avoid, 7, "fixture", FIXTURE_RECIPE)).toEqual({
+      avoidance: "fallback",
+      plan: assembleZone(FIXTURE_LIBRARY, 7, "fixture", FIXTURE_RECIPE),
+    });
+  });
+
+  it("keeps the avoided chunks every run needs and leaves the others out", () => {
+    const chunks = {
+      down: chunk(40, 50),
+      "flat-a": chunk(40, 40),
+      "flat-b": chunk(40, 40),
+      up: chunk(50, 40),
+    };
+    const zone = recipe(3);
+    for (const seed of SEEDS) {
+      const { avoidance, plan } = assembleZoneAvoiding(
+        library(chunks),
+        ["down", "flat-a", "up"],
+        seed,
+        "z",
+        zone,
+      );
+      expect(avoidance).toBe("honoured");
+      expect(middles(plan)).toEqual(["up", "flat-b", "down"]);
+    }
+  });
+
+  it("falls back when the narrowed pool has no run, and throws when the whole pool has none", () => {
+    // A chunk never follows itself, so two middle chunks need both.
+    const chunks = { a: chunk(50, 50), b: chunk(50, 50) };
+    expect(assembleZoneAvoiding(library(chunks), ["a"], 1, "z", recipe(2)).avoidance).toBe(
+      "fallback",
+    );
+    expect(() => assembleZoneAvoiding(library({ a: chunks.a }), ["a"], 1, "z", recipe(2))).toThrow(
+      NoAssemblyError,
+    );
+  });
+
+  it("throws on an error other than no assembly fitting without the avoided chunks", () => {
+    const unknownLook = chunk(50, 50, {
+      solids: [{ col: 0, cols: 60, look: "unknown", row: 50, rows: ROWS - 50 }],
+    });
+    const lib = library({ a: chunk(50, 50), b: unknownLook });
+    expect(() => assembleZoneAvoiding(lib, ["a"], 1, "z", recipe(1))).toThrow(
+      "Theme t has no look unknown for chunk b",
     );
   });
 });
