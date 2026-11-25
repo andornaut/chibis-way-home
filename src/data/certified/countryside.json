@@ -1,6 +1,6 @@
 {
   "arenas": [
-    { "hash": "451fa43bbc2b8fce", "id": "arena-goose-river-crossing", "stage": "river-crossing" }
+    { "hash": "225f4a1e8e53e1c6", "id": "arena-goose-river-crossing", "stage": "river-crossing" }
   ],
   "entries": [
     {
@@ -608,7 +608,7 @@
       "work": 10121
     }
   ],
-  "inputs": { "data": "ee938f582319e822", "proofs": "d4ad7b8a6d597900" },
+  "inputs": { "data": "0339053ac7185f08", "proofs": "b298be7cd63f3426" },
   "version": 1,
   "zone": "countryside"
 }

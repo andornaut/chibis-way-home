@@ -1,12 +1,77 @@
 {
   "arenas": [
     {
-      "hash": "8e7ca1791f1a2188",
+      "hash": "22d1d3a9ea7f072b",
       "id": "arena-raccoon-familiar-neighbourhood",
       "stage": "familiar-neighbourhood"
     }
   ],
   "entries": [
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "home-homecity-crumbling-balcony--awning-row",
+      "kind": "pair",
+      "layout": "832097437cc0f752",
+      "modules": ["homecity-crumbling-balcony", "awning-row"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "5ae4cc926d356225",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "452e58a0688d2298:3009",
+      "work": 3009
+    },
+    {
+      "encounters": 0,
+      "grade": 5,
+      "id": "home-homecity-crumbling-balcony--homecity-crumbling-balcony",
+      "kind": "pair",
+      "layout": "76ee98e8e341bfc8",
+      "modules": ["homecity-crumbling-balcony", "homecity-crumbling-balcony"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "71551e0c77c426c9",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "8747a549dc74742c:548",
+      "work": 548
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-crumbling-balcony--homecity-garden-walls",
+      "kind": "pair",
+      "layout": "f65323a848b0870c",
+      "modules": ["homecity-crumbling-balcony", "homecity-garden-walls"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "6890c87820845ef2",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "585ccb89c4155ab2:1028",
+      "work": 1028
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-garden-walls--awning-row",
+      "kind": "pair",
+      "layout": "5218eeaf65045617",
+      "modules": ["homecity-garden-walls", "awning-row"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "8562b185460acac7",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "093db5da1b4edde8:3412",
+      "work": 3412
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-garden-walls--homecity-crumbling-balcony",
+      "kind": "pair",
+      "layout": "270befff63b901b8",
+      "modules": ["homecity-garden-walls", "homecity-crumbling-balcony"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "fe670aaea00589e6",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "511836e5c3df65e6:1225",
+      "work": 1225
+    },
     {
       "encounters": 0,
       "grade": 4,
@@ -18,6 +83,19 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "ad37e7438d57935c:2968",
       "work": 2968
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-stoop--homecity-crumbling-balcony",
+      "kind": "pair",
+      "layout": "8740d5777afa96b8",
+      "modules": ["homecity-stoop", "homecity-crumbling-balcony"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "cc34d63b21d07688",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b1c0dc186b8d2709:460",
+      "work": 460
     },
     {
       "encounters": 0,
@@ -207,7 +285,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "84a5321386231d6f", "proofs": "d4ad7b8a6d597900" },
+  "inputs": { "data": "861d13e6c5bc82dd", "proofs": "b298be7cd63f3426" },
   "version": 1,
   "zone": "home"
 }

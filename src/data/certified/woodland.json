@@ -1,5 +1,5 @@
 {
-  "arenas": [{ "hash": "4a4de65c19ae9126", "id": "arena-bear-ravine", "stage": "ravine" }],
+  "arenas": [{ "hash": "9553d5a0611accc9", "id": "arena-bear-ravine", "stage": "ravine" }],
   "entries": [
     {
       "encounters": 0,
@@ -317,16 +317,9 @@
       "kind": "pair",
       "layout": "4e99b57445a95b05",
       "modules": ["woodland-broken-ridge", "woodland-bough-return"],
-      "proof": {
-        "kind": "ordinary",
-        "tuning": "63028676eb5663ac",
-        "version": 1
-      },
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
       "route": "a1767874cdb624e1",
-      "slots": {
-        "door": 0,
-        "event": 0
-      },
+      "slots": { "door": 0, "event": 0 },
       "trace": "4822efb5198afc46:1802",
       "work": 1802
     },
@@ -385,16 +378,9 @@
       "kind": "pair",
       "layout": "7114809da83c2ded",
       "modules": ["woodland-broken-ridge", "woodland-hollow-descent"],
-      "proof": {
-        "kind": "ordinary",
-        "tuning": "63028676eb5663ac",
-        "version": 1
-      },
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
       "route": "49693f46bac53a70",
-      "slots": {
-        "door": 0,
-        "event": 0
-      },
+      "slots": { "door": 0, "event": 0 },
       "trace": "3772ecb0b45dc7e4:1391",
       "work": 1391
     },
@@ -601,16 +587,9 @@
       "kind": "pair",
       "layout": "f5f6acb764e31e11",
       "modules": ["woodland-hollow-descent", "woodland-broken-ridge"],
-      "proof": {
-        "kind": "ordinary",
-        "tuning": "63028676eb5663ac",
-        "version": 1
-      },
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
       "route": "087c0459129ecf6a",
-      "slots": {
-        "door": 0,
-        "event": 0
-      },
+      "slots": { "door": 0, "event": 0 },
       "trace": "682fa9c8e18acf1c:2213",
       "work": 2213
     },
@@ -935,7 +914,7 @@
       "work": 897
     }
   ],
-  "inputs": { "data": "aab4ddb65ae21ab1", "proofs": "d4ad7b8a6d597900" },
+  "inputs": { "data": "08af36f2627bdd0e", "proofs": "b298be7cd63f3426" },
   "version": 1,
   "zone": "woodland"
 }
