@@ -106,60 +106,25 @@ const OUTDOOR = Object.entries(STAGE_CONTEXT.recipes).flatMap(([key, recipe]) =>
     ? []
     : [[key, recipe] as const];
 });
-const AVOID_SEEDS = Array.from({ length: 8 }, (_, seed) => seed);
-
-describe("a stage entered again", () => {
-  it.each(OUTDOOR)(
-    "plans %s without the earlier plan's middle chunks, but a source of each step every plan needs",
-    (key, recipe: ZoneRecipe) => {
-      const steps = requiredSteps(CHUNK_LIBRARY, key, recipe);
-      const required = new Set(steps.flat());
-      expect(steps.length).toBeGreaterThan(0);
-      for (const seed of AVOID_SEEDS) {
-        const earlier = requirePlanned(
-          planStage(STAGE_CONTEXT, { avoid: [], seed, target: { recipe: key } }),
-        );
-        const again = requirePlanned(
-          planStage(STAGE_CONTEXT, {
-            avoid: [earlier.middle],
-            seed: seed + 1,
-            target: { recipe: key },
-          }),
-        );
-        for (const sources of steps) {
-          expect(sources.some((id) => earlier.middle.includes(id))).toBe(true);
-        }
-        expect(again.avoidance).toBe("honoured");
-        const arena = CHUNK_LIBRARY.arenas?.[key];
-        expect(
-          again.middle.filter(
-            (id) => id !== arena && earlier.middle.includes(id) && !required.has(id),
-          ),
-        ).toEqual([]);
-        const approach = recipe.arenaApproach?.predecessors ?? [];
-        if (approach.length > 0) {
-          const placed = again.plan.areas.main!.chunks!.map(({ chunk }) => chunk);
-          expect(approach).toContain(placed[placed.indexOf(arena!) - 1]);
-          expect([...required]).toEqual(expect.arrayContaining([...approach]));
-        }
-      }
-    },
-    120_000,
-  );
-
-  it("has an outdoor recipe with a certified arena approach", () => {
-    expect(OUTDOOR.some(([, recipe]) => recipe.arenaApproach !== undefined)).toBe(true);
-  });
+it("has an outdoor recipe with a certified arena approach", () => {
+  expect(OUTDOOR.some(([, recipe]) => recipe.arenaApproach !== undefined)).toBe(true);
 });
 
 const VARIETY_SEEDS = Array.from({ length: 16 }, (_, seed) => seed);
+// The first two entries of these sequences also exercise the one-history avoidance contract.
+const FIRST_REENTRY_SEEDS = 8;
 // A plan's middle chunks in order, repeats included.
 const runOf = ({ plan }: PlannedStage) => plan.areas.main!.chunks!.slice(1, -1).map((c) => c.chunk);
 
 describe("an outdoor stage entered four times running", () => {
   it.each(OUTDOOR)(
-    "plans %s in at most one loop, each honoured entry opening unlike the entry before",
+    "plans %s with required steps, varied reentries and at most one loop",
     (key, recipe: ZoneRecipe) => {
+      const steps = requiredSteps(CHUNK_LIBRARY, key, recipe);
+      const required = new Set(steps.flat());
+      const arena = CHUNK_LIBRARY.arenas?.[key];
+      const approach = recipe.arenaApproach?.predecessors ?? [];
+      expect(steps.length).toBeGreaterThan(0);
       let fallbacks = 0;
       for (const seed of VARIETY_SEEDS) {
         // The entries so far, newest first; each avoids the latest two.
@@ -180,6 +145,27 @@ describe("an outdoor stage entered four times running", () => {
             );
           } else {
             fallbacks++;
+          }
+          if (entry === 1 && seed < FIRST_REENTRY_SEEDS) {
+            const earlier = entries[0]!;
+            for (const sources of steps) {
+              expect(
+                sources.some((id) => earlier.middle.includes(id)),
+                `seed ${seed}`,
+              ).toBe(true);
+            }
+            expect(planned.avoidance, `seed ${seed}`).toBe("honoured");
+            expect(
+              planned.middle.filter(
+                (id) => id !== arena && earlier.middle.includes(id) && !required.has(id),
+              ),
+              `seed ${seed}`,
+            ).toEqual([]);
+            if (approach.length > 0) {
+              const placed = planned.plan.areas.main!.chunks!.map(({ chunk }) => chunk);
+              expect(approach).toContain(placed[placed.indexOf(arena!) - 1]);
+              expect([...required]).toEqual(expect.arrayContaining([...approach]));
+            }
           }
           entries.unshift(planned);
         }
