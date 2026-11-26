@@ -11,6 +11,19 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "apartment-chandelier-approach--apartment-stepped-piers",
+      "kind": "pair",
+      "layout": "4358f1aff082c388",
+      "modules": ["chandelier-approach", "apartment-stepped-piers"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "64fcf059e104daf9",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "1c212dda74587408:611",
+      "work": 611
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "apartment-chandelier-approach--chandelier-swing",
       "kind": "pair",
       "layout": "48abb6015a176afc",
@@ -249,7 +262,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "f3e40b7e015592fc", "proofs": "f57cd30d9ec811e9" },
+  "inputs": { "data": "a1065ab40e09e7a8", "proofs": "f57cd30d9ec811e9" },
   "version": 1,
   "zone": "apartment"
 }
