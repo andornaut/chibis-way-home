@@ -58,3 +58,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0306 | Build every card from shared components and one layout rule             | [cwh-0306.md](../work/cwh-0306.md) |
 | cwh-0314 | Place Use 80 px from Jump                                               | [cwh-0314.md](../work/cwh-0314.md) |
 | cwh-0318 | Label story dialogue advance Next                                       | [cwh-0318.md](../work/cwh-0318.md) |
+| cwh-0326 | Align story navigation with Previous, Next and Skip                     | [cwh-0326.md](../work/cwh-0326.md) |
