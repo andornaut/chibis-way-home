@@ -24,7 +24,7 @@ Every zone and stage on the [V1 route](stages.md#v1-route) is built. The ruleboo
 
 ## Targets
 
-Targets are assessed per stage and player skill. Bands other than the successful-clear time target remain to be agreed with the user. The kinds of target:
+Successful-clear time targets apply per stage. Layout minimums apply per zone. Restart rates, route spread and session length still need calibration.
 
 - **Encounter distribution:** satisfy the rulebook's encounter quotas across each zone’s catalogued stages, with distinct encounter sections, ordinary platforming between them and varied layout. Encounter spacing is flexible; it is not a time-based encounter rate
 - **Layout variety:** target distinct certified physics layouts by zone, with more variety in the earlier zones. Only layouts with matching ordinary no-powerup required-route proofs count. Exclude cosmetic aliases, seeds and boss arenas. Legacy certificates retain their pool eligibility until a pool change is admitted
@@ -33,6 +33,8 @@ Targets are assessed per stage and player skill. Bands other than the successful
 - **Restarts:** a failed attempt is one that ends in death (a fall, hazard or crush), followed by the retry choice. Restarts per stage, by skill: some attempts fail, and the band says how often
 - **Route spread:** every route a choice opens lands within a narrow window of the stage's median clear time and restart rate, so no route is a lot easier or harder
 - **Session length:** the time to finish the game, by skill
+
+The table gives design minimums. Qualification and pool admission establish which layouts currently count.
 
 | Zone in play order   | Minimum distinct layouts |
 | -------------------- | ------------------------ |

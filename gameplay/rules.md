@@ -65,6 +65,7 @@ The play loop, controls, interface, progression and saves. See [movement and ski
 - **Entry:** entering a stage from the map, replaying it or continuing through a statistics interstitial generates a new layout
 - **Pause:** pausing and resuming keeps the same run and position
 - **Restart:** a full restart resets progress to its beginning state; the next actual stage entry starts a fresh run
+- **Run links:** `?zone=` with a stage’s map node plays that stage outside the map. After a clear or a turn back, it re-enters the stage directly. A clear records its run statistics and clear achievements like a map clear. If the map already opens the stage, the clear also saves its completion and stands Chibi there. Otherwise, the map stays as it was. Turning back does not save a clear
 
 ## Stage statistics and interstitials
 
