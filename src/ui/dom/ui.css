@@ -269,8 +269,16 @@
   fill: var(--colour-cream);
 }
 
+[data-ui-fill="dgreen"] {
+  fill: var(--colour-dgreen);
+}
+
 [data-ui-fill="dslate"] {
   fill: var(--colour-dslate);
+}
+
+[data-ui-fill="forest"] {
+  fill: var(--colour-forest);
 }
 
 [data-ui-fill="green"] {
@@ -301,6 +309,10 @@
   fill: var(--colour-red);
 }
 
+[data-ui-fill="slate"] {
+  fill: var(--colour-slate);
+}
+
 [data-ui-fill="tan"] {
   fill: var(--colour-tan);
 }
@@ -321,8 +333,16 @@
   stroke: var(--colour-cream);
 }
 
+[data-ui-stroke="dgreen"] {
+  stroke: var(--colour-dgreen);
+}
+
 [data-ui-stroke="dslate"] {
   stroke: var(--colour-dslate);
+}
+
+[data-ui-stroke="forest"] {
+  stroke: var(--colour-forest);
 }
 
 [data-ui-stroke="green"] {
@@ -351,6 +371,10 @@
 
 [data-ui-stroke="red"] {
   stroke: var(--colour-red);
+}
+
+[data-ui-stroke="slate"] {
+  stroke: var(--colour-slate);
 }
 
 [data-ui-stroke="tan"] {
