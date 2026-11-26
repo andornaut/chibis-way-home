@@ -593,7 +593,7 @@
       "id": "countryside-windmill-lookout--countryside-red-gully",
       "kind": "pair",
       "layout": "b31ce66c24bbf281",
-      "modules": ["windmill-lookout","countryside-red-gully"],
+      "modules": ["windmill-lookout", "countryside-red-gully"],
       "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
       "route": "0d00c3c6ceda76ac",
       "slots": { "door": 0, "event": 0 },
