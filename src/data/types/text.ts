@@ -79,6 +79,7 @@ export interface GameText {
     readonly continue: string;
     // The conversation's accessible name, which a screen reader announces as it opens.
     readonly label: string;
+    readonly previous: string;
     readonly skip: string;
     readonly speakers: Readonly<Record<string, string>>;
   };
