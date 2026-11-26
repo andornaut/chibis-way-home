@@ -48,6 +48,19 @@
     },
     {
       "encounters": 0,
+      "grade": 5,
+      "id": "home-homecity-crumbling-balcony--homecity-low-arch-crossing",
+      "kind": "pair",
+      "layout": "36077f64e91469e9",
+      "modules": ["homecity-crumbling-balcony", "homecity-low-arch-crossing"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "bfc6b75be402ba87",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "dd53dcfa98e8c3c2:808",
+      "work": 808
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "home-homecity-garden-walls--awning-row",
       "kind": "pair",
@@ -71,6 +84,19 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "511836e5c3df65e6:1225",
       "work": 1225
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-garden-walls--homecity-low-arch-crossing",
+      "kind": "pair",
+      "layout": "ad0e45c98d0d0e46",
+      "modules": ["homecity-garden-walls", "homecity-low-arch-crossing"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "9cfafbbf379898ca",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "afff5f9622f7fb31:1626",
+      "work": 1626
     },
     {
       "encounters": 0,
@@ -101,6 +127,19 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "home-homecity-open-balconies--homecity-low-arch-crossing",
+      "kind": "pair",
+      "layout": "0d458e641dd3b1fa",
+      "modules": ["homecity-open-balconies", "homecity-low-arch-crossing"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "ef008bd6bb7f4573",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "a07adc7f2a04df63:1394",
+      "work": 1394
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "home-homecity-stoop--awning-row",
       "kind": "pair",
       "layout": "dbd5936c019b75ef",
@@ -127,6 +166,58 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "home-homecity-stoop--homecity-low-arch-crossing",
+      "kind": "pair",
+      "layout": "633cad5ed0bdd8eb",
+      "modules": ["homecity-stoop", "homecity-low-arch-crossing"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "78be6c2b73ef2072",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "9fca1ba769e7f25f:830",
+      "work": 830
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-terrace-balcony-approach--awning-row",
+      "kind": "pair",
+      "layout": "dc51aca908b10a02",
+      "modules": ["homecity-terrace-balcony-approach", "awning-row"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "4853e32660e55639",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "ea50d1d9a2dbc22a:38361",
+      "work": 38361
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-terrace-balcony-approach--homecity-crumbling-balcony",
+      "kind": "pair",
+      "layout": "56a22f3ee4f90999",
+      "modules": ["homecity-terrace-balcony-approach", "homecity-crumbling-balcony"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "90e99587a88dd102",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "e3154c9d5ea6e965:2035",
+      "work": 2035
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-terrace-balcony-approach--homecity-low-arch-crossing",
+      "kind": "pair",
+      "layout": "386f18762f11ccd9",
+      "modules": ["homecity-terrace-balcony-approach", "homecity-low-arch-crossing"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "ead72a839f5f4ea2",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "3604a62e5121067f:1469",
+      "work": 1469
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "home-homecity-underpass-approach--awning-row",
       "kind": "pair",
       "layout": "91a8e7ff009b29ed",
@@ -149,6 +240,19 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "b93978186d7f17e4:53493",
       "work": 53493
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-underpass-approach--homecity-low-arch-crossing",
+      "kind": "pair",
+      "layout": "4d07ae4351814e8a",
+      "modules": ["homecity-underpass-approach", "homecity-low-arch-crossing"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "9c0fc641a79b5c96",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "f6ceb9c76a9bb057:30763",
+      "work": 30763
     },
     {
       "encounters": 0,
@@ -354,7 +458,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "430d54a2ed686912", "proofs": "f57cd30d9ec811e9" },
+  "inputs": { "data": "a1f312d319517c22", "proofs": "f57cd30d9ec811e9" },
   "version": 1,
   "zone": "home"
 }
