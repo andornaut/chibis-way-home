@@ -12,6 +12,7 @@ import {
 import { createActionIcon } from "./actionHelp.ts";
 import { textButton } from "./card.ts";
 import { type CardFrame, createCardFrame } from "./cardFrame.ts";
+import { createSwitchGlyph } from "./controlGlyphs.ts";
 
 // The settings card in the HTML UI (cardFrame.ts, settings.css): its title, two columns of switch
 // rows on the kit's form rows, the touch settings left and the display settings right, the
@@ -19,7 +20,7 @@ import { type CardFrame, createCardFrame } from "./cardFrame.ts";
 // the footer and the close X; and in the same view, hidden until Install needs it, the install
 // steps card over it, with its title, the browser's steps beside their glyph and its own close X.
 // A switch row is one button and its whole press area (role switch, aria-checked, named by its
-// label and described by its note): its icons, its label over its note and art's ui-switch over
+// label and described by its note): its icons, its label over its note and the switch over
 // its state word. Touch rows draw the controls they show or hide as inline control icons; FPS
 // counter, Reduced motion and Install use art's icons. The icons are decorative, hidden from
 // assistive technology. Install is one standard face holding its icon and label. The keyboard's
@@ -165,6 +166,7 @@ export function createSettingsCard(
       ...(key === "fps" ? {} : { note: words.descriptions[key] }),
       switch: true,
     });
+    view.switch!.append(createSwitchGlyph(document));
     (isTouchSetting(key) ? left : right).list.append(view.element);
     return [key, view] as const;
   });

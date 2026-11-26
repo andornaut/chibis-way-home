@@ -5,6 +5,7 @@ import { SWITCH_ROWS } from "../layout/settingsCard.ts";
 import { createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
 import { createCardFrame } from "./cardFrame.ts";
+import { createSwitchGlyph } from "./controlGlyphs.ts";
 
 // The cheats card in the HTML UI (cardFrame.ts, cheats.css): its title, the unlock actions as a
 // full-width stack, the Invincibility switch row on the kit's form rows (role switch,
@@ -68,6 +69,7 @@ export function createCheatsCard(
     note: words.invulnerableNote,
     switch: true,
   });
+  invincibility.switch!.append(createSwitchGlyph(document));
   rows.element.append(invincibility.element);
   const status = document.createElement("p");
   status.className = "ui-card-text ui-text-body cheats-status";

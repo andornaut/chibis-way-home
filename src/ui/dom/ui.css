@@ -165,7 +165,7 @@
   padding-bottom: 0;
 }
 
-/* The close X's box is its face, art's ui-close; the card's frame places it and gives it its
+/* The close X's box is its face; the card's frame places it and gives it its
    press target (modalFrame.css). */
 .ui-close-button {
   margin: 0;
@@ -179,13 +179,18 @@
   display: block;
   width: calc(var(--ui-unit) * var(--close-size) * 1px);
   height: calc(var(--ui-unit) * var(--close-size) * 1px);
-  background-image: var(--ui-close-image);
-  background-size: 100% 100%;
-  image-rendering: pixelated;
 }
 
-.ui-close-button[data-pressed] .ui-close-face {
-  background-image: var(--ui-close-pressed-image);
+.ui-close-glyph-slot,
+.ui-close-glyph {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.ui-close-glyph {
+  stroke: var(--button-state-ink, var(--close-glyph-ink, var(--colour-ink)));
 }
 
 /* Focus and press fill the face inside its frame from the theme's focus and pressed slots
@@ -218,17 +223,7 @@
 
 .ui-close-button:not(:disabled):is(:focus-visible, [data-pressed], [data-ui-pressed])
   .ui-close-face {
-  position: relative;
   background: var(--button-state-fill);
-}
-
-.ui-close-button:not(:disabled):is(:focus-visible, [data-pressed], [data-ui-pressed])
-  .ui-close-face::after {
-  position: absolute;
-  inset: 0;
-  background: var(--button-state-ink);
-  mask: var(--ui-close-image) center / 100% 100% no-repeat;
-  content: "";
 }
 
 @media (forced-colors: active) {
@@ -253,12 +248,9 @@
   }
 
   .ui-close-button .ui-close-face {
-    forced-color-adjust: none;
-  }
+    --close-glyph-ink: ButtonText;
 
-  .ui-close-button:not(:focus-visible, [data-pressed], [data-ui-pressed]) .ui-close-face {
-    background: ButtonText;
-    mask: var(--ui-close-image) center / 100% 100% no-repeat;
+    forced-color-adjust: none;
   }
 }
 

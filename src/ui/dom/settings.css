@@ -8,6 +8,87 @@
   --ui-text-label-weight: var(--ui-text-body-weight);
 }
 
+/* The decorative SVG fills the kit's switch slot without changing its placement. */
+.ui-switch-glyph {
+  --switch-edge-ink: var(--colour-ink);
+  --switch-track-fill: var(--colour-slate);
+  --switch-track-shadow: var(--colour-dslate);
+  --switch-on-fill: var(--colour-dgreen);
+  --switch-on-shadow: var(--colour-forest);
+  --switch-knob-fill: var(--colour-white);
+  --switch-knob-shadow: var(--colour-lgrey);
+  --switch-mark-ink: var(--colour-white);
+
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+[aria-checked="true"] .ui-switch-glyph {
+  --switch-track-fill: var(--switch-on-fill);
+  --switch-track-shadow: var(--switch-on-shadow);
+}
+
+[aria-checked="true"] .ui-switch-glyph [data-switch-state="off"],
+[aria-checked="false"] .ui-switch-glyph [data-switch-state="on"] {
+  display: none;
+}
+
+.ui-switch-glyph .switch-edge {
+  fill: var(--switch-edge-ink);
+}
+
+.ui-switch-glyph .switch-track {
+  fill: var(--switch-track-fill);
+}
+
+.ui-switch-glyph .switch-knob {
+  fill: var(--switch-knob-fill);
+}
+
+.ui-switch-glyph :is(.switch-track-shade, .switch-knob-shade, .switch-mark) {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ui-switch-glyph .switch-track-shade {
+  stroke: var(--switch-track-shadow);
+}
+
+.ui-switch-glyph .switch-knob-shade {
+  stroke: var(--switch-knob-shadow);
+  stroke-width: 0.7;
+}
+
+.ui-switch-glyph .switch-mark {
+  stroke: var(--switch-mark-ink);
+  stroke-width: 1.6;
+}
+
+@media (forced-colors: active) {
+  .ui-switch-glyph {
+    --switch-edge-ink: ButtonText;
+    --switch-track-fill: ButtonFace;
+    --switch-track-shadow: ButtonFace;
+    --switch-on-fill: ButtonFace;
+    --switch-on-shadow: ButtonFace;
+    --switch-knob-fill: ButtonText;
+    --switch-knob-shadow: ButtonText;
+    --switch-mark-ink: ButtonText;
+
+    forced-color-adjust: none;
+  }
+
+  [role="switch"]:is(:disabled, [aria-disabled="true"]) .ui-switch-glyph {
+    --switch-edge-ink: GrayText;
+    --switch-knob-fill: GrayText;
+    --switch-knob-shadow: GrayText;
+    --switch-mark-ink: GrayText;
+  }
+}
+
 /* Two columns of rows the button gap apart, each column's rows and Install the stack gap apart. */
 .settings-columns {
   display: grid;

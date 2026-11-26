@@ -66,6 +66,9 @@ it.each([true, false])(
   (install) => {
     const view = settingsCard(install);
     expect([view.dialog.getAttribute("role"), name(view.dialog)]).toEqual(["dialog", WORDS.title]);
+    const closeArt = view.close.querySelector(".ui-close-glyph-slot > svg");
+    expect(closeArt?.getAttribute("viewBox")).toBe("0 0 24 24");
+    expect(closeArt?.getAttribute("aria-hidden")).toBe("true");
     expect(focusOrder(view.dialog)).toEqual([
       WORDS.moveControls,
       WORDS.actionButtons,
@@ -95,6 +98,13 @@ it("names each Settings switch by its label and describes it by its note", () =>
 
 it("shows each Settings switch's state as aria-checked and its decorative state word", () => {
   const view = settingsCard(false);
+  const switchArt = (setting: SettingsSwitch) =>
+    view.switches[setting].querySelector(".ui-switch > svg");
+  const glyphs = SWITCHES.map(switchArt);
+  for (const glyph of glyphs) {
+    expect(glyph?.getAttribute("viewBox")).toBe("0 0 32 16");
+    expect(glyph?.getAttribute("aria-hidden")).toBe("true");
+  }
   const states = () =>
     SWITCHES.map((setting) => {
       const row = view.switches[setting];
@@ -119,6 +129,7 @@ it("shows each Settings switch's state as aria-checked and its decorative state 
     ["true", WORDS.state.on, true],
     ["false", WORDS.state.off, true],
   ]);
+  expect(SWITCHES.map(switchArt)).toEqual(glyphs);
 });
 
 it("shows the install steps card named by its title and described by its steps, with or without a glyph", () => {
@@ -181,8 +192,11 @@ it("shows Invincibility as a switch described by its note, with a polite empty f
     CHEATS.invulnerableNote,
   ]);
   expect(state()).toEqual(["false", CHEATS.state.off]);
+  const glyph = row.querySelector(".ui-switch > svg");
+  expect(glyph?.getAttribute("viewBox")).toBe("0 0 32 16");
   view.showInvincibility(true);
   expect(state()).toEqual(["true", CHEATS.state.on]);
+  expect(row.querySelector(".ui-switch > svg")).toBe(glyph);
   expect([
     view.status.getAttribute("role"),
     view.status.getAttribute("aria-live"),

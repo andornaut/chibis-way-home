@@ -19,6 +19,7 @@ import type { CardWidth } from "../layout/contentCard.ts";
 import { FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
 import { hitMargin } from "../layout/hitAreas.ts";
 import { type ActionsContext, measuredActions } from "./actions.ts";
+import { createCloseGlyph } from "./controlGlyphs.ts";
 import { registerLayout, rendered } from "./layout.ts";
 
 // A modal card in the HTML UI on the kit's modal frame (modalFrame.css): the frame's backdrop
@@ -183,13 +184,17 @@ export interface CardFrame {
   setWidth(width: CardWidth): void;
 }
 
-// The close X: its box is its face, art's ui-close, and the frame gives it its press target. Its
+// The close X: its box is its face and the frame gives it its press target. Its
 // name is the accessible one; it shows no text.
 export function closeButton(document: Document, name: string): HTMLButtonElement {
   return createGameButton(
     document,
-    { className: "ui-close-button", face: { className: "ui-close-face" } },
-    { kind: "icon", name },
+    {
+      className: "ui-close-button",
+      contentClassName: "ui-close-glyph-slot",
+      face: { className: "ui-close-face" },
+    },
+    { icon: createCloseGlyph(document), kind: "icon", name },
   ).element;
 }
 
