@@ -274,19 +274,30 @@ describe("bounded section goals and reproducibility", () => {
       "Prepared layout seed",
     );
   });
-  it("repeats one bot seed and changes actual inputs with an independent bot seed", () => {
+  // The 60-tick run makes one jump decision, so an independent seed is compared over the first
+  // eight decisions of the bot the run builds: independent streams agree on all eight with
+  // probability 1/256, and a bot that ignores its seed always agrees.
+  it("repeats one bot seed and draws different jump decisions with an independent bot seed", () => {
     const stage = prepareStage(fixture(ground));
+    const errorRate = 0.5;
     const play = (bot: number) =>
       simulateStage(BIRD, stage, {
         ...config,
         maxSteps: 60,
         policy: { jump: "continuous", move: 1 },
         seeds: { bot, layout: 1, motion: 2 },
-        skill: { ...DIAGNOSTIC_SKILL, errorRate: 0.5 },
+        skill: { ...DIAGNOSTIC_SKILL, errorRate },
         trace: { maxEvents: 60, sampleEveryTicks: 1, stallTicks: 120 },
       }).trace.map(({ input, x, y }) => ({ input, x, y }));
+    const decisions = (bot: number) => {
+      const built = vi.spyOn(botRules, "newBot");
+      play(bot);
+      const { random } = botRules.newBot(...built.mock.calls[0]!);
+      built.mockRestore();
+      return Array.from({ length: 8 }, () => random() >= errorRate);
+    };
     expect(play(10)).toEqual(play(10));
-    expect(play(10)).not.toEqual(play(11));
+    expect(decisions(10)).not.toEqual(decisions(11));
   });
 });
 
