@@ -176,13 +176,11 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     if (view === undefined) {
       return;
     }
-    view.buttons.previous.hidden = this.paragraph === 0;
-    if (
-      view.buttons.previous.hidden &&
-      view.root.ownerDocument.activeElement === view.buttons.previous
-    ) {
+    const canGoBack = this.paragraph > 0;
+    if (!canGoBack && view.root.ownerDocument.activeElement === view.buttons.previous) {
       view.buttons.continue.focus({ preventScroll: true });
     }
+    view.buttons.previous.hidden = !canGoBack;
     showPanelParagraph(view.panel, paragraph);
     const { portrait } = view.panel;
     const key = paragraph.portrait;
