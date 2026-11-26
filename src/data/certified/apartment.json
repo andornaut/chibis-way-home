@@ -11,6 +11,58 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "apartment-chandelier-approach--apartment-cantilever-return",
+      "kind": "pair",
+      "layout": "81f63c8eb7bfc903",
+      "modules": ["chandelier-approach","apartment-cantilever-return"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "61b195c9890de19f",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b85a105349b3fa8f:953",
+      "work": 953
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "apartment-chandelier-approach--apartment-crumbling-stair",
+      "kind": "pair",
+      "layout": "7cc2c0cda8df10dd",
+      "modules": ["chandelier-approach","apartment-crumbling-stair"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "452f9ae478583140",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "23984e197b185e35:592",
+      "work": 592
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "apartment-chandelier-approach--apartment-shuttle-overpass",
+      "kind": "pair",
+      "layout": "14c8534f3c815424",
+      "modules": ["chandelier-approach","apartment-shuttle-overpass"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "36dc762514a98f2d",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "7d508885fcb8fb2f:2703",
+      "work": 2703
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "apartment-chandelier-approach--apartment-staggered-shelves",
+      "kind": "pair",
+      "layout": "d2187476a53d94cc",
+      "modules": ["chandelier-approach","apartment-staggered-shelves"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "3df084d157901e47",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "e31965d24a69e10c:596",
+      "work": 596
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "apartment-chandelier-approach--apartment-stepped-piers",
       "kind": "pair",
       "layout": "4358f1aff082c388",
@@ -20,6 +72,19 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "1c212dda74587408:611",
       "work": 611
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "apartment-chandelier-approach--apartment-vent-return",
+      "kind": "pair",
+      "layout": "3493e2be16372c0c",
+      "modules": ["chandelier-approach","apartment-vent-return"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "3b248e861823d6c1",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b5db2772f5e4d854:883",
+      "work": 883
     },
     {
       "encounters": 0,
@@ -262,7 +327,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "a1065ab40e09e7a8", "proofs": "f57cd30d9ec811e9" },
+  "inputs": { "data": "845d63d16d955375", "proofs": "f57cd30d9ec811e9" },
   "version": 1,
   "zone": "apartment"
 }

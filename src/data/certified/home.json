@@ -78,7 +78,8 @@
       "id": "home-homecity-stoop--awning-row",
       "kind": "pair",
       "layout": "dbd5936c019b75ef",
-      "modules": ["homecity-stoop", "awning-row"],
+      "modules": ["homecity-stoop","awning-row"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
       "route": "8b652833bb5c241f",
       "slots": { "door": 0, "event": 0 },
       "trace": "ad37e7438d57935c:2968",
@@ -96,6 +97,32 @@
       "slots": { "door": 0, "event": 0 },
       "trace": "b1c0dc186b8d2709:460",
       "work": 460
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-underpass-approach--awning-row",
+      "kind": "pair",
+      "layout": "91a8e7ff009b29ed",
+      "modules": ["homecity-underpass-approach","awning-row"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "a190149a6db22b4a",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "be6314970bfc75c2:36032",
+      "work": 36032
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-underpass-approach--homecity-crumbling-balcony",
+      "kind": "pair",
+      "layout": "6c53f53c489dffb4",
+      "modules": ["homecity-underpass-approach","homecity-crumbling-balcony"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "6e44e709ffd34458",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "b93978186d7f17e4:53493",
+      "work": 53493
     },
     {
       "encounters": 0,
@@ -186,6 +213,7 @@
       "id": "home-vertical-compound-low-ceiling-shuttle",
       "kind": "single",
       "layout": "ff5cb3496a873daa",
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
       "route": "7cb42d932b2ca0cf",
       "slots": { "door": 0, "event": 0 },
       "trace": "d7b54c0dafca15c0:2229",
@@ -269,10 +297,11 @@
       "id": "home-vertical-vertical-platform-orbit",
       "kind": "single",
       "layout": "180085161a77f315",
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
       "route": "3963365bd514dd1d",
       "slots": { "door": 0, "event": 0 },
-      "trace": "200a8f6919a1a61f:158819",
-      "work": 158819
+      "trace": "834b4a76c43b76ca:160148",
+      "work": 160148
     },
     {
       "encounters": 0,
@@ -299,7 +328,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "544b5ad4ec82e918", "proofs": "f57cd30d9ec811e9" },
+  "inputs": { "data": "e095e25153f16623", "proofs": "f57cd30d9ec811e9" },
   "version": 1,
   "zone": "home"
 }
