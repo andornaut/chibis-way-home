@@ -33,3 +33,4 @@ Reference: [stages](../../gameplay/design.md#stages), [chunks](../../gameplay/de
 | cwh-0305 | Vary outdoor connectors and widen the Home pool                           | [cwh-0305.md](../work/cwh-0305.md) |
 | cwh-0320 | Qualify at least 20 ordinary layouts per zone                             | [cwh-0320.md](../work/cwh-0320.md) |
 | cwh-0322 | Qualify at least 25 ordinary layouts per zone                             | [cwh-0322.md](../work/cwh-0322.md) |
+| cwh-0324 | Qualify more ordinary layouts in earlier zones                            | [cwh-0324.md](../work/cwh-0324.md) |
