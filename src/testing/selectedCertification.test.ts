@@ -84,11 +84,22 @@ it("rejects unknown existing profiles before selecting a new-entry default", () 
 });
 
 it("reproves selected legacy pairs and singles without changing their facts or neighbours", () => {
-  const previous = CERTIFIED_LISTS.find(({ zone }) => zone === "apartment")!;
+  const current = CERTIFIED_LISTS.find(({ zone }) => zone === "apartment")!;
   const ids = [
     "apartment-chandelier-approach--chandelier-swing",
     "apartment-tall-warned-vent-terrace",
   ];
+  const previous = {
+    ...current,
+    entries: current.entries.map((entry) => {
+      if (!ids.includes(entry.id)) {
+        return entry;
+      }
+      const legacy = { ...entry };
+      delete legacy.proof;
+      return legacy;
+    }),
+  };
   const plan = preparePairProposal("apartment", previous, ids, "reprove-existing");
   expect(plan.selected.map(({ candidate }) => candidate.kind)).toEqual(["pair", "single"]);
   expect(plan.selected.map(({ previous }) => previous?.id)).toEqual(ids);

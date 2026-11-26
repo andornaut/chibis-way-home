@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
 
+import type { CertifiedChunks } from "../data/types/index.ts";
+
 const cli = fileURLToPath(new URL("./chunkPairs.ts", import.meta.url));
 const certificate = fileURLToPath(new URL("../data/certified/industrial.json", import.meta.url));
 
@@ -118,7 +120,17 @@ it("reports a selected legacy no-cross failure in scratch and never writes the s
     "};",
   ]);
   const file = join(root, "src/data/certified/apartment.json");
-  const before = readFileSync(file, "utf8");
+  const list = JSON.parse(readFileSync(file, "utf8")) as CertifiedChunks;
+  const entries = list.entries.map((entry) => {
+    if (entry.id !== id) {
+      return entry;
+    }
+    const legacy = { ...entry };
+    delete legacy.proof;
+    return legacy;
+  });
+  const before = JSON.stringify({ ...list, entries });
+  writeFileSync(file, before);
   const out = join(tmpdir(), `${basename(root)}-blocked.json`);
   const result = run([
     "propose",
