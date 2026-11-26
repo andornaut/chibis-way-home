@@ -138,6 +138,30 @@ const MODULE_LIST: readonly ChunkModule[] = [
     ],
     zones: ["home"],
   },
+  // Broad fixed balconies rise and descend over a red channel before grounded recovery.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "homecity-open-balconies",
+    objects: [
+      { character: "platform-ledge", col: 9, cols: 5, role: "ledge", row: 77 },
+      { character: "platform-ledge", col: 18, cols: 5, role: "ledge", row: 81 },
+      ...red(6, 18, 92),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 11.5, row: 77 } },
+        { at: { col: 20.5, row: 81 } },
+        { at: { col: 27, row: 80 }, xRange: { max: 27, min: 25 } },
+      ],
+    },
+    sides: ["left"],
+    solids: [floor(0, 6, 80), floor(24, 6, 80)],
+    zones: ["home"],
+  },
 ];
 
 export const HOME_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(
