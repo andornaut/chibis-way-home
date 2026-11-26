@@ -125,6 +125,7 @@ export const TEXT: GameText = {
   dialogue: {
     continue: "Next",
     label: "Conversation",
+    previous: "Previous",
     skip: "Skip",
     speakers: {
       bear: "Bini",
