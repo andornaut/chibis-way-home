@@ -258,6 +258,30 @@ const MODULE_LIST: readonly ChunkModule[] = [
     solids: [floor(0, 4, ROW), floor(22, 4, 76), floor(26, 4, ROW)],
     zones: ["apartment"],
   },
+  // A terrace, grounded lower refuge and raised shelf approach the red gap.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "apartment-terraced-approach",
+    objects: [
+      { character: "platform-ledge", col: 16, cols: 6, role: "ledge", row: 75 },
+      ...red(18, 6, 92),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 9, row: 76 } },
+        { at: { col: 15, row: ROW }, xRange: { max: 15, min: 13 } },
+        { at: { col: 19, row: 75 } },
+        { at: { col: 27, row: ROW }, xRange: { max: 27, min: 25 } },
+      ],
+    },
+    sides: ["left"],
+    solids: [floor(0, 6, ROW), floor(6, 6, 76), floor(12, 6, ROW), floor(24, 6, ROW)],
+    zones: ["apartment"],
+  },
 ];
 
 export const APARTMENT_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(
