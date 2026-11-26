@@ -75,7 +75,6 @@
       "id": "apartment-tall-compound-compact-climb",
       "kind": "single",
       "layout": "d17a0acb893c52f0",
-      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
       "route": "74908f4bb01d369a",
       "slots": { "door": 0, "event": 0 },
       "trace": "d353a75ffe0bbd01:1953",
