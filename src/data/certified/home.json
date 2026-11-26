@@ -75,6 +75,32 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "home-homecity-open-balconies--awning-row",
+      "kind": "pair",
+      "layout": "a816722371bcc2a2",
+      "modules": ["homecity-open-balconies", "awning-row"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "ac475821aaa7919f",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "5cfea5b584d2a052:17662",
+      "work": 17662
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "home-homecity-open-balconies--homecity-crumbling-balcony",
+      "kind": "pair",
+      "layout": "c5596ede9f9f69de",
+      "modules": ["homecity-open-balconies", "homecity-crumbling-balcony"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "f0eb1de1e5b00c27",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "3317c4e4e268a0fc:28620",
+      "work": 28620
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "home-homecity-stoop--awning-row",
       "kind": "pair",
       "layout": "dbd5936c019b75ef",
@@ -328,7 +354,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "e095e25153f16623", "proofs": "f57cd30d9ec811e9" },
+  "inputs": { "data": "430d54a2ed686912", "proofs": "f57cd30d9ec811e9" },
   "version": 1,
   "zone": "home"
 }
