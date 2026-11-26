@@ -38,7 +38,7 @@ These are unresolved, not current implementation requirements.
 
 ## Cut
 
-- [cut] **Back button and timed dialogue**: going back a dialogue screen, or advancing on a timer · a tap or keypress moves forward only
+- [cut] **Timed dialogue**: advancing on a timer · the player advances the dialogue manually
 - [cut] **Climbing a hotel**: he climbs a hotel floor by floor to get home · he travels zone to zone across a map
 - [cut] **Combat**: Chibi attacks or stomps · the challenge is platforming, hazards and choices
 - [cut] **Double-tap for a minimal jump**: two quick taps give the smallest hop · it delays every jump and clashes with the jump buffer
