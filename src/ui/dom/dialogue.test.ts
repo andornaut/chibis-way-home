@@ -2,7 +2,7 @@
 import { arrangeActions } from "@andornaut/game-kit/runtime/ui/actionGroup";
 import { expect, it } from "vitest";
 
-import { CARD_CONTENT, DIALOGUE_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
+import { DIALOGUE_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { TEXT } from "../../data/text.ts";
 import { DIALOGUE_SCREEN } from "../layout/dialogueScreen.ts";
@@ -17,9 +17,6 @@ it.each([false, true])(
   (departure) => {
     const view = createDialogueView(document, departure, "dialogue", TEXT.dialogue);
     const buttons = [...view.dialog.querySelectorAll("button")];
-    expect(view.root.style.getPropertyValue("--dialogue-action-inset")).toBe(
-      String(CARD_CONTENT.padding),
-    );
     expect(view.buttons.skip.closest(".dialogue-top-actions")).not.toBeNull();
     expect(view.buttons.continue.classList.contains("ui-text-button-primary")).toBe(true);
     expect(view.buttons.continue.querySelector("svg, img")).toBeNull();

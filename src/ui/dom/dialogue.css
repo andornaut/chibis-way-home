@@ -178,8 +178,8 @@
 /* Skip is separate from paragraph navigation, at the shared page content inset. */
 .dialogue-region .dialogue-top-actions {
   position: absolute;
-  top: calc(var(--ui-unit) * var(--dialogue-action-inset) * 1px);
-  right: calc(var(--ui-unit) * var(--dialogue-action-inset) * 1px);
+  top: calc(var(--ui-unit) * var(--card-padding) * 1px);
+  right: calc(var(--ui-unit) * var(--card-padding) * 1px);
 }
 
 /* A bark's or notice's status region, which takes no presses. */

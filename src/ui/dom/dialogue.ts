@@ -5,7 +5,7 @@ import {
 import { setTextRole } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import { DIALOGUE_PANEL_ALPHA } from "../../data/dialogues.ts";
-import { CARD_CONTENT, DIALOGUE_LAYOUT } from "../../data/layout.ts";
+import { DIALOGUE_LAYOUT } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { DialogueSpeaker } from "../../data/types/index.ts";
 import type { DialogueControl } from "../dialogue/conversation.ts";
@@ -166,14 +166,7 @@ export function createDialogueView(
   words: DialogueWords,
 ): DialogueView {
   const root = element(document, "div", "dialogue-scene");
-  writeLayoutProperties(
-    {
-      ...DIALOGUE_PANEL_LAYOUT,
-      ...DIALOGUE_FOOTER_LAYOUT,
-      "--dialogue-action-inset": CARD_CONTENT.padding,
-    },
-    root,
-  );
+  writeLayoutProperties({ ...DIALOGUE_PANEL_LAYOUT, ...DIALOGUE_FOOTER_LAYOUT }, root);
   const backdrop = element(document, "div", "ui-backdrop");
   const view = element(document, "div", "ui-view");
   const preview = element(document, "img", "dialogue-preview");
