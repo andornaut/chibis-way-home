@@ -36,3 +36,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0312 | Adopt Art Kit 0.34                                                                            | [cwh-0312.md](../work/cwh-0312.md) |
 | cwh-0316 | Adopt Game Kit 0.91 in Chibi                                                                  | [cwh-0316.md](../work/cwh-0316.md) |
 | cwh-0319 | Track the test Dockerfile with Dependabot                                                     | [cwh-0319.md](../work/cwh-0319.md) |
+| cwh-0325 | Reduce duplicate tests and measure suite runtime                                              | [cwh-0325.md](../work/cwh-0325.md) |
