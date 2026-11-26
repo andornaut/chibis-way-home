@@ -11,6 +11,58 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "apartment-apartment-terraced-approach--apartment-cantilever-return",
+      "kind": "pair",
+      "layout": "d66139b759841e8b",
+      "modules": ["apartment-terraced-approach", "apartment-cantilever-return"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "6051c9608eed255a",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "28850c44f2bd40be:1950",
+      "work": 1950
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "apartment-apartment-terraced-approach--apartment-crumbling-stair",
+      "kind": "pair",
+      "layout": "b78bc8518553bf79",
+      "modules": ["apartment-terraced-approach", "apartment-crumbling-stair"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "e8ab10f5c28ca2ff",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "41491c039b7f70cc:1062",
+      "work": 1062
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "apartment-apartment-terraced-approach--apartment-staggered-shelves",
+      "kind": "pair",
+      "layout": "b950941a17971469",
+      "modules": ["apartment-terraced-approach", "apartment-staggered-shelves"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "c14e7dba9a838df1",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "3990209136cc40ba:3024",
+      "work": 3024
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
+      "id": "apartment-apartment-terraced-approach--apartment-stepped-piers",
+      "kind": "pair",
+      "layout": "ee42e1128b87d8e4",
+      "modules": ["apartment-terraced-approach", "apartment-stepped-piers"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "cfac93b2b99fd661",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "2cb2ac27e9166d7e:3572",
+      "work": 3572
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "apartment-chandelier-approach--apartment-cantilever-return",
       "kind": "pair",
       "layout": "81f63c8eb7bfc903",
@@ -327,7 +379,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "845d63d16d955375", "proofs": "f57cd30d9ec811e9" },
+  "inputs": { "data": "35419ef589e07603", "proofs": "f57cd30d9ec811e9" },
   "version": 1,
   "zone": "apartment"
 }
