@@ -1,3 +1,4 @@
+import { redCeiling } from "../chunkTemplates.ts";
 import { AWNING_SECONDS, awningCycle } from "../obstacleBehaviours.ts";
 import { CRUMBLING_SUPPORT_TUNING } from "../obstacleTuning.ts";
 import type { ChunkModule, Instance, SupportCycleSeconds, TerrainRect } from "../types/index.ts";
@@ -160,6 +161,56 @@ const MODULE_LIST: readonly ChunkModule[] = [
     },
     sides: ["left"],
     solids: [floor(0, 6, 80), floor(24, 6, 80)],
+    zones: ["home"],
+  },
+  // A lower grounded slot separates raised banks beneath the red arch.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "homecity-low-arch-crossing",
+    objects: [...redCeiling(8, 16, 70), ...red(18, 2, 80)],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 12.5, row: 77 } },
+        { at: { col: 16.5, row: 80 }, xRange: { max: 16, min: 15 } },
+        { at: { col: 22, row: 77 } },
+        { at: { col: 27, row: 80 }, xRange: { max: 27, min: 25 } },
+      ],
+    },
+    sides: ["right"],
+    solids: [
+      floor(0, 10, 80),
+      floor(10, 5, 77),
+      floor(15, 5, 80),
+      floor(20, 4, 77),
+      floor(24, 6, 80),
+    ],
+    zones: ["home"],
+  },
+  // A broad solid terrace transfers to a lower fixed balcony before grounded recovery.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "homecity-terrace-balcony-approach",
+    objects: [
+      { character: "platform-ledge", col: 16, cols: 6, role: "ledge", row: 78 },
+      ...red(12, 12, 92),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 8, row: 77 } },
+        { at: { col: 19, row: 78 } },
+        { at: { col: 27, row: 80 }, xRange: { max: 27, min: 25 } },
+      ],
+    },
+    sides: ["left"],
+    solids: [floor(0, 4, 80), floor(4, 8, 77), floor(24, 6, 80)],
     zones: ["home"],
   },
 ];
