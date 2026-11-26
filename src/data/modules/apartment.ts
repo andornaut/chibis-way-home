@@ -282,6 +282,30 @@ const MODULE_LIST: readonly ChunkModule[] = [
     solids: [floor(0, 6, ROW), floor(6, 6, 76), floor(12, 6, ROW), floor(24, 6, ROW)],
     zones: ["apartment"],
   },
+  // Upper staging drops to an isolated lower island before the return to the joint bank.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "apartment-lower-island-approach",
+    objects: [
+      { character: "platform-ledge", col: 6, cols: 6, role: "ledge", row: 75 },
+      ...red(12, 4, 94),
+      ...red(20, 4, 94),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 9, row: 75 } },
+        { at: { col: 18, row: 84 } },
+        { at: { col: 27, row: ROW }, xRange: { max: 27, min: 25 } },
+      ],
+    },
+    sides: ["left"],
+    solids: [floor(0, 12, ROW), floor(16, 4, 84), floor(24, 6, ROW)],
+    zones: ["apartment"],
+  },
 ];
 
 export const APARTMENT_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(
