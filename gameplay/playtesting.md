@@ -27,23 +27,12 @@ Every zone and stage on the [V1 route](stages.md#v1-route) is built. The ruleboo
 Successful-clear time targets apply per stage. Layout minimums apply per zone. Restart rates, route spread and session length still need calibration.
 
 - **Encounter distribution:** satisfy the rulebook's encounter quotas across each zone’s catalogued stages, with distinct encounter sections, ordinary platforming between them and varied layout. Encounter spacing is flexible; it is not a time-based encounter rate
-- **Layout variety:** target distinct certified physics layouts by zone, with more variety in the earlier zones. Only layouts with matching ordinary no-powerup required-route proofs count. Exclude cosmetic aliases, seeds and boss arenas. Legacy certificates retain their pool eligibility until a pool change is admitted
+- **Layout variety:** target at least 35 physically distinct certified layouts per zone. Qualification and pool admission establish the current count. Count layouts with matching ordinary no-power-up required-route proofs. Exclude cosmetic aliases, seed variants and boss arenas. Legacy certificates retain pool eligibility until a checked pool change is admitted
 - **Stage length:** the rulebook's [Stages](stages.md#stages) length rule sets the targets. Calibrate with no skill selected or an ordinary test profile. Active-time calibration remains limited. A target is not a direct conversion to tile length. Track this generated run's total active time including retries separately from the historically fastest successful-attempt time, using the rulebook's active-time exclusions
 - **Reaches:** Chibi makes every jump at a reach in the rulebook's Grid, and never one tile beyond it. A pass or fail check, not a band
 - **Restarts:** a failed attempt is one that ends in death (a fall, hazard or crush), followed by the retry choice. Restarts per stage, by skill: some attempts fail, and the band says how often
 - **Route spread:** every route a choice opens lands within a narrow window of the stage's median clear time and restart rate, so no route is a lot easier or harder
 - **Session length:** the time to finish the game, by skill
-
-The table gives design minimums. Qualification and pool admission establish which layouts currently count.
-
-| Zone in play order   | Minimum distinct layouts |
-| -------------------- | ------------------------ |
-| Blue cityscape       | 35                       |
-| Industrial outskirts | 33                       |
-| Countryside          | 31                       |
-| Woodland             | 29                       |
-| Home city            | 27                       |
-| Apartment building   | 25                       |
 
 City boundary’s separate authored approach and arena are outside Blue cityscape’s generated middle pool.
 
