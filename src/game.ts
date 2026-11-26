@@ -123,12 +123,11 @@ function startGame(attempt: LoadingAttempt): void {
     // (the kit's LOADER_CONFIG; its loader watch applies the timeout and retries later rounds).
     loader: LOADER_CONFIG,
     parent: "game",
-    // Lower input-to-screen delay: a desynchronized context lets the browser show a frame without
-    // waiting on the page compositor, and the high-performance GPU where there is a choice.
+    // Present the canvas with the HTML controls so modal transitions share a composited frame.
     render: {
       antialias: false,
       antialiasGL: false,
-      desynchronized: true,
+      desynchronized: false,
       powerPreference: "high-performance",
       roundPixels: true,
     },
