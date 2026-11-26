@@ -1,5 +1,12 @@
+import type { RandomStreams } from "../../ai/index.ts";
 import { EDGE } from "../../core/index.ts";
-import type { ChaseRelief, DialogueLine, ObjectLayout, Point } from "../../data/types/index.ts";
+import type {
+  BossWander,
+  ChaseRelief,
+  DialogueLine,
+  ObjectLayout,
+  Point,
+} from "../../data/types/index.ts";
 import { withinTellClearance } from "./attackGate.ts";
 import type {
   BehaviourEvent,
@@ -267,6 +274,28 @@ function wanderEnd(object: ObjectLayout, world: BehaviourWorld, current: Point, 
   return low;
 }
 
+// A flyer's shortest hop to support: rising its clearance, crossing its least distance and settling
+// back, at its flight speed. A hop crosses its first tile sooner than it lands.
+function shortestHopSeconds(object: ObjectLayout, hop: string): number {
+  const { motion } = nodeOf(object, hop);
+  return motion.kind === "fly" && motion.to === "support" && motion.selection
+    ? (2 * motion.selection.clearance + motion.selection.minDistance) / motion.speed
+    : 0;
+}
+
+// The first interval holds from the spawn. A hop's flight counts in it, as a move's travel counts
+// in the intervals after it, so the first hop clears a tile within the seeded interval.
+function firstWander(
+  decisions: RandomStreams,
+  object: ObjectLayout,
+  wander: BossWander,
+): BehaviourWanderState {
+  const { max, min } = wander.everySeconds;
+  const every = min + decisions("wander:0")() * (max - min);
+  const flight = wander.hop === undefined ? 0 : shortestHopSeconds(object, wander.hop);
+  return { holdSeconds: Math.max(0, every - flight), moves: 0 };
+}
+
 // The plan's wander in a wander wait, outside any rearm cooldown. A move starts when the hold
 // ends: a ground boss walks a seeded distance to a seeded side, the other side when that one
 // leaves the range around its encounter position, its horizontal track or Chibi's screen, or
@@ -313,10 +342,7 @@ export function wanderStep(
   const now = (world.traversalFrame?.timeSeconds ?? 0) + time;
   const between = (random: () => number, { max, min }: { max: number; min: number }) =>
     min + random() * (max - min);
-  let record: BehaviourWanderState = state.wander ?? {
-    holdSeconds: between(world.decisions("wander:0"), wander.everySeconds),
-    moves: 0,
-  };
+  let record = state.wander ?? firstWander(world.decisions, object, wander);
   if (record.hop) {
     // Landed from a hop: hold the seeded hold, and the rest of the interval.
     const flown = now - record.hop.startedAt;
