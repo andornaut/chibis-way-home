@@ -1,3 +1,4 @@
+import { redCeiling } from "../chunkTemplates.ts";
 import { WINDMILL_SAILS, windmillSailOrbit } from "../obstacleTuning.ts";
 import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
 
@@ -20,6 +21,32 @@ const red = (col: number, cols: number, row: number): readonly Instance[] => [
 ];
 
 const STATIC_MODULES: readonly ChunkModule[] = [
+  // Supported transfers beneath an overhead red band above the ordinary full-jump apex.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "countryside-overhead-islands",
+    objects: [
+      { character: "platform-ledge", col: 9, cols: 6, role: "ledge", row: 75 },
+      { character: "platform-ledge", col: 19, cols: 4, role: "ledge", row: 79 },
+      ...red(6, 18, 93),
+      ...redCeiling(6, 18, 64),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 12, row: 75 } },
+        { at: { col: 21, row: 79 } },
+        { at: { col: 27, row: 80 }, xRange: { max: 27, min: 25 } },
+      ],
+    },
+    sides: ["right"],
+    solids: [floor(0, 6, 80), floor(24, 6, 80)],
+    zones: ["countryside"],
+  },
+
   // A short step leads to a higher terrace, followed by supported descents.
   {
     difficulty: 3,

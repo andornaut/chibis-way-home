@@ -26,6 +26,27 @@ const RAIL = -8;
 const PIT = { col: 4, cols: 22 } as const;
 
 const MODULE_LIST: readonly ChunkModule[] = [
+  // Supported transfers beneath an overhead red band above the ordinary full-jump apex.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "industrial-overhead-transfer",
+    objects: [...red(14, 6, 92), ...redCeiling(8, 17, 65)],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 11, row: 76 } },
+        { at: { col: 22.5, row: 78 } },
+        { at: { col: 27, row: 80 }, xRange: { max: 27, min: 25 } },
+      ],
+    },
+    sides: ["right"],
+    solids: [floor(0, 8, 80), floor(8, 6, 76), floor(20, 5, 78), floor(25, 5, 80)],
+    zones: ["industrial"],
+  },
+
   // Two successive full-jump steps, then supported descents back to the lower route.
   {
     difficulty: 3,

@@ -1,4 +1,5 @@
 import { CITY_SHUTTLE_BEHAVIOUR } from "../behaviours.ts";
+import { redCeiling } from "../chunkTemplates.ts";
 import { CHANDELIER_SWING, chandelierOrbit, CRUMBLING_SUPPORT_TUNING } from "../obstacleTuning.ts";
 import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
 
@@ -34,6 +35,34 @@ const startPhase = (): number => {
 };
 
 const MODULE_LIST: readonly ChunkModule[] = [
+  // Supported transfers beneath an overhead red band above the ordinary full-jump apex.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "apartment-overhead-recovery",
+    objects: [
+      { character: "platform-ledge", col: 8, cols: 4, role: "ledge", row: 76 },
+      { character: "platform-ledge", col: 23, cols: 3, role: "ledge", row: 78 },
+      ...red(4, 12, 94),
+      ...red(21, 5, 94),
+      ...redCeiling(6, 20, 65),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 10, row: 76 } },
+        { at: { col: 18, row: 82 }, xRange: { max: 19, min: 17 } },
+        { at: { col: 24.5, row: 78 } },
+        { at: { col: 28, row: 80 } },
+      ],
+    },
+    sides: ["right"],
+    solids: [floor(0, 4, 80), floor(16, 5, 82), floor(26, 4, 80)],
+    zones: ["apartment"],
+  },
+
   // Grade 2: a flat run with a 2-tile red strip to jump, from which the chandelier ahead is in
   // view.
   {
