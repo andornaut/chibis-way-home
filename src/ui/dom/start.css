@@ -27,13 +27,3 @@
   --ui-frame-slice: var(--ui-nav-bar-slice);
   --ui-frame-width: var(--ui-nav-bar-border);
 }
-
-.start-icon-face,
-.start-icon-face .navigation-disc {
-  display: block;
-}
-
-.start-icon-face .navigation-disc {
-  width: 100%;
-  height: 100%;
-}

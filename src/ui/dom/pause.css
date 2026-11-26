@@ -28,29 +28,39 @@
   display: none;
 }
 
-/* Art's SVG paints the entry's rim, face and glyph in every state and the kit's fill layer each
-   skill's disc, so the face keeps no theme fill of its own and the art and icon stay opaque over
-   it. */
-button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button) > .ui-hud-disc-face {
+/* The shared disc draws the face; the art layer supplies only its glyph. */
+button.ui-standard-button.ui-hud-disc:is(.pause-button, .start-icon-button, .skill-button)
+  > .ui-hud-disc-face {
   background-color: transparent;
 }
 
-button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
+button.ui-standard-button.ui-hud-disc:is(.pause-button, .start-icon-button, .skill-button)
   > .ui-hud-disc-face
   > :is(.ui-hud-disc-art, .ui-hud-disc-icon) {
   opacity: 1;
 }
 
-/* The kit draws the entry's ink ring, the same in every state, PAUSE_DISC.inset inside the face
-   with no fill, so the corners outside the ring stay clear; the art's rim covers its inner unit. */
-.pause-button {
-  --ui-hud-disc-ring: var(--pause-ring);
-  --ui-hud-disc-ring-colour: var(--colour-ink);
-  --ui-hud-disc-ring-inset: var(--pause-ring-inset);
+:is(.pause-button, .start-icon-button).ui-hud-disc {
+  --navigation-face: var(--colour-navy);
+  --navigation-glyph: var(--colour-cream);
+  --ui-hud-disc-fill: var(--navigation-face);
+  --ui-hud-disc-disabled-fill: var(--navigation-face);
+  --ui-hud-disc-focus-fill: var(--button-state-fill, var(--navigation-face));
+  --ui-hud-disc-pressed-fill: var(--button-state-fill, var(--navigation-face));
+  --ui-hud-disc-rim: 1;
+  --ui-hud-disc-rim-colour: var(--colour-ink);
+  --ui-hud-disc-rim-inset: 1;
+  --ui-hud-disc-ring: 2;
+  --ui-hud-disc-ring-colour: var(--colour-cream);
+  --ui-hud-disc-ring-inset: 2;
 }
 
-/* Each Menu/Pause pose has its own disc in the face's art, which is art's frame. Exit uses the
-   same disc with its own glyph, and draws its ring in its art. */
+.pause-button[data-navigation-active] {
+  --navigation-face: var(--colour-dslate);
+  --navigation-glyph: var(--colour-white);
+}
+
+/* A pose fills the frame at every UI scale. */
 .pause-disc {
   position: absolute;
   inset: 0;
@@ -63,26 +73,8 @@ button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
   display: none;
 }
 
-:is(.pause-button, .start-icon-button):is(:focus-visible, [data-pressed], [data-ui-pressed])
-  .navigation-disc {
-  --navigation-face: var(--button-state-fill);
-  --navigation-glyph: var(--button-state-ink);
-}
-
-.navigation-disc [data-part="face"] {
-  fill: var(--navigation-face, var(--colour-navy));
-}
-
-.navigation-disc[data-pose]:not([data-pose$="-rest"]) {
-  --navigation-face: var(--colour-dslate);
-}
-
 .navigation-disc :is(rect, path) {
-  fill: var(--navigation-glyph, var(--colour-cream));
-}
-
-.navigation-disc[data-pose]:not([data-pose$="-rest"]) :is(rect, path) {
-  fill: var(--navigation-glyph, var(--colour-white));
+  fill: var(--button-state-ink, var(--navigation-glyph));
 }
 
 /* A skill takes presses only while the HUD is live. */
@@ -141,40 +133,30 @@ button.ui-standard-button.ui-hud-disc:is(.pause-button, .skill-button)
     forced-color-adjust: none;
   }
 
-  /* The entry's art and ring carry the system colours, so they stay where the kit would hide
-     them, and a skill's face takes them where the kit sets its fill aside. */
-  .pause-button > .ui-hud-disc-face > .ui-hud-disc-art {
+  /* Keep the rim's box shadows and the glyph visible in system colours. */
+  :is(.pause-button, .start-icon-button).ui-hud-disc > .ui-hud-disc-face > .ui-hud-disc-art {
     display: block;
   }
 
-  .pause-button > .ui-hud-disc-face::before {
+  :is(.pause-button, .start-icon-button).ui-hud-disc > .ui-hud-disc-face::before {
     display: block;
+    forced-color-adjust: none;
   }
 
-  .pause-button {
-    --ui-hud-disc-ring-colour: ButtonText;
-  }
-
-  button.ui-standard-button.ui-hud-disc.skill-button > .ui-hud-disc-face {
-    background-color: var(--skill-disc-fill);
-  }
-
-  .navigation-disc {
+  :is(.pause-button, .start-icon-button).ui-hud-disc {
+    --ui-hud-disc-ring-colour: ButtonFace;
+    --ui-hud-disc-rim-colour: ButtonText;
     --navigation-face: ButtonFace;
     --navigation-glyph: ButtonText;
   }
 
-  .navigation-disc [data-part="ring"] {
-    fill: ButtonText;
-  }
-
-  .navigation-disc [data-part="rim"] {
-    fill: ButtonFace;
-  }
-
-  .navigation-disc[data-pose]:not([data-pose$="-rest"]) {
+  .pause-button[data-navigation-active] {
     --navigation-face: var(--ui-colour-button-pressed-face);
     --navigation-glyph: var(--ui-colour-button-pressed-text);
+  }
+
+  button.ui-standard-button.ui-hud-disc.skill-button > .ui-hud-disc-face {
+    background-color: var(--skill-disc-fill);
   }
 
   .skill-button {

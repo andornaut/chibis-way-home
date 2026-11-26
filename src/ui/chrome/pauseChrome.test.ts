@@ -10,12 +10,7 @@ import { svgLayers } from "../../testing/chromeSvg.ts";
 import { createNavigationDisc } from "../dom/navigationDisc.ts";
 import { createPauseView, showPauseDisc } from "../dom/pause.ts";
 import { PAUSE_DISC, PAUSE_VISIBLE_DIAMETER } from "../layout/controlChrome.ts";
-import {
-  PAUSE_CHROME_FRAME,
-  pauseChromeLayers,
-  type PauseChromePose,
-  pauseRingLayer,
-} from "./pauseChrome.ts";
+import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./pauseChrome.ts";
 
 const colour = (key: keyof typeof palette.colours) => parseInt(palette.colours[key].slice(1), 16);
 const colours = {
@@ -39,26 +34,26 @@ const entryButton = () =>
     ) as Record<SkillId, string>,
   }).pauseButton;
 
-it.each<{ pose: PauseChromePose; expanded: boolean; face: string; core: string }>([
-  { core: "cream", expanded: false, face: "navy", pose: "rest" },
-  { core: "white", expanded: true, face: "dslate", pose: "press" },
-  { core: "white", expanded: false, face: "dslate", pose: "press" },
-  { core: "white", expanded: false, face: "dslate", pose: "held" },
+it.each<{ pose: PauseChromePose; expanded: boolean; core: string }>([
+  { core: "cream", expanded: false, pose: "rest" },
+  { core: "white", expanded: true, pose: "press" },
+  { core: "white", expanded: false, pose: "press" },
+  { core: "white", expanded: false, pose: "held" },
 ])(
-  "shows the $pose pose inside the kit's ring as inline SVG in its frame, painted by name",
-  ({ core, expanded, face, pose }) => {
+  "shows the $pose pose as glyph-only HUD disc art as inline SVG in its frame, painted by name",
+  ({ core, expanded, pose }) => {
     const button = entryButton();
     showPauseDisc(colours, { expanded, tag: pose }, button);
     const svg = button.querySelector<SVGSVGElement>("svg[data-shown]")!;
     expect({
+      active: button.hasAttribute("data-navigation-active"),
       layers: svgLayers(svg),
       paints: [...svg.children].map((shape) => shape.getAttribute("data-ui-fill")),
-      parts: [...svg.children].map((shape) => shape.getAttribute("data-part")),
       viewBox: svg.getAttribute("viewBox"),
     }).toEqual({
+      active: pose !== "rest",
       layers: pauseChromeLayers(colours, pose),
-      paints: ["cream", face, core, core],
-      parts: ["rim", "face", null, null],
+      paints: [core, core],
       viewBox: `0 0 ${PAUSE_CHROME_FRAME} ${PAUSE_CHROME_FRAME}`,
     });
     showPauseDisc(colours, { expanded: false, tag: "rest" }, button);
@@ -69,44 +64,21 @@ it.each<{ pose: PauseChromePose; expanded: boolean; face: string; core: string }
   },
 );
 
-it("keeps the same ring and rim across all poses, changing the face and glyph paint", () => {
-  const centre = { x: 17.5, y: 17.5 };
-  expect(PAUSE_DISC).toEqual({
-    expandedRadius: 17.5,
-    frame: 35,
-    inset: 1,
-    restDiameter: 33,
-    restRadius: 16.5,
-    ring: 1,
-  });
+it("preserves the glyph rectangles and the existing frame and visible diameter", () => {
+  expect(PAUSE_DISC).toEqual({ frame: 35, inset: 1, restDiameter: 33 });
   expect(PAUSE_CHROME_FRAME).toBe(PAUSE_DISC.frame);
   expect(PAUSE_VISIBLE_DIAMETER).toBe(PAUSE_DISC.restDiameter);
-  expect(pauseRingLayer(colours)).toEqual({
-    centre,
-    colour: colours.ink,
-    kind: "disc",
-    radius: 16.5,
-  });
   expect(pauseChromeLayers(colours, "rest")).toEqual([
-    { centre, colour: colours.cream, kind: "disc", radius: 15.5 },
-    { centre, colour: colours.navy, kind: "disc", radius: 13.5 },
     { colour: colours.cream, kind: "rect", rect: { height: 13, width: 4, x: 12, y: 11 } },
     { colour: colours.cream, kind: "rect", rect: { height: 13, width: 4, x: 19, y: 11 } },
   ]);
-  for (const pose of ["press", "held"] as const) {
-    const [border, face, ...glyphs] = pauseChromeLayers(colours, pose);
-    expect(border).toEqual({ centre, colour: colours.cream, kind: "disc", radius: 15.5 });
-    expect(face).toEqual({ centre, colour: colours.dslate, kind: "disc", radius: 13.5 });
-    expect(glyphs.map(({ colour }) => colour)).toEqual([colours.white, colours.white]);
-  }
 });
 
 it("uses the shared three-bar menu glyph without changing the Pause poses or button geometry", () => {
   const button = entryButton();
   showPauseDisc(colours, { expanded: false, tag: "rest" }, button, "menu");
   const menu = svgLayers(button.querySelector("svg[data-shown]")!);
-  expect(menu.slice(0, 2)).toEqual(pauseChromeLayers(colours, "rest").slice(0, 2));
-  expect(menu.slice(2)).toEqual([
+  expect(menu).toEqual([
     { colour: colours.cream, kind: "rect", rect: { height: 3, width: 11, x: 12, y: 11 } },
     { colour: colours.cream, kind: "rect", rect: { height: 3, width: 11, x: 12, y: 16 } },
     { colour: colours.cream, kind: "rect", rect: { height: 3, width: 11, x: 12, y: 21 } },
@@ -117,19 +89,8 @@ it("uses the shared three-bar menu glyph without changing the Pause poses or but
   );
 });
 
-it("draws Exit's ring in its art, under the same rim and face", () => {
-  const svg = createNavigationDisc(document, colours, "art", "rest", "exit");
-  // The door glyph is a filled path, which svgLayers does not read.
-  const circles = svg.cloneNode(true) as SVGSVGElement;
-  circles.querySelector("path")!.remove();
-  expect(svgLayers(circles)).toEqual([
-    pauseRingLayer(colours),
-    ...pauseChromeLayers(colours, "rest", "exit"),
-  ]);
-  expect([...svg.children].map((shape) => shape.getAttribute("data-part"))).toEqual([
-    "ring",
-    "rim",
-    "face",
-    null,
-  ]);
+it("draws only Exit's door glyph", () => {
+  const svg = createNavigationDisc(document, colours, "rest", "exit");
+  expect(svg.querySelector("path")?.getAttribute("transform")).toBe("translate(8.6 7.5)");
+  expect(svg.children).toHaveLength(1);
 });

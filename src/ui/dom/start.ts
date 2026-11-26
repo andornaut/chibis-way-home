@@ -5,8 +5,9 @@ import {
 
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
-import { createGameButton } from "../binding/index.ts";
+import { createGameHudDisc } from "../binding/index.ts";
 import type { PauseChromeColours } from "../chrome/pauseChrome.ts";
+import { HUD_DISC_SIZES } from "../layout/controlChrome.ts";
 import type { StartScreenLayout } from "../layout/startScreen.ts";
 import { type ActionsView, createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
@@ -86,12 +87,13 @@ export function createStart(
   view.append(nav, logo, actions.element);
   const at = layout.exit;
   if (at !== undefined) {
-    const icon = createNavigationDisc(document, colours, "art", "rest", "exit");
-    const { element: button, face } = createGameButton(
-      document,
-      { className: "start-icon-button ui-button-reset", face: { className: "start-icon-face" } },
-      { icon, kind: "icon", name: words.exit },
-    );
+    const { element: button, face } = createGameHudDisc(document, {
+      art: createNavigationDisc(document, colours, "rest", "exit"),
+      className: "start-icon-button ui-button-reset",
+      name: words.exit,
+      size: "entry",
+      sizes: HUD_DISC_SIZES,
+    });
     button.dataset.control = "exit";
     box(at.hit, button);
     box({ ...at.art, x: at.art.x - at.hit.x, y: at.art.y - at.hit.y }, face);

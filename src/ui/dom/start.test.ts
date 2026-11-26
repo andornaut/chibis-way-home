@@ -69,8 +69,14 @@ it("places the footer row, the logo and Exit from the screen layout", () => {
   expect(number("--start-x", view.logo)).toBe(layout.logo.x);
   expect(number("--start-width", view.logo)).toBe(layout.logo.width);
   const exit = view.buttons.get("exit")!;
+  expect(exit.classList.contains("ui-hud-disc")).toBe(true);
   expect(number("--start-x", exit)).toBe(layout.exit!.hit.x);
   expect(number("--start-width", exit)).toBe(layout.exit!.hit.width);
+  const face = exit.querySelector<HTMLElement>(".ui-hud-disc-face")!;
+  expect(number("--start-width", face)).toBe(layout.exit!.art.width);
+  expect(number("--start-x", face)).toBe(layout.exit!.art.x - layout.exit!.hit.x);
+  expect(number("--start-y", face)).toBe(layout.exit!.art.y - layout.exit!.hit.y);
+  expect(face.querySelector(".ui-hud-disc-art > path")).not.toBeNull();
 });
 
 it("centres a sole Start across the view", () => {
