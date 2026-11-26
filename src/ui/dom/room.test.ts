@@ -31,7 +31,7 @@ function giftWords() {
     skill,
     words: {
       ...WORDS,
-      action: TEXT.dialogue.continue,
+      action: TEXT.room.continue,
       gift: { description: skill.description, disc: skill.title, paragraph, title: skill.title },
       name: "",
     },
@@ -79,7 +79,7 @@ it("names a gift room by its skill, described by the skill's text, with a sole p
     primary: view.leave.classList.contains("ui-text-button-primary"),
     roles: [view.root.getAttribute("role"), card.getAttribute("role")],
   }).toEqual({
-    buttons: [TEXT.dialogue.continue],
+    buttons: [TEXT.room.continue],
     card: skill.title,
     helper: [paragraph.name, paragraph.text],
     images: ["", ""],

@@ -203,7 +203,7 @@ export class RoomScene extends Scene {
         yellow: this.colour("yellow"),
       },
       {
-        action: words === undefined ? TEXT.room.leave : TEXT.dialogue.continue,
+        action: words === undefined ? TEXT.room.leave : TEXT.room.continue,
         actions: TEXT.buttons,
         icons: TEXT.actionIcons,
         name: TEXT.rooms[this.roomKey]?.name ?? "",

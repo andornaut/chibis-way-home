@@ -129,8 +129,9 @@ export interface GameText {
   };
   // What characters say in passing, by key.
   readonly quips: Readonly<Record<string, string>>;
-  // A room's Leave button, which returns him to its door.
+  // The action that returns him to the room's door.
   readonly room: {
+    readonly continue: string;
     readonly leave: string;
   };
   // Each room's name, by its key in ROOMS, shown in the room.
