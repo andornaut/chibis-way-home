@@ -324,6 +324,26 @@ interface LaunchContext {
   readonly span?: { readonly left: number; readonly right: number } | undefined;
 }
 
+// One step backing up along the support, away from a jump launch no preparation reaches, for a
+// longer run-up: none when the launch takes no heading or the step leaves the support or is unsafe.
+export function runUpStep(
+  safeStep: LaunchSafety,
+  tuning: BirdTuning,
+  seconds: number,
+  span: { readonly left: number; readonly right: number },
+  edge: LaunchEdge,
+  bird: { readonly vx: number; readonly x: number },
+): ZoneInput | undefined {
+  const back = -edge.commands[0]!.move as LaunchMove;
+  const to = bird.x + ordinaryHorizontalVelocity(tuning, seconds, back, true, bird.vx) * seconds;
+  return back !== 0 &&
+    to >= span.left - EDGE &&
+    to <= span.right + EDGE &&
+    safeStep(bird.x, to, back)
+    ? { jumpHeld: false, move: back, useHeld: false }
+    : undefined;
+}
+
 export function startsJump(edge: LaunchEdge | undefined) {
   return Boolean(edge?.commands[0]?.jump);
 }

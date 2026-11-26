@@ -105,6 +105,7 @@ import {
   type LaunchMove,
   type LaunchSafety,
   prepareLaunch,
+  runUpStep,
   startsJump,
 } from "./evadeLaunch.ts";
 import { createProjectileAvoidance, type ProjectileFrame } from "./evadeProjectileAvoidance.ts";
@@ -709,6 +710,10 @@ export function createRouteFollower(
       return finish(walkInput(edge));
     }
     if (jump && prepared.kind === "unknown") {
+      const back = runUpStep(safeStep, tuning, seconds, map.nodes[ref.node]!, edge, bird);
+      if (back) {
+        return finish(back);
+      }
       return finish(STILL, {
         kind: "unknown",
         problem: "cannot establish a velocity-matched jump launch on its support",

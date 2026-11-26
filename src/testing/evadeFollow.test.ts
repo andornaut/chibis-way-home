@@ -5,6 +5,7 @@ import { EDGE, STEP_SECONDS } from "../core/index.ts";
 import { TILE } from "../data/screen.ts";
 import type { Point, Rect, TerrainRect } from "../data/types/index.ts";
 import { birdBox, type BirdState, startBird, stepBird } from "../rules/bird/bird.ts";
+import { gameArenaOf } from "./arenaCertify.ts";
 import { arenaLayout, arenaMaps, gameArenaCase } from "./arenas.ts";
 import { ARENA_SAMPLES } from "./arenaSamples.ts";
 import { ORDINARY } from "./encounterLayouts.ts";
@@ -469,4 +470,44 @@ it("reports unknown instead of recovering partial support through an observed bo
   const result = subject.step(subject.goal, boss).result;
   expect(result.problem).toBeDefined();
   expect(result.events.some(({ kind }) => kind === "completed")).toBe(false);
+});
+
+// The certified Penthouse arena: an entry evade run reaches this support at rest 1.6 px from its
+// left end, where the next leftward jump launches exactly at the end at walk speed.
+it("backs up along its support for a run-up to a launch at the support's end", () => {
+  const found = gameArenaOf("arena-ferret-penthouse");
+  const layout = arenaLayout(found);
+  const maps = arenaMaps(found, layout);
+  const area = layout.areas[layout.start.area]!;
+  const { terrain } = maps.encounter;
+  const follower = createRouteFollower(ORDINARY, STEP_SECONDS, maps.chibi, terrain);
+  const bounds = { backX: area.backX, canExit: false, exitX: area.exitX };
+  const solids = terrain.world.solids;
+  const ledges = terrain.area.colliders
+    .filter(({ kind }) => kind === "ledge")
+    .map(({ before }) => before);
+  const hazards = terrain.hazards.map(({ rect }) => rect);
+  const goal = { x: 132, y: 456 };
+  const start = 193.5999999999999;
+  let bird: BirdState = {
+    ...startBird(ORDINARY, { x: 0, y: 0 }),
+    grounded: true,
+    x: start,
+    y: 348,
+  };
+  let furthest = start;
+  let launched = false;
+  for (let tick = 0; tick < 240 && !launched; tick++) {
+    const body = birdBox(ORDINARY, bird);
+    const safe = (from: number, to: number, move: -1 | 0 | 1) =>
+      boundaryInput(bounds, { ...body, x: from }, { jumpHeld: false, move, useHeld: false })
+        .move === move && launchStepSafe(solids, hazards, TILE, undefined, body, from, to);
+    const result = follower.step(safe, { areaWidth: area.width, bird, goal, mask: maps.mask });
+    expect(result.problem).toBeUndefined();
+    bird = stepBird(ORDINARY, solids, ledges, STEP_SECONDS, result.input, bird);
+    furthest = Math.max(furthest, bird.x);
+    launched = !bird.grounded && bird.vx === -ORDINARY.walkSpeed;
+  }
+  expect(furthest).toBeGreaterThan(start);
+  expect(launched).toBe(true);
 });

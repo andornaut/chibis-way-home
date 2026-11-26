@@ -175,7 +175,7 @@ const SIZE_CEILINGS = {
   "src/testing/bossScenarios.ts": { file: 644 },
   "src/testing/chunks.ts": { file: 677 },
   "src/testing/continuousRequiredRoute.ts": { function: 248 },
-  "src/testing/evade.ts": { file: 1772, function: 748 },
+  "src/testing/evade.ts": { file: 1777, function: 748 },
   "src/testing/evadeLaunch.ts": { function: 279 },
   "src/testing/evadeProjectileAvoidance.ts": { function: 194 },
   "src/testing/groundedGapController.ts": { function: 248 },
