@@ -108,6 +108,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     // Every portrait is cut up front, so a later paragraph's shows as it does.
     this.cutPortraits();
     const view = createDialogueView(document, departure, "dialogue", words);
+    view.root.hidden = true;
     this.view = view;
     this.showParagraph();
     const stops = [this.watchPresses(view), this.watchKeys(view)];
@@ -130,12 +131,10 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       }
     };
     if (preview === undefined) {
-      open();
-      showModalBackdrop(this);
+      void showModalBackdrop(this).ready.then(open);
       return;
     }
     // A departure shows once its preview can paint, so the paused zone never shows through.
-    view.root.hidden = true;
     void artFrameUrl(this, preview)
       .then(async (url) => {
         view.preview.src = url;

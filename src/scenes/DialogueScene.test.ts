@@ -3,9 +3,12 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
-const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
+const dom = vi.hoisted(() => ({
+  backdropReady: Promise.resolve(),
+  layer: undefined as unknown,
+}));
 vi.mock("phaser", () => ({ Scene: class {} }));
-vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: Promise.resolve() }) }));
+vi.mock("./modalBackdrop.ts", () => ({ showModalBackdrop: () => ({ ready: dom.backdropReady }) }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string) => Promise.resolve(`blob:${art}`),
   mountSceneView: (scene: { events: EventEmitter }, view: HTMLElement) => {
@@ -32,6 +35,7 @@ const PARAGRAPHS = dialogueParagraphs(SPEAKERS, TEXT, DIALOGUES[SCENE!]!);
 let layer: UiLayer;
 
 beforeEach(() => {
+  dom.backdropReady = Promise.resolve();
   layer = createUiLayer([], document);
   document.body.append(layer.element);
   dom.layer = layer;
@@ -43,7 +47,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function conversation() {
+function mountConversation() {
   const game = { events: new EventEmitter() };
   const opener = { dialogueClosed: vi.fn() };
   const events = new EventEmitter();
@@ -72,8 +76,25 @@ function conversation() {
   return { button, events, line, opener, press, root, route, scene };
 }
 
-it("shows the first paragraph in a labelled conversation, the focus on neither button", () => {
-  const { button, line, root } = conversation();
+async function conversation() {
+  const mounted = mountConversation();
+  await dom.backdropReady;
+  return mounted;
+}
+
+it("keeps the dialogue hidden until the backdrop has rendered", async () => {
+  const backdrop = Promise.withResolvers<void>();
+  dom.backdropReady = backdrop.promise;
+  const { events, root } = mountConversation();
+  expect(root.hidden).toBe(true);
+  backdrop.resolve();
+  await backdrop.promise;
+  expect(root.hidden).toBe(false);
+  events.emit("shutdown");
+});
+
+it("shows the first paragraph in a labelled conversation, the focus on neither button", async () => {
+  const { button, line, root } = await conversation();
   const dialog = root.querySelector<HTMLElement>("[role=dialog]")!;
   expect({
     focused: document.activeElement === dialog,
@@ -95,8 +116,8 @@ it("shows the first paragraph in a labelled conversation, the focus on neither b
   expect(button("continue").textContent).toBe(TEXT.dialogue.continue);
 });
 
-it("advances on a fresh tap anywhere but Skip, and never on a drag or a second finger", () => {
-  const { button, line, press, root } = conversation();
+it("advances on a fresh tap anywhere but Skip, and never on a drag or a second finger", async () => {
+  const { button, line, press, root } = await conversation();
   const backdrop = root.querySelector(".ui-backdrop")!;
   press(backdrop, TOUCH.tapMaxDistance + 1);
   const second = {
@@ -119,8 +140,8 @@ it("advances on a fresh tap anywhere but Skip, and never on a drag or a second f
   expect(line()).toBe(PARAGRAPHS[2]!.text);
 });
 
-it("restores Previous once, hides it at the first paragraph and preserves fresh input", () => {
-  const { button, line, opener, press, route } = conversation();
+it("restores Previous once, hides it at the first paragraph and preserves fresh input", async () => {
+  const { button, line, opener, press, route } = await conversation();
   const previous = button("previous");
   expect(previous.hidden).toBe(true);
   previous.click();
@@ -147,8 +168,8 @@ it("restores Previous once, hides it at the first paragraph and preserves fresh 
   expect(route.launch).not.toHaveBeenCalled();
 });
 
-it("keeps a required terminal choice after revisiting a paragraph and through Skip", () => {
-  const { button, opener, press, route, scene } = conversation();
+it("keeps a required terminal choice after revisiting a paragraph and through Skip", async () => {
+  const { button, opener, press, route, scene } = await conversation();
   const [prompt, first, second] = Object.keys(TEXT.lines);
   const choice: DialogueChoice = {
     options: [
@@ -176,16 +197,16 @@ it("keeps a required terminal choice after revisiting a paragraph and through Sk
   expect(opener.dialogueClosed).toHaveBeenCalledExactlyOnceWith("b");
 });
 
-it("skips the rest on a Skip tap, closing once through its opener", () => {
-  const { button, opener, press, route } = conversation();
+it("skips the rest on a Skip tap, closing once through its opener", async () => {
+  const { button, opener, press, route } = await conversation();
   press(button("skip"));
   press(button("skip"));
   expect(route.stop).toHaveBeenCalledOnce();
   expect(opener.dialogueClosed).toHaveBeenCalledExactlyOnceWith(undefined);
 });
 
-it("steps the focus through Continue then Skip, wrapping, and presses the focused one", () => {
-  const { line, opener } = conversation();
+it("steps the focus through Continue then Skip, wrapping, and presses the focused one", async () => {
+  const { line, opener } = await conversation();
   const steps = (["Tab", "Tab", "ArrowRight", "ArrowUp"] as const).map((key) => {
     expect(pressKey([], key).stopped()).toBe(true);
     return document.activeElement?.textContent;
@@ -200,8 +221,8 @@ it("steps the focus through Continue then Skip, wrapping, and presses the focuse
   expect(opener.dialogueClosed).toHaveBeenCalledOnce();
 });
 
-it("focuses a touched dialogue control without a ring and keeps keyboard focus visible", () => {
-  const { button, press } = conversation();
+it("focuses a touched dialogue control without a ring and keeps keyboard focus visible", async () => {
+  const { button, press } = await conversation();
   const next = button("continue");
   const previous = button("previous");
   const touchFocus = vi.spyOn(next, "focus");
@@ -214,8 +235,8 @@ it("focuses a touched dialogue control without a ring and keeps keyboard focus v
   expect(keyboardFocus).toHaveBeenCalledWith();
 });
 
-it("contains P and Escape without advancing, and takes no action the modal gate refuses", () => {
-  const { line, press, root, scene } = conversation();
+it("contains P and Escape without advancing, and takes no action the modal gate refuses", async () => {
+  const { line, press, root, scene } = await conversation();
   for (const key of ["p", "P", "Escape"]) {
     expect(pressKey([], key).stopped()).toBe(true);
   }
@@ -230,7 +251,7 @@ it("contains P and Escape without advancing, and takes no action the modal gate 
 });
 
 it("keeps the panel and footer painted under a required choice, closing with its answer", async () => {
-  const { opener, root, route, scene } = conversation();
+  const { opener, root, route, scene } = await conversation();
   // No authored conversation ends in a choice, so this one is given one at its last line.
   const [prompt, first, second] = Object.keys(TEXT.lines);
   const choice: DialogueChoice = {
@@ -315,8 +336,8 @@ it.each([
   },
 ] as const)(
   "consumes $name without advancing or replaying a release into the conversation",
-  ({ bars, rect }) => {
-    const { button, events, line, opener, root } = conversation();
+  async ({ bars, rect }) => {
+    const { button, events, line, opener, root } = await conversation();
     const frame = root.querySelector<HTMLElement>(".ui-view")!;
     vi.mocked(frame.getBoundingClientRect).mockReturnValue(rect);
     const backdrop = root.querySelector<HTMLElement>(".ui-backdrop")!;
