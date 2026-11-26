@@ -1,8 +1,7 @@
 import { CHANDELIER_SWING, chandelierOrbit } from "../obstacleTuning.ts";
 import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
 
-// Apartment halves on the lower route (row 80): the swinging chandelier and the approach before
-// it.
+// Apartment halves on the lower route (row 80).
 const ROWS = 120;
 const ROW = 80;
 
@@ -86,6 +85,26 @@ const MODULE_LIST: readonly ChunkModule[] = [
       floor(26, 4, ROW),
       { col: 5, cols: 20, look: "raised", row: PIVOT.row - 5, rows: 4 },
     ],
+    zones: ["apartment"],
+  },
+  // Successive narrow piers climb across a red channel, then descend to a supported exit bank.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "apartment-stepped-piers",
+    objects: red(4, 22, 92),
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 11.5, row: 76 } },
+        { at: { col: 21.5, row: 71 } },
+        { at: { col: 28, row: ROW } },
+      ],
+    },
+    sides: ["right"],
+    solids: [floor(0, 4, ROW), floor(10, 3, 76), floor(20, 3, 71), floor(26, 4, ROW)],
     zones: ["apartment"],
   },
 ];
