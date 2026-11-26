@@ -83,12 +83,14 @@ async function conversation() {
 }
 
 it("keeps the dialogue hidden until the backdrop has rendered", async () => {
-  const backdrop = Promise.withResolvers<void>();
-  dom.backdropReady = backdrop.promise;
+  let backdropRendered: () => void = () => undefined;
+  dom.backdropReady = new Promise<void>((resolve) => {
+    backdropRendered = resolve;
+  });
   const { events, root } = mountConversation();
   expect(root.hidden).toBe(true);
-  backdrop.resolve();
-  await backdrop.promise;
+  backdropRendered();
+  await dom.backdropReady;
   expect(root.hidden).toBe(false);
   events.emit("shutdown");
 });
