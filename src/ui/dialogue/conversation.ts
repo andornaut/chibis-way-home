@@ -36,10 +36,10 @@ export function dialogueParagraphs(
   });
 }
 
-export type DialogueControl = "continue" | "skip";
-export type DialogueAction = "advance" | "nextFocus" | "previousFocus" | "skip";
+export type DialogueControl = "continue" | "previous" | "skip";
+export type DialogueAction = "advance" | "nextFocus" | "previous" | "previousFocus" | "skip";
 
-// Explicit focus navigation selects between Continue and Skip. Enter without focus advances.
+// Explicit focus navigation selects a shown action. Enter without focus advances.
 export function dialogueKeyAction(
   focus: DialogueControl | undefined,
   { key, repeat, shiftKey }: Pick<KeyboardEvent, "key" | "repeat" | "shiftKey">,
@@ -56,7 +56,9 @@ export function dialogueKeyAction(
   if (["ArrowUp", "ArrowLeft"].includes(key)) {
     return "previousFocus";
   }
-  return focus === "skip" && ["Enter", " "].includes(key) ? "skip" : "advance";
+  return focus !== "continue" && focus !== undefined && ["Enter", " "].includes(key)
+    ? focus
+    : "advance";
 }
 
 export interface DialoguePress {
@@ -84,7 +86,7 @@ export function dialogueTapAction(
   tapDistance: number,
   press: DialoguePress | undefined,
   pointer: Point & { readonly id: number; readonly wasCanceled: boolean },
-): "advance" | "skip" | undefined {
+): "advance" | "previous" | "skip" | undefined {
   if (!press || pointer.id !== press.id || pointer.wasCanceled) {
     return undefined;
   }
@@ -95,7 +97,7 @@ export function dialogueTapAction(
   if (released !== press.control) {
     return undefined;
   }
-  return released === "skip" ? "skip" : "advance";
+  return released === "skip" || released === "previous" ? released : "advance";
 }
 
 export interface ResolvedDialogueChoice {
@@ -153,11 +155,14 @@ export function dialogueProgress(
   choice: DialogueChoice | undefined,
   paragraphCount: number,
   index: number,
-  action: "advance" | "skip",
+  action: "advance" | "previous" | "skip",
 ):
   | { readonly kind: "paragraph"; readonly index: number }
   | { readonly kind: "choice"; readonly choice: DialogueChoice }
   | { readonly kind: "complete" } {
+  if (action === "previous") {
+    return { index: Math.max(0, index - 1), kind: "paragraph" };
+  }
   if (action === "advance" && index + 1 < paragraphCount) {
     return { index: index + 1, kind: "paragraph" };
   }

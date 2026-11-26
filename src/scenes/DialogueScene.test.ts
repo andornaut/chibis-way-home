@@ -90,7 +90,7 @@ it("shows the first paragraph in a labelled conversation, the focus on neither b
     line: PARAGRAPHS[0]!.text,
     modal: "true",
     name: PARAGRAPHS[0]!.name,
-    order: [TEXT.dialogue.continue, TEXT.dialogue.skip],
+    order: [TEXT.dialogue.continue, TEXT.dialogue.previous],
   });
   expect(button("continue").textContent).toBe(TEXT.dialogue.continue);
 });
@@ -117,6 +117,63 @@ it("advances on a fresh tap anywhere but Skip, and never on a drag or a second f
   expect(line()).toBe(PARAGRAPHS[1]!.text);
   press(button("continue"));
   expect(line()).toBe(PARAGRAPHS[2]!.text);
+});
+
+it("restores Previous once, hides it at the first paragraph and preserves fresh input", () => {
+  const { button, line, opener, press, route } = conversation();
+  const previous = button("previous");
+  expect(previous.hidden).toBe(true);
+  previous.click();
+  expect(line()).toBe(PARAGRAPHS[0]!.text);
+  press(button("continue"));
+  expect(previous.hidden).toBe(false);
+  press(previous, TOUCH.tapMaxDistance + 1);
+  expect(line()).toBe(PARAGRAPHS[1]!.text);
+  button("continue").focus();
+  const order = ["Tab", "Tab", "Tab"].map((key) => {
+    pressKey([], key);
+    return document.activeElement?.textContent;
+  });
+  expect(order).toEqual([TEXT.dialogue.previous, TEXT.dialogue.skip, TEXT.dialogue.continue]);
+  pressKey([], "ArrowRight");
+  expect(document.activeElement).toBe(previous);
+  pressKey([], " ", { repeat: true });
+  expect(line()).toBe(PARAGRAPHS[1]!.text);
+  pressKey([], " ");
+  expect(line()).toBe(PARAGRAPHS[0]!.text);
+  expect(previous.hidden).toBe(true);
+  expect(document.activeElement).toBe(button("continue"));
+  expect(opener.dialogueClosed).not.toHaveBeenCalled();
+  expect(route.launch).not.toHaveBeenCalled();
+});
+
+it("keeps a required terminal choice after revisiting a paragraph and through Skip", () => {
+  const { button, opener, press, route, scene } = conversation();
+  const [prompt, first, second] = Object.keys(TEXT.lines);
+  const choice: DialogueChoice = {
+    options: [
+      { id: "a", label: first! },
+      { id: "b", label: second! },
+    ],
+    prompt: prompt!,
+  };
+  Object.assign(scene, { choice });
+  for (let index = 1; index < PARAGRAPHS.length; index++) {
+    press(button("continue"));
+  }
+  press(button("previous"));
+  press(button("continue"));
+  expect(route.launch).not.toHaveBeenCalled();
+  press(button("skip"));
+  expect(route.launch).toHaveBeenCalledExactlyOnceWith("dialogueChoice", { choice });
+  press(button("previous"));
+  press(button("continue"));
+  press(button("skip"));
+  expect(route.launch).toHaveBeenCalledTimes(1);
+  expect(opener.dialogueClosed).not.toHaveBeenCalled();
+  scene.choiceSelected("b");
+  scene.choiceSelected("b");
+  expect(opener.dialogueClosed).toHaveBeenCalledExactlyOnceWith("b");
 });
 
 it("skips the rest on a Skip tap, closing once through its opener", () => {
@@ -146,14 +203,14 @@ it("steps the focus through Continue then Skip, wrapping, and presses the focuse
 it("focuses a touched dialogue control without a ring and keeps keyboard focus visible", () => {
   const { button, press } = conversation();
   const next = button("continue");
-  const skip = button("skip");
+  const previous = button("previous");
   const touchFocus = vi.spyOn(next, "focus");
-  const keyboardFocus = vi.spyOn(skip, "focus");
+  const keyboardFocus = vi.spyOn(previous, "focus");
   press(next);
   expect(document.activeElement).toBe(next);
   expect(touchFocus).toHaveBeenCalledWith({ focusVisible: false, preventScroll: true });
   pressKey([], "Tab");
-  expect(document.activeElement).toBe(skip);
+  expect(document.activeElement).toBe(previous);
   expect(keyboardFocus).toHaveBeenCalledWith();
 });
 

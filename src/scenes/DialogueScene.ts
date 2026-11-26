@@ -27,7 +27,7 @@ import { modalInput } from "./modalInput.ts";
 export interface DialogueData {
   readonly scene: string;
   // The cleared stage of a zone's outgoing exchange: its actual preview fills the screen behind
-  // the box, and Continue sits at the bottom right.
+  // the box, and Next sits at the bottom right.
   readonly clearedStage?: string;
   readonly linear?: boolean;
   readonly opener?: string;
@@ -42,18 +42,17 @@ export interface DialogueChoiceOpener {
 }
 
 // The keyboard's focus order.
-const CONTROLS: readonly DialogueControl[] = ["continue", "skip"];
+const CONTROLS: readonly DialogueControl[] = ["continue", "previous", "skip"];
 
-// Where a press lands in the view: on Skip or Continue, or anywhere else ("panel"), which
-// advances as Continue does inside the fitted game frame. Letterbox bars take no action.
+// Button presses navigate or skip; a fresh panel press advances within the fitted game frame.
+// Letterbox bars take no action.
 type DialogueTarget = DialogueControl | "panel";
 
 // ZoneScene owns the frozen world and per-attempt trigger. This scene owns one paragraph at a
 // time, consuming input until the conversation and its optional required terminal choice finish.
-// The conversation is HTML in the UI layer (src/ui/dom/dialogue.ts), opened in its modal layer
-// with the top card owning input: a fresh tap inside the game advances, except Skip, which skips; Tab
-// and the arrows move the keyboard's focus through Continue then Skip, wrapping, starting on
-// neither; Enter and Space press the focused one, and every other key but P and Escape advances.
+// The HTML modal owns fresh presses. Previous restores a paragraph, Next and panel presses
+// advance, and Skip reaches the terminal choice or closes a linear conversation. Focus navigation
+// visits only shown controls; pause keys and foreground/modal guards retain their normal scope.
 export class DialogueScene extends Scene implements DialogueChoiceOpener {
   private paragraphs: readonly DialogueParagraph[] = [];
   private opener = "zone";
@@ -93,7 +92,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
 
   create(): void {
     const words = TEXT.dialogue;
-    if (!words.continue.trim() || !words.skip.trim()) {
+    if (!words.continue.trim() || !words.previous.trim() || !words.skip.trim()) {
       throw new Error("Dialogue actions need labels");
     }
     const departure = this.clearedStage !== undefined;
@@ -177,6 +176,13 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     if (view === undefined) {
       return;
     }
+    view.buttons.previous.hidden = this.paragraph === 0;
+    if (
+      view.buttons.previous.hidden &&
+      view.root.ownerDocument.activeElement === view.buttons.previous
+    ) {
+      view.buttons.continue.focus({ preventScroll: true });
+    }
     showPanelParagraph(view.panel, paragraph);
     const { portrait } = view.panel;
     const key = paragraph.portrait;
@@ -217,10 +223,14 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       return;
     }
     if (action === "nextFocus" || action === "previousFocus") {
-      const next = stepFocus(CONTROLS, this.focus(), action === "nextFocus" ? "next" : "previous");
+      const controls = CONTROLS.filter((control) => !this.view?.buttons[control].hidden);
+      const next = stepFocus(controls, this.focus(), action === "nextFocus" ? "next" : "previous");
       if (next !== undefined) {
         this.view?.buttons[next].focus();
       }
+      return;
+    }
+    if (action === "previous" && this.paragraph === 0) {
       return;
     }
     const next = dialogueProgress(this.choice, this.paragraphs.length, this.paragraph, action);
@@ -240,10 +250,12 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
   // The button the keyboard's focus is on, if any.
   private focus(): DialogueControl | undefined {
     const active = this.view?.root.ownerDocument.activeElement;
-    return CONTROLS.find((control) => this.view?.buttons[control] === active);
+    return CONTROLS.find(
+      (control) => !this.view?.buttons[control].hidden && this.view?.buttons[control] === active,
+    );
   }
 
-  // A press advances, or skips on Skip, as a fresh tap (bindSceneActions), and focuses the button it
+  // A fresh tap navigates its action or advances off the buttons, and focuses the button it
   // lands on, or the conversation off them. A click with no pointer behind it (an assistive
   // technology's) presses its button.
   private watchPresses(view: DialogueView): () => void {
@@ -277,7 +289,8 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       input,
       {
         accepts: live,
-        activate: (control) => this.act(control === "skip" ? "skip" : "advance"),
+        activate: (control) =>
+          this.act(control === "skip" || control === "previous" ? control : "advance"),
         controlAt: (event) =>
           event.target instanceof Element && view.root.contains(event.target) && inside(event)
             ? ((event.target.closest<HTMLElement>("[data-control]")?.dataset.control as

@@ -175,12 +175,11 @@
   bottom: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px);
 }
 
-/* A sole shown action is centred across the view. */
-.dialogue-region
-  .dialogue-footer:not(:has(> .ui-text-button:not([hidden]) ~ .ui-text-button:not([hidden]))) {
-  right: 0;
-  left: 0;
-  margin-inline: auto;
+/* Skip is separate from paragraph navigation, at the shared page content inset. */
+.dialogue-region .dialogue-top-actions {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--dialogue-action-inset) * 1px);
+  right: calc(var(--ui-unit) * var(--dialogue-action-inset) * 1px);
 }
 
 /* A bark's or notice's status region, which takes no presses. */

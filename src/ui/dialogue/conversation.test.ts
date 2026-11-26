@@ -17,7 +17,13 @@ const speakers: Readonly<Record<string, DialogueSpeaker>> = {
   dog: { colour: "amber", portrait: "portrait-dog", side: "right" },
 };
 const text: Pick<GameText, "dialogue" | "lines"> = {
-  dialogue: { continue: "Continue", label: "Talk", skip: "Skip", speakers: { dog: "Dog" } },
+  dialogue: {
+    continue: "Continue",
+    label: "Talk",
+    previous: "Previous",
+    skip: "Skip",
+    speakers: { dog: "Dog" },
+  },
   lines: { greeting: "Stop there." },
 };
 const plan: DialoguePlan = { lines: [{ line: "greeting", speaker: "dog" }] };
@@ -69,6 +75,9 @@ describe("dialogueKeyAction", () => {
     { action: "nextFocus", focus: undefined, key: "Tab", repeat: false },
     { action: "nextFocus", focus: undefined, key: "ArrowRight", repeat: false },
     { action: "skip", focus: "skip", key: "Enter", repeat: false },
+    { action: "previous", focus: "previous", key: "Enter", repeat: false },
+    { action: "previous", focus: "previous", key: " ", repeat: false },
+    { action: undefined, focus: "previous", key: "Enter", repeat: true },
     { action: "advance", focus: "continue", key: "Enter", repeat: false },
     { action: "skip", focus: "skip", key: " ", repeat: false },
     { action: undefined, focus: "skip", key: "Enter", repeat: true },
@@ -171,6 +180,12 @@ describe("terminal dialogue choices", () => {
       );
     },
   );
+
+  it("Previous restores a paragraph without reaching the terminal choice or completing", () => {
+    expect(dialogueProgress(choice, 3, 2, "previous")).toEqual({ index: 1, kind: "paragraph" });
+    expect(dialogueProgress(undefined, 3, 2, "previous")).toEqual({ index: 1, kind: "paragraph" });
+    expect(dialogueProgress(choice, 3, 0, "previous")).toEqual({ index: 0, kind: "paragraph" });
+  });
 
   it("Skip reaches the required choice while Continue keeps the next paragraph", () => {
     const count = plan.lines.length + 1;

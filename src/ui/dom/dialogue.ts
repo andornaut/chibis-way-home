@@ -5,7 +5,7 @@ import {
 import { setTextRole } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import { DIALOGUE_PANEL_ALPHA } from "../../data/dialogues.ts";
-import { DIALOGUE_LAYOUT } from "../../data/layout.ts";
+import { CARD_CONTENT, DIALOGUE_LAYOUT } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { DialogueSpeaker } from "../../data/types/index.ts";
 import type { DialogueControl } from "../dialogue/conversation.ts";
@@ -137,16 +137,17 @@ export interface DialogueWords {
   readonly continue: string;
   // The conversation's accessible name.
   readonly label: string;
+  readonly previous: string;
   readonly skip: string;
 }
 
 export interface DialogueView {
-  // The full-area backdrop under the panel, which takes every press off Skip and Continue.
+  // The full-area backdrop under the panel, which takes presses off the navigation buttons.
   readonly backdrop: HTMLElement;
   readonly buttons: Readonly<Record<DialogueControl, HTMLButtonElement>>;
   // The conversation: role dialog, named by its label, holding the panel and the buttons.
   readonly dialog: HTMLElement;
-  // The row of Skip and Continue, a kit action group.
+  // The row of Previous and Next, a kit action group.
   readonly footer: HTMLElement;
   readonly panel: DialoguePanelView;
   // The cleared stage's preview, filling the view behind a departure's panel; the caller sets its
@@ -156,9 +157,8 @@ export interface DialogueView {
   readonly root: HTMLElement;
 }
 
-// A conversation's view: the panel, and Continue then Skip in the keyboard's focus order, which
-// the action group shows with Skip on the left. A departure (departure true) fills the view with
-// the cleared stage's preview and puts the buttons at its bottom-right corner.
+// Previous and Next share the existing footer; Skip has its own top-right group. A departure
+// fills the view with the cleared stage preview and keeps the footer at its bottom-right corner.
 export function createDialogueView(
   document: Document,
   departure: boolean,
@@ -166,7 +166,14 @@ export function createDialogueView(
   words: DialogueWords,
 ): DialogueView {
   const root = element(document, "div", "dialogue-scene");
-  writeLayoutProperties({ ...DIALOGUE_PANEL_LAYOUT, ...DIALOGUE_FOOTER_LAYOUT }, root);
+  writeLayoutProperties(
+    {
+      ...DIALOGUE_PANEL_LAYOUT,
+      ...DIALOGUE_FOOTER_LAYOUT,
+      "--dialogue-action-inset": CARD_CONTENT.padding,
+    },
+    root,
+  );
   const backdrop = element(document, "div", "ui-backdrop");
   const view = element(document, "div", "ui-view");
   const preview = element(document, "img", "dialogue-preview");
@@ -180,16 +187,23 @@ export function createDialogueView(
   panel.line.setAttribute("aria-live", "polite");
   const buttons = {
     continue: textButton(document, words.continue, true),
+    previous: textButton(document, words.previous),
     skip: textButton(document, words.skip),
   };
   buttons.continue.dataset.control = "continue";
+  buttons.previous.dataset.control = "previous";
+  buttons.previous.hidden = true;
   buttons.skip.dataset.control = "skip";
-  const { element: footer } = createActions(document, [buttons.continue, buttons.skip], {
+  const { element: footer } = createActions(document, [buttons.continue, buttons.previous], {
     className: "dialogue-footer",
     width: "content",
   });
   footer.toggleAttribute("data-departure", departure);
-  dialog.append(panel.element, footer);
+  const { element: topActions } = createActions(document, [buttons.skip], {
+    className: "dialogue-top-actions",
+    width: "content",
+  });
+  dialog.append(panel.element, footer, topActions);
   view.append(preview, dialog);
   root.append(backdrop, view);
   return { backdrop, buttons, dialog, footer, panel, preview, root };
