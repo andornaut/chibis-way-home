@@ -166,6 +166,7 @@ it("captures the world once while touch settings update inside the single DOM mo
     ]);
     expect(showModalBackdrop).toHaveBeenCalledTimes(1);
     tap(pause.button(TEXT.pause.resume));
+    pause.game.events.emit("postrender");
     expect([chrome.inert, chrome.hasAttribute(UI_DIMMED)]).toEqual([false, false]);
     expect(pause.status.zone).toBe("running");
   } finally {
@@ -406,12 +407,13 @@ it("wraps keyboard focus through the Pause actions in order", async () => {
 });
 
 it("keeps keyboard focus on the top card when an inactive skill is asked to focus", async () => {
-  const { details, open, scenes, skill } = play();
+  const { details, game, open, scenes, skill } = play();
   await open();
   skill("speedy").focus();
   expect(document.activeElement).not.toBe(skill("speedy"));
   pressKey([], "Enter");
   expect(details()).toEqual([]);
+  game.events.emit("postrender");
   expect(scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
 });
 
@@ -528,6 +530,7 @@ it.each([
   const fixture = play();
   await fixture.open();
   route(fixture);
+  fixture.game.events.emit("postrender");
   expect(fixture.scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
   expect(fixture.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
   fixture.update();

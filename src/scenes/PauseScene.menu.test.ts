@@ -188,6 +188,7 @@ it("opens the Start Menu with bottom-primary Close and returns focus without cha
   ]);
   f.pause.dialog.focus();
   pressKey([f.pause.keyboard], "Enter");
+  f.game.events.emit("postrender");
   expect(f.active.has("start")).toBe(true);
   expect(f.scenes.resume).toHaveBeenCalledExactlyOnceWith("start");
   expect(document.activeElement).toBe(origin);
@@ -227,6 +228,7 @@ it("retains the existing Settings subview across Menu", async () => {
   f.active.delete("settings");
   f.pause.scene.settingsClosed();
   tap(f.pause.button(TEXT.pause.resume));
+  f.game.events.emit("postrender");
   expect(f.active.has("zone")).toBe(true);
 });
 
@@ -253,6 +255,7 @@ it("opens the same Cheats from Pause and restores its invoker before resuming", 
   expect(document.activeElement).toBe(cheats);
   expect(f.paused.has("zone")).toBe(true);
   tap(resume);
+  f.game.events.emit("postrender");
   expect(f.active.has("zone")).toBe(true);
 });
 
@@ -317,6 +320,7 @@ it("restores Pause after Update covers it without allowing a covered Menu visit"
   f.pause.update();
   expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
   tap(f.pause.button(TEXT.pause.resume));
+  f.game.events.emit("postrender");
   expect(f.active.has("zone")).toBe(true);
   expect(f.scenes.resume.mock.calls.filter(([key]) => key === "zone")).toHaveLength(1);
 });
@@ -375,6 +379,7 @@ it("uses Menu for an active story phase that declines Pause, without advancing t
   await settle();
   expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.menu.title);
   tap(f.pause.button(TEXT.pause.close));
+  f.game.events.emit("postrender");
   expect(f.scenes.resume).toHaveBeenCalledExactlyOnceWith("dialogue");
   expect(f.scenes.launch).not.toHaveBeenCalled();
 });
@@ -437,6 +442,7 @@ it.each(["start", "map"])(
     expect(document.activeElement).toBe(action);
     expect(modalInput(f.pause.scene).accepts()).toBe(true);
     tap(f.pause.button(TEXT.pause.close));
+    f.game.events.emit("postrender");
     expect(f.active.has(source)).toBe(true);
     expect(f.paused.has("zone")).toBe(true);
   },
@@ -487,6 +493,7 @@ it("opens Achievements above gameplay Pause and returns to its held context befo
   expect(document.activeElement).toBe(action);
   expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.pause.title);
   tap(f.pause.button(TEXT.pause.resume));
+  f.game.events.emit("postrender");
   expect(f.active.has("zone")).toBe(true);
   expect(f.scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
   f.active.delete("zone");
@@ -526,6 +533,40 @@ it.each([
     f.pause.scene[`${key}Closed`]();
     expect(document.activeElement).toBe(action);
     tap(close);
+    f.game.events.emit("postrender");
     expect(f.active.has("start")).toBe(true);
   },
 );
+
+it("keeps the card and held source until the dim-free game frame, rejecting repeated closes", async () => {
+  const f = menu("zone");
+  tap(f.pause.pauseButton);
+  await settle();
+  const card = f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!;
+  expect(card.hidden).toBe(false);
+  tap(f.pause.button(TEXT.pause.resume));
+  expect(card.hidden).toBe(false);
+  expect(f.paused.has("zone")).toBe(true);
+  expect(f.scenes.resume).not.toHaveBeenCalled();
+  expect(modalInput(f.pause.scene).accepts()).toBe(false);
+  tap(f.pause.button(TEXT.pause.resume));
+  pressKey([f.pause.keyboard], "Escape");
+  expect(f.game.events.listenerCount("postrender")).toBe(1);
+  f.game.events.emit("postrender");
+  expect(card.hidden).toBe(true);
+  expect(f.scenes.resume).toHaveBeenCalledExactlyOnceWith("zone");
+  expect(f.active.has("zone")).toBe(true);
+  expect(f.game.events.listenerCount("postrender")).toBe(0);
+});
+
+it("cancels a pending close paint on shutdown without resuming the held scene", async () => {
+  const f = menu("zone");
+  tap(f.pause.pauseButton);
+  await settle();
+  tap(f.pause.button(TEXT.pause.resume));
+  expect(f.game.events.listenerCount("postrender")).toBe(1);
+  f.pause.events.emit("shutdown");
+  expect(f.game.events.listenerCount("postrender")).toBe(0);
+  f.game.events.emit("postrender");
+  expect(f.scenes.resume).not.toHaveBeenCalled();
+});

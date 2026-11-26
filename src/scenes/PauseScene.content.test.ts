@@ -79,7 +79,7 @@ function content() {
   };
   const pause = createPauseScene(game, scenes);
   shutdowns.push(() => pause.events.emit("shutdown"));
-  return { active, get, pause, paused, scenes };
+  return { active, game, get, pause, paused, scenes };
 }
 
 it("keeps the top-left overlay visible on fine-pointer content, including title, except initial loading", () => {
@@ -115,7 +115,7 @@ it("keeps the top-left overlay visible on fine-pointer content, including title,
 });
 
 it("keeps card keys guarded and restores only held content", async () => {
-  const { active, get, pause, paused, scenes } = content();
+  const { active, game, get, pause, paused, scenes } = content();
   paused.add("zone");
   for (const key of [
     "stageSelect",
@@ -148,12 +148,13 @@ it("keeps card keys guarded and restores only held content", async () => {
   expect(scenes.resume).not.toHaveBeenCalled();
   pause.scene.settingsClosed();
   tap(pause.button(TEXT.pause.close));
+  game.events.emit("postrender");
   expect(scenes.resume).toHaveBeenCalledExactlyOnceWith("map");
   expect(paused.has("zone")).toBe(true);
 });
 
 it("captures Pause before story keys and freezes simultaneous content without consuming a story action", async () => {
-  const { active, get, pause, scenes } = content();
+  const { active, game, get, pause, scenes } = content();
   active.clear();
   active.add("opening");
   active.add("zoneIntroduction");
@@ -171,6 +172,7 @@ it("captures Pause before story keys and freezes simultaneous content without co
   expect(advance).not.toHaveBeenCalled();
   expect(modalInput(opening as never).accepts()).toBe(false);
   tap(pause.button(TEXT.pause.resume));
+  game.events.emit("postrender");
   expect(scenes.resume.mock.calls.map(([key]) => key)).toEqual(["opening", "zoneIntroduction"]);
   expect(modalInput(opening as never).accepts()).toBe(true);
   story.remove();

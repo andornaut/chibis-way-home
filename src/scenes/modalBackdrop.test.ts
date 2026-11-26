@@ -9,7 +9,10 @@ const capture = vi.hoisted(() => ({ mount: vi.fn() }));
 vi.mock("@andornaut/game-kit/runtime/view/phaser/modalBackdrop", () => ({
   mountModalBackdrop: capture.mount,
 }));
-vi.mock("phaser", () => ({ Scenes: { Events: { ADDED_TO_SCENE: "addedtoscene" } } }));
+vi.mock("phaser", () => ({
+  Core: { Events: { POST_RENDER: "postrender" } },
+  Scenes: { Events: { ADDED_TO_SCENE: "addedtoscene" } },
+}));
 vi.mock("./scenePalette.ts", () => ({
   palette: () => paletteData,
   paletteColour: () => 0x181425,
@@ -50,7 +53,7 @@ function fixture() {
     },
     children: { list: [{}] },
     events: new EventEmitter(),
-    game: {},
+    game: { events: new EventEmitter() },
     scale: Object.assign(new EventEmitter(), {
       gameSize: { height: BACKING.height, width: BACKING.width },
       zoom: 1 / 2,
@@ -108,6 +111,11 @@ describe("Duck modal backdrop adapter", () => {
     const canvas = canvasRect(scene);
     expect(fill.setDisplaySize).toHaveBeenCalledWith(canvas.width, canvas.height);
     resolve(false);
+    await Promise.resolve();
+    expect(card.visible).toBe(true);
+    expect(background.visible).toBe(true);
+    expect(modalInput(scene).accepts()).toBe(false);
+    scene.game.events.emit("postrender");
     await modal.ready;
     expect(card.visible).toBe(true);
     expect(background.visible).toBe(true);
@@ -126,6 +134,21 @@ describe("Duck modal backdrop adapter", () => {
     resolve(false);
     await modal.ready;
     expect(card.visible).toBe(false);
+    expect(destroy).toHaveBeenCalledOnce();
+  });
+
+  it("settles readiness and cancels its paint listener on shutdown after capture", async () => {
+    const { card, destroy, resolve, scene } = fixture();
+    const modal = showModalBackdrop(scene);
+    resolve(true);
+    await Promise.resolve();
+    expect(scene.game.events.listenerCount("postrender")).toBe(1);
+    const restore = vi.spyOn(card, "setVisible");
+    scene.events.emit("shutdown");
+    await modal.ready;
+    expect(scene.game.events.listenerCount("postrender")).toBe(0);
+    scene.game.events.emit("postrender");
+    expect(restore).not.toHaveBeenCalled();
     expect(destroy).toHaveBeenCalledOnce();
   });
 

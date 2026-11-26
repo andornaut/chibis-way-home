@@ -1,6 +1,6 @@
 import { mountModalBackdrop } from "@andornaut/game-kit/runtime/view/phaser/modalBackdrop";
 import { renderFit } from "@andornaut/game-kit/runtime/view/renderScale";
-import { type GameObjects, type Scene, Scenes } from "phaser";
+import { Core, type GameObjects, type Scene, Scenes } from "phaser";
 
 import { SCREEN } from "../data/screen.ts";
 import { canvasSize, modalColour, viewShift } from "../ui/index.ts";
@@ -26,6 +26,16 @@ export function showModalBackdrop(
   cameras.forEach(({ camera }) => camera.setVisible(false));
   backdropCamera.setVisible(false);
   let disposed = false;
+  let settleReady = () => {};
+  const ready = new Promise<void>((resolve) => {
+    settleReady = resolve;
+  });
+  const painted = () => {
+    if (!disposed) {
+      input.ready(true);
+    }
+    settleReady();
+  };
   let image: GameObjects.Image | GameObjects.Rectangle | undefined;
   // A fallback fill covers the whole canvas. A captured image is the whole backing at capture,
   // in device pixels, so it keeps that canvas's size in base pixels and moves with the view
@@ -66,6 +76,8 @@ export function showModalBackdrop(
       return;
     }
     disposed = true;
+    scene.game.events.off(Core.Events.POST_RENDER, painted);
+    settleReady();
     scene.events.off(Scenes.Events.ADDED_TO_SCENE, toBackdrop);
     scene.events.off(Scenes.Events.ADDED_TO_SCENE, toContent);
     scene.scale.off("resize", fit);
@@ -74,13 +86,15 @@ export function showModalBackdrop(
   };
   scene.events.once("shutdown", destroy);
   scene.scale.on("resize", fit);
-  const ready = backdrop.ready.then(() => {
+  // Capture completion creates the image after a rendered frame. The next game postrender
+  // proves that its camera has drawn before DOM consumers reveal the card or accept input.
+  void backdrop.ready.then(() => {
     scene.events.off(Scenes.Events.ADDED_TO_SCENE, toBackdrop);
     if (!disposed) {
       cameras.forEach(({ camera, visible }) => camera.setVisible(visible));
       backdropCamera.setVisible(true);
       scene.events.on(Scenes.Events.ADDED_TO_SCENE, toContent);
-      input.ready(true);
+      scene.game.events.once(Core.Events.POST_RENDER, painted);
     }
   });
   return { destroy, ready, setVisible: (visible) => backdropCamera.setVisible(visible) };

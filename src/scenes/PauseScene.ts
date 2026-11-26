@@ -2,7 +2,7 @@ import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/a
 import type { HoldActionsBinding } from "@andornaut/game-kit/runtime/web/input/dom/holdActions";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { readUnit } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
-import { Scene } from "phaser";
+import { Core, Scene } from "phaser";
 
 import { EDGE } from "../core/index.ts";
 import { DEV_TEXT } from "../data/dev.ts";
@@ -118,6 +118,7 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
   private overScene: string | undefined;
   private heldScenes: string[] = [];
   private closeModal: (() => void) | undefined;
+  private cancelClosePaint: (() => void) | undefined;
   // The card control to restore after a nested card closes.
   private nestedFocus: HTMLElement | undefined;
   private actionBindings: HoldActionsBinding[] = [];
@@ -132,6 +133,7 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
   }
 
   create(): void {
+    this.cancelClosePaint?.();
     this.menuGeneration++;
     this.state = "closed";
     this.frames = [];
@@ -167,6 +169,7 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
     this.events.once("shutdown", () => {
       this.live = false;
       this.menuGeneration++;
+      this.cancelClosePaint?.();
       unmountEntry?.();
     });
     // The delegated guard must see native clicks before the button renderer sees them.
@@ -330,6 +333,29 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
     if (this.state !== "open" || !modalInput(this).accepts()) {
       return;
     }
+    if (this.cancelClosePaint !== undefined) {
+      return;
+    }
+    const generation = this.menuGeneration;
+    const input = modalInput(this);
+    input.ready(false);
+    this.dim?.setVisible(false);
+    const painted = () => {
+      this.cancelClosePaint?.();
+      if (this.live && generation === this.menuGeneration) {
+        input.ready(true);
+        this.finishClose();
+      }
+    };
+    this.cancelClosePaint = () => {
+      this.game.events.off(Core.Events.POST_RENDER, painted);
+      this.cancelClosePaint = undefined;
+    };
+    this.game.events.once(Core.Events.POST_RENDER, painted);
+  }
+
+  // The dim-free canvas and hidden DOM card reach the same browser presentation.
+  private finishClose(): void {
     const returnToEntry = this.returnEntryFocus;
     this.returnEntryFocus = false;
     this.state = "closed";

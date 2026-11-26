@@ -139,7 +139,7 @@ async function startMenu() {
     document.activeElement!.dispatchEvent(event);
     return event;
   };
-  return { key, layer, pause, start };
+  return { game, key, layer, pause, start };
 }
 
 it.each(["Enter", " "])(
@@ -179,6 +179,7 @@ it.each(["Enter", " "])(
     }
     expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
     tap(f.pause.button(TEXT.pause.close));
+    f.game.events.emit("postrender");
     expect(document.activeElement).toBe(f.pause.pauseButton);
     expect(f.key(activation, true).defaultPrevented).toBe(true);
     expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
@@ -196,6 +197,7 @@ it("returns keyboard focus to the Menu entry after native disabled-button blur a
   await settle();
   expect(document.activeElement).toBe(f.pause.dialog);
   f.key("Escape");
+  f.game.events.emit("postrender");
   await settle();
   expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
   expect(document.activeElement).toBe(f.pause.pauseButton);
