@@ -82,3 +82,56 @@ it("rejects unknown existing profiles before selecting a new-entry default", () 
     "Unknown ordinary proof profile",
   );
 });
+
+it("reproves selected legacy pairs and singles without changing their facts or neighbours", () => {
+  const previous = CERTIFIED_LISTS.find(({ zone }) => zone === "apartment")!;
+  const ids = [
+    "apartment-chandelier-approach--chandelier-swing",
+    "apartment-tall-warned-vent-terrace",
+  ];
+  const plan = preparePairProposal("apartment", previous, ids, true);
+  expect(plan.selected.map(({ candidate }) => candidate.kind)).toEqual(["pair", "single"]);
+  expect(plan.selected.map(({ previous }) => previous?.id)).toEqual(ids);
+  const next = completePairProposal(plan, plan.selected.map(proof));
+  expect(next).toEqual({
+    ...previous,
+    entries: previous.entries.map((entry) =>
+      ids.includes(entry.id)
+        ? { ...entry, proof: ORDINARY_PROOF_PROFILE, trace: proof().trace, work: proof().work }
+        : entry,
+    ),
+  });
+});
+
+it("rejects already ordinary, unknown and duplicate legacy selections before planning a proof", () => {
+  const existing = industrial.entries.find(({ proof }) => proof !== undefined)!;
+  expect(() => preparePairProposal("industrial", industrial, [existing.id], true)).toThrow(
+    "Not an existing legacy entry",
+  );
+  expect(() => preparePairProposal("industrial", industrial, ["unknown"], true)).toThrow(
+    "Not an existing legacy entry",
+  );
+  expect(() =>
+    preparePairProposal("industrial", industrial, [existing.id, existing.id], true),
+  ).toThrow("unique");
+});
+
+it("does not reprove against a stale data, layout or route preimage", () => {
+  const entry = industrial.entries.find(({ proof }) => proof === undefined)!;
+  const id = entry.id;
+  const staleData = { ...industrial, inputs: { ...industrial.inputs, data: "stale" } };
+  expect(() => preparePairProposal("industrial", staleData, [id], true)).toThrow(
+    "data hash is stale",
+  );
+  for (const key of ["layout", "route"] as const) {
+    const stale = {
+      ...industrial,
+      entries: industrial.entries.map((item) =>
+        item.id === id ? { ...item, [key]: "stale" } : item,
+      ),
+    };
+    expect(() => preparePairProposal("industrial", stale, [id], true)).toThrow(
+      "recorded facts differ",
+    );
+  }
+});

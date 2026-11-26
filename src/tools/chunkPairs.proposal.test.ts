@@ -1,7 +1,7 @@
 import { spawnSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { expect, it } from "vitest";
@@ -39,7 +39,7 @@ it("refuses source output and selection flags on the broad certify command befor
   expect(broad.stderr).not.toContain("to prove");
 });
 
-function fixture() {
+function fixture(worker?: readonly string[]) {
   const root = mkdtempSync(join(tmpdir(), "pair-proposal-"));
   for (const name of ["src", "public", "package.json"]) {
     cpSync(resolve(name), join(root, name), { recursive: true });
@@ -51,7 +51,9 @@ function fixture() {
     [
       "// CLEANUP (added 2026-11-13): This worker trap expires with the isolated test scratch.",
       'const workers = require("node:worker_threads");',
-      'workers.Worker = class { constructor() { throw new Error("Native worker forbidden by fixture"); } };',
+      ...(worker ?? [
+        'workers.Worker = class { constructor() { throw new Error("Native worker forbidden by fixture"); } };',
+      ]),
       'require("node:module").syncBuiltinESMExports();',
     ].join("\n"),
   );
@@ -98,4 +100,48 @@ it("rejects an unknown reused profile before constructing native workers or writ
   expect(rejected.stderr).toContain("Unknown ordinary proof profile");
   expect(rejected.stderr).not.toContain("Native worker forbidden");
   expect(readFileSync(file, "utf8")).toBe(before);
+});
+
+it("reports a selected legacy no-cross failure in scratch and never writes the source certificate", () => {
+  const id = "apartment-tall-warned-vent-terrace";
+  const problem = "penthouse empty: crossed no-cross 1,2";
+  const { root, run } = fixture([
+    'const { EventEmitter } = require("node:events");',
+    "workers.Worker = class extends EventEmitter {",
+    "  postMessage(job) {",
+    `    if (job.id !== ${JSON.stringify(id)} || job.proof?.kind !== "ordinary") throw Error("Unexpected job");`,
+    '    setImmediate(() => this.emit("message", {',
+    `      problems: [${JSON.stringify(problem)}], proof: job.proof, trace: "0000000000000000:1", work: 1,`,
+    "    }));",
+    "  }",
+    "  async terminate() {}",
+    "};",
+  ]);
+  const file = join(root, "src/data/certified/apartment.json");
+  const before = readFileSync(file, "utf8");
+  const out = join(tmpdir(), `${basename(root)}-blocked.json`);
+  const result = run([
+    "propose",
+    "--zone",
+    "apartment",
+    "--id",
+    id,
+    "--profile",
+    "ordinary",
+    "--reprove-existing",
+    "--out",
+    out,
+  ]);
+  expect(result.status, result.stderr).toBe(1);
+  const blocked = JSON.parse(readFileSync(out, "utf8"));
+  expect(blocked).toMatchObject({
+    error: expect.stringContaining(problem),
+    selected: [{ id, previous: { id, kind: "single" }, proof: { problems: [problem] } }],
+    status: "blocked",
+  });
+  expect(blocked).not.toHaveProperty("proposed");
+  expect(readFileSync(file, "utf8")).toBe(before);
+  expect(run(["certify", "--reprove-existing"]).stderr).toContain(
+    "Selection flags require propose",
+  );
 });

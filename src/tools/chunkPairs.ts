@@ -77,9 +77,8 @@ const USAGE = `Usage:
       differ from REF's lists (needs git), then prove a sample ordered by S (the lists' input
       hashes by default), starting only proofs whose recorded work fits within N ms of the start
       (default ${DEFAULT_SAMPLE_MS})
-  npm run pairs -- propose --zone ZONE --id ID... --profile ordinary --out SCRATCH_PATH
-      prove only new selected pairs with ordinary tuning and write a scratch proposal;
-      existing entries and arenas stay unchanged; no arena or assembly-feasibility proofs
+  npm run pairs -- propose --zone ZONE --id ID... --profile ordinary [--reprove-existing] --out SCRATCH_PATH
+      write a scratch ordinary proposal for selected new pairs or legacy entries only
   npm run pairs -- qualify-approach --zone ZONE --stage STAGE --input PENDING_CERTIFICATE
       --result CANONICAL_RESULT --trace CANONICAL_RAW_TRACE --out SCRATCH_PATH
       record existing canonical cold-encounter evidence against the explicit pending certificate;
@@ -603,6 +602,8 @@ async function proposeCurrent(subject: string): Promise<number> {
   return proposal.status === "proposal" && failure === undefined ? 0 : 1;
 }
 
+const PROPOSE_OPTIONS = new Set(["id", "out", "profile", "reprove-existing", "zone"]);
+
 async function main(args: readonly string[]): Promise<number> {
   let parsed;
   try {
@@ -617,6 +618,7 @@ async function main(args: readonly string[]): Promise<number> {
         input: { type: "string" },
         out: { type: "string" },
         profile: { type: "string" },
+        "reprove-existing": { type: "boolean" },
         result: { type: "string" },
         "sample-ms": { type: "string" },
         seed: { type: "string" },
@@ -638,7 +640,10 @@ async function main(args: readonly string[]): Promise<number> {
   const zones = (values.zone ?? ZONES) as ZoneKey[];
   const unknown = zones.filter((zone) => !ZONES.includes(zone));
   const [command, ...rest] = positionals;
-  if (command !== "propose" && (values.id !== undefined || values.profile !== undefined)) {
+  if (
+    command !== "propose" &&
+    [values.id, values.profile, values["reprove-existing"]].some((value) => value !== undefined)
+  ) {
     console.error(`Selection flags require propose\n${USAGE}`);
     return 2;
   }
@@ -733,10 +738,7 @@ async function main(args: readonly string[]): Promise<number> {
         values.out === undefined ||
         values.profile !== "ordinary" ||
         values.id === undefined ||
-        values.all ||
-        values["changed-since"] !== undefined ||
-        values["sample-ms"] !== undefined ||
-        values.seed !== undefined
+        Object.keys(values).some((key) => !PROPOSE_OPTIONS.has(key))
       ) {
         console.error(
           `propose requires one zone, IDs, ordinary profile and a scratch path\n${USAGE}`,
@@ -744,31 +746,23 @@ async function main(args: readonly string[]): Promise<number> {
         return 2;
       }
       try {
-        const out = resolve(values.out);
-        const scratch = realpathSync(tmpdir());
-        const parent = realpathSync(dirname(out));
-        const checkout = realpathSync(fileURLToPath(new URL("../../", import.meta.url)));
-        const inside = (root: string, subject: string) => {
-          const path = relative(root, subject);
-          return !isAbsolute(path) && path !== ".." && !path.startsWith(`..${sep}`);
-        };
-        if (!inside(scratch, parent) || inside(checkout, parent) || existsSync(out)) {
-          throw new Error(
-            "Proposal output must be a new file within the scratch directory and outside the checkout",
-          );
-        }
-        const current = readList(zones[0]!);
+        const out = scratchOutput(values.out);
+        const zone = zones[0]!;
+        const reprove = values["reprove-existing"] === true;
+        const preimage = reprove ? readFileSync(listUrl(zone), "utf8") : undefined;
+        const current =
+          preimage === undefined ? readList(zone) : (JSON.parse(preimage) as CertifiedChunks);
         if (current === undefined) {
           throw new Error("No existing certificate list");
         }
-        const plan = preparePairProposal(zones[0]!, current, values.id);
+        const plan = preparePairProposal(zone, current, values.id, reprove);
         const results = await proveAll(
-          { costs: plan.selected.map(() => 0) },
+          { costs: plan.selected.map(({ previous }) => previous?.work ?? 0) },
           plan.selected.map(({ candidate, themes }) => ({
             id: candidate.id,
             proof: ORDINARY_PROOF_PROFILE,
             themes,
-            zone: zones[0]!,
+            zone,
           })),
         );
         const proofs = results.map((proof) => {
@@ -777,26 +771,32 @@ async function main(args: readonly string[]): Promise<number> {
           }
           return proof;
         });
-        const proposed = completePairProposal(plan, proofs);
-        writeFileSync(
-          out,
-          `${JSON.stringify(
-            {
-              proposed,
-              selected: plan.selected.map(({ candidate, layout, themes }, index) => ({
-                id: candidate.id,
-                layout,
-                proof: proofs[index],
-                themes,
-              })),
-              status: "proposal",
-            },
-            null,
-            2,
-          )}\n`,
-          { flag: "wx" },
-        );
-        return 0;
+        const selected = plan.selected.map(({ candidate, layout, previous, themes }, index) => ({
+          id: candidate.id,
+          layout,
+          ...(previous !== undefined && { previous }),
+          proof: proofs[index],
+          themes,
+        }));
+        let proposed: CertifiedChunks | undefined;
+        let failure: string | undefined;
+        try {
+          if (preimage !== undefined && readFileSync(listUrl(zone), "utf8") !== preimage) {
+            throw new Error("Certificate preimage changed during execution");
+          }
+          proposed = completePairProposal(plan, proofs);
+        } catch (error) {
+          if (!reprove) {
+            throw error;
+          }
+          failure = String(error);
+        }
+        const result =
+          failure === undefined
+            ? { proposed, selected, status: "proposal" }
+            : { error: failure, selected, status: "blocked" };
+        writeFileSync(out, `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" });
+        return failure === undefined ? 0 : 1;
       } catch (error) {
         console.error(error instanceof Error ? error.message : String(error));
         return 2;
