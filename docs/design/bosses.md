@@ -20,3 +20,4 @@ Reference: [boss behaviour](../../gameplay/design.md#boss-behaviour), [boss enco
 | cwh-0278 | Use one two-second arena slowdown standard                   | [cwh-0278.md](../work/cwh-0278.md) |
 | cwh-0309 | Record boss contact as its own death reason                  | [cwh-0309.md](../work/cwh-0309.md) |
 | cwh-0313 | Give each timed hazard query its own budget                  | [cwh-0313.md](../work/cwh-0313.md) |
+| cwh-0321 | Apply the evade safety check to ordinary ground movement     | [cwh-0321.md](../work/cwh-0321.md) |
