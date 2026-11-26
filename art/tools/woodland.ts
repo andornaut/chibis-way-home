@@ -279,7 +279,14 @@ function birches(): RgbaImage {
       );
       const centre = Math.trunc(left + width * 0.52);
       for (let y = top + 160; y < 590; y += 46) {
-        rect("slate", [centre - 2, y, centre + 2, y + 2], im);
+        // Bark paint stays inside the existing tree silhouette.
+        for (let row = y; row < y + 2; row++) {
+          for (let col = Math.max(0, centre - 2); col < Math.min(im.width, centre + 2); col++) {
+            if (im.data[(row * im.width + col) * 4 + 3] === 255) {
+              rect("slate", [col, row, col + 1, row + 1], im);
+            }
+          }
+        }
       }
     }
   }
