@@ -89,7 +89,7 @@ it("reproves selected legacy pairs and singles without changing their facts or n
     "apartment-chandelier-approach--chandelier-swing",
     "apartment-tall-warned-vent-terrace",
   ];
-  const plan = preparePairProposal("apartment", previous, ids, true);
+  const plan = preparePairProposal("apartment", previous, ids, "reprove-existing");
   expect(plan.selected.map(({ candidate }) => candidate.kind)).toEqual(["pair", "single"]);
   expect(plan.selected.map(({ previous }) => previous?.id)).toEqual(ids);
   const next = completePairProposal(plan, plan.selected.map(proof));
@@ -105,14 +105,14 @@ it("reproves selected legacy pairs and singles without changing their facts or n
 
 it("rejects already ordinary, unknown and duplicate legacy selections before planning a proof", () => {
   const existing = industrial.entries.find(({ proof }) => proof !== undefined)!;
-  expect(() => preparePairProposal("industrial", industrial, [existing.id], true)).toThrow(
-    "Not an existing legacy entry",
-  );
-  expect(() => preparePairProposal("industrial", industrial, ["unknown"], true)).toThrow(
-    "Not an existing legacy entry",
-  );
   expect(() =>
-    preparePairProposal("industrial", industrial, [existing.id, existing.id], true),
+    preparePairProposal("industrial", industrial, [existing.id], "reprove-existing"),
+  ).toThrow("Not an existing legacy entry");
+  expect(() =>
+    preparePairProposal("industrial", industrial, ["unknown"], "reprove-existing"),
+  ).toThrow("Not an existing legacy entry");
+  expect(() =>
+    preparePairProposal("industrial", industrial, [existing.id, existing.id], "reprove-existing"),
   ).toThrow("unique");
 });
 
@@ -120,7 +120,7 @@ it("does not reprove against a stale data, layout or route preimage", () => {
   const entry = industrial.entries.find(({ proof }) => proof === undefined)!;
   const id = entry.id;
   const staleData = { ...industrial, inputs: { ...industrial.inputs, data: "stale" } };
-  expect(() => preparePairProposal("industrial", staleData, [id], true)).toThrow(
+  expect(() => preparePairProposal("industrial", staleData, [id], "reprove-existing")).toThrow(
     "data hash is stale",
   );
   for (const key of ["layout", "route"] as const) {
@@ -130,8 +130,32 @@ it("does not reprove against a stale data, layout or route preimage", () => {
         item.id === id ? { ...item, [key]: "stale" } : item,
       ),
     };
-    expect(() => preparePairProposal("industrial", stale, [id], true)).toThrow(
+    expect(() => preparePairProposal("industrial", stale, [id], "reprove-existing")).toThrow(
       "recorded facts differ",
     );
   }
+});
+
+it("opts into new authored singles while preserving the new-pair default", () => {
+  const previous = CERTIFIED_LISTS.find(({ zone }) => zone === "apartment")!;
+  const id = "apartment-tall-warned-vent-terrace";
+  const entry = previous.entries.find((entry) => entry.id === id)!;
+  const known = { ...previous, entries: previous.entries.filter((entry) => entry.id !== id) };
+  expect(() => preparePairProposal("apartment", known, [id])).toThrow("Not a new selected pair");
+  expect(() => preparePairProposal("apartment", previous, [id], "single")).toThrow(
+    "Not a new selected single",
+  );
+  expect(() => preparePairProposal("industrial", current, [IDS[0]!], "single")).toThrow(
+    "Not a new selected single",
+  );
+  const plan = preparePairProposal("apartment", known, [id], "single");
+  const native = proof();
+  expect(completePairProposal(plan, [native])).toEqual({
+    ...previous,
+    entries: previous.entries.map((item) =>
+      item === entry
+        ? { ...item, proof: native.proof, trace: native.trace, work: native.work }
+        : item,
+    ),
+  });
 });

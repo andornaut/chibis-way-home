@@ -30,12 +30,12 @@ export interface PairProposalPlan {
   }[];
 }
 
-// Select new pairs or already admitted legacy entries without running any proofs.
+// Select new pairs, new singles or already admitted legacy entries without running proofs.
 export function preparePairProposal(
   zone: ZoneKey,
   current: CertifiedChunks,
   ids: readonly string[],
-  reproveExisting = false,
+  mode: "pair" | "single" | "reprove-existing" = "pair",
 ): PairProposalPlan {
   if (current.zone !== zone || ids.length === 0 || new Set(ids).size !== ids.length) {
     throw new Error("A proposal requires one matching zone and unique selected IDs");
@@ -43,6 +43,7 @@ export function preparePairProposal(
   if (current.inputs.proofs !== proofsHash()) {
     throw new Error("Existing proof provenance is stale");
   }
+  const reproveExisting = mode === "reprove-existing";
   const { candidates } = zoneCandidates(GAME_CONTEXT, zone);
   const data = dataHash(GAME_CONTEXT, zone, candidates);
   const existing = verifyEntryStructure(GAME_CONTEXT, {
@@ -64,9 +65,9 @@ export function preparePairProposal(
     }
     if (
       candidate === undefined ||
-      (!reproveExisting && (candidate.kind !== "pair" || entry !== undefined))
+      (!reproveExisting && (candidate.kind !== mode || entry !== undefined))
     ) {
-      throw new Error(`Not a new selected pair: ${id}`);
+      throw new Error(`Not a new selected ${mode}: ${id}`);
     }
     const problems = structuralProblems(zone, candidate);
     if (problems.length > 0) {

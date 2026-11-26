@@ -77,8 +77,9 @@ const USAGE = `Usage:
       differ from REF's lists (needs git), then prove a sample ordered by S (the lists' input
       hashes by default), starting only proofs whose recorded work fits within N ms of the start
       (default ${DEFAULT_SAMPLE_MS})
-  npm run pairs -- propose --zone ZONE --id ID... --profile ordinary [--reprove-existing] --out SCRATCH_PATH
-      write a scratch ordinary proposal for selected new pairs or legacy entries only
+  npm run pairs -- propose --zone ZONE --id ID... --profile ordinary --out SCRATCH_PATH
+      [--reprove-existing | --new-single]
+      write a scratch ordinary proposal for selected new pairs, new singles or legacy entries only
   npm run pairs -- qualify-approach --zone ZONE --stage STAGE --input PENDING_CERTIFICATE
       --result CANONICAL_RESULT --trace CANONICAL_RAW_TRACE --out SCRATCH_PATH
       record existing canonical cold-encounter evidence against the explicit pending certificate;
@@ -602,7 +603,7 @@ async function proposeCurrent(subject: string): Promise<number> {
   return proposal.status === "proposal" && failure === undefined ? 0 : 1;
 }
 
-const PROPOSE_OPTIONS = new Set(["id", "out", "profile", "reprove-existing", "zone"]);
+const PROPOSE_OPTIONS = new Set(["id", "new-single", "out", "profile", "reprove-existing", "zone"]);
 
 async function main(args: readonly string[]): Promise<number> {
   let parsed;
@@ -616,6 +617,7 @@ async function main(args: readonly string[]): Promise<number> {
         help: { short: "h", type: "boolean" },
         id: { multiple: true, type: "string" },
         input: { type: "string" },
+        "new-single": { type: "boolean" },
         out: { type: "string" },
         profile: { type: "string" },
         "reprove-existing": { type: "boolean" },
@@ -633,6 +635,7 @@ async function main(args: readonly string[]): Promise<number> {
     return 2;
   }
   const { positionals, values } = parsed;
+  const { "new-single": single, "reprove-existing": reprove } = values;
   if (values.help) {
     console.log(USAGE);
     return 0;
@@ -642,7 +645,7 @@ async function main(args: readonly string[]): Promise<number> {
   const [command, ...rest] = positionals;
   if (
     command !== "propose" &&
-    [values.id, values.profile, values["reprove-existing"]].some((value) => value !== undefined)
+    ["id", "new-single", "profile", "reprove-existing"].some((key) => Object.hasOwn(values, key))
   ) {
     console.error(`Selection flags require propose\n${USAGE}`);
     return 2;
@@ -738,24 +741,21 @@ async function main(args: readonly string[]): Promise<number> {
         values.out === undefined ||
         values.profile !== "ordinary" ||
         values.id === undefined ||
+        (single && reprove) ||
         Object.keys(values).some((key) => !PROPOSE_OPTIONS.has(key))
       ) {
         console.error(
-          `propose requires one zone, IDs, ordinary profile and a scratch path\n${USAGE}`,
+          `propose requires one zone, IDs, ordinary profile, a scratch path and at most one selection mode\n${USAGE}`,
         );
         return 2;
       }
       try {
         const out = scratchOutput(values.out);
         const zone = zones[0]!;
-        const reprove = values["reprove-existing"] === true;
-        const preimage = reprove ? readFileSync(listUrl(zone), "utf8") : undefined;
-        const current =
-          preimage === undefined ? readList(zone) : (JSON.parse(preimage) as CertifiedChunks);
-        if (current === undefined) {
-          throw new Error("No existing certificate list");
-        }
-        const plan = preparePairProposal(zone, current, values.id, reprove);
+        const mode = reprove ? "reprove-existing" : single ? "single" : "pair";
+        const preimage = readFileSync(listUrl(zone), "utf8");
+        const current = JSON.parse(preimage) as CertifiedChunks;
+        const plan = preparePairProposal(zone, current, values.id, mode);
         const results = await proveAll(
           { costs: plan.selected.map(({ previous }) => previous?.work ?? 0) },
           plan.selected.map(({ candidate, themes }) => ({
@@ -781,12 +781,12 @@ async function main(args: readonly string[]): Promise<number> {
         let proposed: CertifiedChunks | undefined;
         let failure: string | undefined;
         try {
-          if (preimage !== undefined && readFileSync(listUrl(zone), "utf8") !== preimage) {
+          if (mode !== "pair" && readFileSync(listUrl(zone), "utf8") !== preimage) {
             throw new Error("Certificate preimage changed during execution");
           }
           proposed = completePairProposal(plan, proofs);
         } catch (error) {
-          if (!reprove) {
+          if (mode === "pair") {
             throw error;
           }
           failure = String(error);

@@ -145,3 +145,28 @@ it("reports a selected legacy no-cross failure in scratch and never writes the s
     "Selection flags require propose",
   );
 });
+
+it("rejects conflicting selection modes and rejects new-single on broad commands", () => {
+  const { root, run } = fixture();
+  const out = join(tmpdir(), `${basename(root)}-conflict.json`);
+  const conflict = run([
+    "propose",
+    "--zone",
+    "apartment",
+    "--id",
+    "apartment-tall-warned-vent-terrace",
+    "--profile",
+    "ordinary",
+    "--new-single",
+    "--reprove-existing",
+    "--out",
+    out,
+  ]);
+  expect(conflict.status).toBe(2);
+  expect(conflict.stderr).toContain("at most one selection mode");
+  expect(conflict.stderr).not.toContain("Native worker forbidden");
+  expect(existsSync(out)).toBe(false);
+  const broad = run(["certify", "--new-single"]);
+  expect(broad.status).toBe(2);
+  expect(broad.stderr).toContain("Selection flags require propose");
+});
