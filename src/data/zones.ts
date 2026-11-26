@@ -55,6 +55,10 @@ const APARTMENT_CHALLENGE_CHUNKS: ChunkPool = [
   "compound-lift-shuttle",
   "compound-low-ceiling-shuttle",
   "compound-return-high",
+  "compound-return-shuttle",
+  "horizontal-platform-orbit",
+  "vertical-platform-orbit",
+  "vertical-red-gate",
 ];
 const APARTMENT_LENGTH = { max: 12 * CHUNK_COLS, min: 11 * CHUNK_COLS };
 const apartmentRecipe = (
