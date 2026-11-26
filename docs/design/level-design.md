@@ -35,3 +35,4 @@ Reference: [stages](../../gameplay/design.md#stages), [chunks](../../gameplay/de
 | cwh-0322 | Qualify at least 25 ordinary layouts per zone                             | [cwh-0322.md](../work/cwh-0322.md) |
 | cwh-0324 | Qualify more ordinary layouts in earlier zones                            | [cwh-0324.md](../work/cwh-0324.md) |
 | cwh-0329 | Qualify 35 ordinary layouts in every zone                                 | [cwh-0329.md](../work/cwh-0329.md) |
+| cwh-0331 | Qualify layouts with overhead hazards for Double jump                     | [cwh-0331.md](../work/cwh-0331.md) |
