@@ -1,4 +1,5 @@
-import { CHANDELIER_SWING, chandelierOrbit } from "../obstacleTuning.ts";
+import { CITY_SHUTTLE_BEHAVIOUR } from "../behaviours.ts";
+import { CHANDELIER_SWING, chandelierOrbit, CRUMBLING_SUPPORT_TUNING } from "../obstacleTuning.ts";
 import type { ChunkModule, Instance, TerrainRect } from "../types/index.ts";
 
 // Apartment halves on the lower route (row 80).
@@ -105,6 +106,156 @@ const MODULE_LIST: readonly ChunkModule[] = [
     },
     sides: ["right"],
     solids: [floor(0, 4, ROW), floor(10, 3, 76), floor(20, 3, 71), floor(26, 4, ROW)],
+    zones: ["apartment"],
+  },
+  // A high cantilever and a covered lower refuge lead across a red strip to the return steps.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "apartment-cantilever-return",
+    objects: red(18, 2, 88),
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 12, row: 75 } },
+        { at: { col: 14, row: 88 }, xRange: { max: 14, min: 12 } },
+        { at: { col: 24, row: 84 } },
+        { at: { col: 28, row: ROW } },
+      ],
+    },
+    sides: ["right"],
+    solids: [
+      floor(0, 4, ROW),
+      floor(4, 18, 88),
+      floor(22, 4, 84),
+      floor(26, 4, ROW),
+      { col: 6, cols: 12, look: "raised", row: 75, rows: 2 },
+    ],
+    zones: ["apartment"],
+  },
+  // A lower shelf starts successive rising transfers above a red channel.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "apartment-staggered-shelves",
+    objects: [
+      { character: "platform-ledge", col: 8, cols: 4, role: "ledge", row: 83 },
+      { character: "platform-ledge", col: 17, cols: 3, role: "ledge", row: 78 },
+      { character: "platform-ledge", col: 22, cols: 4, role: "ledge", row: 74 },
+      ...red(4, 22, 94),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 10, row: 83 } },
+        { at: { col: 18.5, row: 78 } },
+        { at: { col: 24, row: 74 } },
+        { at: { col: 28, row: ROW } },
+      ],
+    },
+    sides: ["right"],
+    solids: [floor(0, 4, ROW), floor(26, 4, ROW)],
+    zones: ["apartment"],
+  },
+  // A raised approach boards a shuttle above the red channel before the lower exit bank.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "apartment-shuttle-overpass",
+    objects: [
+      {
+        behaviour: { ...CITY_SHUTTLE_BEHAVIOUR, distance: 12 },
+        character: "city-shuttle",
+        col: 8,
+        cols: 6,
+        role: "shuttle",
+        row: 76,
+      },
+      ...red(8, 18, 92),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 6, row: 76 } },
+        { at: { col: 11, row: 76 } },
+        { at: { col: 28, row: ROW } },
+      ],
+    },
+    sides: ["right"],
+    solids: [floor(0, 4, ROW), floor(4, 4, 76), floor(26, 4, ROW)],
+    zones: ["apartment"],
+  },
+  // A lower vent chamber has grounded observation on both sides and a stepped return.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "apartment-vent-return",
+    objects: [{ character: "warned-vent", col: 15, row: 82 }],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 7, row: 84 } },
+        { at: { col: 13, row: 88 }, xRange: { max: 13, min: 12 } },
+        { at: { col: 21, row: 88 }, xRange: { max: 21, min: 20 } },
+        { at: { col: 24.5, row: 84 } },
+        { at: { col: 28, row: ROW } },
+      ],
+    },
+    sides: ["right"],
+    solids: [
+      floor(0, 4, ROW),
+      floor(4, 6, 84),
+      floor(10, 13, 88),
+      floor(23, 3, 84),
+      floor(26, 4, ROW),
+    ],
+    zones: ["apartment"],
+  },
+  // Two contact-triggered balconies climb toward a fixed recovery pier and the exit bank.
+  {
+    difficulty: 4,
+    encounters: 0,
+    entry: { row: ROW },
+    exit: { row: ROW },
+    id: "apartment-crumbling-stair",
+    objects: [
+      {
+        character: "platform-ledge",
+        col: 7,
+        cols: 4,
+        crumbling: CRUMBLING_SUPPORT_TUNING,
+        role: "ledge",
+        row: 77,
+      },
+      {
+        character: "platform-ledge",
+        col: 14,
+        cols: 4,
+        crumbling: CRUMBLING_SUPPORT_TUNING,
+        role: "ledge",
+        row: 73,
+      },
+      ...red(4, 18, 92),
+    ],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 9, row: 77 }, xRange: { max: 9, min: 7 } },
+        { at: { col: 16, row: 73 }, xRange: { max: 16, min: 14 } },
+        { at: { col: 24, row: 76 } },
+        { at: { col: 28, row: ROW } },
+      ],
+    },
+    sides: ["right"],
+    solids: [floor(0, 4, ROW), floor(22, 4, 76), floor(26, 4, ROW)],
     zones: ["apartment"],
   },
 ];
