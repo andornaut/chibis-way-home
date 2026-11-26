@@ -113,6 +113,31 @@ const MODULE_LIST: readonly ChunkModule[] = [
     solids: [floor(0, 6, 80), floor(18, 6, 72), floor(24, 6, 80)],
     zones: ["home"],
   },
+  // A covered lower courtyard returns to street level through two supported climbs.
+  {
+    difficulty: 3,
+    encounters: 0,
+    entry: { row: 80 },
+    exit: { row: 80 },
+    id: "homecity-underpass-approach",
+    objects: [],
+    route: {
+      profile: "recovery",
+      targets: [
+        { at: { col: 14, row: 88 }, xRange: { max: 14, min: 10 } },
+        { at: { col: 24, row: 84 } },
+      ],
+    },
+    sides: ["left"],
+    solids: [
+      floor(0, 6, 80),
+      floor(6, 16, 88),
+      floor(22, 4, 84),
+      floor(26, 4, 80),
+      { col: 8, cols: 8, look: "raised", row: 79, rows: 2 },
+    ],
+    zones: ["home"],
+  },
 ];
 
 export const HOME_MODULES: Readonly<Record<string, ChunkModule>> = Object.fromEntries(
