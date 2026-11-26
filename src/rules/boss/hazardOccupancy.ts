@@ -13,8 +13,9 @@ import type { EncounterSampler } from "./encounter.ts";
 import { createTimedHazardSampler, timedHazardRect } from "./timedHazard.ts";
 
 const MAX_GRAPH_STATES = 128;
+const GRAPH_METADATA = new WeakMap<BehaviourPlan, ReturnType<typeof graphMetadata>>();
 
-// Placed behaviour graphs remain readonly for the lifetime of an occupancy snapshot.
+// Placed behaviour graphs remain readonly across snapshots.
 function graphMetadata(plan: BehaviourPlan) {
   const ranges = new Map<BehaviourNode, number | undefined>();
   const actionRange = (node: BehaviourNode): number | undefined => {
@@ -162,6 +163,32 @@ export function hazardBoundsAt(
   };
   const results = new Map<number, Rect | undefined>();
   let graph: ReturnType<typeof graphMetadata> | undefined;
+  // Padding is part of the snapshot, independent of the queried horizon.
+  const rounding = object.contact ? 1 : 0;
+  const paddingX =
+    rounding +
+    Math.max(0, origin.x - occupied.x, occupied.x + occupied.width - origin.x - object.width);
+  const paddingY =
+    rounding +
+    Math.max(0, origin.y - occupied.y, occupied.y + occupied.height - origin.y - object.height);
+  const padded = (range: number, rect: Rect): Rect | undefined => {
+    const left = Math.min(rect.x, origin.x);
+    const top = Math.min(rect.y, origin.y);
+    const height =
+      Math.max(rect.y + rect.height, origin.y + object.height) - top + 2 * (paddingY + range);
+    const width =
+      Math.max(rect.x + rect.width, origin.x + object.width) - left + 2 * (paddingX + range);
+    const x = left - paddingX - range;
+    const y = top - paddingY - range;
+    return Number.isFinite(x) &&
+      Number.isFinite(y) &&
+      Number.isFinite(width) &&
+      Number.isFinite(height) &&
+      width > 0 &&
+      height > 0
+      ? { height, width, x, y }
+      : undefined;
+  };
   const calculate = (endSeconds: number): Rect | undefined => {
     const horizon = endSeconds - timeSeconds;
     if (
@@ -172,29 +199,6 @@ export function hazardBoundsAt(
     ) {
       return undefined;
     }
-    // Native silhouette frame origins round to whole pixels at every future position.
-    const rounding = object.contact ? 1 : 0;
-    const paddingX =
-      rounding +
-      Math.max(0, origin.x - occupied.x, occupied.x + occupied.width - origin.x - object.width);
-    const paddingY =
-      rounding +
-      Math.max(0, origin.y - occupied.y, occupied.y + occupied.height - origin.y - object.height);
-    const padded = (range: number, rect: Rect): Rect | undefined => {
-      const left = Math.min(rect.x, origin.x);
-      const top = Math.min(rect.y, origin.y);
-      const result = {
-        height:
-          Math.max(rect.y + rect.height, origin.y + object.height) - top + 2 * (paddingY + range),
-        width:
-          Math.max(rect.x + rect.width, origin.x + object.width) - left + 2 * (paddingX + range),
-        x: left - paddingX - range,
-        y: top - paddingY - range,
-      };
-      return Object.values(result).every(Number.isFinite) && result.width > 0 && result.height > 0
-        ? result
-        : undefined;
-    };
     if (object.orbit) {
       const host = objects[object.orbit.host];
       if (
@@ -228,7 +232,14 @@ export function hazardBoundsAt(
         y: object.origin.y + Math.min(0, dy),
       });
     }
-    const metadata = (graph ??= graphMetadata(plan));
+    if (graph === undefined) {
+      graph = GRAPH_METADATA.get(plan);
+      if (graph === undefined) {
+        graph = graphMetadata(plan);
+        GRAPH_METADATA.set(plan, graph);
+      }
+    }
+    const metadata = graph;
     const actions = metadata.actions;
     const initial = plan.states[plan.initial];
     // Existing emitted effects are bounded only for a still-unacquired, stationary initial state.
@@ -274,7 +285,7 @@ export function hazardBoundsAt(
       earliest.set(plan.initial, 0);
       queue.push(plan.initial);
     }
-    const zeroEdges = new Map<string, string[]>();
+    let zeroEdges: Map<string, string[]> | undefined;
     const processed = new Set<string>();
     while (queue.length) {
       const key = queue.shift()!;
@@ -335,7 +346,13 @@ export function hazardBoundsAt(
           continue;
         }
         if (threshold === 0) {
-          zeroEdges.set(key, [...(zeroEdges.get(key) ?? []), transition.to]);
+          zeroEdges ??= new Map();
+          const edges = zeroEdges.get(key);
+          if (edges) {
+            edges.push(transition.to);
+          } else {
+            zeroEdges.set(key, [transition.to]);
+          }
         }
         if (!earliest.has(transition.to) || next < earliest.get(transition.to)!) {
           earliest.set(transition.to, next);
@@ -344,24 +361,7 @@ export function hazardBoundsAt(
         }
       }
     }
-    const visiting = new Set<string>(),
-      done = new Set<string>();
-    const cyclic = (key: string): boolean => {
-      if (visiting.has(key)) {
-        return true;
-      }
-      if (done.has(key)) {
-        return false;
-      }
-      visiting.add(key);
-      if ((zeroEdges.get(key) ?? []).some(cyclic)) {
-        return true;
-      }
-      visiting.delete(key);
-      done.add(key);
-      return false;
-    };
-    if ([...processed].some(cyclic)) {
+    if (zeroEdges && hasCycle(zeroEdges)) {
       return undefined;
     }
     return padded(range, { height: bottom - top, width: right - left, x: left, y: top });
@@ -372,6 +372,32 @@ export function hazardBoundsAt(
     }
     return results.get(endSeconds);
   };
+}
+
+function hasCycle(edges: ReadonlyMap<string, readonly string[]>): boolean {
+  const visiting = new Set<string>();
+  const done = new Set<string>();
+  const cyclic = (key: string): boolean => {
+    if (visiting.has(key)) {
+      return true;
+    }
+    if (done.has(key)) {
+      return false;
+    }
+    visiting.add(key);
+    if (edges.get(key)?.some(cyclic)) {
+      return true;
+    }
+    visiting.delete(key);
+    done.add(key);
+    return false;
+  };
+  for (const key of edges.keys()) {
+    if (cyclic(key)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 // Preserve the legacy envelope while exposing certified timed contacts explicitly.
