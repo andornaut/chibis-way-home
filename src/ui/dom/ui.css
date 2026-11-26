@@ -252,6 +252,10 @@
 
     forced-color-adjust: none;
   }
+
+  .ui-close-button:not(:focus-visible, [data-pressed], [data-ui-pressed]) .ui-close-face {
+    background: transparent;
+  }
 }
 
 /* SVG chrome (chrome.ts) paints each shape in the palette colour it names, so under a modal it
