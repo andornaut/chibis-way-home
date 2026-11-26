@@ -1,7 +1,7 @@
 {
   "arenas": [
     {
-      "hash": "8af3a5a0e8ddc73e",
+      "hash": "27ce4baef58f589f",
       "id": "arena-dog-city-boundary",
       "stage": "city-boundary"
     }
@@ -723,7 +723,7 @@
         "plan": "ba08cf7b09d71556",
         "retries": 0,
         "seed": 2,
-        "trace": "42e549eecb670bcb:37686"
+        "trace": "1e0f546aeca4e06c:37769"
       },
       "inputs": {
         "data": "34ca8cc56135d25c",
