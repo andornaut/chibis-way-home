@@ -123,7 +123,7 @@ export const TEXT: GameText = {
     title: "{zone}",
   },
   dialogue: {
-    continue: "Continue",
+    continue: "Next",
     label: "Conversation",
     skip: "Skip",
     speakers: {
@@ -293,6 +293,7 @@ export const TEXT: GameText = {
     title: "Restart",
   },
   room: {
+    continue: "Continue",
     leave: "Leave",
   },
   rooms: {
