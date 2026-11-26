@@ -5,7 +5,7 @@ import type { OpeningBeat, OpeningLayer, OpeningShot } from "../data/types/index
 import { createOpeningPlayback, openingDestination, openingPose } from "./opening.ts";
 
 describe("manual opening playback", () => {
-  it("chains shots within a beat, holds its final pose, and never advances dialogue on time", () => {
+  it("holds the final shot, returns to the prior beat's start, and completes only by advance", () => {
     const done = vi.fn();
     const shots = [
       { background: null, layers: [], seconds: 1 },
@@ -16,6 +16,9 @@ describe("manual opening playback", () => {
       { shots: [shots[0]!], text: "last" },
     ];
     const playback = createOpeningPlayback(done, beats);
+    expect(playback.canGoBack()).toBe(false);
+    playback.previous();
+    expect(playback.frame()).toMatchObject({ beatIndex: 0, progress: 0, shotIndex: 0 });
     playback.tick(shots[0]!.seconds);
     expect(playback.frame()).toMatchObject({ beatIndex: 0, progress: 0, shotIndex: 1 });
     playback.tick(100);
@@ -23,7 +26,17 @@ describe("manual opening playback", () => {
     expect(done).not.toHaveBeenCalled();
     playback.advance();
     expect(playback.frame()).toMatchObject({ beatIndex: 1, progress: 0, shotIndex: 0 });
+    expect(playback.canGoBack()).toBe(true);
+    playback.tick(1);
+    playback.previous();
+    expect(playback.frame()).toMatchObject({ beatIndex: 0, progress: 0, shotIndex: 0 });
+    expect(playback.canGoBack()).toBe(false);
+    expect(done).not.toHaveBeenCalled();
     playback.advance();
+    playback.advance();
+    playback.previous();
+    expect(playback.frame()).toMatchObject({ beatIndex: 1, finished: true });
+    expect(playback.canGoBack()).toBe(false);
     playback.skip();
     playback.advance();
     expect(done).toHaveBeenCalledTimes(1);

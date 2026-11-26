@@ -1,4 +1,3 @@
-import { type AsepriteSheet, sheetTags } from "@andornaut/game-kit/runtime/art/aseprite";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { type GameObjects, Scene } from "phaser";
 
@@ -9,12 +8,13 @@ import { createOpeningPlayback } from "../progress/index.ts";
 import {
   createOpeningView,
   focusKeyAction,
+  type OpeningAction,
   type OpeningView,
   showOpeningCaption,
   stepFocus,
 } from "../ui/index.ts";
 import { bindSceneActions } from "./domTaps.ts";
-import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
+import { mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
 import { renderOpeningLayer } from "./openingLayer.ts";
@@ -22,9 +22,8 @@ import { fitPlayCamera } from "./playCamera.ts";
 import { saveOpeningSeen } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
 
-type Action = "continue" | "skip";
-// The keyboard's focus order: Continue then Skip, though Skip is drawn on the left.
-const ACTIONS: readonly Action[] = ["continue", "skip"];
+// Next stays the default action. Previous joins the focus order only when it is shown.
+const ACTIONS: readonly OpeningAction[] = ["continue", "previous", "skip"];
 
 export class OpeningScene extends Scene {
   private view: OpeningView | undefined;
@@ -34,7 +33,7 @@ export class OpeningScene extends Scene {
   private art!: GameObjects.Container;
   private background: GameObjects.Image | undefined;
   private layers: GameObjects.Sprite[] = [];
-  private focus: Action | undefined;
+  private focus: OpeningAction | undefined;
   private shot: object | undefined;
   private beat: object | undefined;
 
@@ -73,7 +72,11 @@ export class OpeningScene extends Scene {
         event.preventDefault();
       }
       if (action === "next" || action === "previous") {
-        this.focus = stepFocus(ACTIONS, this.focusedAction(), action);
+        this.focus = stepFocus(
+          ACTIONS.filter((control) => this.actionAvailable(control)),
+          this.focusedAction(),
+          action,
+        );
         if (this.htmlReady && this.focus !== undefined) {
           this.view?.buttons[this.focus].focus();
         }
@@ -98,15 +101,7 @@ export class OpeningScene extends Scene {
       const stop = this.watchPresses(view);
       view.root.addEventListener("keydown", keydown);
       view.root.addEventListener("keyup", keyup);
-      const mark = sheetTags(this.cache.json.get("ui-play-mark") as AsepriteSheet).get("light")?.[0]
-        ?.frame;
-      const urls = artFrameUrl(this, "ui-play-mark", mark).then((url) => {
-        if (this.generation === generation) {
-          view.mark.src = url;
-        }
-        return [url];
-      });
-      const reveal = revealSceneView(this, view.root, urls);
+      const reveal = revealSceneView(this, view.root, []);
       this.events.once("shutdown", () => {
         ++this.generation;
         this.htmlReady = false;
@@ -138,30 +133,41 @@ export class OpeningScene extends Scene {
     this.drawFrame();
   }
 
-  private focusedAction(): Action | undefined {
+  private focusedAction(): OpeningAction | undefined {
     if (!this.htmlReady) {
       return this.focus;
     }
     const active = this.view?.root.ownerDocument.activeElement;
-    return ACTIONS.find((action) => this.view?.buttons[action] === active);
+    return ACTIONS.find(
+      (action) => this.actionAvailable(action) && this.view?.buttons[action] === active,
+    );
+  }
+
+  private actionAvailable(action: OpeningAction): boolean {
+    return action !== "previous" || this.playback.canGoBack();
   }
 
   private watchPresses(view: OpeningView): () => void {
     const input = modalInput(this);
     const live = () => this.htmlReady && !this.playback.frame().finished;
-    const controlAt = ({ target }: { readonly target: EventTarget | null }): Action | null => {
+    const controlAt = ({
+      target,
+    }: {
+      readonly target: EventTarget | null;
+    }): OpeningAction | null => {
       if (!(target instanceof Element) || !view.root.contains(target)) {
         return null;
       }
       const action = target.closest<HTMLElement>("[data-control]")?.dataset.control;
-      return action === "continue" || action === "skip" ? action : null;
+      return ACTIONS.find((control) => control === action) ?? null;
     };
-    const stop = bindSceneActions<Action>(
+    const stop = bindSceneActions<OpeningAction>(
       { preventDefault: true, target: view.root, view: view.root },
       input,
       {
         accepts: live,
         activate: (action) => this.activate(action),
+        available: (action) => this.actionAvailable(action),
         controlAt,
         controls: ACTIONS,
         element: (action) => view.buttons[action],
@@ -182,13 +188,19 @@ export class OpeningScene extends Scene {
     };
   }
 
-  private activate(action: Action): void {
-    if (!modalInput(this).accepts() || this.playback.frame().finished) {
+  private activate(action: OpeningAction): void {
+    if (
+      !modalInput(this).accepts() ||
+      !this.actionAvailable(action) ||
+      this.playback.frame().finished
+    ) {
       return;
     }
     modalInput(this).invalidate();
     if (action === "skip") {
       this.playback.skip();
+    } else if (action === "previous") {
+      this.playback.previous();
     } else {
       this.playback.advance();
     }
@@ -199,7 +211,7 @@ export class OpeningScene extends Scene {
 
   private drawFrame(): void {
     const frame = this.playback.frame();
-    if (this.shot !== frame.shot) {
+    if (this.shot !== frame.shot || this.beat !== frame.beat) {
       this.layers.forEach((sprite) => sprite.destroy());
       this.background?.destroy();
       this.background = undefined;
@@ -223,6 +235,13 @@ export class OpeningScene extends Scene {
         throw new Error(`Missing opening caption ${frame.beat.text}`);
       }
       if (this.view !== undefined) {
+        const { buttons, root } = this.view;
+        const canGoBack = this.playback.canGoBack();
+        if (!canGoBack && root.ownerDocument.activeElement === buttons.previous) {
+          this.focus = "continue";
+          buttons.continue.focus();
+        }
+        buttons.previous.hidden = !canGoBack;
         showOpeningCaption(text, this.view);
       }
       this.beat = frame.beat;

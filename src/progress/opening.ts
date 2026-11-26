@@ -72,6 +72,7 @@ export function createOpeningPlayback(onFinish: () => void, beats: readonly Open
   let beatIndex = 0;
   let elapsed = 0;
   let finished = false;
+  const canGoBack = () => !finished && beatIndex > 0;
   const finish = () => {
     if (finished) {
       return;
@@ -91,6 +92,7 @@ export function createOpeningPlayback(onFinish: () => void, beats: readonly Open
         elapsed = 0;
       }
     },
+    canGoBack,
     frame() {
       const beat = beats[beatIndex]!;
       let time = elapsed;
@@ -110,6 +112,12 @@ export function createOpeningPlayback(onFinish: () => void, beats: readonly Open
         time -= shot.seconds;
       }
       throw new Error("Opening shot is missing");
+    },
+    previous() {
+      if (canGoBack()) {
+        beatIndex--;
+        elapsed = 0;
+      }
     },
     skip: finish,
     tick(seconds: number) {

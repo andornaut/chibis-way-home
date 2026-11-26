@@ -1,5 +1,5 @@
 /* The footer keeps its height and right anchor. Its action group is as wide as its faces, which
-   fit their label and mark. */
+   fit their labels. */
 .opening-view {
   pointer-events: none;
 }
@@ -26,15 +26,8 @@
   text-box: trim-both cap alphabetic;
 }
 
-/* The play mark and label count as one content-sized face. */
-.opening-actions .ui-text-button-primary .ui-text-button-label {
-  display: inline-flex;
-  align-items: center;
-  gap: calc(var(--ui-unit) * var(--opening-mark-gap) * 1px);
-}
-
-.opening-actions .ui-text-button-label img {
-  width: calc(var(--ui-unit) * var(--opening-mark-width) * 1px);
-  height: calc(var(--ui-unit) * var(--opening-mark-height) * 1px);
-  image-rendering: pixelated;
+.opening-skip {
+  position: absolute;
+  top: calc(var(--ui-unit) * var(--card-padding) * 1px);
+  right: calc(var(--ui-unit) * var(--card-padding) * 1px);
 }

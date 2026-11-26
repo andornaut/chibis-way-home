@@ -16,26 +16,35 @@ it("names the opening story region and its actions from the text data", () => {
   const view = createOpeningView(document, WORDS);
   expect(view.root.getAttribute("role")).toBe("region");
   expect(view.root.getAttribute("aria-label")).toBe(TEXT.opening.name);
-  for (const action of ["continue", "skip"] as const) {
+  for (const action of ["continue", "previous", "skip"] as const) {
     const button = view.buttons[action];
     expect(button.textContent).toBe(TEXT.dialogue[action]);
     expect(button.dataset.control).toBe(action);
     expect(button.disabled).toBe(false);
-    expect(button.hidden).toBe(false);
+    expect(button.hidden).toBe(action === "previous");
   }
   expect(actionRole(view.buttons.continue)).toBe("primary");
+  expect(actionRole(view.buttons.previous)).toBe("secondary");
   expect(actionRole(view.buttons.skip)).toBe("secondary");
-  // The play mark is decoration inside Continue's label.
-  expect(view.buttons.continue.contains(view.mark)).toBe(true);
-  expect(view.mark.alt).toBe("");
+  expect(view.buttons.continue.querySelector("svg, img")).toBeNull();
 });
 
-it("moves the focus from Continue to Skip", () => {
+it("keeps Next and Previous in the footer, with Skip in a separate action group", () => {
   const view = createOpeningView(document, WORDS);
   expect([...view.root.querySelectorAll("button")]).toEqual([
     view.buttons.continue,
+    view.buttons.previous,
     view.buttons.skip,
   ]);
+  expect([...view.actions.element.children]).toEqual([
+    view.buttons.continue,
+    view.buttons.previous,
+  ]);
+  expect(view.actions.element.parentElement?.classList.contains("opening-footer")).toBe(true);
+  const skipGroup = view.buttons.skip.parentElement!;
+  expect(skipGroup.matches(".opening-skip[data-ui-layout]")).toBe(true);
+  expect([...skipGroup.children]).toEqual([view.buttons.skip]);
+  expect(skipGroup.closest(".opening-footer")).toBeNull();
 });
 
 it("announces each caption as plain text without measuring during playback", () => {
@@ -62,22 +71,22 @@ it("announces each caption as plain text without measuring during playback", () 
   }
 });
 
-it("shows Skip on the left and Continue on the right, 16 px apart, in a group as wide as both", () => {
+it("places Previous to the left of primary Next in a row as wide as both", () => {
   const gap = ACTION_GAPS.standard.row;
   const margin = hitMargin({ ...face(TEXT_BUTTON.height), x: 0, y: 0 });
   const width = rowWidth(undefined, [120, 72]);
   expect(width).toBe(120 + TEXT_BUTTON.gap + 72);
   expect(rowWidth(undefined, [120])).toBe(120);
-  // Focus order: Continue, then Skip.
+  // Focus order: Next, then Previous.
   const arrangement = arrangeActions({ axis: "row", width }, [
     { key: "continue", role: "primary", size: face(120) },
-    { key: "skip", role: "secondary", size: face(72) },
+    { key: "previous", role: "secondary", size: face(72) },
   ]);
   expect(arrangement.group).toMatchObject({ height: TEXT_BUTTON.height, width });
   const placed = Object.fromEntries(
     arrangement.actions.map((action) => [action.key, action] as const),
   );
-  expect(placed.skip).toMatchObject({
+  expect(placed.previous).toMatchObject({
     face: { ...face(72), x: 0, y: 0 },
     outset: { left: margin, right: gap / 2 },
   });

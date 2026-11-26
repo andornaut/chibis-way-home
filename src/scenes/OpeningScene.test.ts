@@ -3,7 +3,6 @@ import { EventEmitter } from "node:events";
 
 import { beforeEach, expect, it, vi } from "vitest";
 
-import markSheet from "../../public/art/sprites/ui-play-mark.json" with { type: "json" };
 import { OPENING } from "../data/opening.ts";
 import { SCREEN } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
@@ -14,7 +13,6 @@ const dom = vi.hoisted(() => ({
   ready: undefined as ((value: boolean) => void) | undefined,
 }));
 vi.mock("./domUi.ts", () => ({
-  artFrameUrl: vi.fn(async () => "blob:play-mark"),
   mountSceneView: (scene: OpeningScene, root: HTMLElement) => {
     document.body.append(root);
     scene.events.once("shutdown", () => root.remove());
@@ -80,7 +78,6 @@ vi.mock("phaser", () => {
         rectangle: vi.fn(drawable),
         sprite: drawable,
       };
-      readonly cache = { json: { get: () => markSheet } };
       readonly events = new EventEmitter();
       readonly game = {};
       readonly input = Object.assign(new EventEmitter(), {
@@ -190,7 +187,7 @@ it("holds actions until reveal succeeds, then renders each caption in HTML", asy
   expect(root.hidden).toBe(false);
 });
 
-it("uses HTML Continue then Skip focus order and whole-opening Skip", async () => {
+it("skips hidden Previous in the initial focus order and still skips the whole opening", async () => {
   const { root, scene } = await htmlOpening();
   const next = root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
   const skip = root.querySelector<HTMLButtonElement>('[data-control="skip"]')!;
@@ -200,6 +197,29 @@ it("uses HTML Continue then Skip focus order and whole-opening Skip", async () =
   expect(document.activeElement).toBe(skip);
   skip.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
   expect(saveOpeningSeen).toHaveBeenCalledOnce();
+});
+
+it("returns to the first caption without saving and moves focus from hidden Previous to Next", async () => {
+  const { root, scene } = await htmlOpening();
+  const caption = root.querySelector(".opening-caption")!;
+  const previous = root.querySelector<HTMLButtonElement>('[data-control="previous"]')!;
+  const next = root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
+  expect(previous.hidden).toBe(true);
+  previous.click();
+  expect(caption.textContent).toBe(TEXT.lines[OPENING[0]!.text]);
+
+  key(scene, "Enter");
+  expect(caption.textContent).toBe(TEXT.lines[OPENING[1]!.text]);
+  expect(previous.hidden).toBe(false);
+  next.focus();
+  next.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Tab" }));
+  expect(document.activeElement).toBe(previous);
+  previous.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Enter" }));
+  expect(caption.textContent).toBe(TEXT.lines[OPENING[0]!.text]);
+  expect(previous.hidden).toBe(true);
+  expect(document.activeElement).toBe(next);
+  expect(saveOpeningSeen).not.toHaveBeenCalled();
+  expect(scene.scene.start).not.toHaveBeenCalled();
 });
 
 it("rejects HTML inherited releases, outside taps, drags and covered gestures", async () => {

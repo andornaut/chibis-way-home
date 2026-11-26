@@ -3,25 +3,21 @@ import {
   writeLayoutProperties,
 } from "@andornaut/game-kit/runtime/web/ui/dom/layoutProperties";
 
-import { CARD_CONTENT, PLAY_MARK, TEXT_BUTTON } from "../../data/layout.ts";
+import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
 import { type ActionsView, createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
 
-export type OpeningAction = "continue" | "skip";
+export type OpeningAction = "continue" | "previous" | "skip";
 
 export const OPENING_PROPERTIES: LayoutValues = {
   "--opening-footer-height": TEXT_BUTTON.height + 2 * CARD_CONTENT.padding,
-  "--opening-mark-gap": PLAY_MARK.gap,
-  "--opening-mark-height": PLAY_MARK.height,
-  "--opening-mark-width": PLAY_MARK.width,
 };
 
 export interface OpeningView {
-  // The footer row: Skip on the left and Continue on the right.
+  // Previous and Next in the footer, with Skip in its own top-right action group.
   readonly actions: ActionsView;
   readonly buttons: Readonly<Record<OpeningAction, HTMLButtonElement>>;
   readonly caption: HTMLElement;
-  readonly mark: HTMLImageElement;
   readonly root: HTMLElement;
 }
 
@@ -29,11 +25,11 @@ export interface OpeningWords {
   readonly continue: string;
   // The screen's accessible name.
   readonly name: string;
+  readonly previous: string;
   readonly skip: string;
 }
 
-// The footer holds the caption and, at its right, the action row sized to its faces. Continue
-// leads the focus order; the group shows it on the right, after Skip.
+// Next leads the focus order, with the primary face drawn to the right of Previous.
 export function createOpeningView(document: Document, words: OpeningWords): OpeningView {
   const root = document.createElement("div");
   root.className = "opening-scene";
@@ -51,21 +47,25 @@ export function createOpeningView(document: Document, words: OpeningWords): Open
   caption.setAttribute("aria-live", "polite");
   const buttons = {
     continue: textButton(document, words.continue, true),
+    previous: textButton(document, words.previous),
     skip: textButton(document, words.skip),
   };
-  buttons.continue.dataset.control = "continue";
-  buttons.skip.dataset.control = "skip";
-  const mark = document.createElement("img");
-  mark.alt = "";
-  buttons.continue.querySelector(".ui-text-button-label")!.prepend(mark);
-  const actions = createActions(document, [buttons.continue, buttons.skip], {
+  for (const [action, button] of Object.entries(buttons)) {
+    button.dataset.control = action;
+  }
+  buttons.previous.hidden = true;
+  const actions = createActions(document, [buttons.continue, buttons.previous], {
     className: "opening-actions",
     width: "content",
   });
+  const skip = createActions(document, [buttons.skip], {
+    className: "opening-skip",
+    width: "content",
+  });
   footer.append(caption, actions.element);
-  view.append(footer);
+  view.append(footer, skip.element);
   root.append(backdrop, view);
-  return { actions, buttons, caption, mark, root };
+  return { actions, buttons, caption, root };
 }
 
 export function showOpeningCaption(text: string, view: OpeningView): void {
