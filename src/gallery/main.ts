@@ -6,7 +6,7 @@ import { parseBitmapFont } from "@andornaut/game-kit/runtime/text/bitmapFont";
 
 import manifestJson from "../../public/art/manifest.json" with { type: "json" };
 import palette from "../../public/art/palette.json" with { type: "json" };
-import { type ArtManifest } from "../assets/index.ts";
+import type { ArtManifest } from "../assets/index.ts";
 import { galleryCatalogue, type GalleryItem } from "./catalogue.ts";
 import { type Crop, fontPreview, galleryFrame } from "./preview.ts";
 

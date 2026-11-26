@@ -2,7 +2,7 @@ import { type AnimationFrame, animationKey } from "@andornaut/game-kit/runtime/a
 import { type Random, randomStream } from "@andornaut/game-kit/runtime/random";
 import type { GameObjects, Scene } from "phaser";
 
-import { type ArtManifest } from "../assets/index.ts";
+import type { ArtManifest } from "../assets/index.ts";
 import { contactFrameAt, spriteFrameOrigin } from "../core/index.ts";
 import { BIRD } from "../data/bird.ts";
 import { CAMERA } from "../data/camera.ts";

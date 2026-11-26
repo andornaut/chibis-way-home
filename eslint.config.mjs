@@ -266,11 +266,15 @@ export default defineConfig(
   ...boundaryConfigs(),
   // No runtime import cycles: a module in a cycle can run before what it imports has loaded.
   // Type-only imports are erased at build time, so they may form one, and the layers keep it
-  // within one group.
+  // within one group. An import whose names are all inline `type` still loads its module under
+  // verbatimModuleSyntax, yet no-cycle skips it, so it is written `import type` instead.
   {
     files: SOURCE_FILES,
     plugins: { "import-x": IMPORT_X },
-    rules: { "import-x/no-cycle": "error" },
+    rules: {
+      "@typescript-eslint/no-import-type-side-effects": "error",
+      "import-x/no-cycle": "error",
+    },
     settings: IMPORT_X_SETTINGS,
   },
   // The layers, by resolved path, so a relative path of any depth is caught. Tests may import any

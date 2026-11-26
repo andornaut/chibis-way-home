@@ -6,7 +6,7 @@ import { BIRD } from "../../data/bird.ts";
 import type { Character, ChunkPlan, Instance, ZoneRecipe } from "../../data/types/index.ts";
 import { assembleZone } from "../../testing/stageAssembly.ts";
 import { enterArea } from "../zone/zone.ts";
-import { type ChunkLibrary } from "./assemble.ts";
+import type { ChunkLibrary } from "./assemble.ts";
 import { chunkProblems } from "./chunk.ts";
 import { zoneLayout } from "./tiles.ts";
 

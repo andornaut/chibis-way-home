@@ -119,7 +119,7 @@ import {
   type ZoneStory,
   zoneStoryForStage,
 } from "../rules/zone/index.ts";
-import { type Tileset } from "../stage/index.ts";
+import type { Tileset } from "../stage/index.ts";
 import {
   buttonHeld,
   coarsePointer,
@@ -157,7 +157,7 @@ import type { CutsceneData } from "./CutsceneScene.ts";
 import { mountDashTrail } from "./dashTrail.ts";
 import { frameDeathCamera } from "./deathCamera.ts";
 import type { DeathData, DeathOpener } from "./DeathScene.ts";
-import { type DialogueData, type DialogueOpener } from "./DialogueScene.ts";
+import type { DialogueData, DialogueOpener } from "./DialogueScene.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
 import { modalInput } from "./modalInput.ts";
 import { canvasRect, fitPlayCamera, sceneFit, sceneViewShift } from "./playCamera.ts";

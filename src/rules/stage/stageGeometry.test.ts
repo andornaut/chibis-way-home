@@ -7,7 +7,7 @@ import type { ChunkPlan, OrderedZoneRecipe, ZoneRecipe } from "../../data/types/
 import { SKILL_PROFILES } from "../../progress/index.ts";
 import { assembleZone } from "../../testing/stageAssembly.ts";
 import { preparedZone, startZone, stepZone } from "../zone/zone.ts";
-import { type ChunkLibrary } from "./assemble.ts";
+import type { ChunkLibrary } from "./assemble.ts";
 import { chunkProblems, recipeProblems } from "./chunk.ts";
 import { zoneLayout } from "./tiles.ts";
 
