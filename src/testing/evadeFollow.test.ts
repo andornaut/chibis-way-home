@@ -17,6 +17,7 @@ import {
   launchStepSafe,
   prepareLaunch,
   type RouteFollowEvent,
+  startsJump,
 } from "./evade.ts";
 import { PENTHOUSE_LAUNCH } from "./fixtures/penthouseLaunch.ts";
 
@@ -511,3 +512,72 @@ it("backs up along its support for a run-up to a launch at the support's end", (
   expect(furthest).toBeGreaterThan(start);
   expect(launched).toBe(true);
 });
+
+it.each(["same-span", "walk-edge"] as const)(
+  "checks the observed body's swept safety for an ordinary %s walk",
+  (route) => {
+    const found =
+      route === "same-span"
+        ? gameArenaCase({
+            ...ARENA_SAMPLES.find(({ boss }) => boss === "dog-antagonist")!,
+            objects: [],
+            solids: [{ col: 0, cols: 60, look: "raised", row: 50, rows: 40 }],
+          })
+        : gameArenaOf("arena-ferret-penthouse");
+    const layout = arenaLayout(found);
+    const maps = arenaMaps(found, layout);
+    const { terrain } = maps.encounter;
+    const bird = {
+      ...startBird(ORDINARY, { x: route === "same-span" ? 252 : 422, y: 600 }),
+      grounded: true,
+      vx: ORDINARY.walkSpeed,
+    };
+    const body = birdBox(ORDINARY, bird);
+    const goal = { x: route === "same-span" ? 360 : 600, y: 600 };
+    const origin = locate(maps.chibi, body)!;
+    const path = pathTo(maps.chibi, maps.mask, origin, { point: goal, radius: TILE })!;
+    expect(path).toBeDefined();
+    expect(path.edges.length > 0).toBe(route === "walk-edge");
+    expect(path.edges.every((id) => !startsJump(maps.chibi.edges[id]))).toBe(true);
+    for (const blocked of [true, false]) {
+      const follower = createRouteFollower(ORDINARY, STEP_SECONDS, maps.chibi, terrain);
+      const boss = { ...body, x: body.x + body.width + (blocked ? 1 : 100) };
+      const checks: boolean[] = [];
+      const safe = (from: number, to: number) => {
+        const accepted = launchStepSafe(
+          terrain.world.solids,
+          terrain.hazards.map(({ rect }) => rect),
+          0,
+          boss,
+          body,
+          from,
+          to,
+        );
+        checks.push(accepted);
+        return accepted;
+      };
+      const result = follower.step(safe, { areaWidth: 720, bird, goal, mask: maps.mask });
+      expect(checks).toContain(!blocked);
+      if (blocked) {
+        expect(result.kind).toBe("unsafe");
+        expect(result.input.move).toBe(0);
+      } else {
+        expect(result.problem).toBeUndefined();
+        expect(result.input.move).toBe(1);
+        const ledges = terrain.area.colliders
+          .filter(({ kind }) => kind === "ledge")
+          .map(({ before }) => before);
+        const next = stepBird(
+          ORDINARY,
+          terrain.world.solids,
+          ledges,
+          STEP_SECONDS,
+          result.input,
+          bird,
+        );
+        expect(next.x).toBeGreaterThan(bird.x);
+        expect(next.grounded).toBe(true);
+      }
+    }
+  },
+);

@@ -527,10 +527,18 @@ export function createRouteFollower(
     };
     const walkInput = (edge: MapEdge<MapSupport>) =>
       toward(Math.min(edge.land.right, Math.max(edge.land.left, goal.x - body.width / 2)));
-    const walkSafe = (edge: MapEdge<MapSupport>) => {
-      const input = walkInput(edge);
+    const walkSafe = (input: ZoneInput) => {
       const vx = ordinaryHorizontalVelocity(tuning, seconds, input.move, true, bird.vx);
       return safeStep(body.x, body.x + vx * seconds, input.move);
+    };
+    // The map retains the current span, so an ordinary walk still needs swept-step safety.
+    const walk = (input: ZoneInput): RouteFollowResult => {
+      if (walkSafe(input)) {
+        return finish(input);
+      }
+      prefix = undefined;
+      preparation.reset();
+      return finish(STILL, { kind: "unsafe", problem: "selected walk has no safe ordinary step" });
     };
     let retained: MapEdge<MapSupport> | undefined;
     if (prefix) {
@@ -568,7 +576,7 @@ export function createRouteFollower(
         const actual = { node, x: body.x };
         valid = !firstEdgeMask(tuning, seconds, map, mask, actual, bird).blocked.includes(edge.id);
         if (valid && edge.kind === "walk" && !startsJump(edge)) {
-          valid = walkSafe(edge);
+          valid = walkSafe(walkInput(edge));
         }
         if (valid) {
           ref = actual;
@@ -695,19 +703,11 @@ export function createRouteFollower(
             supported(ref.node) && Math.abs(feet.y - goal.y) <= EDGE ? "completed" : "following",
         });
       }
-      return finish(toward(spanGoal(areaWidth, map.nodes[ref.node], goal.x - body.width / 2)));
+      return walk(toward(spanGoal(areaWidth, map.nodes[ref.node], goal.x - body.width / 2)));
     }
     const jump = startsJump(edge);
     if (edge.kind === "walk" && !jump) {
-      if (prefix && !walkSafe(edge)) {
-        prefix = undefined;
-        preparation.reset();
-        return finish(STILL, {
-          kind: "unsafe",
-          problem: "selected walk has no safe ordinary step",
-        });
-      }
-      return finish(walkInput(edge));
+      return walk(walkInput(edge));
     }
     if (jump && prepared.kind === "unknown") {
       const back = runUpStep(safeStep, tuning, seconds, map.nodes[ref.node]!, edge, bird);
