@@ -15,9 +15,7 @@ import { CARD_CONTENT, CARD_SCREEN_MARGIN, CARD_WIDTH, TEXT_BUTTON } from "../..
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
 import { createGameButton } from "../binding/index.ts";
-import type { CardWidth } from "../layout/contentCard.ts";
-import { FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
-import { hitMargin } from "../layout/hitAreas.ts";
+import { type CardWidth, FONT_METRICS, hitMargin, UI_FONT_FACE } from "../layout/index.ts";
 import { type ActionsContext, measuredActions } from "./actions.ts";
 import { createCloseGlyph } from "./controlGlyphs.ts";
 import { registerLayout, rendered } from "./layout.ts";

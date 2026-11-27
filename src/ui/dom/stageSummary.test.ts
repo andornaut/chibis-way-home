@@ -5,8 +5,7 @@ import { expect, it } from "vitest";
 import { CARD_CONTENT, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { STATS_SCOPE_TEXT, TEXT } from "../../data/text.ts";
-import { capTop, FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
-import { hitMargin } from "../layout/hitAreas.ts";
+import { capTop, FONT_METRICS, hitMargin, UI_FONT_FACE } from "../layout/index.ts";
 import {
   createStageSummary,
   type LineInk,

@@ -5,8 +5,7 @@ import { expect, it } from "vitest";
 import { DIALOGUE_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { TEXT } from "../../data/text.ts";
-import { DIALOGUE_SCREEN } from "../layout/dialogueScreen.ts";
-import { hitMargin } from "../layout/hitAreas.ts";
+import { DIALOGUE_SCREEN, hitMargin } from "../layout/index.ts";
 import { createDialogueView, createStatusPanel, DIALOGUE_FOOTER_LAYOUT } from "./dialogue.ts";
 
 const HIT = hitMargin({ height: TEXT_BUTTON.height, width: TEXT_BUTTON.height, x: 0, y: 0 });

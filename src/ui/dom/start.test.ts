@@ -6,8 +6,7 @@ import palette from "../../../public/art/palette.json" with { type: "json" };
 import { TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { TEXT } from "../../data/text.ts";
-import { hitMargin } from "../layout/hitAreas.ts";
-import { startScreenLayout } from "../layout/startScreen.ts";
+import { hitMargin, startScreenLayout } from "../layout/index.ts";
 import { actionRole } from "./actions.ts";
 import { createStart } from "./start.ts";
 

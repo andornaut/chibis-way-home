@@ -9,11 +9,7 @@ import { DIALOGUE_LAYOUT } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { DialogueSpeaker } from "../../data/types/index.ts";
 import type { DialogueControl } from "../dialogue/conversation.ts";
-import {
-  DIALOGUE_PORTRAIT_SIZE,
-  DIALOGUE_SCREEN,
-  dialogueSpeakerLayout,
-} from "../layout/dialogueScreen.ts";
+import { DIALOGUE_PORTRAIT_SIZE, DIALOGUE_SCREEN, dialogueSpeakerLayout } from "../layout/index.ts";
 import { createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
 

@@ -1,4 +1,4 @@
-import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import { SKILL_BUTTON } from "../layout/index.ts";
 import type { TouchChromeLayer } from "./touchChrome.ts";
 
 export function skillChromeLayers(face: number): readonly TouchChromeLayer[] {

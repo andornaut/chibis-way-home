@@ -9,7 +9,7 @@ import { SKILL_IDS } from "../../progress/index.ts";
 import { svgLayers } from "../../testing/chromeSvg.ts";
 import { createNavigationDisc } from "../dom/navigationDisc.ts";
 import { createPauseView, showPauseDisc } from "../dom/pause.ts";
-import { PAUSE_DISC, PAUSE_VISIBLE_DIAMETER } from "../layout/controlChrome.ts";
+import { PAUSE_DISC, PAUSE_VISIBLE_DIAMETER } from "../layout/index.ts";
 import { PAUSE_CHROME_FRAME, pauseChromeLayers, type PauseChromePose } from "./pauseChrome.ts";
 
 const colour = (key: keyof typeof palette.colours) => parseInt(palette.colours[key].slice(1), 16);

@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 import palette from "../../../public/art/palette.json" with { type: "json" };
 import { svgLayers } from "../../testing/chromeSvg.ts";
 import { skillChromeLayers } from "../chrome/skillChrome.ts";
-import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import { SKILL_BUTTON } from "../layout/index.ts";
 import { createSkillDisc } from "./skillDisc.ts";
 
 const colour = (name: keyof typeof palette.colours) =>

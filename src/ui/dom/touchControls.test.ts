@@ -12,7 +12,7 @@ import {
   touchChromeLayers,
   type TouchChromePose,
 } from "../chrome/touchChrome.ts";
-import { canvasSize, shifted, viewShift } from "../layout/playView.ts";
+import { canvasSize, shifted, viewShift } from "../layout/index.ts";
 import { createTouchControls, type TouchControlsState } from "./touchControls.ts";
 
 const COLOURS = {

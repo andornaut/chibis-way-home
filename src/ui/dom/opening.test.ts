@@ -5,7 +5,7 @@ import { expect, it, vi } from "vitest";
 import { TEXT_BUTTON } from "../../data/layout.ts";
 import { OPENING } from "../../data/opening.ts";
 import { TEXT } from "../../data/text.ts";
-import { hitMargin } from "../layout/hitAreas.ts";
+import { hitMargin } from "../layout/index.ts";
 import { actionRole, rowWidth } from "./actions.ts";
 import { createOpeningView, showOpeningCaption } from "./opening.ts";
 

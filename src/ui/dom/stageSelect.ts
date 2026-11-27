@@ -11,7 +11,7 @@ import {
   STAGE_ROW_WIDTH,
   STAGE_SELECT_LAYOUT,
   STAGE_SELECT_WIDTH,
-} from "../layout/stageSelectCard.ts";
+} from "../layout/index.ts";
 import { createActions } from "./actions.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";
 import { createCardFrame, TEXT_BUTTON_APPEARANCE } from "./card.ts";

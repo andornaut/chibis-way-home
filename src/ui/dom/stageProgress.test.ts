@@ -10,8 +10,7 @@ import { expect, it } from "vitest";
 import { SCREEN } from "../../data/screen.ts";
 import { STAGE_PROGRESS } from "../../data/stageProgress.ts";
 import { STAGE_PROGRESS_STYLE } from "../../presentation/index.ts";
-import { canvasSize, viewShift } from "../layout/playView.ts";
-import { stageProgressRect } from "../layout/stageProgress.ts";
+import { canvasSize, stageProgressRect, viewShift } from "../layout/index.ts";
 import { createUiLayer } from "./layer.ts";
 import { createStageProgress } from "./stageProgress.ts";
 

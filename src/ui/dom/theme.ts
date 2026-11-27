@@ -6,7 +6,7 @@ import {
 } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import { THEME_COLOURS } from "../../data/layout.ts";
-import { TEXT_ROLE_STYLES } from "../layout/fontRoles.ts";
+import { TEXT_ROLE_STYLES } from "../layout/index.ts";
 
 // The interface's theme on the kit's (uiTheme.css): each colour slot's palette colour
 // (THEME_COLOURS in src/data/layout.ts) and the text roles. The focus and pressed slots fill a

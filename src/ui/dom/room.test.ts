@@ -8,9 +8,7 @@ import { CARD_CONTENT, CARD_SCREEN_MARGIN, CARD_WIDTH, TEXT_BUTTON } from "../..
 import { SCREEN } from "../../data/screen.ts";
 import { TEXT } from "../../data/text.ts";
 import { dialogueParagraphs } from "../dialogue/conversation.ts";
-import { hitMargin } from "../layout/hitAreas.ts";
-import { ROOM_SCREEN } from "../layout/roomScreen.ts";
-import { SKILL_ROOM } from "../layout/skillDetails.ts";
+import { hitMargin, ROOM_SCREEN, SKILL_ROOM } from "../layout/index.ts";
 import { createRoomView, ROOM_GIFT_CONTENT } from "./room.ts";
 
 const COLOURS = {

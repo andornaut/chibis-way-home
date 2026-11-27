@@ -53,7 +53,7 @@ const SOURCE_BANDS = [
   [
     "Presentation",
     [
-      ["presentation/backdrop", "presentation/zoneTheme", "ui/binding", "ui/dim"],
+      ["presentation/backdrop", "presentation/zoneTheme", "ui/binding", "ui/dim", "ui/layout"],
       ["presentation", "ui"],
     ],
   ],

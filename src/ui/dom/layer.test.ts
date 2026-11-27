@@ -10,7 +10,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 import { SCREEN } from "../../data/screen.ts";
-import { playView } from "../layout/playView.ts";
+import { playView } from "../layout/index.ts";
 import { createUiLayer, UI_LAYOUT } from "./layer.ts";
 import { UI_COLOURS, UI_FRAMES } from "./skin.ts";
 

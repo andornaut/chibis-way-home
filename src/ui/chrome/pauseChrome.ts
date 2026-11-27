@@ -1,5 +1,5 @@
 import { MENU_GLYPH, PAUSE_GLYPH } from "../../data/layout.ts";
-import { PAUSE_DISC } from "../layout/controlChrome.ts";
+import { PAUSE_DISC } from "../layout/index.ts";
 import type { TouchChromeColours, TouchChromeLayer } from "./touchChrome.ts";
 
 export const PAUSE_CHROME_FRAME = PAUSE_DISC.frame;

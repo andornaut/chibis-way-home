@@ -13,9 +13,7 @@ import { CARD_CONTENT, DEATH_CARD, TEXT_BUTTON } from "../../data/layout.ts";
 import type { Point } from "../../data/types/index.ts";
 import { disposeGameButtons } from "../binding/index.ts";
 import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
-import { FONT_METRICS } from "../layout/fontRoles.ts";
-import { hitMargin } from "../layout/hitAreas.ts";
-import { playView } from "../layout/playView.ts";
+import { FONT_METRICS, hitMargin, playView } from "../layout/index.ts";
 import {
   refreshTextButtonFrames,
   setButtonLayoutDefaults,

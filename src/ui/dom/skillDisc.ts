@@ -5,7 +5,7 @@ import {
 
 import type { Rect } from "../../data/types/index.ts";
 import { skillChromeLayers } from "../chrome/skillChrome.ts";
-import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import { SKILL_BUTTON } from "../layout/index.ts";
 import { createPaletteSvg } from "./chrome.ts";
 
 // A skill's disc in the HTML UI (skillDisc.css): its circle as inline SVG from the skill chrome's

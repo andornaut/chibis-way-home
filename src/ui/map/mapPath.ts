@@ -1,9 +1,9 @@
 import { clamp } from "@andornaut/game-kit/runtime/numbers";
 
 import type { Point, Rect } from "../../data/types/index.ts";
-import type { PathStroke } from "../layout/mapScreen.ts";
+import type { PathStroke } from "../layout/index.ts";
 
-export type { PathStroke } from "../layout/mapScreen.ts";
+export type { PathStroke } from "../layout/index.ts";
 
 // A path on the map: a quadratic Bezier from one node's centre to the next.
 interface Curve {

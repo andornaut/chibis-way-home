@@ -7,7 +7,7 @@ import type { ControlAction } from "../../data/types/index.ts";
 import { actionHelpParts } from "../chrome/actionHelp.ts";
 import { helpChromeLayers } from "../chrome/helpChrome.ts";
 import { TOUCH_CHROME_FRAME } from "../chrome/touchChrome.ts";
-import { ACTION_HELP } from "../layout/actionHelp.ts";
+import { ACTION_HELP } from "../layout/index.ts";
 import { createPaletteSvg } from "./chrome.ts";
 
 // Text with inline control illustrations in the HTML UI (actionHelp.css): each {move}, {use} or

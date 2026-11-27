@@ -8,8 +8,7 @@ import { slice } from "@andornaut/game-kit/runtime/web/ui/dom/viewUnits";
 
 import { CARD_CONTENT, DEATH_CARD, STAGE_PREVIEW, STAGE_SUMMARY } from "../../data/layout.ts";
 import type { DialogueSpeaker } from "../../data/types/index.ts";
-import { capTop, FONT_METRICS, UI_FONT_FACE } from "../layout/fontRoles.ts";
-import type { StatsMetricRow } from "../layout/runStats.ts";
+import { capTop, FONT_METRICS, type StatsMetricRow, UI_FONT_FACE } from "../layout/index.ts";
 import { createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
 import { createRunStats } from "./runStats.ts";

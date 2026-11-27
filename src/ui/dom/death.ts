@@ -5,7 +5,7 @@ import {
 
 import { CARD_CONTENT, DEATH_CARD } from "../../data/layout.ts";
 import type { DeathAction } from "../input/deathInput.ts";
-import type { StatsMetricRow } from "../layout/runStats.ts";
+import type { StatsMetricRow } from "../layout/index.ts";
 import { type ActionsView, createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
 import { createCardFrame } from "./cardFrame.ts";

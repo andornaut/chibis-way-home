@@ -5,8 +5,7 @@ import { expect, it } from "vitest";
 import { MAP_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { TEXT } from "../../data/text.ts";
-import { hitMargin } from "../layout/hitAreas.ts";
-import { MAP_SCREEN } from "../layout/mapScreen.ts";
+import { hitMargin, MAP_SCREEN } from "../layout/index.ts";
 import { actionRole } from "./actions.ts";
 import { createMap, type DestinationLook, type MapFace } from "./map.ts";
 

@@ -6,7 +6,7 @@ import {
   DESTINATION_FIXTURE as MAP,
   DESTINATION_PLANS as PLANS,
 } from "../../testing/mapDestinations.ts";
-import { MAP_SCREEN } from "../layout/mapScreen.ts";
+import { MAP_SCREEN } from "../layout/index.ts";
 import {
   destinationAtTap,
   destinationCentre,

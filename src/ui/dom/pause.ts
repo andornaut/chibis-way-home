@@ -10,14 +10,15 @@ import type { GameText, SkillId } from "../../data/types/index.ts";
 import { SKILL_IDS } from "../../progress/index.ts";
 import { createGameHudDisc } from "../binding/index.ts";
 import type { PauseChromePose } from "../chrome/pauseChrome.ts";
-import { HUD_DISC_SIZES } from "../layout/controlChrome.ts";
-import { ENTRY_ORIGIN, ENTRY_WIDTH } from "../layout/pauseCard.ts";
 import {
+  ENTRY_ORIGIN,
+  ENTRY_WIDTH,
+  HUD_DISC_SIZES,
   SKILL_HUD_GROUP,
   SKILL_HUD_TOP,
   skillHudItems,
   skillHudWidth,
-} from "../layout/skillHud.ts";
+} from "../layout/index.ts";
 import {
   type ActionsContext,
   type ActionsGridContext,

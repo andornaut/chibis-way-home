@@ -6,9 +6,7 @@ import {
 import { CARD_SCREEN_MARGIN, SKILL_DETAILS } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Rect } from "../../data/types/index.ts";
-import { PAGE_TITLE } from "../layout/pageTitle.ts";
-import { ROOM_SCREEN } from "../layout/roomScreen.ts";
-import { SKILL_ROOM } from "../layout/skillDetails.ts";
+import { PAGE_TITLE, ROOM_SCREEN, SKILL_ROOM } from "../layout/index.ts";
 import { type ActionHelpWords, createActionHelp } from "./actionHelp.ts";
 import { createActions } from "./actions.ts";
 import { createCardFrame, textButton } from "./card.ts";

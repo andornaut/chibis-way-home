@@ -1,6 +1,6 @@
 import type { RequiredLoadingResource } from "@andornaut/game-kit/runtime/load/loadingAttempts";
 
-import { FONT_ROLES } from "../layout/fontRoles.ts";
+import { FONT_ROLES } from "../layout/index.ts";
 
 const UI_FONTS = {
   display: "block",

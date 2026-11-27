@@ -1,6 +1,6 @@
 import type { MapDestination, Point, Size, ZoneMap } from "../../data/types/index.ts";
 import { destinationStages, nodeOf, type OpenMap } from "../../progress/index.ts";
-import type { PathLook } from "../layout/mapScreen.ts";
+import type { PathLook } from "../layout/index.ts";
 
 type MarkerState = "current" | "locked" | "normal" | "unbuilt" | "visited";
 

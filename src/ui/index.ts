@@ -154,48 +154,48 @@ export { gameplayKeyHandlers } from "./input/keyboardActions.ts";
 export { MAP_ACTIONS, type MapAction, mapKeyAction } from "./input/mapInput.ts";
 export { listenMouseActions } from "./input/mouseActions.ts";
 export { stagePickerKey } from "./input/stageSelectInput.ts";
-export { achievementsCardProperties, achievementsPerPage } from "./layout/achievementsCard.ts";
-export { ACTION_HELP } from "./layout/actionHelp.ts";
-export { buttonFace, type ButtonFaceState } from "./layout/buttonLabel.ts";
+export type { LabelledButton } from "./layout/index.ts";
+export { achievementsCardProperties, achievementsPerPage } from "./layout/index.ts";
+export { ACTION_HELP } from "./layout/index.ts";
+export { buttonFace, type ButtonFaceState } from "./layout/index.ts";
 export {
   contactBorder,
   contactCueOn,
   contactOverscan,
   contactWorldOffset,
-} from "./layout/contactFeedback.ts";
-export { PAUSE_VISIBLE_DIAMETER } from "./layout/controlChrome.ts";
+} from "./layout/index.ts";
+export { PAUSE_VISIBLE_DIAMETER } from "./layout/index.ts";
 export {
   DIALOGUE_PORTRAIT_SIZE,
   DIALOGUE_SCREEN,
   dialogueNameTab,
   dialogueSpeakerLayout,
-} from "./layout/dialogueScreen.ts";
-export { FONT_ROLES, FONT_SCALE } from "./layout/fontRoles.ts";
-export { type PressArea, pressedArea } from "./layout/hitAreas.ts";
-export type { LabelledButton } from "./layout/labelledButton.ts";
-export { labelledButton } from "./layout/labelledButton.ts";
-export { MAP_PATH_LOOKS, MAP_SCREEN, mapLabel, type PathLook } from "./layout/mapScreen.ts";
-export { PAUSE_BUTTON } from "./layout/pauseCard.ts";
-export { canvasSize, playView, shifted, viewShift } from "./layout/playView.ts";
-export { ROOM_SCREEN } from "./layout/roomScreen.ts";
+} from "./layout/index.ts";
+export { FONT_ROLES, FONT_SCALE } from "./layout/index.ts";
+export { type PressArea, pressedArea } from "./layout/index.ts";
+export { labelledButton } from "./layout/index.ts";
+export { MAP_PATH_LOOKS, MAP_SCREEN, mapLabel, type PathLook } from "./layout/index.ts";
+export { PAUSE_BUTTON } from "./layout/index.ts";
+export { canvasSize, playView, shifted, viewShift } from "./layout/index.ts";
+export { ROOM_SCREEN } from "./layout/index.ts";
 export {
   RUN_STAT_KEYS,
   runStatLabels,
   STAGE_METRICS,
   statsTotalRows,
   type StatsTotalsSnapshot,
-} from "./layout/runStats.ts";
-export { SETTINGS_LAYOUT } from "./layout/settingsCard.ts";
-export { SKILL_ROOM } from "./layout/skillDetails.ts";
-export { SKILL_ART, SKILL_BUTTON, skillButton, skillHud } from "./layout/skillHud.ts";
-export { stageProgressRect } from "./layout/stageProgress.ts";
-export { stagePageOf, STAGES_PER_PAGE } from "./layout/stageSelectCard.ts";
+} from "./layout/index.ts";
+export { SETTINGS_LAYOUT } from "./layout/index.ts";
+export { SKILL_ROOM } from "./layout/index.ts";
+export { SKILL_ART, SKILL_BUTTON, skillButton, skillHud } from "./layout/index.ts";
+export { stageProgressRect } from "./layout/index.ts";
+export { stagePageOf, STAGES_PER_PAGE } from "./layout/index.ts";
 export {
   type IconButtonLayout,
   type StartScreenLayout,
   startScreenLayout,
-} from "./layout/startScreen.ts";
-export { type TouchControl, type TouchLayout, touchLayout } from "./layout/touchControls.ts";
+} from "./layout/index.ts";
+export { type TouchControl, type TouchLayout, touchLayout } from "./layout/index.ts";
 export {
   destinationAtTap,
   destinationCentre,

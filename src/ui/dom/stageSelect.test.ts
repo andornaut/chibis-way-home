@@ -4,7 +4,7 @@ import { expect, it } from "vitest";
 
 import { ZONE_MAP } from "../../data/map.ts";
 import { TEXT } from "../../data/text.ts";
-import { STAGES_PER_PAGE } from "../layout/stageSelectCard.ts";
+import { STAGES_PER_PAGE } from "../layout/index.ts";
 import { createStageSelect } from "./stageSelect.ts";
 
 const paged = ZONE_MAP.destinations.find(({ stages }) => stages.length > STAGES_PER_PAGE)!;

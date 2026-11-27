@@ -3,9 +3,11 @@ import { createRequire } from "node:module";
 
 import { expect, it } from "vitest";
 
-import { achievementsCardProperties } from "../layout/achievementsCard.ts";
-import { SETTINGS_LAYOUT } from "../layout/settingsCard.ts";
-import { STAGE_SELECT_LAYOUT } from "../layout/stageSelectCard.ts";
+import {
+  achievementsCardProperties,
+  SETTINGS_LAYOUT,
+  STAGE_SELECT_LAYOUT,
+} from "../layout/index.ts";
 import { ACTION_HELP_PROPERTIES } from "./actionHelp.ts";
 import { CELEBRATION_DOM_LAYOUT } from "./celebration.ts";
 import { DEATH_LAYOUT } from "./death.ts";

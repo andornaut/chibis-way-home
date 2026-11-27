@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { afterEach, expect, it, vi } from "vitest";
 
 import { createUiLayer, loadUiFonts } from "../dom/layer.ts";
-import { FONT_METRICS } from "../layout/fontRoles.ts";
+import { FONT_METRICS } from "../layout/index.ts";
 import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "./uiFonts.ts";
 
 const layers: ReturnType<typeof createUiLayer>[] = [];

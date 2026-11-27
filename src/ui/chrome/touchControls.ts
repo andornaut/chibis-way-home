@@ -2,7 +2,7 @@ import { type AnimationFrame, tagMs } from "@andornaut/game-kit/runtime/art/asep
 
 import type { Point, Size } from "../../data/types/index.ts";
 import type { HeldTouch } from "../input/intent.ts";
-import type { TouchControl } from "../layout/touchControls.ts";
+import type { TouchControl } from "../layout/index.ts";
 
 // Whether a touch holds the button.
 export function buttonHeld(control: TouchControl, touches: readonly HeldTouch[]): boolean {

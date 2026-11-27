@@ -1,5 +1,5 @@
 import { UI_FONT_FAMILY } from "../chrome/uiFonts.ts";
-import { UI_FONT_FACE } from "../layout/fontRoles.ts";
+import { UI_FONT_FACE } from "../layout/index.ts";
 import type { InkMeasure } from "./stageSummary.ts";
 
 const MEASURE_SCALE = 16;

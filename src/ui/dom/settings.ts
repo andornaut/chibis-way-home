@@ -3,7 +3,7 @@ import { writeLayoutProperties } from "@andornaut/game-kit/runtime/web/ui/dom/la
 
 import fpsCounterIcon from "../../../art/icons/icon-fps-counter.svg?raw";
 import { createGameFormRow } from "../binding/index.ts";
-import { SETTINGS_LAYOUT, SETTINGS_ROWS } from "../layout/settingsCard.ts";
+import { SETTINGS_LAYOUT, SETTINGS_ROWS } from "../layout/index.ts";
 import {
   TOUCH_SETTING_ACTIONS,
   TOUCH_SETTINGS,

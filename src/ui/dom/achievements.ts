@@ -5,7 +5,7 @@ import type { PagerView } from "@andornaut/game-kit/runtime/web/ui/dom/pager";
 
 import { TEXT_BUTTON } from "../../data/layout.ts";
 import { createGamePager, type GameAction } from "../binding/index.ts";
-import { achievementsCardProperties } from "../layout/achievementsCard.ts";
+import { achievementsCardProperties } from "../layout/index.ts";
 import { setTextButtonRole } from "./buttonLayout.ts";
 import { createCardFrame, TEXT_BUTTON_APPEARANCE, textButton } from "./card.ts";
 import { registerLayout, rendered } from "./layout.ts";

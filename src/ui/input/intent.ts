@@ -1,6 +1,5 @@
 import type { Point, TouchTuning } from "../../data/types/index.ts";
-import { type PressArea, pressedArea } from "../layout/hitAreas.ts";
-import type { TouchControl } from "../layout/touchControls.ts";
+import { type PressArea, pressedArea, type TouchControl } from "../layout/index.ts";
 import { MOUSE_KEYS } from "./mouseActions.ts";
 
 // What the player is asking for, from the keyboard, mouse and touch controls together.

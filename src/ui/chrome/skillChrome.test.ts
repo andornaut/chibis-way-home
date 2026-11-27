@@ -3,7 +3,7 @@ import { expect, it } from "vitest";
 
 import { svgLayers } from "../../testing/chromeSvg.ts";
 import { createPaletteSvg } from "../dom/chrome.ts";
-import { SKILL_BUTTON } from "../layout/skillHud.ts";
+import { SKILL_BUTTON } from "../layout/index.ts";
 import { skillChromeLayers } from "./skillChrome.ts";
 
 const colours = { face: 0x223344, ink: 0x181425 };

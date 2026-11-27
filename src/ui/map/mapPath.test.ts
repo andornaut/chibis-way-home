@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { MAP_PATH } from "../../data/layout.ts";
 import type { Point, Rect } from "../../data/types/index.ts";
-import { MAP_PATH_LOOKS } from "../layout/mapScreen.ts";
+import { MAP_PATH_LOOKS } from "../layout/index.ts";
 import { bentCurve, curveWalk, dashInks, pathRects, type PathStroke, stampAt } from "./mapPath.ts";
 
 const STRAIGHT = 0;

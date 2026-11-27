@@ -6,7 +6,7 @@ import type {
   Point,
 } from "../../data/types/index.ts";
 import { focusKeyAction, stepFocus } from "../focus/index.ts";
-import { type PressArea, pressedArea } from "../layout/hitAreas.ts";
+import { type PressArea, pressedArea } from "../layout/index.ts";
 
 export interface DialogueParagraph {
   readonly colour: DialogueSpeaker["colour"];

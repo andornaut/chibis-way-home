@@ -5,7 +5,7 @@ import { MAP_LAYOUT } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import type { Point, Rect } from "../../data/types/index.ts";
 import type { MapAction } from "../input/mapInput.ts";
-import { MAP_SCREEN } from "../layout/mapScreen.ts";
+import { MAP_SCREEN } from "../layout/index.ts";
 import { type ActionsView, createActions } from "./actions.ts";
 import { textButton } from "./card.ts";
 

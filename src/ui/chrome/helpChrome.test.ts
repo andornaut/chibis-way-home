@@ -2,7 +2,7 @@ import { expect, it } from "vitest";
 
 import palette from "../../../public/art/palette.json" with { type: "json" };
 import type { ControlAction } from "../../data/types/index.ts";
-import { ACTION_HELP } from "../layout/actionHelp.ts";
+import { ACTION_HELP } from "../layout/index.ts";
 import { helpChromeLayers, helpChromeSvg } from "./helpChrome.ts";
 import { touchChromeLayers, touchChromePixel } from "./touchChrome.ts";
 

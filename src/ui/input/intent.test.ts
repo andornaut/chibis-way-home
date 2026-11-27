@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { TOUCH_CIRCLE_RADIUS } from "../../data/layout.ts";
 import { SCREEN } from "../../data/screen.ts";
 import { TOUCH } from "../../data/touch.ts";
-import { touchLayout } from "../layout/touchControls.ts";
+import { touchLayout } from "../layout/index.ts";
 import {
   combineIntents,
   type HeldTouch,
