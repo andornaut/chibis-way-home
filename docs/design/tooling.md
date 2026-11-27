@@ -39,3 +39,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0325 | Reduce duplicate tests and measure suite runtime                                              | [cwh-0325.md](../work/cwh-0325.md) |
 | cwh-0328 | Pin Chibi to Delivery Kit 8.6.0                                                               | [cwh-0328.md](../work/cwh-0328.md) |
 | cwh-0330 | Adopt Game Kit 0.92.0 in Chibi                                                                | [cwh-0330.md](../work/cwh-0330.md) |
+| cwh-0334 | Organize Chibi's source and public interfaces                                                 | [cwh-0334.md](../work/cwh-0334.md) |
