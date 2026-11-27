@@ -18,6 +18,7 @@ export const NOTICE_BLOCKING_SCENES: ReadonlySet<string> = new Set([
   "death",
   "dialogue",
   "dialogueChoice",
+  "exit",
   "opening",
   "restart",
   "room",

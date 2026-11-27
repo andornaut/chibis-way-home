@@ -106,6 +106,7 @@ describe("deferring unlock notices", () => {
     ["the Achievements card shows", { active: ["start", "achievements"] }, true],
     ["the Cheats card shows", { active: ["start", "cheats"] }, true],
     ["the Cheats card is paused", { paused: ["cheats"] }, true],
+    ["the Exit confirmation shows", { active: ["start", "exit"] }, true],
     ["a bark waits or shows", { active: ["zone", "zoneBark"], barksIdle: false }, true],
     ["the zone is covered or ending", { active: ["zone"], zoneBlocked: true }, true],
   ])("defers a notice only when it must: %s", (_, scenes, blocked) => {

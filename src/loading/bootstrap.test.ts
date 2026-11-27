@@ -85,6 +85,7 @@ beforeEach(() => {
     "DeathScene",
     "DialogueChoiceScene",
     "DialogueScene",
+    "ExitScene",
     "MapScene",
     "OpeningScene",
     "PauseScene",
