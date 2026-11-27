@@ -7,36 +7,42 @@ import { RECIPES } from "./zones.ts";
 const DESTINATIONS: readonly [MapDestination, ...MapDestination[]] = [
   {
     at: { col: 10, row: 7 },
+    giftCount: 2,
     icon: "map-icon-blue-cityscape",
     id: "blue-cityscape",
     stages: ["street", "city-streets", "city-boundary"],
   },
   {
     at: { col: 29, row: 7 },
+    giftCount: 2,
     icon: "map-icon-industrial",
     id: "industrial",
     stages: ["warehouse-district", "loading-yards", "freight-terminal"],
   },
   {
     at: { col: 48, row: 7 },
+    giftCount: 2,
     icon: "map-icon-countryside",
     id: "countryside",
     stages: ["farmland", "country-lanes", "river-crossing"],
   },
   {
     at: { col: 48, row: 18 },
+    giftCount: 2,
     icon: "map-icon-woodland",
     id: "woodland",
     stages: ["forest-paths", "deep-woods", "ravine"],
   },
   {
     at: { col: 29, row: 18 },
+    giftCount: 2,
     icon: "map-icon-home-city",
     id: "home-city",
     stages: ["city-outskirts", "back-streets", "familiar-neighbourhood"],
   },
   {
     at: { col: 10, row: 18 },
+    giftCount: 3,
     icon: "map-icon-apartment",
     id: "apartment",
     stages: ["lobby", "restaurant", "pool", "spa", "residential-floors", "penthouse"],
