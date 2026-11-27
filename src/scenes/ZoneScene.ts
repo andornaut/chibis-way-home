@@ -1301,7 +1301,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       return;
     }
     this.inRoom = true;
-    this.scene.launch("room", { room, stage: this.stageKey() } satisfies RoomData);
+    this.scene.launch("room", {
+      room,
+      stage: this.stageKey(),
+      zoneScopedGift: this.isZoneGiftRoom(room),
+    } satisfies RoomData);
     this.scene.pause();
   }
 
@@ -1384,9 +1388,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     });
   }
 
-  // Plans the stage the entry asks for and starts it, assembled afresh each time he enters it
-  // unless ?assembly=<n> fixes the seed. A map entry's destination then remembers the plan's
-  // middle chunks.
   private startStage(): void {
     const { record } = this.entry;
     const { giftRoom, layout, middle } = loadStageEntry(
@@ -1406,8 +1407,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     }
   }
 
-  // Starts plan from its start. Each load draws a fresh motion seed, so the random motion differs
-  // from one play to the next; ?seed=<n> fixes it.
+  // An unpinned entry draws a fresh motion seed.
   private loadPlan(layout: ZoneLayout): void {
     this.barks?.reset();
     this.scheduledBarks =
@@ -1415,7 +1415,6 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.heardDialogues.clear();
     this.dialogueAttempt = -1;
     this.dialogueArea = "";
-    // PLACEHOLDER: carried choices set no flags yet.
     this.layout = layout;
     const seed = this.entry.motionSeed ?? ENTRY.entropy();
     this.zone = startZone(this.movementTuning(), this.layout, seed);
