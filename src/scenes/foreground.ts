@@ -125,6 +125,7 @@ export function mapDirectionalKey(event: KeyboardEvent): boolean {
     !event.metaKey &&
     !event.shiftKey &&
     !event.isComposing &&
+    event.keyCode !== 229 &&
     !(
       event.target instanceof Element &&
       event.target.closest(

@@ -106,6 +106,15 @@ it("uses Map aliases for focused UI, preserves each horizontal event once, and d
   root.append(slider);
   slider.focus();
   expect(press(slider, "ArrowRight", "ArrowRight").defaultPrevented).toBe(false);
+  const composing = new KeyboardEvent("keydown", {
+    bubbles: true,
+    cancelable: true,
+    code: "KeyA",
+    key: "a",
+  });
+  Object.defineProperty(composing, "keyCode", { value: 229 });
+  primary.dispatchEvent(composing);
+  expect(composing.defaultPrevented).toBe(false);
   slider.setAttribute("role", "textbox");
   expect(press(slider, "a", "KeyA").defaultPrevented).toBe(false);
   expect(moves).toEqual([1, -1]);
