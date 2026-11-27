@@ -44,6 +44,7 @@ export default gameViteConfig<typeof ConfigModules>({
       webManifestPlugin,
     },
     repoPath,
+    metadata,
   ) => {
     const atlas = atlasPlugin();
     return [
@@ -55,7 +56,12 @@ export default gameViteConfig<typeof ConfigModules>({
       hashedIconsPlugin({ icons: ICONS }),
       webManifestPlugin(),
       publicFilesPlugin(UNNAMED_PUBLIC_FILES),
-      precachePlugin("play/index.html", repoPath("src/pwa/serviceWorker.ts"), atlas.api),
+      precachePlugin(
+        metadata.buildId,
+        "play/index.html",
+        repoPath("src/pwa/serviceWorker.ts"),
+        atlas.api,
+      ),
       securityHeadersPlugin(),
     ];
   },

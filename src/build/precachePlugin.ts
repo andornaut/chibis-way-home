@@ -16,6 +16,7 @@ import { ART_MANIFEST_URL, artUrls, bootArtUrls } from "./precacheArt.ts";
 // launch counts into the first install's one progress value, are the atlas pages and the art
 // BootScene's file load reads.
 export function precachePlugin(
+  buildId: string | undefined,
   pageHtmlFile: string,
   serviceWorkerSource: string,
   atlas: {
@@ -81,6 +82,7 @@ export function precachePlugin(
     emitArt,
     kitPrecachePlugin({
       boot: () => [...boot, ...atlas.pageUrls()],
+      buildId,
       groupedFirstInstall: { archiveOnly },
       hashedFiles: () => ({ sounds: SOUNDS, urls: [...urls, ...atlas.pageUrls()] }),
       pageHtmlFile,
