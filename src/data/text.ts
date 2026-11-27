@@ -423,6 +423,11 @@ export const TEXT: GameText = {
   },
 };
 
+export const START_EXIT_TEXT = {
+  question: "Leave the game?",
+  title: "Exit game",
+} as const;
+
 export const STATS_SCOPE_TEXT: StatsScopeText = {
   aggregate: "Totals",
   stageTotal: "Stage total: {time}",
