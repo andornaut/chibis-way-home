@@ -19,7 +19,7 @@ vi.mock("./domUi.ts", () => ({
   sceneDomUi: () => dom.layer,
 }));
 
-import { DIALOGUES, SPEAKERS } from "../data/dialogues.ts";
+import { DIALOGUE_PANEL_ALPHA, DIALOGUES, SPEAKERS } from "../data/dialogues.ts";
 import { TEXT } from "../data/text.ts";
 import { TOUCH } from "../data/touch.ts";
 import type { DialogueChoice } from "../data/types/index.ts";
@@ -47,7 +47,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function mountConversation(key = SCENE!) {
+function mountConversation(key = SCENE!, openerScene?: string) {
   const game = { events: new EventEmitter() };
   const opener = { dialogueClosed: vi.fn() };
   const events = new EventEmitter();
@@ -58,7 +58,7 @@ function mountConversation(key = SCENE!) {
     scene: route,
     textures: { exists: () => true },
   });
-  scene.init({ scene: key });
+  scene.init({ ...(openerScene === undefined ? {} : { opener: openerScene }), scene: key });
   scene.create();
   modalInput(scene).open();
   const root = document.querySelector<HTMLElement>(".dialogue-scene")!;
@@ -81,6 +81,19 @@ async function conversation() {
   await dom.backdropReady;
   return mounted;
 }
+
+it.each([
+  { opaque: true, opener: "room" },
+  { opaque: false, opener: "zone" },
+  { opaque: false, opener: undefined },
+])("keeps room-owned foreground panel opaque only: $opener", async ({ opaque, opener }) => {
+  const { root } = mountConversation(SCENE!, opener);
+  await dom.backdropReady;
+  expect(root.style.getPropertyValue("--dialogue-alpha")).toBe(
+    String(opaque ? 1 : DIALOGUE_PANEL_ALPHA),
+  );
+  expect(root.querySelector(".dialogue-box")).not.toBeNull();
+});
 
 it("limits Mallow Skip to the first page, restores history and completes with the final Next", async () => {
   const key = Object.keys(DIALOGUES).find((name) => name.startsWith("gift-mallow-"))!;

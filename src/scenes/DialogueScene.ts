@@ -109,6 +109,9 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     // Every portrait is cut up front, so a later paragraph's shows as it does.
     this.cutPortraits();
     const view = createDialogueView(document, departure, "dialogue", words);
+    if (this.opener === "room") {
+      view.root.style.setProperty("--dialogue-alpha", "1");
+    }
     view.root.hidden = true;
     this.view = view;
     this.showParagraph();
