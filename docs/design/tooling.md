@@ -40,3 +40,5 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0328 | Pin Chibi to Delivery Kit 8.6.0                                                               | [cwh-0328.md](../work/cwh-0328.md) |
 | cwh-0330 | Adopt Game Kit 0.92.0 in Chibi                                                                | [cwh-0330.md](../work/cwh-0330.md) |
 | cwh-0334 | Organize Chibi's source and public interfaces                                                 | [cwh-0334.md](../work/cwh-0334.md) |
+| cwh-0343 | Add a shared documentation navigation layout                                                  | [cwh-0343.md](../work/cwh-0343.md) |
+| cwh-0345 | Separate documentation guides and reference                                                   | [cwh-0345.md](../work/cwh-0345.md) |

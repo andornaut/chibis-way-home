@@ -62,3 +62,7 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0327 | Prevent screen flashes when opening menus and cards                     | [cwh-0327.md](../work/cwh-0327.md) |
 | cwh-0335 | Complete keyboard navigation and align mouse actions                    | [cwh-0335.md](../work/cwh-0335.md) |
 | cwh-0337 | Centre dialogue actions and limit Skip to linear pages                  | [cwh-0337.md](../work/cwh-0337.md) |
+| cwh-0339 | Show controls on the game website                                       | [cwh-0339.md](../work/cwh-0339.md) |
+| cwh-0340 | Align Chibi's homepage with the shared structure                        | [cwh-0340.md](../work/cwh-0340.md) |
+| cwh-0342 | Remove redundant homepage navigation                                    | [cwh-0342.md](../work/cwh-0342.md) |
+| cwh-0344 | Square the lower edges of game buttons                                  | [cwh-0344.md](../work/cwh-0344.md) |
