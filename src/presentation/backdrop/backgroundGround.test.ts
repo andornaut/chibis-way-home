@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import { CAMERA } from "../data/camera.ts";
+import { CAMERA } from "../../data/camera.ts";
 import { backgroundGroundOffset } from "./backgroundGround.ts";
 import { chunkParallax } from "./chunkParallax.ts";
 

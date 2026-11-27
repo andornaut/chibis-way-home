@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json" with { type: "json" };
+import manifest from "../../../public/art/manifest.json" with { type: "json" };
 import { interiorBackdrop } from "./interiorBackdrop.ts";
 
 const bounds = { height: 216, width: 120, x: 24, y: 48 };
