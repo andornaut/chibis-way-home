@@ -283,10 +283,15 @@ it.each(MODES.flatMap((mode) => ["p", "P", "Escape"].map((name) => ({ mode, name
   },
 );
 
-it("advances the conversation on another key, which Pause leaves alone", async () => {
+it("ignores an unrelated key and advances only on Enter without opening Pause", async () => {
   const { acted, dialogue, key, pause, scenes } = await conversation();
   dialogue.paragraph = 0;
   expect(key("x").stopped()).toBe(true);
+  expect(dialogue.paragraph).toBe(0);
+  expect(acted).not.toHaveBeenCalled();
+  expect(cardShown(pause.dialog)).toBe(false);
+  expect(scenes.pause).not.toHaveBeenCalled();
+  expect(key("Enter").stopped()).toBe(true);
   expect(dialogue.paragraph).toBe(1);
   expect(acted).toHaveBeenCalledOnce();
   expect(cardShown(pause.dialog)).toBe(false);
