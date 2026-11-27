@@ -119,6 +119,37 @@ it("uses actual elapsed time and the maximum AND guard before a pursuit transiti
   expect(bounds(9)).toBeUndefined();
   expect(bounds(Infinity)).toBeUndefined();
 });
+it("preserves transition boundaries when querying a snapshot in either time order", () => {
+  const object = actor({
+    ...waitingPlan(),
+    states: {
+      move: { ...wait, motion: { direction: 1, kind: "move", speed: 1 } },
+      wait: {
+        ...wait,
+        transitions: [{ to: "move", when: [{ kind: "elapsed", seconds: 0.5 }] }],
+      },
+    },
+  });
+  const rest = body(object);
+  const moved = { ...rest, width: rest.width + 300 };
+  const bounds = hazardBoundsAt(
+    [object],
+    startBehaviour(BIRD, object, target),
+    object.origin,
+    rest,
+    0,
+    object,
+  );
+  expect(bounds(0.4)).toEqual(rest);
+  expect(bounds(0.5 - 2 * EDGE)).toEqual(rest);
+  expect(bounds(0.5 - EDGE)).toEqual(moved);
+  expect(bounds(0.6)).toEqual(moved);
+  expect(bounds(0.3)).toEqual(rest);
+  expect(bounds(0.7)).toEqual(moved);
+  expect(bounds(0.2)).toEqual(rest);
+  expect(bounds(-1)).toBeUndefined();
+  expect(bounds(Infinity)).toBeUndefined();
+});
 it("checks every alternative transition even when a later branch can move sooner", () => {
   const object = actor({
     ...waitingPlan(),

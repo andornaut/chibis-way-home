@@ -136,6 +136,39 @@ function graphMetadata(plan: BehaviourPlan) {
   };
 }
 
+function authoredMotionBounds(objects: readonly ObjectLayout[], object: ObjectLayout) {
+  if (object.orbit) {
+    const host = objects[object.orbit.host];
+    if (
+      !host ||
+      host.behaviour ||
+      host.orbit ||
+      host.motion.variance !== 0 ||
+      host.motion.algorithm !== "linear" ||
+      host.reaction.kind !== "none" ||
+      object.behaviour ||
+      object.contact ||
+      object.motion.algorithm !== "static"
+    ) {
+      return undefined;
+    }
+    return orbitBounds(objects, object);
+  }
+  const motion = object.motion;
+  if (motion.variance !== 0 || !["static", "linear", "ease"].includes(motion.algorithm)) {
+    return undefined;
+  }
+  const axis = axisOf(motion.direction);
+  const dx = motion.algorithm === "static" ? 0 : axis.x * motion.distance;
+  const dy = motion.algorithm === "static" ? 0 : axis.y * motion.distance;
+  return {
+    height: object.height + Math.abs(dy),
+    width: object.width + Math.abs(dx),
+    x: object.origin.x + Math.min(0, dx),
+    y: object.origin.y + Math.min(0, dy),
+  };
+}
+
 // Undefined means that this snapshot cannot certify future occupancy, not an empty envelope.
 export function hazardBoundsAt(
   objects: readonly ObjectLayout[],
@@ -162,6 +195,8 @@ export function hazardBoundsAt(
     stateKey: state.stateKey,
   };
   const results = new Map<number, Rect | undefined>();
+  let interval:
+    { readonly from: number; readonly until: number; readonly bounds: Rect } | undefined;
   let graph: ReturnType<typeof graphMetadata> | undefined;
   // Padding is part of the snapshot, independent of the queried horizon.
   const rounding = object.contact ? 1 : 0;
@@ -199,38 +234,10 @@ export function hazardBoundsAt(
     ) {
       return undefined;
     }
-    if (object.orbit) {
-      const host = objects[object.orbit.host];
-      if (
-        !host ||
-        host.behaviour ||
-        host.orbit ||
-        host.motion.variance !== 0 ||
-        host.motion.algorithm !== "linear" ||
-        host.reaction.kind !== "none" ||
-        object.behaviour ||
-        object.contact ||
-        object.motion.algorithm !== "static"
-      ) {
-        return undefined;
-      }
-      return padded(0, orbitBounds(objects, object));
-    }
     const plan = object.behaviour;
-    if (!plan) {
-      const motion = object.motion;
-      if (motion.variance !== 0 || !["static", "linear", "ease"].includes(motion.algorithm)) {
-        return undefined;
-      }
-      const axis = axisOf(motion.direction);
-      const dx = motion.algorithm === "static" ? 0 : axis.x * motion.distance;
-      const dy = motion.algorithm === "static" ? 0 : axis.y * motion.distance;
-      return padded(0, {
-        height: object.height + Math.abs(dy),
-        width: object.width + Math.abs(dx),
-        x: object.origin.x + Math.min(0, dx),
-        y: object.origin.y + Math.min(0, dy),
-      });
+    if (!plan || object.orbit) {
+      const bounds = authoredMotionBounds(objects, object);
+      return bounds && padded(0, bounds);
     }
     if (graph === undefined) {
       graph = GRAPH_METADATA.get(plan);
@@ -273,6 +280,12 @@ export function hazardBoundsAt(
     ) {
       return undefined;
     }
+    const limit = horizon + EDGE;
+    if (interval && interval.from <= limit && limit < interval.until) {
+      return { ...interval.bounds };
+    }
+    let from = 0;
+    let until = Infinity;
     let left = origin.x,
       right = origin.x + object.width;
     let top = origin.y,
@@ -333,9 +346,11 @@ export function hazardBoundsAt(
         if (!Number.isFinite(next)) {
           return undefined;
         }
-        if (next > horizon + EDGE) {
+        if (next > limit) {
+          until = Math.min(until, next);
           continue;
         }
+        from = Math.max(from, next);
         if (plan.pursuit && transition.pursuitEnded) {
           const radius = metadata.stationaryEscape(transition.to);
           if (radius === undefined) {
@@ -364,7 +379,12 @@ export function hazardBoundsAt(
     if (zeroEdges && hasCycle(zeroEdges)) {
       return undefined;
     }
-    return padded(range, { height: bottom - top, width: right - left, x: left, y: top });
+    const bounds = padded(range, { height: bottom - top, width: right - left, x: left, y: top });
+    if (bounds) {
+      // The same arrivals within the limit produce the same traversal and envelope.
+      interval = { bounds: { ...bounds }, from, until };
+    }
+    return bounds;
   };
   return (endSeconds) => {
     if (!results.has(endSeconds)) {
