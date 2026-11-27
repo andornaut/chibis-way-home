@@ -9,6 +9,7 @@ export { DeathScene } from "./DeathScene.ts";
 export { DialogueChoiceScene } from "./DialogueChoiceScene.ts";
 export { DialogueScene } from "./DialogueScene.ts";
 export { mountDomUi } from "./domUi.ts";
+export { ExitScene } from "./ExitScene.ts";
 export { MapScene } from "./MapScene.ts";
 export { OpeningScene } from "./OpeningScene.ts";
 export { PauseScene } from "./PauseScene.ts";
