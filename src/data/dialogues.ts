@@ -10,6 +10,7 @@ import type {
   BehaviourPlan,
   DialoguePlan,
   DialogueSpeaker,
+  MapDestination,
   ZoneDialoguePlan,
 } from "./types/index.ts";
 
@@ -72,6 +73,42 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
       { line: "fert-outro-2", speaker: "bird" },
     ],
   },
+  "gift-mallow-apartment": {
+    lines: [
+      { line: "gift-mallow-apartment", speaker: "mallow" },
+      { line: "gift-mallow-reply", speaker: "bird" },
+    ],
+  },
+  "gift-mallow-blue-cityscape": {
+    lines: [
+      { line: "gift-mallow-blue-cityscape", speaker: "mallow" },
+      { line: "gift-mallow-reply", speaker: "bird" },
+    ],
+  },
+  "gift-mallow-countryside": {
+    lines: [
+      { line: "gift-mallow-countryside", speaker: "mallow" },
+      { line: "gift-mallow-reply", speaker: "bird" },
+    ],
+  },
+  "gift-mallow-home-city": {
+    lines: [
+      { line: "gift-mallow-home-city", speaker: "mallow" },
+      { line: "gift-mallow-reply", speaker: "bird" },
+    ],
+  },
+  "gift-mallow-industrial": {
+    lines: [
+      { line: "gift-mallow-industrial", speaker: "mallow" },
+      { line: "gift-mallow-reply", speaker: "bird" },
+    ],
+  },
+  "gift-mallow-woodland": {
+    lines: [
+      { line: "gift-mallow-woodland", speaker: "mallow" },
+      { line: "gift-mallow-reply", speaker: "bird" },
+    ],
+  },
   "kiwi-intro": {
     lines: [
       { line: "kiwi-intro-1", speaker: "raccoon" },
@@ -83,6 +120,12 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
     lines: [
       { line: "kiwi-outro-1", speaker: "raccoon" },
       { line: "kiwi-outro-2", speaker: "bird" },
+    ],
+  },
+  "mallow-gift": {
+    lines: [
+      { line: "mallow-gift", speaker: "mallow" },
+      { line: "gift-mallow-reply", speaker: "bird" },
     ],
   },
   "pebble-intro": {
@@ -116,6 +159,16 @@ export const DIALOGUES: Readonly<Record<string, DialoguePlan>> = {
   },
 };
 
+// Gift-room exchanges for map destinations. The room supplies the fallback plan.
+export const GIFT_CONVERSATIONS: Readonly<Record<MapDestination["id"], string>> = {
+  apartment: "gift-mallow-apartment",
+  "blue-cityscape": "gift-mallow-blue-cityscape",
+  countryside: "gift-mallow-countryside",
+  "home-city": "gift-mallow-home-city",
+  industrial: "gift-mallow-industrial",
+  woodland: "gift-mallow-woodland",
+};
+
 // Portraits and name-tab colours shared by every line from a speaker.
 export const SPEAKERS: Readonly<Record<string, DialogueSpeaker>> = {
   bear: { colour: "tan", portrait: "portrait-bear", side: "right" },
@@ -123,6 +176,7 @@ export const SPEAKERS: Readonly<Record<string, DialogueSpeaker>> = {
   dog: { colour: "green", portrait: "portrait-dog", side: "right" },
   ferret: { colour: "tan", portrait: "portrait-ferret", side: "right" },
   goose: { colour: "tan", portrait: "portrait-goose", side: "right" },
+  mallow: { colour: "green", portrait: "portrait-mallow", side: "right" },
   pigeon: { colour: "tan", portrait: "portrait-pigeon", side: "right" },
   raccoon: { colour: "tan", portrait: "portrait-raccoon", side: "right" },
   "room-helper": { colour: "green", portrait: "dog-pug", side: "right" },

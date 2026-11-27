@@ -133,6 +133,7 @@ export const TEXT: GameText = {
       dog: "Archie",
       ferret: "Fert",
       goose: "Trixi",
+      mallow: "Mallow",
       pigeon: "Pebble",
       raccoon: "Kiwi",
       "room-helper": "Helper",
@@ -188,6 +189,17 @@ export const TEXT: GameText = {
     "fert-outro-1": "You really came all the way back.",
     "fert-outro-2": "This is my home too.",
     "fert-spotted": "I distinctly remember posting you!",
+    "gift-mallow-apartment": "The lower floors connect to the stairs. Follow them up towards home.",
+    "gift-mallow-blue-cityscape":
+      "Watch the ledges above the street. Sometimes the safer way is up.",
+    "gift-mallow-countryside":
+      "A good landing is worth waiting for. Look for solid ground between the gaps.",
+    "gift-mallow-home-city":
+      "You're getting close. The streets here lead towards the apartment building.",
+    "gift-mallow-industrial":
+      "There are routes beneath the factories. Look for the stairs back up.",
+    "gift-mallow-reply": "Thanks, Mallow. I'll keep going.",
+    "gift-mallow-woodland": "Look for a branch to land on before you jump for the next one.",
     "kiwi-escaped": "Well. You made that awkward.",
     "kiwi-intro-1": "Fert asked me to watch for you. I found a very good spot.",
     "kiwi-intro-2": "I found a better one. My apartment.",
@@ -195,6 +207,7 @@ export const TEXT: GameText = {
     "kiwi-outro-1": "I picked the best hiding place. You picked the exit.",
     "kiwi-outro-2": "I know where I am going.",
     "kiwi-spotted": "Looking for me? Look up.",
+    "mallow-gift": "Need a hand? Take a moment to rest before you head out.",
     "opening-argument": "Then they had a fight.",
     "opening-friendship": "Chibi and Fert shared a home.",
     "opening-packing": "While Chibi slept, Fert packed him off.",
@@ -295,7 +308,9 @@ export const TEXT: GameText = {
   },
   room: {
     continue: "Continue",
+    giftLifetime: "This power-up lasts until you enter another zone.",
     leave: "Leave",
+    talk: "Talk",
   },
   rooms: {
     "dash-gift": { name: "Dash gift room" },
