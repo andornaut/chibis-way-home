@@ -12,7 +12,7 @@ vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }))
 vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 vi.mock("./modalInput.ts", () => ({ modalInput: () => gate }));
 
-import { createZoneObjectArt } from "./zoneObjectArt.ts";
+import { createZoneObjectArt } from "./world/zoneObjectArt.ts";
 import { ZoneScene } from "./ZoneScene.ts";
 
 afterEach(() => {

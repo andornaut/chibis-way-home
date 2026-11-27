@@ -143,11 +143,8 @@ import {
   trackPress,
 } from "../ui/index.ts";
 import { achievementNoticeShowing } from "./achievementNotice.ts";
-import { mountAirJumpCue } from "./airJumpCue.ts";
-import { mountBossWarning } from "./bossWarning.ts";
 import { cancelContactFeedback, playContactFeedback } from "./contactFeedback.ts";
 import type { CutsceneData } from "./CutsceneScene.ts";
-import { mountDashTrail } from "./dashTrail.ts";
 import { frameDeathCamera } from "./deathCamera.ts";
 import type { DeathData, DeathOpener } from "./DeathScene.ts";
 import type { DialogueData, DialogueOpener } from "./DialogueScene.ts";
@@ -178,15 +175,18 @@ import {
 } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
 import type { StartData } from "./StartScene.ts";
-import { bindZoneBarks } from "./zoneBarks.ts";
-import type { ZoneBarkScene } from "./ZoneBarkScene.ts";
-import type { ZoneDepartureData } from "./ZoneDepartureScene.ts";
-import type { IntroductionOpener, ZoneIntroductionData } from "./ZoneIntroductionScene.ts";
+import { mountAirJumpCue } from "./world/airJumpCue.ts";
+import { mountBossWarning } from "./world/bossWarning.ts";
+import { mountDashTrail } from "./world/dashTrail.ts";
 import {
   createZoneObjectArt,
   showZoneSprite as show,
   ZONE_ART_DEPTHS as DEPTHS,
-} from "./zoneObjectArt.ts";
+} from "./world/zoneObjectArt.ts";
+import { bindZoneBarks } from "./zoneBarks.ts";
+import type { ZoneBarkScene } from "./ZoneBarkScene.ts";
+import type { ZoneDepartureData } from "./ZoneDepartureScene.ts";
+import type { IntroductionOpener, ZoneIntroductionData } from "./ZoneIntroductionScene.ts";
 import { loadStageEntry, SCENE_ENTRY as ENTRY } from "./zoneStageEntry.ts";
 
 // What every zone's instances are resolved against.

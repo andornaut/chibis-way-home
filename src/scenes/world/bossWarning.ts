@@ -1,8 +1,8 @@
 import type { GameObjects, Scene } from "phaser";
 
-import type { SpriteContact } from "../data/types/index.ts";
-import { bossWarning, type BossWarningTuning } from "../presentation/index.ts";
-import type { BehaviourState } from "../rules/boss/index.ts";
+import type { SpriteContact } from "../../data/types/index.ts";
+import { bossWarning, type BossWarningTuning } from "../../presentation/index.ts";
+import type { BehaviourState } from "../../rules/boss/index.ts";
 
 export function mountBossWarning(
   tuning: BossWarningTuning,

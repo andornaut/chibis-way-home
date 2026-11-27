@@ -2,11 +2,11 @@ import { type AnimationFrame, animationKey } from "@andornaut/game-kit/runtime/a
 import type { Random } from "@andornaut/game-kit/runtime/random";
 import type { GameObjects, Scene } from "phaser";
 
-import type { ArtManifest } from "../assets/index.ts";
-import { contactFrameAt, spriteFrameOrigin } from "../core/index.ts";
-import { BIRD } from "../data/bird.ts";
-import { CAMERA } from "../data/camera.ts";
-import { SCREEN, TILE } from "../data/screen.ts";
+import type { ArtManifest } from "../../assets/index.ts";
+import { contactFrameAt, spriteFrameOrigin } from "../../core/index.ts";
+import { BIRD } from "../../data/bird.ts";
+import { CAMERA } from "../../data/camera.ts";
+import { SCREEN, TILE } from "../../data/screen.ts";
 import type {
   AreaLayout,
   CharacterState,
@@ -16,7 +16,7 @@ import type {
   Rect,
   SupportPhase,
   ZoneLayout,
-} from "../data/types/index.ts";
+} from "../../data/types/index.ts";
 import {
   type ArtKind,
   artKind,
@@ -42,8 +42,8 @@ import {
   type PlacedTile,
   scenerySpriteFrame,
   tetherLine,
-} from "../presentation/index.ts";
-import { forcePulseVolume } from "../rules/bird/index.ts";
+} from "../../presentation/index.ts";
+import { forcePulseVolume } from "../../rules/bird/index.ts";
 import {
   type BehaviourState,
   effectiveGustPhase,
@@ -52,15 +52,15 @@ import {
   phaseFollowerTag,
   removalProgress,
   timedHazardRect,
-} from "../rules/boss/index.ts";
-import { areaOf, type ZoneState, zoneStream } from "../rules/zone/index.ts";
-import { sceneryParallax, type Tileset, worldScenery } from "../stage/index.ts";
-import { reducedMotion } from "../ui/index.ts";
+} from "../../rules/boss/index.ts";
+import { areaOf, type ZoneState, zoneStream } from "../../rules/zone/index.ts";
+import { sceneryParallax, type Tileset, worldScenery } from "../../stage/index.ts";
+import { reducedMotion } from "../../ui/index.ts";
+import { paletteColour } from "../scenePalette.ts";
 import { backdropBottomFrame } from "./backdropBottomFrame.ts";
 import { mountBossWarning } from "./bossWarning.ts";
 import { createCrumblingArt } from "./crumblingArt.ts";
 import { createPulseSpanArt } from "./pulseSpanArt.ts";
-import { paletteColour } from "./scenePalette.ts";
 import { createTetherArt } from "./tetherArt.ts";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
 

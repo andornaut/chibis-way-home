@@ -3,10 +3,10 @@ import { EventEmitter } from "node:events";
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import { STEP_SECONDS } from "../core/index.ts";
-import { AIR_JUMP_CUE } from "../data/airJumpCue.ts";
-import { BIRD } from "../data/bird.ts";
-import { startBird, stepBird } from "../rules/bird/bird.ts";
+import { STEP_SECONDS } from "../../core/index.ts";
+import { AIR_JUMP_CUE } from "../../data/airJumpCue.ts";
+import { BIRD } from "../../data/bird.ts";
+import { startBird, stepBird } from "../../rules/bird/bird.ts";
 import { mountAirJumpCue } from "./airJumpCue.ts";
 
 it("clears on pause and disposes once, without advancing or replaying a covered cue", () => {

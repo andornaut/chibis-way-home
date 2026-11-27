@@ -1,7 +1,7 @@
 import { animationKey } from "@andornaut/game-kit/runtime/art/aseprite";
 import type { GameObjects, Scene } from "phaser";
 
-import { spokeSegments, type TetherLine, tetherSegments } from "../presentation/index.ts";
+import { spokeSegments, type TetherLine, tetherSegments } from "../../presentation/index.ts";
 
 // The placeholder line's width in pixels while the tether has no sprite.
 const PLACEHOLDER_WIDTH = 2;

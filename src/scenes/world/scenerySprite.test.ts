@@ -1,12 +1,12 @@
 import { expect, it, vi } from "vitest";
 
-import type { ArtManifest } from "../assets/index.ts";
-import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
+import type { ArtManifest } from "../../assets/index.ts";
+import type { ObjectLayout, ZoneLayout } from "../../data/types/index.ts";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
+vi.mock("../../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 
-import type { ZoneState } from "../rules/zone/zone.ts";
+import type { ZoneState } from "../../rules/zone/zone.ts";
 import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 it("places animated scenery behind actors, crops it before rendering and ignores camera movement for facing", () => {

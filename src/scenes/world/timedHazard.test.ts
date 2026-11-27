@@ -1,24 +1,24 @@
 import type { Scene } from "phaser";
 import { expect, it, vi } from "vitest";
 
-import palette from "../../public/art/palette.json" with { type: "json" };
-import { BIRD } from "../data/bird.ts";
-import { HAZARD_PHASE_STYLE } from "../data/hazardPhaseStyle.ts";
-import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../data/obstacleBehaviours.ts";
-import type { Archetype, ObjectLayout, Rect, ZoneLayout } from "../data/types/index.ts";
-import { startBird } from "../rules/bird/bird.ts";
-import { startBehaviour } from "../rules/boss/behaviour.ts";
-import { effectiveCollision } from "../rules/boss/effectiveCollision.ts";
-import { timedHazardRect } from "../rules/boss/timedHazard.ts";
-import { objectLayout } from "../rules/stage/tiles.ts";
-import { stepBehaviour } from "../testing/behaviourStep.ts";
+import palette from "../../../public/art/palette.json" with { type: "json" };
+import { BIRD } from "../../data/bird.ts";
+import { HAZARD_PHASE_STYLE } from "../../data/hazardPhaseStyle.ts";
+import { WARNED_VENT_BEHAVIOUR, WARNED_VENT_SECONDS } from "../../data/obstacleBehaviours.ts";
+import type { Archetype, ObjectLayout, Rect, ZoneLayout } from "../../data/types/index.ts";
+import { startBird } from "../../rules/bird/bird.ts";
+import { startBehaviour } from "../../rules/boss/behaviour.ts";
+import { effectiveCollision } from "../../rules/boss/effectiveCollision.ts";
+import { timedHazardRect } from "../../rules/boss/timedHazard.ts";
+import { objectLayout } from "../../rules/stage/tiles.ts";
+import { stepBehaviour } from "../../testing/behaviourStep.ts";
 import { createPhaseTileArt, createTimedHazardArt } from "./timedHazard.ts";
 
 vi.mock("phaser", () => ({ Scene: class {}, Scenes: { Events: { PRE_RENDER: "prerender" } } }));
-vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
+vi.mock("../../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 
-import type { ArtManifest } from "../assets/index.ts";
-import type { ZoneState } from "../rules/zone/zone.ts";
+import type { ArtManifest } from "../../assets/index.ts";
+import type { ZoneState } from "../../rules/zone/zone.ts";
 import { createZoneObjectArt } from "./zoneObjectArt.ts";
 
 const colour = (name: string) =>

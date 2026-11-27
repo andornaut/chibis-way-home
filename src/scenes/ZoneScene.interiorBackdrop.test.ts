@@ -3,7 +3,7 @@ import { expect, it, vi } from "vitest";
 import type { ArtManifest } from "../assets/index.ts";
 import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
 import type { ZoneState } from "../rules/zone/zone.ts";
-import { createZoneObjectArt } from "./zoneObjectArt.ts";
+import { createZoneObjectArt } from "./world/zoneObjectArt.ts";
 
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));

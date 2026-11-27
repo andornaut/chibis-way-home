@@ -2,20 +2,20 @@ import { EventEmitter } from "node:events";
 
 import { expect, it, vi } from "vitest";
 
-import manifest from "../../public/art/manifest.json" with { type: "json" };
-import type { ArtManifest } from "../assets/index.ts";
-import type { ObjectLayout, ZoneLayout } from "../data/types/index.ts";
+import manifest from "../../../public/art/manifest.json" with { type: "json" };
+import type { ArtManifest } from "../../assets/index.ts";
+import type { ObjectLayout, ZoneLayout } from "../../data/types/index.ts";
 
 vi.mock("phaser", () => ({
   Scene: class {},
   Scenes: { Events: { PRE_RENDER: "prerender" } },
 }));
 
-vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
+vi.mock("../../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 
-import type { ZoneState } from "../rules/zone/zone.ts";
+import type { ZoneState } from "../../rules/zone/zone.ts";
+import { ZoneScene } from "../ZoneScene.ts";
 import { createZoneObjectArt } from "./zoneObjectArt.ts";
-import { ZoneScene } from "./ZoneScene.ts";
 
 it("updates paused preview backdrops after camera changes and removes the render hook on shutdown", () => {
   const item = {
