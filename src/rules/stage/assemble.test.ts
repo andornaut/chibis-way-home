@@ -1188,3 +1188,54 @@ describe("a recipe's loop cap", () => {
     }
   });
 });
+
+it.each(["replacement-gift", null])(
+  "binds reserved room %s without moving other fills or consuming draws",
+  (room) => {
+    const slot = (id: string, col: number) => ({
+      area: { col, cols: 4, row: 45, rows: 5 },
+      id,
+      kind: "door" as const,
+    });
+    const lib = library({
+      a: chunk(50, 50, { slots: [slot("middle", 20)] }),
+      start: chunk(50, 50, { slots: [slot("start", 10), { ...slot("event", 20), kind: "event" }] }),
+    });
+    const run = (bind: boolean) => {
+      let draws = 0;
+      const plan = zonePlanOf(
+        lib,
+        () => {
+          draws++;
+          return 0.9;
+        },
+        {
+          door: ["ordinary", "gift"],
+          event: ["event-fill"],
+          start: "start",
+          startDoors: ["gift"],
+          ...(bind && { giftBinding: { reservedRoom: "gift", room } }),
+        },
+        "t",
+        2,
+        ["start", "a", "finish"],
+      );
+      return { area: areaOf(plan), draws };
+    };
+    const baseline = run(false);
+    const bound = run(true);
+    expect(bound.draws).toBe(baseline.draws);
+    expect(bound.area.chunks).toEqual(baseline.area.chunks);
+    expect(bound.area.solids).toEqual(baseline.area.solids);
+    const ordinary = (area: AreaPlan) =>
+      area.objects.filter((object) => object.room === "ordinary");
+    expect(ordinary(bound.area)).toEqual(ordinary(baseline.area));
+    expect(bound.area.slots?.filter((slot) => slot.kind === "event")).toEqual(
+      baseline.area.slots?.filter((slot) => slot.kind === "event"),
+    );
+    const gift = baseline.area.objects.find((object) => object.room === "gift")!;
+    const replacement = bound.area.objects.find((object) => object.room === room);
+    expect(replacement).toEqual(room === null ? undefined : { ...gift, room });
+    expect(bound.area.slots?.find((slot) => slot.id === "start")?.fill).toBe(room ?? undefined);
+  },
+);

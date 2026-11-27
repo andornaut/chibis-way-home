@@ -5,6 +5,7 @@ import { CHARACTERS } from "../../data/characters.ts";
 import { CHUNK_RULES, CHUNKS, THEMES } from "../../data/chunks.ts";
 import { ZONE_MAP } from "../../data/map.ts";
 import { MODULE_RULES, MODULES, PAIR_GRADES } from "../../data/modules/index.ts";
+import { ROOMS } from "../../data/rooms.ts";
 import { ZONE_ROWS } from "../../data/screen.ts";
 import { SEAM_ROWS } from "../../data/seams.ts";
 import type {
@@ -102,6 +103,7 @@ export const STAGE_CONTEXT: StageContext = {
   library: CHUNK_LIBRARY,
   map: ZONE_MAP,
   recipes: STAGE_RECIPES,
+  rooms: ROOMS,
 };
 
 // The zone key names, assembled from its recipe in STAGE_RECIPES for seed, the same for the same

@@ -1,12 +1,8 @@
 import { type Random, randomInt, randomStream, shuffled } from "@andornaut/game-kit/runtime/random";
 
 import type {
-  ArenaApproach,
-  BackgroundSection,
-  Character,
   ChunkPlan,
   ChunkPool,
-  ChunkRules,
   FilledSlot,
   Instance,
   OrderedZoneRecipe,
@@ -14,13 +10,13 @@ import type {
   SlotKind,
   StageRecipe,
   TerrainRect,
-  ThemePlan,
   TilePoint,
   ZonePlan,
   ZoneRecipe,
 } from "../../data/types/index.ts";
 import { namespaceOrbitInstances } from "../bird/index.ts";
 import { arenaApproachProblems } from "./arenaApproaches.ts";
+import type { ChunkLibrary, GiftSlotFills, StageAssemblyContext } from "./assemblyContext.ts";
 import { withBackgroundSections } from "./backgroundSections.ts";
 import { bindElement } from "./elementBinding.ts";
 import { namespaceForcedTransit } from "./forcedTransitLayout.ts";
@@ -35,22 +31,10 @@ import {
   type RunSearch,
   useChunk,
 } from "./runSearch.ts";
+import { bindGiftSlots, slotFills, validateGiftReservation } from "./slotGiftBinding.ts";
 import { applyStageGeometry, chunkRows, validRows } from "./stageGeometry.ts";
 
-// What zones are assembled from: the chunks and themes by key, the chunk rules, the seam rows,
-// a zone's height in rows, and the characters by key, for the size of each theme's door.
-// arenas: the chunk id of each stage's arena, by stage key.
-export interface ChunkLibrary {
-  readonly approaches?: Readonly<Record<string, ArenaApproach>>;
-  readonly arenas?: Readonly<Record<string, string>>;
-  readonly backgrounds?: Readonly<Record<string, BackgroundSection>>;
-  readonly characters: Readonly<Record<string, Pick<Character, "cols" | "rows">>>;
-  readonly chunks: Readonly<Record<string, ChunkPlan>>;
-  readonly rows: number;
-  readonly rules: ChunkRules;
-  readonly seams: readonly number[];
-  readonly themes: Readonly<Record<string, ThemePlan>>;
-}
+export type { ChunkLibrary } from "./assemblyContext.ts";
 
 // A stage's assembled plan.
 export interface PlannedAssembly {
@@ -705,8 +689,7 @@ const shiftInstance = (col: number, instance: Instance): Instance => ({
 export function zonePlanOf(
   library: ChunkLibrary,
   random: Random,
-  fills: Readonly<Record<SlotKind, readonly string[]>> &
-    Partial<Pick<ZoneRecipe, "start" | "startDoors">>,
+  fills: GiftSlotFills,
   themeKey: string,
   spawnCol: number,
   ids: readonly string[],
@@ -783,6 +766,7 @@ export function zonePlanOf(
     }
     remaining.forEach((fill, index) => filled.set(open[index] as FilledSlot, fill));
   }
+  bindGiftSlots(fills.giftBinding, filled);
   const doorTemplate = bindElement(theme.bindings, {
     character: "",
     col: 0,
@@ -868,14 +852,6 @@ export function zonePlanOf(
       },
     },
     start: { area: ASSEMBLED_AREA, entry: START_ENTRY },
-  };
-}
-
-// The recipe's events and doors, each id or room repeated count times.
-function fillsOf(recipe: Pick<ZoneRecipe, "doors" | "events">): Record<SlotKind, string[]> {
-  return {
-    door: recipe.doors.flatMap(({ count, room }) => Array<string>(count).fill(room)),
-    event: recipe.events.flatMap(({ count, id }) => Array<string>(count).fill(id)),
   };
 }
 
@@ -987,7 +963,7 @@ export function orderedRecipeProblems(library: ChunkLibrary, recipe: OrderedZone
 }
 
 function assembleOrdered(
-  library: ChunkLibrary,
+  library: StageAssemblyContext,
   seed: number,
   key: string,
   recipe: OrderedZoneRecipe,
@@ -1175,7 +1151,7 @@ function assembleOrdered(
         zonePlanOf(
           library,
           randomStream(seed, `slots:${key}:${section.id}`),
-          fillsOf(section),
+          slotFills(library.giftBinding, section),
           section.theme,
           section.spawnCol,
           ids,
@@ -1244,11 +1220,12 @@ function assembleOrdered(
 // theme's chunks (searchRun), and its finish chunk, with the recipe's events and doors in
 // seeded slots, or that nothing fits. The same seed always gives the same outcome.
 export function assembleStage(
-  library: ChunkLibrary,
+  library: StageAssemblyContext,
   seed: number,
   key: string,
   recipe: StageRecipe,
 ): StageAssembly {
+  validateGiftReservation(library.giftBinding, recipe);
   if ("sections" in recipe) {
     const themes = Object.fromEntries(recipe.sections.map(({ id, theme }) => [id, theme]));
     const ordered = assembleOrdered(library, seed, key, recipe);
@@ -1308,11 +1285,7 @@ export function assembleStage(
   const zone = zonePlanOf(
     library,
     randomStream(seed, `slots:${key}`),
-    {
-      ...fillsOf(recipe),
-      start: recipe.start,
-      ...(recipe.startDoors && { startDoors: recipe.startDoors }),
-    },
+    slotFills(library.giftBinding, recipe),
     recipe.theme,
     recipe.spawnCol,
     [recipe.start, ...run, recipe.finish],
@@ -1467,7 +1440,7 @@ export type AvoidingAssembly = NothingFits | (PlannedAssembly & { readonly avoid
 // assembleStage and counts as honoured. Only the outcome that nothing fits falls back: a narrowed
 // pool that is no valid pool, or nothing fitting the narrowed pools. Errors are thrown on.
 export function assembleZoneAvoiding(
-  library: ChunkLibrary,
+  library: StageAssemblyContext,
   avoid: AvoidEntries,
   seed: number,
   key: string,
