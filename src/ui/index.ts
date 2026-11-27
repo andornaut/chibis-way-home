@@ -150,8 +150,9 @@ export {
   touchIntent,
   touchRoleAt,
 } from "./input/intent.ts";
+export { gameplayKeyHandlers } from "./input/keyboardActions.ts";
 export { MAP_ACTIONS, type MapAction, mapKeyAction } from "./input/mapInput.ts";
-export { isMouseMovementKey, listenMouseMovement } from "./input/mouseMovement.ts";
+export { listenMouseActions } from "./input/mouseActions.ts";
 export { stagePickerKey } from "./input/stageSelectInput.ts";
 export { achievementsCardProperties, achievementsPerPage } from "./layout/achievementsCard.ts";
 export { ACTION_HELP } from "./layout/actionHelp.ts";

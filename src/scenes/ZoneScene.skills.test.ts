@@ -28,10 +28,17 @@ import {
 } from "../ui/index.ts";
 
 const saved = vi.hoisted(() => ({ active: null as SkillId | null, owned: [] as SkillId[] }));
-const routing = vi.hoisted(() => ({ accepts: true }));
+const routing = vi.hoisted(() => ({ accepts: true, clear: () => {} }));
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({ turn: () => 0 }) }));
-vi.mock("./modalInput.ts", () => ({ modalInput: () => ({ accepts: () => routing.accepts }) }));
+vi.mock("./modalInput.ts", () => ({
+  modalInput: () => ({
+    accepts: () => routing.accepts,
+    subscribe: (clear: () => void) => {
+      routing.clear = clear;
+    },
+  }),
+}));
 vi.mock("../ui/settings/touchControls.ts", () => ({
   coarsePointer: (host: Window) => host.matchMedia("(pointer: coarse)").matches,
   touchSettingShown: () => true,
@@ -44,6 +51,7 @@ vi.mock("./save.ts", () => ({
   recordActiveStageStep: vi.fn(),
   recordStepAchievements: vi.fn(),
   savedSkills: () => saved.owned,
+  triggerZoneTips: vi.fn(),
 }));
 
 import { ZoneScene } from "./ZoneScene.ts";
@@ -82,6 +90,7 @@ it.each<SkillId | null>([null, "dash", "doubleJump", "speedy"])(
       },
       clock: frameSteps({ maxFrameMs: 100, stepMs: STEP_MS }, 0, startStepClock).clock,
       drawDeath: vi.fn(),
+      heldKeys: new Set(["MouseLeft", "MouseRight"]),
       layout: { areas: {} },
       loading: false,
       openProximityDialogue: () => false,
@@ -90,6 +99,7 @@ it.each<SkillId | null>([null, "dash", "doubleJump", "speedy"])(
     }) as unknown as { update(time: number): void };
     scene.update(STEP_MS * 2);
     expect(step).toHaveBeenCalledOnce();
+    expect(step.mock.calls[0]![5]).toEqual({ jumpHeld: true, move: 0, useHeld: true });
     const profile = step.mock.calls[0]![2];
     expect(profile.doubleJump).toBe(selected === "doubleJump");
     expect(profile.dash).toEqual(selected === "dash" ? BIRD.dash : undefined);
@@ -102,6 +112,66 @@ it.each<SkillId | null>([null, "dash", "doubleJump", "speedy"])(
 
 // A press's target on an HTML button: the pause button, a skill button or a page button.
 const PAGE_BUTTON = { closest: () => ({}) };
+
+it("keeps key aliases in active play and leaves native controls and modal input alone", () => {
+  class HudButton {}
+  vi.stubGlobal("HTMLButtonElement", HudButton);
+  const keyboard = new EventEmitter();
+  const events = new EventEmitter();
+  const gameEvents = new EventEmitter();
+  const hud = new HudButton();
+  const bare = {};
+  const state = { active: true, covered: false };
+  const scene = Object.assign(new ZoneScene(), {
+    events,
+    game: {
+      canvas: {
+        ownerDocument: { body: bare, documentElement: {} },
+        parentElement: { contains: (target: unknown) => target === hud },
+      },
+      events: gameEvents,
+    },
+    input: { keyboard },
+    playCovered: () => state.covered,
+    scene: { isActive: () => state.active },
+  }) as unknown as { heldKeys: Set<string>; watchKeys(): void };
+  routing.accepts = true;
+  scene.watchKeys();
+  const send = (type: string, code: string, target = bare, repeat = false) => {
+    const event = new Event(type, { cancelable: true });
+    Object.defineProperties(event, {
+      code: { value: code },
+      repeat: { value: repeat },
+      target: { value: target },
+    });
+    keyboard.emit(type, event);
+    return event;
+  };
+  expect(send("keydown", "KeyH", hud).defaultPrevented).toBe(true);
+  expect(keyIntent(scene.heldKeys).move).toBe(-1);
+  expect(send("keydown", "Space", hud).defaultPrevented).toBe(false);
+  expect(send("keydown", "Enter", hud).defaultPrevented).toBe(false);
+  expect(send("keydown", "KeyK", {}).defaultPrevented).toBe(false);
+  expect(send("keydown", "ArrowDown").defaultPrevented).toBe(false);
+  routing.accepts = false;
+  routing.clear();
+  expect(send("keydown", "KeyL").defaultPrevented).toBe(false);
+  expect(scene.heldKeys.size).toBe(0);
+  routing.accepts = true;
+  expect(send("keydown", "KeyH", bare, true).defaultPrevented).toBe(true);
+  expect(scene.heldKeys.size).toBe(0);
+  expect(send("keydown", "Enter").defaultPrevented).toBe(true);
+  expect(keyIntent(scene.heldKeys).use).toBe(true);
+  send("keyup", "Enter", hud);
+  expect(scene.heldKeys.size).toBe(0);
+  send("keydown", "KeyK");
+  expect(keyIntent(scene.heldKeys).jump).toBe(true);
+  gameEvents.emit("blur");
+  expect(scene.heldKeys.size).toBe(0);
+  events.emit("shutdown");
+  expect(keyboard.listenerCount("keydown")).toBe(0);
+  expect(gameEvents.listenerCount("blur")).toBe(0);
+});
 
 // A skill target's centre from its top-left.
 const targetCentre = (at: { x: number; y: number }) => ({
@@ -152,6 +222,7 @@ function touchFixture() {
     heldKeys: Set<string>;
     heldTouches: Map<number, HeldTouch>;
     clearControls(): void;
+    update(time: number): void;
     watchMouse(): void;
     watchTouches(): void;
     drawMoveHint(touches: readonly HeldTouch[]): void;
@@ -167,7 +238,7 @@ function touchFixture() {
     },
     target: unknown = canvas,
   ) => {
-    const event = new Event(type);
+    const event = new Event(type, { cancelable: true });
     Object.defineProperties(event, {
       clientX: { value: bounds.x + (point.x * bounds.width) / size.width },
       clientY: { value: bounds.y + (point.y * bounds.height) / size.height },
@@ -188,7 +259,7 @@ function touchFixture() {
     point: { x: number; y: number },
     target: unknown = canvas,
   ) => {
-    const event = new Event(type);
+    const event = new Event(type, { cancelable: true });
     Object.defineProperties(event, {
       button: { value: button },
       buttons: { value: buttons },
@@ -197,12 +268,13 @@ function touchFixture() {
       target: { value: target },
     });
     host.dispatchEvent(event);
+    return event;
   };
   return { canvas, draw, events, fit, host, mouse, scene, send, state };
 }
 
 it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])(
-  "keeps mouse presses on shown %s out of movement through drag and release",
+  "keeps mouse presses on shown %s out of gameplay through drag and release",
   (control) => {
     const f = touchFixture();
     f.scene.actionButtonsShown = true;
@@ -222,7 +294,7 @@ it.each(["dash", "doubleJump", "speedy", "pause", "use", "jump", "page button"])
     const target = control === "use" || control === "jump" ? f.canvas : PAGE_BUTTON;
     f.mouse("mousedown", 0, 1, point, target);
     f.mouse("mousemove", 0, 1, { x: 250, y: 180 });
-    expect(keyIntent(f.scene.heldKeys).move).toBe(0);
+    expect(f.scene.heldKeys.size).toBe(0);
     expect(f.scene.heldTouches.size).toBe(0);
     f.mouse("mouseup", 0, 0, { x: 250, y: 180 });
     f.events.emit("shutdown");
@@ -236,34 +308,94 @@ it("clears actual mouse holds without reviving them and preserves a separate tou
   f.send("pointerdown", 1, point);
   f.send("pointermove", 1, { ...point, x: point.x + TOUCH.moveDeadZone + 1 });
   f.mouse("mousedown", 0, 1, point);
-  expect(keyIntent(f.scene.heldKeys).move).toBe(-1);
+  expect(keyIntent(f.scene.heldKeys)).toEqual({ jump: true, move: 0, use: false });
   expect(touchIntent(TOUCH, [...f.scene.heldTouches.values()]).move).toBe(1);
   expect(f.draw()).toBe(true);
   f.mouse("mouseup", 0, 0, point, { closest: () => ({}) });
-  expect(keyIntent(f.scene.heldKeys).move).toBe(0);
+  expect(f.scene.heldKeys.size).toBe(0);
   expect(f.scene.heldTouches.has(1)).toBe(true);
   f.mouse("mousedown", 2, 2, point);
   f.scene.clearControls();
   f.mouse("mousemove", 0, 2, point);
-  expect(keyIntent(f.scene.heldKeys).move).toBe(0);
+  expect(f.scene.heldKeys.size).toBe(0);
   f.events.emit("shutdown");
 });
 
-it("suppresses the context menu only on the play canvas while listening", () => {
+it("suppresses the context menu only after the canvas consumed that right press", () => {
   const f = touchFixture();
   f.scene.watchMouse();
-  const menu = () => new Event("contextmenu", { cancelable: true });
-  const canvasMenu = menu();
-  f.canvas.dispatchEvent(canvasMenu);
-  expect(canvasMenu.defaultPrevented).toBe(true);
-  const pageMenu = menu();
-  f.host.dispatchEvent(pageMenu);
-  expect(pageMenu.defaultPrevented).toBe(false);
+  const at = { x: 250, y: 180 };
+  const menu = (target = f.canvas) => f.mouse("contextmenu", 2, 2, at, target);
+  expect(menu().defaultPrevented).toBe(false);
+  f.state.covered = true;
+  f.mouse("mousedown", 2, 2, at);
+  expect(f.scene.heldKeys.size).toBe(0);
+  expect(menu().defaultPrevented).toBe(false);
+  f.state.covered = false;
+  f.mouse("mousedown", 2, 2, at);
+  expect(keyIntent(f.scene.heldKeys)).toEqual({ jump: false, move: 0, use: true });
+  expect(menu().defaultPrevented).toBe(true);
+  f.mouse("mouseup", 2, 0, at);
+  f.mouse("mousedown", 2, 2, at, PAGE_BUTTON);
+  expect(f.mouse("contextmenu", 2, 2, at, PAGE_BUTTON).defaultPrevented).toBe(false);
   f.events.emit("shutdown");
-  const after = menu();
-  f.canvas.dispatchEvent(after);
-  expect(after.defaultPrevented).toBe(false);
+  expect(menu().defaultPrevented).toBe(false);
 });
+
+it("uses complete mouse clicks on the first playable step and discards cleared clicks", () => {
+  const f = touchFixture();
+  f.scene.watchMouse();
+  const scene = Object.assign(f.scene, {
+    barksCanPresent: () => false,
+    cameraView: () => ({}),
+    clock: frameSteps({ maxFrameMs: 100, stepMs: STEP_MS }, 0, startStepClock).clock,
+    drawArea: vi.fn(),
+    drawBird: vi.fn(),
+    drawControls: vi.fn(),
+    drawMoveHint: vi.fn(),
+    drawObjects: vi.fn(),
+    drawProgress: vi.fn(),
+    layout: { areas: {} },
+    loading: false,
+    openProximityDialogue: () => false,
+    stageKey: () => "stage",
+    zone: { area: "main", bird: startBird(BIRD, { x: 0, y: 0 }), steps: 0 },
+  });
+  const step = vi
+    .spyOn(engine, "stepZone")
+    .mockImplementation((_prepared, _profiles, _tuning, _layout, _seconds, _input, state) => ({
+      ...state,
+      steps: state.steps + 1,
+    }));
+  const at = { x: 250, y: 180 };
+  f.mouse("mousedown", 0, 1, at);
+  f.mouse("mouseup", 0, 0, at);
+  f.mouse("mousedown", 2, 2, at);
+  f.mouse("mouseup", 2, 0, at);
+  expect(f.mouse("contextmenu", 2, 0, at).defaultPrevented).toBe(true);
+  expect(f.scene.heldKeys.size).toBe(0);
+  scene.update(STEP_MS / 2);
+  expect(step).not.toHaveBeenCalled();
+  scene.update(STEP_MS * 2);
+  expect(step.mock.calls.map((call) => call[5])).toEqual([
+    { jumpHeld: true, move: 0, useHeld: true },
+    { jumpHeld: false, move: 0, useHeld: false },
+  ]);
+  f.mouse("mousedown", 2, 2, at);
+  f.mouse("mouseup", 2, 0, at);
+  scene.clearControls();
+  scene.update(STEP_MS * 3);
+  scene.update(STEP_MS * 4);
+  expect(step.mock.calls[2]?.[5]).toEqual({ jumpHeld: false, move: 0, useHeld: false });
+  f.mouse("mousedown", 0, 1, at);
+  scene.update(STEP_MS * 6);
+  expect(step.mock.calls.slice(3).map((call) => call[5].jumpHeld)).toEqual([true, true]);
+  f.mouse("mouseup", 0, 0, at);
+  scene.update(STEP_MS * 7);
+  expect(step.mock.calls[5]?.[5].jumpHeld).toBe(false);
+  f.events.emit("shutdown");
+});
+
 it.each([
   ...SKILL_IDS.map((skill) => ({ control: skill, role: undefined })),
   { control: "pause", role: undefined },

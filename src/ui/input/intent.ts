@@ -1,28 +1,33 @@
 import type { Point, TouchTuning } from "../../data/types/index.ts";
 import { type PressArea, pressedArea } from "../layout/hitAreas.ts";
 import type { TouchControl } from "../layout/touchControls.ts";
-import { MOUSE_KEYS } from "./mouseMovement.ts";
+import { MOUSE_KEYS } from "./mouseActions.ts";
 
-// What the player is asking for, from the keyboard and the touch controls together.
+// What the player is asking for, from the keyboard, mouse and touch controls together.
 export interface Intent {
   readonly jump: boolean;
   readonly move: -1 | 0 | 1;
   readonly use: boolean;
 }
 
-const LEFT_KEYS = ["ArrowLeft", "KeyA", MOUSE_KEYS.left];
-const RIGHT_KEYS = ["ArrowRight", "KeyD", MOUSE_KEYS.right];
-const JUMP_KEYS = ["ArrowUp", "KeyW", "Space"];
+const LEFT_KEYS = ["ArrowLeft", "KeyA", "KeyH"];
+const RIGHT_KEYS = ["ArrowRight", "KeyD", "KeyL"];
+const JUMP_KEYS = ["ArrowUp", "KeyK", "KeyW", "Space"];
 const USE_KEYS = ["Enter", "KeyE", "KeyF"];
+const GAMEPLAY_KEYS = new Set([...LEFT_KEYS, ...RIGHT_KEYS, ...JUMP_KEYS, ...USE_KEYS]);
+
+export function isGameplayKey(code: string): boolean {
+  return GAMEPLAY_KEYS.has(code);
+}
 
 // KeyboardEvent codes and eligible mouse-button controls held. Left and right together cancel.
 export function keyIntent(held: ReadonlySet<string>): Intent {
   const left = LEFT_KEYS.some((key) => held.has(key));
   const right = RIGHT_KEYS.some((key) => held.has(key));
   return {
-    jump: JUMP_KEYS.some((key) => held.has(key)),
+    jump: held.has(MOUSE_KEYS.jump) || JUMP_KEYS.some((key) => held.has(key)),
     move: left === right ? 0 : left ? -1 : 1,
-    use: USE_KEYS.some((key) => held.has(key)),
+    use: held.has(MOUSE_KEYS.use) || USE_KEYS.some((key) => held.has(key)),
   };
 }
 

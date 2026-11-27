@@ -20,7 +20,7 @@ import {
   type PagePointerEvent,
   type PagePress,
 } from "@andornaut/game-kit/runtime/web/input/dom/pagePresses";
-import { Core, type GameObjects, Input, Scale, Scene, Scenes, type Tilemaps } from "phaser";
+import { Core, type GameObjects, Scale, Scene, Scenes, type Tilemaps } from "phaser";
 
 import {
   ART_MANIFEST_KEY,
@@ -128,10 +128,10 @@ import {
   createStageProgress,
   createTouchControls,
   frameTurn,
+  gameplayKeyHandlers,
   type HeldTouch,
-  isMouseMovementKey,
   keyIntent,
-  listenMouseMovement,
+  listenMouseActions,
   moveHintView,
   reducedMotion,
   shifted,
@@ -253,6 +253,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
   private loading = true;
   private zone!: ZoneState;
   private readonly heldKeys = new Set<string>();
+  private readonly mousePresses = new Set<string>();
   private readonly heldTouches = new Map<number, HeldTouch>();
   private readonly buttonTouches = new Set<number>();
   private landMs = 0;
@@ -323,7 +324,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     this.trial = this.entry.trial;
     // Everything one run of the zone changes starts afresh: the scene object is reused.
     this.objects = undefined;
-    this.heldKeys.clear();
+    this.clearDesktopInput();
     this.heldTouches.clear();
     this.buttonTouches.clear();
     this.presses.clear();
@@ -494,7 +495,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     // Back from a room, he stands at its door with nothing held, and the door shows closed.
     this.events.on("resume", () => {
       this.clock = startStepClock;
-      this.heldKeys.clear();
+      this.clearDesktopInput();
       if (this.inRoom) {
         this.inRoom = false;
         this.hold = undefined;
@@ -792,6 +793,11 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       if (this.openProximityDialogue()) {
         break;
       }
+      // A complete mouse click between frames still reaches the first playable step.
+      const stepIntent = this.mousePresses.size
+        ? combineIntents(intent, keyIntent(this.mousePresses))
+        : intent;
+      this.mousePresses.clear();
       const beforeZone = this.zone;
       const before = this.zone.bird;
       this.zone = developmentStep(
@@ -802,7 +808,7 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
           this.movementTuning(),
           this.layout,
           STEP_SECONDS,
-          { jumpHeld: intent.jump, move: intent.move, useHeld: intent.use },
+          { jumpHeld: stepIntent.jump, move: stepIntent.move, useHeld: stepIntent.use },
           this.zone,
         ),
       );
@@ -1149,9 +1155,14 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     }
   }
 
+  private clearDesktopInput(): void {
+    this.heldKeys.clear();
+    this.mousePresses.clear();
+  }
+
   private clearControls(): void {
     this.clearAirJump();
-    this.heldKeys.clear();
+    this.clearDesktopInput();
     this.heldTouches.clear();
     this.presses.clear();
     this.clock = startStepClock;
@@ -1523,12 +1534,12 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
 
   private watchMouse(): void {
     const canvas = this.game.canvas;
-    const stopListening = listenMouseMovement(
+    const stopListening = listenMouseActions(
       (event) => {
         if (
           event.target !== canvas ||
           onPageControl(event.target) ||
-          !modalInput(this).accepts() ||
+          !modalInput(this).accepts(event) ||
           !this.scene.isActive() ||
           this.playCovered()
         ) {
@@ -1545,19 +1556,16 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       },
       window,
       this.heldKeys,
+      this.mousePresses,
     );
-    const suppressMenu = (event: Event) => event.preventDefault();
-    canvas.addEventListener("contextmenu", suppressMenu);
-    this.events.once("shutdown", () => {
-      stopListening();
-      canvas.removeEventListener("contextmenu", suppressMenu);
-    });
+    this.events.once("shutdown", stopListening);
   }
 
   private watchKeys(): void {
-    modalInput(this).subscribe(() => {
+    const input = modalInput(this);
+    input.subscribe(() => {
       this.dashWind?.clear();
-      this.heldKeys.clear();
+      this.clearDesktopInput();
       this.heldTouches.clear();
       this.presses.clear();
     });
@@ -1565,33 +1573,22 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
     if (!keyboard) {
       return;
     }
-    // Arrow keys and Space would otherwise scroll the page.
-    keyboard.addCapture([
-      Input.Keyboard.KeyCodes.LEFT,
-      Input.Keyboard.KeyCodes.RIGHT,
-      Input.Keyboard.KeyCodes.UP,
-      Input.Keyboard.KeyCodes.SPACE,
-    ]);
-    // A key held from before the zone resumed, under the pause card or a room, counts only once
-    // pressed again: its repeats never press it.
-    keyboard.on("keydown", (event: KeyboardEvent) => {
-      if (
-        modalInput(this).accepts(event) &&
-        !isMouseMovementKey(event.code) &&
-        !event.repeat &&
-        !this.playCovered() &&
-        this.scene.isActive()
-      ) {
-        this.heldKeys.add(event.code);
-      }
-    });
-    keyboard.on("keyup", (event: KeyboardEvent) => {
-      if (!isMouseMovementKey(event.code)) {
-        this.heldKeys.delete(event.code);
-      }
-    });
+    const { down, up } = gameplayKeyHandlers(
+      (event) => !this.playCovered() && this.scene.isActive() && input.accepts(event),
+      this.game.canvas,
+      this.heldKeys,
+    );
     // A key released while the page is hidden never sends keyup.
-    this.game.events.on("blur", () => this.heldKeys.clear());
+    const clear = () => this.clearDesktopInput();
+    keyboard.on("keydown", down);
+    keyboard.on("keyup", up);
+    this.game.events.on("blur", clear);
+    this.events.once("shutdown", () => {
+      keyboard.off("keydown", down);
+      keyboard.off("keyup", up);
+      this.game.events.off("blur", clear);
+      clear();
+    });
   }
 
   // A touch takes the role it starts with and keeps it, wherever it moves, until it lifts. A new

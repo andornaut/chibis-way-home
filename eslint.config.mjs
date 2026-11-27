@@ -164,7 +164,7 @@ const SIZE_CEILINGS = {
   "src/scenes/MapScene.ts": { file: 616, function: 184 },
   "src/scenes/PauseScene.ts": { file: 950 },
   "src/scenes/zoneObjectArt.ts": { file: 764, function: 211 },
-  "src/scenes/ZoneScene.ts": { file: 1687 },
+  "src/scenes/ZoneScene.ts": { file: 1684 },
   "src/sim/bossProperties.ts": { file: 1024, function: 247 },
   "src/sim/cli.ts": { function: 217 },
   "src/sim/navigation.ts": { file: 1342, function: 564 },
