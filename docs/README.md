@@ -23,8 +23,7 @@ and tooling. Its pages summarize each area and point to its detailed topic docs.
 `work/` holds numbered request files, including proposed, approved, completed and
 superseded work. Each records its scope, criteria and any recorded decisions or
 outcome. Its README defines the convention and retains the historical index.
-Use the work files and their design-area links alongside that index, rather than
-treating every historical request as a current rule.
+Follow a work item's design-area link for the current rules.
 
 The shared [game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md)
 define cross-game product and development rules. Local Art, Gameplay and Source
