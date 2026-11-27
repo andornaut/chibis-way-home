@@ -60,3 +60,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0318 | Label story dialogue advance Next                                       | [cwh-0318.md](../work/cwh-0318.md) |
 | cwh-0326 | Align story navigation with Previous, Next and Skip                     | [cwh-0326.md](../work/cwh-0326.md) |
 | cwh-0327 | Prevent screen flashes when opening menus and cards                     | [cwh-0327.md](../work/cwh-0327.md) |
+| cwh-0335 | Complete keyboard navigation and align mouse actions                    | [cwh-0335.md](../work/cwh-0335.md) |
