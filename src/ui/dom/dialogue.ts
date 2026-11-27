@@ -5,7 +5,7 @@ import {
 import { setTextRole } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import { DIALOGUE_PANEL_ALPHA } from "../../data/dialogues.ts";
-import { DIALOGUE_LAYOUT } from "../../data/layout.ts";
+import { DIALOGUE_LAYOUT, TEXT_BUTTON } from "../../data/layout.ts";
 import type { DialogueSpeaker } from "../../data/types/index.ts";
 import type { DialogueControl } from "../dialogue/conversation.ts";
 import { DIALOGUE_PORTRAIT_SIZE, DIALOGUE_SCREEN, dialogueSpeakerLayout } from "../layout/index.ts";
@@ -45,6 +45,7 @@ export const DIALOGUE_PANEL_LAYOUT: LayoutValues = {
 
 // Every dialogue action row shares the existing bottom page inset.
 export const DIALOGUE_FOOTER_LAYOUT: LayoutValues = {
+  "--dialogue-action-height": TEXT_BUTTON.height,
   "--dialogue-footer-bottom": DIALOGUE_LAYOUT.departureInset,
 };
 

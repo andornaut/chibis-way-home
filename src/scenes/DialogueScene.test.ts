@@ -92,6 +92,7 @@ it.each([
   expect(root.style.getPropertyValue("--dialogue-alpha")).toBe(
     String(opaque ? 1 : DIALOGUE_PANEL_ALPHA),
   );
+  expect(root.hasAttribute("data-room-conversation")).toBe(opaque);
   expect(root.querySelector(".dialogue-box")).not.toBeNull();
 });
 

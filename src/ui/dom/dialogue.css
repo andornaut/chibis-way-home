@@ -53,6 +53,28 @@
   opacity: var(--dialogue-alpha);
 }
 
+/* A room conversation locally occludes the dim room's name tab and bottom actions. */
+.dialogue-scene[data-room-conversation] .dialogue-panel::before {
+  position: absolute;
+  inset: calc(-1 * var(--ui-unit) * var(--dialogue-tab-overhang) * 1px) 0 0;
+  background: var(--colour-ink);
+  content: "";
+  pointer-events: none;
+}
+
+.dialogue-scene[data-room-conversation] .dialogue-region::before {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: calc(
+    var(--ui-unit) * (var(--dialogue-action-height) + var(--dialogue-footer-bottom)) * 1px
+  );
+  background: var(--colour-ink);
+  content: "";
+  pointer-events: none;
+}
+
 /* Art's portrait frame, the panel's padding in from its top and the speaker's end, and the
    portrait filling the slot inside its border. */
 .dialogue-portrait-frame {

@@ -110,6 +110,7 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     this.cutPortraits();
     const view = createDialogueView(document, departure, "dialogue", words);
     if (this.opener === "room") {
+      view.root.setAttribute("data-room-conversation", "");
       view.root.style.setProperty("--dialogue-alpha", "1");
     }
     view.root.hidden = true;
