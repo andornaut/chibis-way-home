@@ -249,7 +249,10 @@ function createDimmingModals(
   dim: ReturnType<typeof createDim>,
   globalEntry: HTMLElement,
 ) {
-  const modals = createModalLayer(root, foregroundInput(root.ownerDocument));
+  const modals = createModalLayer(
+    root,
+    root.ownerDocument.defaultView === null ? undefined : foregroundInput(root.ownerDocument),
+  );
   const stack: { readonly dialog: HTMLElement }[] = [];
   const paint = createModalPaint(root, globalEntry);
   const update = () => {

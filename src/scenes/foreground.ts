@@ -60,12 +60,13 @@ export function registerSceneForeground(scene: Scene, root: HTMLElement): () => 
   const focusDefault = () => {
     if (
       !PAGE_DEFAULTS.has(key) ||
+      !scene.scene.isActive() ||
+      !root.isConnected ||
       !ready() ||
       root.closest("[hidden],[inert],[data-ui-unready]") !== null
     ) {
       return;
     }
-    scene.events.off("postupdate", focusDefault);
     const active = root.ownerDocument.activeElement;
     if (active === root.ownerDocument.body || active === root.ownerDocument.documentElement) {
       const first = foregroundTargets(root).find(

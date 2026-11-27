@@ -18,4 +18,4 @@ export {
   type GameActionOptions,
   type GamePager,
 } from "./actionBinding.ts";
-export { foregroundGameEscape, foregroundInput } from "./foreground.ts";
+export { foregroundGameEscape, foregroundInput, hasForegroundInput } from "./foreground.ts";

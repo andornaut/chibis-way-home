@@ -6,6 +6,10 @@ import {
 const owners = new WeakMap<Document, ForegroundInput>();
 const escapes = new WeakMap<Document, () => (() => void) | undefined>();
 
+export function hasForegroundInput(document: Document): boolean {
+  return owners.has(document);
+}
+
 // Installed by the first-paint crash adapter, shared across game retirement and recovery.
 export function foregroundInput(document: Document): ForegroundInput {
   let owner = owners.get(document);

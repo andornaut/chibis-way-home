@@ -80,7 +80,15 @@ it("uses Map aliases for focused UI, preserves each horizontal event once, and d
   stops.push(registerSceneForeground(scene, root));
   events.emit("postupdate");
   expect(document.activeElement).toBe(primary);
+  primary.blur();
+  events.emit("postupdate");
+  expect(document.activeElement).toBe(primary);
+  press(primary, "Enter", "Enter");
+  expect(activate).toHaveBeenCalledOnce();
+  activate.mockClear();
   home.focus();
+  events.emit("postupdate");
+  expect(document.activeElement).toBe(home);
   press(home, "w", "KeyW");
   expect(document.activeElement).toBe(primary);
   expect(activate).not.toHaveBeenCalled();
