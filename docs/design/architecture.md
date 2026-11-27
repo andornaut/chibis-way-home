@@ -22,3 +22,4 @@ Reference: [architecture](../../src/README.md#architecture),
 | cwh-0310 | Layer the source behind an import check                       | [cwh-0310.md](../work/cwh-0310.md) |
 | cwh-0315 | Close the procedural systems policy gaps                      | [cwh-0315.md](../work/cwh-0315.md) |
 | cwh-0323 | Measure and improve Chibi performance                         | [cwh-0323.md](../work/cwh-0323.md) |
+| cwh-0336 | Reuse hazard bounds for equivalent search horizons            | [cwh-0336.md](../work/cwh-0336.md) |
