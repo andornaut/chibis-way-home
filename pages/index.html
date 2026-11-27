@@ -15,8 +15,6 @@
     <meta name="apple-mobile-web-app-title" content="Chibi's Way Home" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="stylesheet" href="/site.css" />
-    <link rel="stylesheet" href="/nav.css" />
-    <script src="/nav.js" defer></script>
     <script type="module" src="/src/homePage/main.ts"></script>
     <style>
       /* Homepage colours and layout stay local to this document. */
@@ -190,25 +188,6 @@
         margin: 0;
         font-size: 20px;
       }
-      .home-footer {
-        box-sizing: border-box;
-        width: 100%;
-        padding-top: 16px;
-        border-top: 1px solid var(--home-dslate);
-      }
-      .home-footer nav {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 16px;
-      }
-      .home-footer a {
-        color: var(--home-dslate);
-        text-underline-offset: 3px;
-      }
-      .home-footer a:focus-visible {
-        outline: 3px solid var(--home-ink);
-        outline-offset: 3px;
-      }
       .controls table {
         width: 100%;
         margin-top: 12px;
@@ -376,12 +355,6 @@
             Native text fields and sliders keep their own keys.
           </p>
         </section>
-        <footer class="home-footer">
-          <nav aria-label="Footer">
-            <a href="/">Home</a>
-            <a href="/play/">Play</a>
-          </nav>
-        </footer>
       </div>
     </main>
 

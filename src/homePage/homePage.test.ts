@@ -55,11 +55,15 @@ it("names the play page's title and game element from the text data", async () =
   expect(html).not.toContain("%GAME_NAME%");
 });
 
-it("spaces Install and Play the kit's button gap apart", async () => {
-  const gaps = [...(await pageText()).matchAll(/(?:^|[}>]) *\.actions *\{([^}]*)\}/gu)].flatMap(
-    ([, body]) => [...body!.matchAll(/gap: *([^;]+);/gu)].map(([, value]) => value),
+it("keeps Play before Install with the kit gap and omits only homepage navigation", async () => {
+  const html = await pageText();
+  const gaps = [...html.matchAll(/(?:^|[}>]) *\.actions *\{([^}]*)\}/gu)].flatMap(([, body]) =>
+    [...body!.matchAll(/gap: *([^;]+);/gu)].map(([, value]) => value),
   );
   expect(gaps).toEqual([`${BUTTON_GAP}px`]);
+  expect(html).toMatch(/<a class="play" href="\/play\/">.*?<\/a> <button class="install"/u);
+  expect(html).toContain('id="install" type="button" hidden');
+  expect(html).not.toMatch(/<nav\b|<footer\b|home-footer|href="\/nav.css"|src="\/nav.js"/u);
 });
 
 it("renders the home page's description into the web app manifest", async () => {
