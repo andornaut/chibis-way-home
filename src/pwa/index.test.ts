@@ -94,6 +94,23 @@ const preparation: BrowserLaunchPreparation = {
 };
 const beforeLaunch = vi.fn();
 
+it("keeps platform exit unavailable until bound and releases only the owning launch", async () => {
+  const { bindPlatformBackExit, leavePlatformBack } = await import("./index.ts");
+  expect(await leavePlatformBack()).toBe(false);
+  const first = vi.fn(async () => true);
+  const releaseFirst = bindPlatformBackExit(first);
+  expect(await leavePlatformBack()).toBe(true);
+  const current = vi.fn(async () => false);
+  const releaseCurrent = bindPlatformBackExit(current);
+  releaseFirst();
+  expect(await leavePlatformBack()).toBe(false);
+  expect(current).toHaveBeenCalledOnce();
+  expect(first).toHaveBeenCalledOnce();
+  releaseCurrent();
+  expect(await leavePlatformBack()).toBe(false);
+  expect(current).toHaveBeenCalledOnce();
+});
+
 // The options setupPhoneApp gave the kit's launch.
 const launchOptions = () => kit.create.mock.calls[0]![1];
 

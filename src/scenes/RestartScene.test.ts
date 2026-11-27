@@ -16,6 +16,7 @@ const dom = vi.hoisted(() => ({ layer: undefined as undefined | object }));
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/index.ts", async (original) => ({
   ...(await original<typeof import("../pwa/index.ts")>()),
+  leavePlatformBack: vi.fn(async () => false),
   requestUpdateCheck,
 }));
 vi.mock("./save.ts", () => ({

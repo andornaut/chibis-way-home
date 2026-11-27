@@ -9,7 +9,7 @@ import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
 
 export interface ExitData {
-  readonly accepted: () => void;
+  readonly accepted: () => Promise<boolean>;
   readonly cancelled: () => void;
   readonly words: { readonly question: string; readonly title: string };
 }
@@ -18,7 +18,9 @@ export interface ExitData {
 export class ExitScene extends Scene {
   private request!: ExitData;
   private decided = false;
+  private accepting = false;
   private closeModal: (() => void) | undefined;
+  private pending: (accepting: boolean) => void = () => {};
 
   constructor() {
     super("exit");
@@ -27,6 +29,7 @@ export class ExitScene extends Scene {
   init(data: ExitData): void {
     this.request = data;
     this.decided = false;
+    this.accepting = false;
     this.closeModal = undefined;
   }
 
@@ -42,6 +45,17 @@ export class ExitScene extends Scene {
       width: "small",
     });
     card.root.hidden = true;
+    this.pending = (accepting) => {
+      for (const button of Object.values(card.buttons)) {
+        button.disabled = accepting;
+      }
+      if (card.close !== undefined) {
+        card.close.disabled = accepting;
+      }
+      if (!accepting) {
+        card.dialog.focus({ preventScroll: true });
+      }
+    };
     const input = modalInput(this);
     const backdrop = showModalBackdrop(this);
     const cancel = () => this.decide(false);
@@ -87,15 +101,38 @@ export class ExitScene extends Scene {
     });
   }
 
-  private decide(accepted: boolean): void {
-    if (this.decided || !this.sys.isActive() || !modalInput(this).accepts()) {
+  back(): void {
+    void this.decide(false);
+  }
+
+  private async decide(accepted: boolean): Promise<void> {
+    if (this.decided || this.accepting || !this.sys.isActive() || !modalInput(this).accepts()) {
       return;
+    }
+    if (accepted) {
+      this.accepting = true;
+      this.pending(true);
+      let left = false;
+      try {
+        left = await this.request.accepted();
+      } catch {
+        // A refused or failed native continuation leaves the confirmation available.
+      }
+      if (this.decided || !this.sys.isActive()) {
+        return;
+      }
+      if (!left) {
+        this.accepting = false;
+        this.pending(false);
+        return;
+      }
     }
     this.decided = true;
     this.closeModal?.();
     this.closeModal = undefined;
-    const continuation = accepted ? this.request.accepted : this.request.cancelled;
     this.scene.stop();
-    continuation();
+    if (!accepted) {
+      this.request.cancelled();
+    }
   }
 }

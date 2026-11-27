@@ -1,20 +1,18 @@
-import { browserExitPage, exitApp } from "@andornaut/game-kit/runtime/web/pwa/dom/exitApp";
 import { focusTarget } from "@andornaut/game-kit/runtime/web/ui/dom/focusModality";
 import { Scene } from "phaser";
 
-import { TEXT } from "../data/text.ts";
+import { START_EXIT_TEXT, TEXT } from "../data/text.ts";
 import { openingDestination } from "../progress/index.ts";
 import {
-  backLeavesGame,
   closeApp,
   exitShown,
+  leavePlatformBack,
   PHONE_EVENTS,
   requestUpdateCheck,
 } from "../pwa/index.ts";
 import {
   createStart,
   focusKeyAction,
-  startBackAction,
   type StartScreenLayout,
   startScreenLayout,
   type StartView,
@@ -22,6 +20,7 @@ import {
 } from "../ui/index.ts";
 import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
+import type { ExitData, ExitScene } from "./ExitScene.ts";
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
 import { fitPlayCamera } from "./playCamera.ts";
@@ -35,7 +34,7 @@ const RESTART = "restart";
 
 type Control = "exit" | "restart" | "start";
 // The card over the start screen, if one shows.
-type Card = "restart";
+type Card = "exit" | "restart";
 
 export interface StartData {
   readonly returnedToTitle?: true;
@@ -45,9 +44,8 @@ export interface StartData {
 // button, which opens the map (Continue, with him where he stands, once progress is saved),
 // under a nav bar with Exit at its right end only in an app window a script can close (exitShown).
 // Restart opens the restart card; the card that shows takes the keys and back until it closes.
-// Exit closes the app's window and never navigates. Back with no card open leaves the game where
-// it can (backLeavesGame): a closable app's window closes and a browser tab goes to the site's
-// home page. A control acts when a press lands on it and lifts on it.
+// Explicit Exit closes the window. Platform Back on bare Start asks before its native
+// continuation; nested cards retain their own Back. A control acts on a fresh release.
 export class StartScene extends Scene implements RestartOpener {
   private layout!: StartScreenLayout;
   private focus: Control | undefined;
@@ -87,14 +85,21 @@ export class StartScene extends Scene implements RestartOpener {
       this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
     }
     const onBack = (event: Event) => {
-      const action = startBackAction(this.card !== undefined, backLeavesGame());
-      if (action === "closeCard") {
+      if (this.card !== undefined) {
         const card = this.cardScene();
         if (modalInput(card).accepts(event)) {
           card.back();
         }
-      } else if (action === "leave" && modalInput(this).accepts(event)) {
-        exitApp(browserExitPage());
+      } else if (!this.starting && modalInput(this).accepts(event)) {
+        this.card = "exit";
+        this.scene.launch("exit", {
+          accepted: leavePlatformBack,
+          cancelled: () => {
+            this.card = undefined;
+            this.drawFocus();
+          },
+          words: START_EXIT_TEXT,
+        } satisfies ExitData);
       }
     };
     window.addEventListener(PHONE_EVENTS.backPressed, onBack);
@@ -282,8 +287,8 @@ export class StartScene extends Scene implements RestartOpener {
   }
 
   // The card that shows, which takes back.
-  private cardScene(): RestartScene {
-    return this.scene.get(RESTART) as RestartScene;
+  private cardScene(): ExitScene | RestartScene {
+    return this.scene.get(this.card!) as ExitScene | RestartScene;
   }
 
   private colour(name: string): number {

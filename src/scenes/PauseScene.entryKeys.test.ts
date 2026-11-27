@@ -20,6 +20,7 @@ vi.mock("../pwa/index.ts", () => ({
   backLeavesGame: () => true,
   closeApp: exit,
   exitShown: () => true,
+  leavePlatformBack: vi.fn(async () => false),
   startWakeLock: vi.fn(),
   stopWakeLock: vi.fn(),
   updateOffer: { defer: vi.fn() },

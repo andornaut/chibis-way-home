@@ -41,7 +41,7 @@ afterEach(() => layer.dispose());
 
 function openCard() {
   const events = new EventEmitter();
-  const accepted = vi.fn();
+  const accepted = vi.fn(async () => true);
   const cancelled = vi.fn();
   const stop = vi.fn(() => events.emit("shutdown"));
   const scene = Object.assign(new ExitScene(), {
@@ -67,14 +67,40 @@ it.each([
   expect(document.activeElement?.textContent).toContain(START_EXIT_TEXT.question);
   gate.accepts.mockReturnValue(false);
   card.button(decision.label).click();
+  await Promise.resolve();
   expect(card.stop).not.toHaveBeenCalled();
   gate.accepts.mockReturnValue(true);
   card.button(decision.label).click();
   window.dispatchEvent(new Event("back-pressed"));
+  await Promise.resolve();
   expect(card.stop).toHaveBeenCalledOnce();
   expect(card.accepted).toHaveBeenCalledTimes(decision.accepted ? 1 : 0);
   expect(card.cancelled).toHaveBeenCalledTimes(decision.accepted ? 0 : 1);
   expect(document.querySelector("[role=dialog]")).toBeNull();
+});
+
+it("keeps one pending native continuation and restores Cancel after a refused departure", async () => {
+  const card = openCard();
+  await dom.ready;
+  let resolve!: (left: boolean) => void;
+  card.accepted.mockImplementationOnce(
+    () =>
+      new Promise<boolean>((done) => {
+        resolve = done;
+      }),
+  );
+  card.button(TEXT.start.exit).click();
+  card.button(TEXT.start.exit).click();
+  window.dispatchEvent(new Event("back-pressed"));
+  expect(card.accepted).toHaveBeenCalledOnce();
+  expect(card.cancelled).not.toHaveBeenCalled();
+  expect(card.stop).not.toHaveBeenCalled();
+  resolve(false);
+  await Promise.resolve();
+  expect(card.button(TEXT.restart.cancel).disabled).toBe(false);
+  card.button(TEXT.restart.cancel).click();
+  expect(card.cancelled).toHaveBeenCalledOnce();
+  expect(card.stop).toHaveBeenCalledOnce();
 });
 
 it("cancels platform Back at modal priority without passing it to the opener", async () => {
