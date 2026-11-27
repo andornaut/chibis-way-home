@@ -11,6 +11,7 @@ const save = vi.hoisted(() => ({
   completeRunLinkStage: vi.fn(),
   completeStageRun: vi.fn(() => ({})),
   flushStats: vi.fn(),
+  prepareStageGift: vi.fn(),
   saveCompleted: vi.fn(),
   savedMap: vi.fn(() => ({ completed: [], stand: "unchanged" })),
   stageRunStats: vi.fn(() => ({})),
@@ -20,6 +21,10 @@ const save = vi.hoisted(() => ({
 vi.mock("phaser", () => ({ Input: {}, Scale: {}, Scene: class {}, Scenes: {} }));
 vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({}) }));
 vi.mock("./save.ts", () => save);
+vi.mock("../rules/stage/tiles.ts", async (original) => ({
+  ...(await original<object>()),
+  zoneLayout: () => ({}),
+}));
 vi.mock("../progress/save/runSummary.ts", () => ({ wholeRunSummary: () => ({}) }));
 
 import { type DialogueData, DialogueScene } from "./DialogueScene.ts";
@@ -168,6 +173,7 @@ it.each([
     const zone = Object.assign(new ZoneScene(), {
       ...replay,
       cameras: { main: camera },
+      manifest: { tilesets: [] },
       scene: route,
       trial: ZONE_MAP.nodes.find(({ id }) => id === stage)!.zone,
       zone: { turnedBack },

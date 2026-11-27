@@ -3,7 +3,7 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
 import type { SkillId } from "../data/types/index.ts";
-import { SKILL_IDS } from "../progress/index.ts";
+import { BEGINNING, PROGRESS_KEYS, PROGRESS_VERSION, SKILL_IDS } from "../progress/index.ts";
 import { createPageSave } from "../save/index.ts";
 import { createSave } from "./save.ts";
 
@@ -187,18 +187,15 @@ it("saves Unlock all power-ups as each pickup's grant and keeps the current sele
 });
 
 it("keeps an existing save's selection on load", async () => {
-  const { PROGRESS_VERSION } = await import("../progress/index.ts");
   const raw = JSON.stringify({
+    ...BEGINNING,
     activeSkill: "speedy",
-    allZonesUnlocked: false,
-    at: "beginning",
     openingSeen: true,
-    seenTips: [],
     skills: ["dash", "speedy"],
     version: PROGRESS_VERSION,
   });
   vi.stubGlobal("localStorage", {
-    getItem: (key: string) => (key === "chibis-way-home.save" ? raw : null),
+    getItem: (key: string) => (key === PROGRESS_KEYS.save ? raw : null),
     setItem: vi.fn(),
   });
   const save = openSave();

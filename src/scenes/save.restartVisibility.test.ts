@@ -2,6 +2,7 @@ import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/local
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
+import { BEGINNING } from "../progress/index.ts";
 import { createPageSave } from "../save/index.ts";
 import { createSave } from "./save.ts";
 
@@ -34,14 +35,7 @@ it("keeps confirmed Restart cleared across map browsing and reopen until real st
   save.saveStand(save.savedMap().stand);
   await save.flushStats();
   await save.loadProgress();
-  expect(save.savedProgress()).toEqual({
-    activeSkill: null,
-    allZonesUnlocked: false,
-    at: "beginning",
-    openingSeen: false,
-    seenTips: [],
-    skills: [],
-  });
+  expect(save.savedProgress()).toEqual(BEGINNING);
   expect(save.stageRunStats(stage)).toEqual(stats);
   expect(save.savedMap().stand).toBe(stage);
   save.beginStageRun(stage);
@@ -59,12 +53,5 @@ it("does not begin saved progress for a non-catalogued diagnostic stage", async 
   save.beginStageRun("diagnostic-fixture");
   save.saveStand(ZONE_MAP.start);
   await save.loadProgress();
-  expect(save.savedProgress()).toEqual({
-    activeSkill: null,
-    allZonesUnlocked: false,
-    at: "beginning",
-    openingSeen: false,
-    seenTips: [],
-    skills: [],
-  });
+  expect(save.savedProgress()).toEqual(BEGINNING);
 });

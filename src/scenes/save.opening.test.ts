@@ -2,6 +2,7 @@ import { localSaveStorage } from "@andornaut/game-kit/runtime/web/save/dom/local
 import { afterEach, expect, it, vi } from "vitest";
 
 import { ZONE_MAP } from "../data/map.ts";
+import { BEGINNING } from "../progress/index.ts";
 import { createPageSave } from "../save/index.ts";
 import { createSave } from "./save.ts";
 
@@ -21,24 +22,10 @@ it("preserves opening acknowledgement through progress writes and resets it inde
   const save = openSave();
   await save.loadProgress();
   save.saveStand(ZONE_MAP.start);
-  expect(save.savedProgress()).toEqual({
-    activeSkill: null,
-    allZonesUnlocked: false,
-    at: "beginning",
-    openingSeen: false,
-    seenTips: [],
-    skills: [],
-  });
+  expect(save.savedProgress()).toEqual(BEGINNING);
   save.saveOpeningSeen();
   await save.loadProgress();
-  expect(save.savedProgress()).toEqual({
-    activeSkill: null,
-    allZonesUnlocked: false,
-    at: "beginning",
-    openingSeen: true,
-    seenTips: [],
-    skills: [],
-  });
+  expect(save.savedProgress()).toEqual({ ...BEGINNING, openingSeen: true });
   const destination = ZONE_MAP.destinations[0]!;
   const stage = destination.stages[0]!;
   save.beginStageRun(stage);
@@ -52,13 +39,6 @@ it("preserves opening acknowledgement through progress writes and resets it inde
   const stats = save.stageRunStats(stage);
   save.clearProgress();
   await save.loadProgress();
-  expect(save.savedProgress()).toEqual({
-    activeSkill: null,
-    allZonesUnlocked: false,
-    at: "beginning",
-    openingSeen: false,
-    seenTips: [],
-    skills: [],
-  });
+  expect(save.savedProgress()).toEqual(BEGINNING);
   expect(save.stageRunStats(stage)).toEqual(stats);
 });
