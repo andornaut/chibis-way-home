@@ -80,6 +80,7 @@ const BLOCKING_CARDS = [
   "achievements",
   "cheats",
   "death",
+  "exit",
   "restart",
   "settings",
   "skillDetail",
@@ -92,7 +93,6 @@ const START = "start";
 interface PausableConversation {
   pausable(): boolean;
 }
-
 // One persistent entry opens Pause over active pausable content and Menu elsewhere.
 // The entry respects the top modal owner. Each visit retains the underlying scopes,
 // focus and already-paused scenes, and resumes only its own held subset when it closes.

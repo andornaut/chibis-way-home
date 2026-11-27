@@ -46,11 +46,13 @@ export class ExitScene extends Scene {
     const backdrop = showModalBackdrop(this);
     const cancel = () => this.decide(false);
     const onBack = (event: Event) => {
-      if (this.decided || !this.sys.isActive() || !input.accepts(event)) {
+      if (this.decided || !this.sys.isActive()) {
         return;
       }
       event.stopImmediatePropagation();
-      cancel();
+      if (input.accepts(event)) {
+        cancel();
+      }
     };
     window.addEventListener(PHONE_EVENTS.backPressed, onBack, true);
     const stopButtons = bindSceneButtons(

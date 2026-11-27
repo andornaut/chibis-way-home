@@ -108,3 +108,28 @@ it("does not reopen or dispatch a decision after shutdown while the backdrop is 
   expect(card.accepted).not.toHaveBeenCalled();
   expect(card.cancelled).not.toHaveBeenCalled();
 });
+
+it("consumes platform Back while its pending backdrop keeps input guarded", async () => {
+  let ready!: () => void;
+  dom.ready = new Promise<void>((resolve) => {
+    ready = resolve;
+  });
+  gate.accepts.mockReturnValue(false);
+  const card = openCard();
+  const openerBack = vi.fn();
+  window.addEventListener("back-pressed", openerBack);
+  try {
+    window.dispatchEvent(new Event("back-pressed"));
+    expect(openerBack).not.toHaveBeenCalled();
+    expect(card.cancelled).not.toHaveBeenCalled();
+    gate.accepts.mockReturnValue(true);
+    ready();
+    await dom.ready;
+    window.dispatchEvent(new Event("back-pressed"));
+    expect(card.cancelled).toHaveBeenCalledOnce();
+    expect(openerBack).not.toHaveBeenCalled();
+  } finally {
+    window.removeEventListener("back-pressed", openerBack);
+    card.events.emit("shutdown");
+  }
+});

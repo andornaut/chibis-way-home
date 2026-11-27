@@ -120,6 +120,7 @@ it("keeps card keys guarded and restores only held content", async () => {
   for (const key of [
     "stageSelect",
     "restart",
+    "exit",
     "achievements",
     "death",
     "skillDetail",
