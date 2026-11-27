@@ -66,3 +66,5 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0340 | Align Chibi's homepage with the shared structure                        | [cwh-0340.md](../work/cwh-0340.md) |
 | cwh-0342 | Remove redundant homepage navigation                                    | [cwh-0342.md](../work/cwh-0342.md) |
 | cwh-0344 | Square the lower edges of game buttons                                  | [cwh-0344.md](../work/cwh-0344.md) |
+| cwh-0346 | Keep Start button text inside the rotated face                          | [cwh-0346.md](../work/cwh-0346.md) |
+| cwh-0347 | Confirm platform Back before leaving Start                              | [cwh-0347.md](../work/cwh-0347.md) |
