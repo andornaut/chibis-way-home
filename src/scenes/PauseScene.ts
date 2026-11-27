@@ -12,13 +12,13 @@ import { TOUCH } from "../data/touch.ts";
 import type { SkillId } from "../data/types/index.ts";
 import { SKILL_IDS } from "../progress/index.ts";
 import { PHONE_EVENTS, startWakeLock, stopWakeLock, updateOffer } from "../pwa/index.ts";
+import { foregroundGameEscape } from "../ui/binding/index.ts";
 import {
   type CardAction,
   cardBackAction,
   cardKeyAction,
   cardTurnAction,
   createPauseView,
-  focusKeyAction,
   frameTurn,
   type PauseColours,
   type PauseView,
@@ -34,13 +34,13 @@ import type { AchievementsOpener, AchievementsScene } from "./AchievementsScene.
 import type { CheatsOpener, CheatsScene } from "./CheatsScene.ts";
 import { bindSceneActions, bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, sceneDomUi } from "./domUi.ts";
+import { defaultForeground, registerGameplayForeground } from "./foreground.ts";
 import {
   MENU_CONTENT_SCENES,
   menuContext,
   type MenuFrame,
   type NestedMenuCard,
 } from "./menuContext.ts";
-import { menuEntryFocus } from "./menuEntryFocus.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import {
   globalMenuInput,
@@ -180,7 +180,12 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
       this.releasePauseButton();
       this.syncMenuVisibility();
     });
-    this.watchKeys(view);
+    this.watchKeys();
+
+    const layer = sceneDomUi(this);
+    if (layer !== undefined) {
+      this.events.once("shutdown", registerGameplayForeground(this, layer.element));
+    }
     this.watchBackAndTurns();
     this.loadGlyphs();
     this.events.once("shutdown", () => {
@@ -659,7 +664,12 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
     if (open) {
       showPauseMenu(TEXT, this.mode, this.homeShown, view);
       this.closeModal ??= sceneDomUi(this)?.modals.open(
-        { backdrop: view.card.backdrop, close: () => this.close(), isolation: "dialog" },
+        {
+          backdrop: view.card.backdrop,
+          close: () => this.close(),
+          foreground: defaultForeground(modalInput(this), () => this.close(), view.card.dialog),
+          isolation: "dialog",
+        },
         view.card.dialog,
       );
     } else {
@@ -874,9 +884,33 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
 
   // Existing Pause shortcuts retain their content guards. Tab follows the card order;
   // Enter and Space on the card itself still take the primary action.
-  private watchKeys(view: PauseView): void {
+  private watchKeys(): void {
+    this.events.once(
+      "shutdown",
+      foregroundGameEscape(document, () =>
+        this.entryAvailable() && !this.blocked() && this.cardInput().accepts()
+          ? () => this.act("open")
+          : undefined,
+      ),
+    );
     const onPauseKey = (event: KeyboardEvent) => {
-      const action = cardKeyAction(false, event.key, event.repeat);
+      if (
+        event.isComposing ||
+        event.keyCode === 229 ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        (event.target instanceof Element &&
+          event.target.closest(
+            "input,textarea,select,[contenteditable],[role=textbox],dialog[open]",
+          ))
+      ) {
+        return;
+      }
+      const action =
+        event.key === "p" || event.key === "P"
+          ? cardKeyAction(false, event.key, event.repeat)
+          : undefined;
       if (
         action === undefined ||
         this.state !== "closed" ||
@@ -897,54 +931,5 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
       document.removeEventListener("keydown", onPauseKey, true);
       this.input.keyboard?.off("keydown", onPauseKey);
     });
-    const onEntryKey = (event: KeyboardEvent) => {
-      if (view.pauseButton.closest("[inert]") !== null) {
-        return;
-      }
-      const context = this.context();
-      if (
-        this.state === "closed" &&
-        context !== undefined &&
-        context.scene !== ZONE &&
-        !view.pauseButton.hidden &&
-        !view.pauseButton.disabled
-      ) {
-        const root = view.root.ownerDocument.querySelector<HTMLElement>(
-          `[data-menu-scene="${context.scene}"]`,
-        );
-        if (root !== null) {
-          menuEntryFocus(view.root.ownerDocument, view.pauseButton, root, event);
-        }
-      }
-      if (event.target === view.pauseButton && (event.key === "Enter" || event.key === " ")) {
-        // Own entry activation before page controllers and native button defaults.
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (!event.repeat) {
-          view.pauseButton.click();
-        }
-      }
-    };
-    document.addEventListener("keydown", onEntryKey, true);
-    this.events.once("shutdown", () => document.removeEventListener("keydown", onEntryKey, true));
-    const { dialog } = view.card;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.target === dialog && (event.key === "Enter" || event.key === " ")) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!event.repeat && this.state === "open" && modalInput(this).accepts(event)) {
-          this.close();
-        }
-        return;
-      }
-      const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
-      if (event.target === dialog && (action === "next" || action === "previous")) {
-        event.preventDefault();
-        event.stopPropagation();
-        (action === "next" ? view.card.buttons.achievements : view.card.close).focus();
-      }
-    };
-    dialog.addEventListener("keydown", onKeyDown);
-    this.events.once("shutdown", () => dialog.removeEventListener("keydown", onKeyDown));
   }
 }

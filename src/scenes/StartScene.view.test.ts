@@ -3,6 +3,8 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, expect, it, vi } from "vitest";
 
+import { mountFixtureForeground } from "./foregroundFixture.ts";
+
 const native = vi.hoisted(() => ({ cancel: vi.fn(), layer: vi.fn(), reveal: vi.fn() }));
 const requestUpdateCheck = vi.hoisted(() => vi.fn());
 vi.mock("phaser", () => ({ Scene: class {} }));
@@ -21,7 +23,10 @@ vi.mock("./scenePalette.ts", () => ({ paletteColour: () => 0 }));
 vi.mock("./playCamera.ts", () => ({ fitPlayCamera: vi.fn() }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: async () => "blob:art",
-  mountSceneView: (_scene: unknown, view: HTMLElement) => document.body.append(view),
+  mountSceneView: (scene: StartScene, view: HTMLElement) => {
+    document.body.append(view);
+    mountFixtureForeground(scene, "start", view);
+  },
   revealSceneView: native.reveal,
   sceneDomUi: native.layer,
 }));
@@ -112,7 +117,10 @@ it("enables Start input only after the native view decodes, then cancels on shut
     return {
       cancel: native.cancel,
       revealed: new Promise<boolean>((resolve) => {
-        reveal = resolve;
+        reveal = (shown) => {
+          root.hidden = !shown;
+          resolve(shown);
+        };
       }),
     };
   });

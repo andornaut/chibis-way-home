@@ -83,7 +83,9 @@ export class StartScene extends Scene implements RestartOpener {
     this.mountNative();
     this.showPressed(undefined);
     modalInput(this).subscribe(() => this.showPressed(undefined));
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
+    if (sceneDomUi(this) === undefined) {
+      this.input.keyboard?.on("keydown", (event: KeyboardEvent) => this.key(event));
+    }
     const onBack = (event: Event) => {
       const action = startBackAction(this.card !== undefined, backLeavesGame());
       if (action === "closeCard") {
@@ -185,7 +187,9 @@ export class StartScene extends Scene implements RestartOpener {
       }
     };
     const keep = (event: Event) => event.preventDefault();
-    view.root.addEventListener("keydown", key);
+    if (sceneDomUi(this) === undefined) {
+      view.root.addEventListener("keydown", key);
+    }
     view.root.addEventListener("focusin", focus);
     view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
     view.root.addEventListener("touchend", keep, { capture: true, passive: false });

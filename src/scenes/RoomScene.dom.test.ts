@@ -29,7 +29,10 @@ vi.mock("./modalInput.ts", async (original) => ({
 }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: vi.fn(async (_scene, art, frame) => `blob:${art}:${frame}`),
-  mountSceneView: vi.fn((_scene, root: HTMLElement) => document.body.append(root)),
+  mountSceneView: vi.fn((scene: RoomScene, root: HTMLElement) => {
+    document.body.append(root);
+    mountFixtureForeground(scene, "room", root);
+  }),
   revealSceneView: vi.fn(),
   sceneDomUi: () => ({ element: document.createElement("div") }),
 }));
@@ -56,6 +59,7 @@ function fixture(data: RoomData = { room: "dash-gift", stage: "street" }) {
   });
   const events = new EventEmitter();
   const controller = {
+    isActive: () => true,
     launch: vi.fn(),
     pause: vi.fn(),
     resume: vi.fn(),
@@ -192,3 +196,4 @@ it("cancels a pending room handoff on shutdown without enabling stale controls",
   expect(controller.resume).not.toHaveBeenCalled();
   expect(events.listenerCount("prerender")).toBe(0);
 });
+import { mountFixtureForeground } from "./foregroundFixture.ts";

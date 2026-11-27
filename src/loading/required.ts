@@ -10,7 +10,7 @@ import {
 import type { LaunchFailure } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 
 import { SCREEN } from "../data/screen.ts";
-import { bindFactoryAction } from "../ui/binding/index.ts";
+import { bindFactoryAction, foregroundInput } from "../ui/binding/index.ts";
 import { loadingFailurePresentation, loadingUnit } from "./presentation.ts";
 
 // One page registry shares the kit's required-resource failure and explicit Retry lifecycle.
@@ -122,6 +122,7 @@ export function mountRequiredLoading(parent: HTMLElement): () => void {
     view = mountLoadingFailure(
       {
         bindHoldAction: bindFactoryAction,
+        foregroundInput: foregroundInput(document),
         onRetry,
         presentation,
       },

@@ -21,6 +21,7 @@ import {
 } from "../ui/index.ts";
 import { bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { stageNavigationKey } from "./foreground.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
 import { mapFullyOpen, savedMap } from "./save.ts";
@@ -126,11 +127,13 @@ export class StageSelectScene extends Scene {
     ).catch((error: unknown) => console.warn("The stage screenshots failed to load", error));
     view.root.addEventListener("keydown", (event) => this.key(event));
     // A focused button presses on Space's keyup; the keydown already did.
-    view.root.addEventListener("keyup", (event) => {
-      if (event.key === " ") {
-        event.preventDefault();
-      }
-    });
+    if (sceneDomUi(this) === undefined) {
+      view.root.addEventListener("keyup", (event) => {
+        if (event.key === " ") {
+          event.preventDefault();
+        }
+      });
+    }
     const input = modalInput(this);
     const backdrop = showModalBackdrop(this);
     const guard = { gate: input };
@@ -175,7 +178,15 @@ export class StageSelectScene extends Scene {
       if (shown && !this.finished) {
         view.root.hidden = false;
         this.closeModal = sceneDomUi(this)?.modals.open(
-          { backdrop: view.backdrop, isolation: "dialog" },
+          {
+            backdrop: view.backdrop,
+            close: () => this.back(),
+            foreground: {
+              preserveKey: (event) =>
+                !this.finished && input.accepts() && stageNavigationKey(event),
+            },
+            isolation: "dialog",
+          },
           view.dialog,
         );
         this.render();
@@ -235,10 +246,33 @@ export class StageSelectScene extends Scene {
   }
 
   private key(event: KeyboardEvent): void {
+    if (
+      event.isComposing ||
+      event.keyCode === 229 ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      (event.target instanceof Element &&
+        event.target.closest("input,textarea,select,[contenteditable],[role=textbox],dialog[open]"))
+    ) {
+      return;
+    }
+    if (event.key === "p" || event.key === "P") {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    if (sceneDomUi(this) !== undefined && !stageNavigationKey(event)) {
+      return;
+    }
     if (!modalInput(this).accepts(event)) {
       return;
     }
-    if (event.key !== "Escape" && focusKeyAction(event.key, event.shiftKey, false) === undefined) {
+    if (
+      sceneDomUi(this) === undefined &&
+      event.key !== "Escape" &&
+      focusKeyAction(event.key, event.shiftKey, false) === undefined
+    ) {
       return;
     }
     event.preventDefault();

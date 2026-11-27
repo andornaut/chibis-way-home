@@ -287,9 +287,9 @@ it("focuses a touched dialogue control without a ring and keeps keyboard focus v
   expect(keyboardFocus).toHaveBeenCalledWith();
 });
 
-it("contains P and Escape without advancing, and takes no action the modal gate refuses", async () => {
+it("contains P without advancing and takes no action the modal gate refuses", async () => {
   const { line, press, root, scene } = await conversation();
-  for (const key of ["p", "P", "Escape"]) {
+  for (const key of ["p", "P"]) {
     expect(pressKey([], key).stopped()).toBe(true);
   }
   const cover = Object.assign(new DialogueScene(), {
@@ -452,3 +452,11 @@ it.each([
     events.emit("shutdown");
   },
 );
+
+it("routes one eligible Escape to Skip without answering or leaking a repeat", async () => {
+  const { opener } = await conversation();
+  expect(pressKey([], "Escape").stopped()).toBe(true);
+  expect(opener.dialogueClosed).toHaveBeenCalledOnce();
+  pressKey([], "Escape", { repeat: true });
+  expect(opener.dialogueClosed).toHaveBeenCalledOnce();
+});

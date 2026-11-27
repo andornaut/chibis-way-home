@@ -127,7 +127,11 @@ it("keeps key aliases in active play and leaves native controls and modal input 
     game: {
       canvas: {
         ownerDocument: { body: bare, documentElement: {} },
-        parentElement: { contains: (target: unknown) => target === hud },
+        parentElement: {
+          addEventListener: vi.fn(),
+          contains: (target: unknown) => target === hud,
+          removeEventListener: vi.fn(),
+        },
       },
       events: gameEvents,
     },
@@ -147,7 +151,9 @@ it("keeps key aliases in active play and leaves native controls and modal input 
     keyboard.emit(type, event);
     return event;
   };
-  expect(send("keydown", "KeyH", hud).defaultPrevented).toBe(true);
+  expect(send("keydown", "KeyH", hud).defaultPrevented).toBe(false);
+  expect(keyIntent(scene.heldKeys).move).toBe(0);
+  expect(send("keydown", "KeyH", bare).defaultPrevented).toBe(true);
   expect(keyIntent(scene.heldKeys).move).toBe(-1);
   expect(send("keydown", "Space", hud).defaultPrevented).toBe(false);
   expect(send("keydown", "Enter", hud).defaultPrevented).toBe(false);

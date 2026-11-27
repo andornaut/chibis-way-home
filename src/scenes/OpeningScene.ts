@@ -90,8 +90,12 @@ export class OpeningScene extends Scene {
         event.preventDefault();
       }
     };
-    this.input.keyboard?.on("keydown", keydown);
-    this.input.keyboard?.on("keyup", keyup);
+    if (sceneDomUi(this) === undefined) {
+      this.input.keyboard?.on("keydown", keydown);
+    }
+    if (sceneDomUi(this) === undefined) {
+      this.input.keyboard?.on("keyup", keyup);
+    }
     this.drawFrame();
     if (sceneDomUi(this) !== undefined) {
       const view = createOpeningView(document, { ...TEXT.dialogue, name: TEXT.opening.name });
@@ -99,8 +103,7 @@ export class OpeningScene extends Scene {
       const frame = this.playback.frame();
       showOpeningCaption(TEXT.lines[frame.beat.text]!, view);
       const stop = this.watchPresses(view);
-      view.root.addEventListener("keydown", keydown);
-      view.root.addEventListener("keyup", keyup);
+
       const reveal = revealSceneView(this, view.root, []);
       this.events.once("shutdown", () => {
         ++this.generation;

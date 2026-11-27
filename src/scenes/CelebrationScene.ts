@@ -11,7 +11,7 @@ import {
   stepFocus,
 } from "../ui/index.ts";
 import { bindSceneActions } from "./domTaps.ts";
-import { artFrameUrl, mountSceneView, revealSceneView } from "./domUi.ts";
+import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
 import { fitPlayCamera } from "./playCamera.ts";
@@ -93,8 +93,12 @@ export class CelebrationScene extends Scene implements RestartOpener {
         event.stopPropagation();
       }
     };
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("keyup", onKeyUp);
+    if (sceneDomUi(this) === undefined) {
+      document.addEventListener("keydown", onKey);
+    }
+    if (sceneDomUi(this) === undefined) {
+      document.addEventListener("keyup", onKeyUp);
+    }
     this.events.once("shutdown", () => {
       ++this.generation;
       reveal.cancel();

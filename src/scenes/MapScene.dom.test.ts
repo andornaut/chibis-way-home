@@ -3,6 +3,8 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 
+import { mountFixtureForeground } from "./foregroundFixture.ts";
+
 const ready = vi.hoisted(() => ({
   cancel: vi.fn(),
   finish: undefined as ((shown: boolean) => void) | undefined,
@@ -17,11 +19,12 @@ vi.mock("../pwa/index.ts", async (original) => ({
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: (_scene: unknown, art: string, frame: unknown) =>
     Promise.resolve(`blob:${art}-${String(frame)}`),
-  mountSceneView: (scene: { events: EventEmitter }, root: HTMLElement) => {
+  mountSceneView: (scene: MapScene, root: HTMLElement) => {
     document.body.append(root);
+    mountFixtureForeground(scene, "map", root);
     scene.events.once("shutdown", () => root.remove());
   },
-  revealSceneView: (_scene: unknown, root: HTMLElement, urls: Promise<readonly string[]>) => {
+  revealSceneView: (_scene: MapScene, root: HTMLElement, urls: Promise<readonly string[]>) => {
     ready.urls = urls;
     root.hidden = true;
     root.inert = true;
@@ -32,6 +35,7 @@ vi.mock("./domUi.ts", () => ({
           root.hidden = !shown;
           root.inert = !shown;
           resolve(shown);
+          queueMicrotask(() => _scene instanceof MapScene && _scene.events.emit("postupdate"));
         };
       }),
     };
@@ -136,13 +140,15 @@ it("restores the focused Continue on the rebuilt map only after reveal", async (
 });
 
 it.each(["unfocused default shortcut", "competing focus after restart"])(
-  "does not assign Continue focus after %s",
+  "restores the safe Continue default without stealing competing focus after %s",
   async (reason) => {
     const original = setup();
     ready.finish!(true);
     await Promise.resolve();
     if (reason === "unfocused default shortcut") {
-      original.root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, code: "Enter" }));
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent("keydown", { bubbles: true, code: "Enter", key: "Enter" }),
+      );
     } else {
       tap(original.root.querySelector('[data-control="continue"]')!);
     }
@@ -150,7 +156,7 @@ it.each(["unfocused default shortcut", "competing focus after restart"])(
     original.scene.stageSelectionClosed();
     const data = original.route.restart.mock.calls[0]![0] as Parameters<MapScene["init"]>[0];
     original.events.emit("shutdown");
-    setup(original.scene, data);
+    const rebuilt = setup(original.scene, data);
     if (reason === "competing focus after restart") {
       const other = document.createElement("button");
       document.body.append(other);
@@ -159,7 +165,11 @@ it.each(["unfocused default shortcut", "competing focus after restart"])(
     const focused = document.activeElement;
     ready.finish!(true);
     await Promise.resolve();
-    expect(document.activeElement).toBe(focused);
+    expect(document.activeElement).toBe(
+      reason === "unfocused default shortcut"
+        ? rebuilt.root.querySelector('[data-control="continue"]')
+        : focused,
+    );
   },
 );
 
@@ -318,9 +328,13 @@ it("reaches Back to title with arrows and activates only the focused footer acti
   const { root, route } = setup();
   ready.finish!(true);
   await Promise.resolve();
-  const key = (code: string) =>
-    root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, code }));
-  key("ArrowDown");
+  const key = (code: string) => {
+    const target = document.activeElement!;
+    target.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, code, key: code }),
+    );
+    target.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, code, key: code }));
+  };
   expect(document.activeElement).toBe(root.querySelector('[data-control="continue"]'));
   expect(route.launch).not.toHaveBeenCalled();
   key("ArrowDown");

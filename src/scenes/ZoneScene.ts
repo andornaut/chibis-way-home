@@ -1561,22 +1561,20 @@ export class ZoneScene extends Scene implements DeathOpener, DialogueOpener, Int
       this.presses.clear();
     });
     const keyboard = this.input.keyboard;
-    if (!keyboard) {
-      return;
-    }
-    const { down, up } = gameplayKeyHandlers(
+    const { dispose, down, up } = gameplayKeyHandlers(
       (event) => !this.playCovered() && this.scene.isActive() && input.accepts(event),
       this.game.canvas,
       this.heldKeys,
     );
     // A key released while the page is hidden never sends keyup.
     const clear = () => this.clearDesktopInput();
-    keyboard.on("keydown", down);
-    keyboard.on("keyup", up);
+    keyboard?.on("keydown", down);
+    keyboard?.on("keyup", up);
     this.game.events.on("blur", clear);
     this.events.once("shutdown", () => {
-      keyboard.off("keydown", down);
-      keyboard.off("keyup", up);
+      dispose();
+      keyboard?.off("keydown", down);
+      keyboard?.off("keyup", up);
       this.game.events.off("blur", clear);
       clear();
     });

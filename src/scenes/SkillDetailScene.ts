@@ -8,6 +8,7 @@ import { PHONE_EVENTS } from "../pwa/index.ts";
 import { createSkillDetailsCard, SKILL_ART } from "../ui/index.ts";
 import { bindSceneButtons } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { defaultForeground } from "./foreground.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
 import { paletteColour } from "./scenePalette.ts";
@@ -74,12 +75,6 @@ export class SkillDetailScene extends Scene {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "p" || event.key === "P") {
         event.stopPropagation();
-      } else if (event.target === card.dialog && (event.key === "Enter" || event.key === " ")) {
-        event.preventDefault();
-        event.stopPropagation();
-        if (!event.repeat) {
-          this.requestClose();
-        }
       }
     };
     card.dialog.addEventListener("keydown", onKeyDown);
@@ -126,7 +121,12 @@ export class SkillDetailScene extends Scene {
         this.ready = true;
         card.root.hidden = false;
         this.closeModal = sceneDomUi(this)?.modals.open(
-          { backdrop: card.backdrop, close: () => this.requestClose(), isolation: "dialog" },
+          {
+            backdrop: card.backdrop,
+            close: () => this.requestClose(),
+            foreground: defaultForeground(input, () => this.requestClose(), card.dialog),
+            isolation: "dialog",
+          },
           card.dialog,
         );
       }

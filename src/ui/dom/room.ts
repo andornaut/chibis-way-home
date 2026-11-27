@@ -97,6 +97,7 @@ export function createRoomView(
   writeLayoutProperties(roomProperties(), root);
   const view = make("div", "ui-view room-view");
   const leave = textButton(document, words.action, words.gift !== undefined);
+  leave.dataset.control = "leave";
   if (words.gift === undefined) {
     const title = make("h1", "room-name ui-text-heading");
     title.id = "room-title";
@@ -143,6 +144,9 @@ export function createRoomView(
   frame.content.append(body);
   const footer = make("div", "room-footer");
   const talk = words.talk === undefined ? undefined : textButton(document, words.talk);
+  if (talk !== undefined) {
+    talk.dataset.control = "talk";
+  }
   footer.append(
     createActions(document, [...(talk === undefined ? [] : [talk]), leave], {
       context: { axis: "row" },

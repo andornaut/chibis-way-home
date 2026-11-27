@@ -166,3 +166,19 @@ it("preserves a turned-back summary without claiming a clear or inventing a stat
     TEXT.death.progress.replace("{percent}", "37"),
   );
 });
+
+it("uses the actual statement as a guarded secondary-click action", () => {
+  const { dialog, route } = summary(new CutsceneScene());
+  const target = dialog.querySelector(".stage-summary-statement")!;
+  const pointer = {
+    bubbles: true,
+    button: 2,
+    cancelable: true,
+    isPrimary: true,
+    pointerId: 7,
+    pointerType: "mouse",
+  };
+  target.dispatchEvent(new PointerEvent("pointerdown", pointer));
+  target.dispatchEvent(new PointerEvent("pointerup", pointer));
+  expect(route.start).toHaveBeenCalledExactlyOnceWith("zone", { continueVisit: true, node: NEXT });
+});

@@ -249,7 +249,10 @@ const cardShown = (dialog: HTMLElement) => !dialog.closest<HTMLElement>(".ui-car
 
 it.each(
   MODES.flatMap((mode) =>
-    ["P", "Escape", "back", "frame turn", "pause button"].map((route) => ({ mode, route })),
+    (mode === "line"
+      ? ["P", "back", "frame turn", "pause button"]
+      : ["P", "Escape", "back", "frame turn", "pause button"]
+    ).map((route) => ({ mode, route })),
   ),
 )(
   "leaves the physical $mode modal in control when $route requests Pause",
@@ -270,23 +273,24 @@ it.each(
   },
 );
 
-it.each(MODES.flatMap((mode) => ["p", "P", "Escape"].map((name) => ({ mode, name }))))(
-  "leaves $name with the physical $mode modal without a story action",
-  async ({ mode, name }) => {
-    const { acted, key, pause, state } = await conversation(mode);
-    const before = state();
-    key(name);
-    await settle();
-    expect(cardShown(pause.dialog)).toBe(false);
-    expect(acted).not.toHaveBeenCalled();
-    expect(state()).toEqual(before);
-  },
-);
+it.each(
+  MODES.flatMap((mode) =>
+    (mode === "line" ? ["p", "P"] : ["p", "P", "Escape"]).map((name) => ({ mode, name })),
+  ),
+)("leaves $name with the physical $mode modal without a story action", async ({ mode, name }) => {
+  const { acted, key, pause, state } = await conversation(mode);
+  const before = state();
+  key(name);
+  await settle();
+  expect(cardShown(pause.dialog)).toBe(false);
+  expect(acted).not.toHaveBeenCalled();
+  expect(state()).toEqual(before);
+});
 
 it("ignores an unrelated key and advances only on Enter without opening Pause", async () => {
   const { acted, dialogue, key, pause, scenes } = await conversation();
   dialogue.paragraph = 0;
-  expect(key("x").stopped()).toBe(true);
+  expect(key("x").stopped()).toBe(false);
   expect(dialogue.paragraph).toBe(0);
   expect(acted).not.toHaveBeenCalled();
   expect(cardShown(pause.dialog)).toBe(false);

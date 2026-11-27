@@ -11,7 +11,7 @@ import { createViewUnits, slice } from "@andornaut/game-kit/runtime/web/ui/dom/v
 
 import { CARD_CONTENT, DEATH_CARD, TEXT_BUTTON } from "../../data/layout.ts";
 import type { Point } from "../../data/types/index.ts";
-import { disposeGameButtons } from "../binding/index.ts";
+import { disposeGameButtons, foregroundInput, foregroundPolicy } from "../binding/index.ts";
 import { registerUiFonts, UI_FONT_FAMILY, UI_FONT_RESOURCES } from "../chrome/uiFonts.ts";
 import { FONT_METRICS, hitMargin, playView } from "../layout/index.ts";
 import {
@@ -249,7 +249,7 @@ function createDimmingModals(
   dim: ReturnType<typeof createDim>,
   globalEntry: HTMLElement,
 ) {
-  const modals = createModalLayer(root);
+  const modals = createModalLayer(root, foregroundInput(root.ownerDocument));
   const stack: { readonly dialog: HTMLElement }[] = [];
   const paint = createModalPaint(root, globalEntry);
   const update = () => {
@@ -257,18 +257,55 @@ function createDimmingModals(
     paint.show(stack.map(({ dialog }) => dialog));
     dim.apply(top === undefined ? new Set() : dimTargets(root, top.dialog));
   };
+  // P remains the game's existing modal close key; the shared owner handles Escape.
+  const legacyPauseKey = (event: KeyboardEvent) => {
+    if (
+      !["p", "P"].includes(event.key) ||
+      event.isComposing ||
+      event.keyCode === 229 ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      (event.target instanceof Element &&
+        event.target.closest("input,textarea,select,[contenteditable],[role=textbox],dialog[open]"))
+    ) {
+      return;
+    }
+    const top = stack.at(-1);
+    if (top === undefined) {
+      return;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if (!event.repeat && foregroundPolicy(top.dialog).guard?.gate.accepts() !== false) {
+      modals.back();
+    }
+  };
+  root.addEventListener("keydown", legacyPauseKey);
   const observer = new MutationObserver(update);
   observer.observe(root, { attributeFilter: ["inert"], attributes: true, subtree: true });
   const layer: ModalLayer = {
     back: () => modals.back(),
     dispose() {
+      root.removeEventListener("keydown", legacyPauseKey);
       observer.disconnect();
       stack.length = 0;
       update();
       modals.dispose();
     },
     open(options, dialog) {
-      const close = modals.open({ ...options, isolation: "dialog", live: [] }, dialog);
+      const close = modals.open(
+        {
+          ...options,
+          foreground: {
+            ...foregroundPolicy(dialog),
+            ...options.foreground,
+          },
+          isolation: "dialog",
+          live: [],
+        },
+        dialog,
+      );
       const entry = { dialog };
       stack.push(entry);
       update();

@@ -9,7 +9,6 @@ import {
   DEATH_ACTIONS,
   type DeathAction,
   type DeathCardView,
-  deathKeyAction,
   STAGE_METRICS,
   statsStatement,
   statsTotalRows,
@@ -17,6 +16,7 @@ import {
 } from "../ui/index.ts";
 import { bindSceneButtons } from "./domTaps.ts";
 import { mountSceneView, sceneDomUi } from "./domUi.ts";
+import { defaultForeground } from "./foreground.ts";
 import { showModalBackdrop } from "./modalBackdrop.ts";
 import { modalInput } from "./modalInput.ts";
 
@@ -80,18 +80,6 @@ export class DeathScene extends Scene {
       ),
     });
     card.root.hidden = true;
-    // A fresh Enter or Space with the focus on the card itself presses Try again; the modal layer
-    // handles every other key.
-    const onKeyDown = (event: KeyboardEvent) => {
-      const action =
-        event.target === card.dialog ? deathKeyAction(undefined, event).action : undefined;
-      if (action !== undefined) {
-        event.preventDefault();
-        event.stopPropagation();
-        card.buttons[action].click();
-      }
-    };
-    card.dialog.addEventListener("keydown", onKeyDown);
     const input = modalInput(this);
     const backdrop = showModalBackdrop(this);
     const stops = [
@@ -104,7 +92,6 @@ export class DeathScene extends Scene {
         })),
         card.root,
       ),
-      () => card.dialog.removeEventListener("keydown", onKeyDown),
     ];
     let shown = true;
     this.events.once("shutdown", () => {
@@ -118,7 +105,11 @@ export class DeathScene extends Scene {
       if (shown && !this.finished) {
         card.root.hidden = false;
         this.closeModal = sceneDomUi(this)?.modals.open(
-          { backdrop: card.backdrop, isolation: "dialog" },
+          {
+            backdrop: card.backdrop,
+            foreground: defaultForeground(input, () => this.act("retry"), card.dialog),
+            isolation: "dialog",
+          },
           card.dialog,
         );
       }

@@ -322,24 +322,6 @@ export class RoomScene extends Scene implements DialogueOpener {
 
   private watchDomInput(view: RoomView): () => void {
     const input = modalInput(this);
-    const onKey = (event: KeyboardEvent) => {
-      if (!this.domReady || !input.accepts(event)) {
-        return;
-      }
-      if (
-        event.altKey ||
-        event.ctrlKey ||
-        event.metaKey ||
-        (focusKeyAction(event.key, event.shiftKey, event.repeat) === undefined &&
-          ![" ", "Enter", "Escape", "p", "P"].includes(event.key))
-      ) {
-        return;
-      }
-      event.preventDefault();
-      event.stopPropagation();
-      this.act({ key: event.key, kind: "key", repeat: event.repeat, shift: event.shiftKey });
-    };
-    view.root.addEventListener("keydown", onKey);
     const stopTaps = bindSceneActions<RoomControl>(
       { preventDefault: true, target: view.root, view: view.root },
       input,
@@ -362,7 +344,6 @@ export class RoomScene extends Scene implements DialogueOpener {
     );
     return () => {
       stopTaps();
-      view.root.removeEventListener("keydown", onKey);
     };
   }
 
@@ -372,15 +353,21 @@ export class RoomScene extends Scene implements DialogueOpener {
   }
 
   private watchInput(): void {
-    this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
-      if (this.domReady && event.target instanceof Node && this.view?.root.contains(event.target)) {
-        return;
-      }
-      if (!modalInput(this).accepts(event)) {
-        return;
-      }
-      this.act({ key: event.key, kind: "key", repeat: event.repeat, shift: event.shiftKey });
-    });
+    if (sceneDomUi(this) === undefined) {
+      this.input.keyboard?.on("keydown", (event: KeyboardEvent) => {
+        if (
+          this.domReady &&
+          event.target instanceof Node &&
+          this.view?.root.contains(event.target)
+        ) {
+          return;
+        }
+        if (!modalInput(this).accepts(event)) {
+          return;
+        }
+        this.act({ key: event.key, kind: "key", repeat: event.repeat, shift: event.shiftKey });
+      });
+    }
     const onBack = (event: Event) => {
       if (modalInput(this).accepts(event)) {
         this.act({ kind: "back" });

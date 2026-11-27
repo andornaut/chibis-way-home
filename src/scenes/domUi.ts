@@ -22,6 +22,7 @@ import {
   UI_FRAMES,
   type UiLayer,
 } from "../ui/index.ts";
+import { registerSceneForeground } from "./foreground.ts";
 import { sceneFit } from "./playCamera.ts";
 import { palette } from "./scenePalette.ts";
 
@@ -165,8 +166,13 @@ export function mountSceneView(scene: Scene, view: HTMLElement): () => void {
   const unmount =
     sceneDomUi(scene)?.mount(scene.game.scene.getIndex(scene.sys.settings.key), view) ??
     (() => view.remove());
-  scene.events.once("shutdown", unmount);
-  return unmount;
+  const stopInput = registerSceneForeground(scene, view);
+  const dispose = () => {
+    stopInput();
+    unmount();
+  };
+  scene.events.once("shutdown", dispose);
+  return dispose;
 }
 
 // Call before mountSceneView. The canvas fallback keeps drawing until revealed resolves true;

@@ -13,6 +13,8 @@ const { install, screen } = vi.hoisted(() => {
     screen,
   };
 });
+const foreground = vi.hoisted(() => ({ dispose: vi.fn(), register: vi.fn(() => () => {}) }));
+vi.mock("../ui/binding/foreground.ts", () => ({ foregroundInput: () => foreground }));
 vi.mock("@andornaut/game-kit/runtime/web/crash/dom/crashScreen", () => ({
   installCrashScreen: install,
 }));
@@ -49,6 +51,7 @@ describe("native crash screen adapter", () => {
       expect(page).toBe(window);
       expect(options).toMatchObject({ buildLabel: "test build", dev, words: TEXT.crash });
       expect(options.bindHoldAction).toBe(bindFactoryAction);
+      expect(options.foregroundInput).toBe(foreground);
       expect(options.colours).toEqual({
         background: palette.colours.navy,
         buttonFace: palette.colours.dslate,

@@ -1,4 +1,5 @@
 import type { HoldRule } from "@andornaut/game-kit/runtime/input/hold";
+import type { ForegroundAction } from "@andornaut/game-kit/runtime/web/input/dom/foregroundInput";
 import {
   bindHoldActions,
   type HoldAction,
@@ -40,11 +41,13 @@ export interface GameActionOptions {
   readonly resolve: (target: EventTarget | null) => GameAction | null;
   readonly pointerTarget?: HTMLElement | Document;
   readonly resolvePointer?: (event: PointerEvent) => GameAction | null;
+  readonly targets?: (() => readonly HTMLElement[]) | undefined;
   readonly onPressChange?: (action: HoldAction | null) => void;
 }
 
 interface ActionRegistration {
   readonly resolve: GameActionOptions["resolve"];
+  readonly targets?: (() => readonly HTMLElement[]) | undefined;
   readonly guard?: PressGuard | undefined;
 }
 
@@ -64,13 +67,14 @@ function registered(
   root: HTMLElement,
   binding: HoldActionsBinding,
   guard?: PressGuard,
+  targets?: () => readonly HTMLElement[],
 ): HoldActionsBinding {
   let entries = registrations.get(root);
   if (entries === undefined) {
     entries = new Set();
     registrations.set(root, entries);
   }
-  const entry = { guard, resolve };
+  const entry = { guard, resolve, targets };
   entries.add(entry);
   const owned = entries;
   const dispose = () => {
@@ -321,7 +325,7 @@ export function bindGameActions(options: GameActionOptions, root: HTMLElement): 
     root.removeEventListener("click", click);
   };
   dispose.cancel = binding.cancel;
-  return registered(options.resolve, root, dispose, options.guard);
+  return registered(options.resolve, root, dispose, options.guard, options.targets);
 }
 
 // Factories retain their native click ownership and original guarded semantic callback.
@@ -355,3 +359,60 @@ export const bindFactoryAction: HoldActionBinding = (action) => {
     action.element,
   );
 };
+
+// Foreground keyboard and secondary clicks reuse the exact guarded semantic action.
+export function foregroundAction(target: EventTarget): ForegroundAction | null {
+  let node =
+    target instanceof HTMLElement ? target : target instanceof Node ? target.parentElement : null;
+  const control = node?.closest<HTMLElement>(
+    'button,[role="button"],[role="switch"],[data-control]',
+  );
+  if (control !== null && control !== undefined) {
+    const action = currentButtonAction(control);
+    return action === null ? null : { ...action, identity: action.identity ?? action.element };
+  }
+  while (node !== null) {
+    const action = currentButtonAction(node);
+    if (action !== null) {
+      return { ...action, identity: action.identity ?? action.element };
+    }
+    node = node.parentElement;
+  }
+  return null;
+}
+
+export function foregroundTargets(root: HTMLElement): readonly HTMLElement[] {
+  for (let node: HTMLElement | null = root; node !== null; node = node.parentElement) {
+    const targets = [...(registrations.get(node) ?? [])].flatMap(
+      (entry) => entry.targets?.() ?? [],
+    );
+    if (targets.length > 0) {
+      return [...new Set(targets)].filter(
+        (target) => root.contains(target) && target.tabIndex >= 0,
+      );
+    }
+  }
+  return [...root.querySelectorAll<HTMLElement>("button,a[href],input,select,textarea,[tabindex]")];
+}
+
+export function foregroundSkip(root: HTMLElement): ForegroundAction | null {
+  const skip = root.querySelector<HTMLElement>('[data-control="skip"]');
+  return skip === null || skip.hidden ? null : foregroundAction(skip);
+}
+
+export function foregroundPolicy(root: HTMLElement) {
+  let guard: PressGuard | undefined;
+  for (
+    let node: HTMLElement | null = root;
+    node !== null && guard === undefined;
+    node = node.parentElement
+  ) {
+    guard = [...(registrations.get(node) ?? [])].find((entry) => entry.guard !== undefined)?.guard;
+  }
+  return {
+    ...(guard === undefined ? {} : { guard }),
+    resolve: foregroundAction,
+    skip: () => foregroundSkip(root),
+    targets: () => foregroundTargets(root),
+  };
+}

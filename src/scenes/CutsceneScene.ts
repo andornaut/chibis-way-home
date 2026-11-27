@@ -25,6 +25,7 @@ import {
 } from "../ui/index.ts";
 import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, sceneDomUi } from "./domUi.ts";
+import { defaultForeground } from "./foreground.ts";
 import { modalInput } from "./modalInput.ts";
 
 export interface CutsceneData {
@@ -103,7 +104,10 @@ export class CutsceneScene extends Scene {
       "stage-summary",
       stageSummaryWords(this.summary),
     );
-    const stops = [this.watchPresses(view), this.watchKeys(view)];
+    const stops = [
+      this.watchPresses(view),
+      sceneDomUi(this) === undefined ? this.watchKeys(view) : () => {},
+    ];
     let shown = true;
     this.events.once("shutdown", () => {
       shown = false;
@@ -120,23 +124,31 @@ export class CutsceneScene extends Scene {
       .catch((error: unknown) => console.warn("The stage preview failed to load", error));
     modalInput(this).open();
     mountSceneView(this, view.root);
-    this.closeModal = sceneDomUi(this)?.modals.open({ isolation: "dialog" }, view.dialog);
+    this.closeModal = sceneDomUi(this)?.modals.open(
+      {
+        foreground: defaultForeground(modalInput(this), () => this.continue(), view.dialog),
+        isolation: "dialog",
+      },
+      view.dialog,
+    );
   }
   // Continue and the statement line continue on a fresh tap, Continue showing pressed meanwhile. A
   // click on Continue with no pointer behind it (an assistive technology's) continues.
   private watchPresses(view: StageSummaryView): () => void {
-    const stopTaps = bindSceneActions<"continue">(
+    const stopTaps = bindSceneActions<"continue" | "statement">(
       { preventDefault: true, target: view.root, view: view.root },
       modalInput(this),
       {
         accepts: () => !this.finished,
         activate: () => this.continue(),
         controlAt: ({ target }) =>
-          target instanceof Element && target.closest("[data-continue]") !== null
-            ? "continue"
-            : null,
-        controls: ["continue"],
-        element: () => view.continue,
+          target instanceof Node && view.statement?.contains(target)
+            ? "statement"
+            : target instanceof Node && view.continue.contains(target)
+              ? "continue"
+              : null,
+        controls: view.statement === undefined ? ["continue"] : ["continue", "statement"],
+        element: (control) => (control === "statement" ? view.statement! : view.continue),
         land: () => focusTarget(view.continue),
         show: (control) => view.continue.toggleAttribute("data-pressed", control !== undefined),
       },

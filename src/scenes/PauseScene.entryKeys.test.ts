@@ -3,6 +3,8 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, expect, it, vi } from "vitest";
 
+import { mountFixtureForeground } from "./foregroundFixture.ts";
+
 const dom = vi.hoisted(() => ({ layer: undefined as unknown }));
 // Exit's window close, and the page exit handler, which may navigate.
 const exit = vi.hoisted(() => vi.fn());
@@ -34,9 +36,10 @@ vi.mock("./modalBackdrop.ts", () => ({
 }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: () => Promise.resolve("blob:art"),
-  mountSceneView: (scene: { events: EventEmitter; scene: { key: string } }, root: HTMLElement) => {
+  mountSceneView: (scene: StartScene, root: HTMLElement) => {
     root.dataset.menuScene = scene.scene.key;
     const unmount = (dom.layer as UiLayer).mount(0, root);
+    mountFixtureForeground(scene, "start", root);
     scene.events.once("shutdown", unmount);
     return unmount;
   },
@@ -114,6 +117,7 @@ async function startMenu() {
   });
   start.create();
   await settle();
+  events.emit("postupdate");
   pause.update();
   // Phaser's KeyboardManager listens on window after the DOM controller handlers.
   const forward = (event: KeyboardEvent) => {
@@ -146,7 +150,6 @@ it.each(["Enter", " "])(
   "owns %j on the focused global Menu entry before the underlying Start Exit handler",
   async (activation) => {
     const f = await startMenu();
-    f.key("Tab");
     expect(document.activeElement?.textContent).toBe(TEXT.start.start);
     f.key("Tab");
     expect(document.activeElement?.getAttribute("aria-label")).toBe(TEXT.start.exit);
@@ -191,7 +194,6 @@ it("returns keyboard focus to the Menu entry after native disabled-button blur a
   const f = await startMenu();
   f.key("Tab");
   f.key("Tab");
-  f.key("Tab");
   expect(document.activeElement).toBe(f.pause.pauseButton);
   f.key("Enter");
   await settle();
@@ -232,7 +234,6 @@ it.each(["keyboard", "glyph tap"])(
   async (input) => {
     const f = await startMenu();
     if (input === "keyboard") {
-      f.key("Tab");
       f.key("Tab");
       expect(document.activeElement?.getAttribute("aria-label")).toBe(TEXT.start.exit);
       f.key("Enter");

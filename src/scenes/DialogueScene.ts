@@ -116,7 +116,10 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     view.root.hidden = true;
     this.view = view;
     this.showParagraph();
-    const stops = [this.watchPresses(view), this.watchKeys(view)];
+    const stops = [
+      this.watchPresses(view),
+      sceneDomUi(this) === undefined ? this.watchKeys(view) : () => {},
+    ];
     let shown = true;
     this.events.once("shutdown", () => {
       shown = false;

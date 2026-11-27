@@ -1,4 +1,6 @@
-import { focusKeyAction, stepFocus } from "../focus/index.ts";
+import { foregroundKeyAction } from "@andornaut/game-kit/runtime/ui/focusKeys";
+
+import { stepFocus } from "../focus/index.ts";
 
 // Highlighting the latest stage does not activate it. A new navigation press must focus an
 // action before Enter/Space can choose; the key that opened the modal cannot choose a stage. A
@@ -21,7 +23,10 @@ export function stagePickerKey(
   if (event.key === "Escape" && !event.repeat) {
     return { close: true, focus, stage: undefined };
   }
-  const action = focusKeyAction(event.key, event.shiftKey, event.repeat);
+  const action = foregroundKeyAction(event.key, event.shiftKey);
+  if (event.repeat && action !== "next" && action !== "previous") {
+    return { close: false, focus, stage: undefined };
+  }
   if (action === "next" || action === "previous") {
     return {
       close: false,

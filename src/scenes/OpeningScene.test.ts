@@ -6,6 +6,7 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { OPENING } from "../data/opening.ts";
 import { SCREEN } from "../data/screen.ts";
 import { TEXT } from "../data/text.ts";
+import { mountFixtureForeground } from "./foregroundFixture.ts";
 
 const dom = vi.hoisted(() => ({
   cancel: vi.fn(),
@@ -15,9 +16,10 @@ const dom = vi.hoisted(() => ({
 vi.mock("./domUi.ts", () => ({
   mountSceneView: (scene: OpeningScene, root: HTMLElement) => {
     document.body.append(root);
+    mountFixtureForeground(scene, "opening", root);
     scene.events.once("shutdown", () => root.remove());
   },
-  revealSceneView: (_scene: unknown, root: HTMLElement) => {
+  revealSceneView: (_scene: OpeningScene, root: HTMLElement) => {
     root.hidden = true;
     root.inert = true;
     return {
@@ -29,6 +31,7 @@ vi.mock("./domUi.ts", () => ({
             root.inert = false;
           }
           resolve(value);
+          queueMicrotask(() => _scene.events.emit("postupdate"));
         };
       }),
     };
@@ -112,21 +115,30 @@ function opening() {
   scene.create();
   return scene;
 }
-function key(scene: OpeningScene, key: string, repeat = false) {
-  scene.input.keyboard!.emit("keydown", {
-    key,
-    preventDefault: vi.fn(),
-    repeat,
-    shiftKey: false,
-    stopPropagation: vi.fn(),
-  });
+function key(_scene: OpeningScene, key: string, repeat = false) {
+  if (!dom.enabled) {
+    _scene.input.keyboard!.emit("keydown", {
+      key,
+      preventDefault: vi.fn(),
+      repeat,
+      shiftKey: false,
+      stopPropagation: vi.fn(),
+    });
+    return;
+  }
+  const target = document.activeElement ?? document.body;
+  target.dispatchEvent(
+    new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key, repeat }),
+  );
+  if (!repeat) {
+    target.dispatchEvent(new KeyboardEvent("keyup", { bubbles: true, cancelable: true, key }));
+  }
 }
 
 it("requires manual fresh activation and saves only at the final beat, not elapsed time or interruption", async () => {
   const { scene } = await htmlOpening();
   scene.update(0, 100000);
   key(scene, "Enter", true);
-  key(scene, "Escape");
   expect(saveOpeningSeen).not.toHaveBeenCalled();
   for (let i = 0; i < OPENING.length - 1; i++) {
     key(scene, "Enter");
@@ -188,10 +200,9 @@ it("holds actions until reveal succeeds, then renders each caption in HTML", asy
 });
 
 it("skips hidden Previous in the initial focus order and still skips the whole opening", async () => {
-  const { root, scene } = await htmlOpening();
+  const { root } = await htmlOpening();
   const next = root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
   const skip = root.querySelector<HTMLButtonElement>('[data-control="skip"]')!;
-  key(scene, "Tab");
   expect(document.activeElement).toBe(next);
   next.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Tab" }));
   expect(document.activeElement).toBe(skip);
@@ -328,4 +339,12 @@ it("completes the HTML opening once through fresh Continue without acknowledging
   }
   button.click();
   expect(saveOpeningSeen).toHaveBeenCalledOnce();
+});
+
+it("uses one eligible Escape Skip without treating its repeat as a new action", async () => {
+  const { scene } = await htmlOpening();
+  key(scene, "Escape");
+  key(scene, "Escape", true);
+  expect(saveOpeningSeen).toHaveBeenCalledOnce();
+  expect(scene.scene.start).toHaveBeenCalledExactlyOnceWith("map");
 });

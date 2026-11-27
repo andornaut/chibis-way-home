@@ -101,7 +101,8 @@ export function modalInput(scene: Scene): SceneInput {
     },
     capture() {
       const valid = scope ? scope.capture() : gameGate.capture();
-      return () => accepts() && valid();
+      const revision = menuRevisions.get(scene.game);
+      return () => accepts() && valid() && revision === menuRevisions.get(scene.game);
     },
     close() {
       scope?.close();

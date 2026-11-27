@@ -10,16 +10,14 @@ export function gameplayKeyHandlers(
   const host = canvas.parentElement;
   const document = canvas.ownerDocument;
   const bare = [document.body, document.documentElement, host, canvas];
-  // Keep Enter and Space native on a focused HUD button. The other play shortcuts still
-  // work from that button when Pause restores focus.
-  const targetInPlay = ({ code, target }: KeyboardEvent) =>
-    onBarePage(bare, target) ||
-    (code !== "Enter" &&
-      code !== "Space" &&
-      target instanceof HTMLButtonElement &&
-      host?.contains(target) === true);
+  // Focused HUD controls belong to foreground UI; only bare play targets move the bird.
+  const targetInPlay = ({ target }: KeyboardEvent) => onBarePage(bare, target);
+
+  const clear = () => held.clear();
+  host?.addEventListener("focusin", clear);
 
   return {
+    dispose: () => host?.removeEventListener("focusin", clear),
     down(event: KeyboardEvent) {
       if (
         isGameplayKey(event.code) &&

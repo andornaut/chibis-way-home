@@ -43,6 +43,7 @@ import {
 } from "../ui/index.ts";
 import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
+import { mapDirectionalKey } from "./foreground.ts";
 import { captureTab } from "./keyboardCapture.ts";
 import { modalInput } from "./modalInput.ts";
 import { fitPlayCamera } from "./playCamera.ts";
@@ -427,11 +428,7 @@ export class MapScene extends Scene implements StageSelectOpener {
           ),
       },
     );
-    view.root.addEventListener("keydown", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      this.key(event);
-    });
+    view.root.addEventListener("keydown", (event) => this.key(event));
     const keep = (event: Event) => event.preventDefault();
     view.root.addEventListener("touchstart", keep, { capture: true, passive: false });
     view.root.addEventListener("touchend", keep, { capture: true, passive: false });
@@ -502,23 +499,20 @@ export class MapScene extends Scene implements StageSelectOpener {
   }
 
   private key(event: KeyboardEvent): void {
+    if (!mapDirectionalKey(event)) {
+      return;
+    }
     if (!this.domReady || !modalInput(this).accepts(event)) {
       return;
     }
     if (this.selectionOpen || this.travelling) {
       return;
     }
-    const action = mapKeyAction(this.focus, event);
-    if (action?.kind === "step") {
+    event.preventDefault();
+    event.stopPropagation();
+    const action = mapKeyAction(event);
+    if (action !== undefined) {
       this.walkToDestination(steppedDestination(PLANS, ZONE_MAP, this.open, this.stand, action.by));
-    } else if (action?.kind === "focus") {
-      this.focus = action.target;
-      if (this.domReady && action.target !== undefined) {
-        focusTarget(this.view!.buttons[action.target]);
-      }
-      this.showPressed(undefined);
-    } else if (action?.kind === "activate") {
-      this.act(action.target);
     }
   }
 

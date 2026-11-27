@@ -3,6 +3,8 @@ import { EventEmitter } from "node:events";
 
 import { afterEach, expect, it, vi } from "vitest";
 
+import { mountFixtureForeground } from "./foregroundFixture.ts";
+
 const state = vi.hoisted(() => ({
   cancel: vi.fn(),
   ready: true,
@@ -28,11 +30,12 @@ vi.mock("./modalInput.ts", async (original) => ({
 }));
 vi.mock("./domUi.ts", () => ({
   artFrameUrl: () => Promise.resolve("blob:art"),
-  mountSceneView: (scene: { events: EventEmitter }, root: HTMLElement) => {
+  mountSceneView: (scene: CelebrationScene, root: HTMLElement) => {
     document.body.append(root);
+    mountFixtureForeground(scene, "celebration", root);
     scene.events.once("shutdown", () => root.remove());
   },
-  revealSceneView: (_scene: unknown, root: HTMLElement) => {
+  revealSceneView: (_scene: CelebrationScene, root: HTMLElement) => {
     root.hidden = true;
     root.inert = true;
     return {
@@ -42,10 +45,12 @@ vi.mock("./domUi.ts", () => ({
           root.hidden = !ready;
           root.inert = !ready;
           resolve(ready);
+          queueMicrotask(() => _scene.events.emit("postupdate"));
         };
       }),
     };
   },
+  sceneDomUi: () => ({ element: document.body }),
 }));
 
 import { CelebrationScene } from "./CelebrationScene.ts";
@@ -82,7 +87,7 @@ function setup() {
   return { events, input, launch, scene, start };
 }
 const key = (name: string, repeat = false) =>
-  document.dispatchEvent(
+  (document.activeElement ?? document.body).dispatchEvent(
     new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: name, repeat }),
   );
 afterEach(() => {
@@ -118,7 +123,6 @@ it("delegates keys while Restart is open and restores Restart focus on cancellat
   const { events, launch, scene, start } = setup();
   state.resolve!(true);
   await Promise.resolve();
-  key("Tab");
   expect((document.activeElement as HTMLElement).dataset.action).toBe("continue");
   key("Tab");
   expect((document.activeElement as HTMLElement).dataset.action).toBe("restart");

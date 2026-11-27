@@ -8,7 +8,7 @@ import { installCrashScreen } from "@andornaut/game-kit/runtime/web/crash/dom/cr
 
 import { BUILD_LABEL } from "../buildLabel.ts";
 import { CRASH_TEXT } from "../data/crashText.ts";
-import { bindFactoryAction } from "../ui/binding/index.ts";
+import { bindFactoryAction, foregroundInput } from "../ui/binding/index.ts";
 import { CRASH_COLOURS, installCrashTheme, installPageTheme } from "./theme.ts";
 
 installCrashTheme(document.documentElement.style);
@@ -21,6 +21,7 @@ export const CRASH_SCREEN = installCrashScreen(
     buildLabel: BUILD_LABEL,
     colours: CRASH_COLOURS,
     dev: new URLSearchParams(window.location.search).get("dev") === "1",
+    foregroundInput: foregroundInput(document),
     words: CRASH_TEXT,
   },
   window,

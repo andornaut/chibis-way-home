@@ -90,6 +90,7 @@ export function bindSceneActions<Control>(
           const control = route.controlAt(event);
           return control === null ? null : action(control);
         },
+        targets: () => route.controls.map(route.element),
       },
       at.view,
     ),

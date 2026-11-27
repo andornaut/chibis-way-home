@@ -10,7 +10,12 @@ export {
   createGameHudDisc,
   createGamePager,
   disposeGameButtons,
+  foregroundAction,
+  foregroundPolicy,
+  foregroundSkip,
+  foregroundTargets,
   type GameAction,
   type GameActionOptions,
   type GamePager,
 } from "./actionBinding.ts";
+export { foregroundGameEscape, foregroundInput } from "./foreground.ts";

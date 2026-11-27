@@ -134,13 +134,15 @@ it("closes without clearing from the close X", async () => {
 });
 
 it("never defaults to clearing, and Cancel closes without clearing", async () => {
-  const { button, key, restartClosed, stop } = await openCard();
+  const { button, dialog, key, restartClosed, stop } = await openCard();
   key("Enter");
   gate.accepts.mockReturnValue(false);
   key("Tab");
   key("Enter");
   expect(restartClosed).not.toHaveBeenCalled();
+  expect(document.activeElement).toBe(dialog);
   gate.accepts.mockReturnValue(true);
+  key("Tab");
   expect(document.activeElement).toBe(button(TEXT.restart.cancel));
   key("Enter");
   key("Enter");
