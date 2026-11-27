@@ -18,6 +18,7 @@ vi.mock("../ui/input/frameTurn.ts", () => ({ frameTurn: () => ({ onChange: () =>
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "phone-back" },
   backLeavesGame: () => true,
+  canLeavePlatformBack: () => false,
   closeApp: exit,
   exitShown: () => true,
   leavePlatformBack: vi.fn(async () => false),

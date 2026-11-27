@@ -95,20 +95,28 @@ const preparation: BrowserLaunchPreparation = {
 const beforeLaunch = vi.fn();
 
 it("keeps platform exit unavailable until bound and releases only the owning launch", async () => {
-  const { bindPlatformBackExit, leavePlatformBack } = await import("./index.ts");
+  const { bindPlatformBackExit, canLeavePlatformBack, leavePlatformBack } =
+    await import("./index.ts");
+  expect(canLeavePlatformBack()).toBe(false);
   expect(await leavePlatformBack()).toBe(false);
-  const first = vi.fn(async () => true);
+  const first = { canLeave: () => true, leave: vi.fn(async () => true) };
   const releaseFirst = bindPlatformBackExit(first);
   expect(await leavePlatformBack()).toBe(true);
-  const current = vi.fn(async () => false);
+  let available = false;
+  const current = { canLeave: () => available, leave: vi.fn(async () => false) };
   const releaseCurrent = bindPlatformBackExit(current);
   releaseFirst();
+  expect(canLeavePlatformBack()).toBe(false);
   expect(await leavePlatformBack()).toBe(false);
-  expect(current).toHaveBeenCalledOnce();
-  expect(first).toHaveBeenCalledOnce();
+  expect(current.leave).not.toHaveBeenCalled();
+  available = true;
+  expect(canLeavePlatformBack()).toBe(true);
+  expect(await leavePlatformBack()).toBe(false);
+  expect(current.leave).toHaveBeenCalledOnce();
+  expect(first.leave).toHaveBeenCalledOnce();
   releaseCurrent();
   expect(await leavePlatformBack()).toBe(false);
-  expect(current).toHaveBeenCalledOnce();
+  expect(current.leave).toHaveBeenCalledOnce();
 });
 
 // The options setupPhoneApp gave the kit's launch.

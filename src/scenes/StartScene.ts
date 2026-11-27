@@ -4,6 +4,7 @@ import { Scene } from "phaser";
 import { START_EXIT_TEXT, TEXT } from "../data/text.ts";
 import { openingDestination } from "../progress/index.ts";
 import {
+  canLeavePlatformBack,
   closeApp,
   exitShown,
   leavePlatformBack,
@@ -94,6 +95,7 @@ export class StartScene extends Scene implements RestartOpener {
         this.card = "exit";
         this.scene.launch("exit", {
           accepted: leavePlatformBack,
+          canLeave: canLeavePlatformBack,
           cancelled: () => {
             this.card = undefined;
             this.drawFocus();

@@ -56,7 +56,11 @@ export const networkPlay = createNetworkPlay();
 let appCloses = false;
 let backLeaves = true;
 let screenWakeLock: ScreenWakeLock | undefined;
-let platformBackExit: { readonly confirm: () => Promise<boolean> } | undefined;
+interface PlatformBackExit {
+  canLeave(): boolean;
+  leave(): Promise<boolean>;
+}
+let platformBackExit: { readonly controller: PlatformBackExit } | undefined;
 
 // A first install reports progress and failure to the page shell before the game loads.
 function setupLaunch(context: LaunchContext): Promise<LaunchResult> {
@@ -144,8 +148,8 @@ export function closeApp(): void {
 }
 
 // The page binds the checked shared native continuation for its current launch.
-export function bindPlatformBackExit(confirm: () => Promise<boolean>): () => void {
-  const binding = { confirm };
+export function bindPlatformBackExit(controller: PlatformBackExit): () => void {
+  const binding = { controller };
   platformBackExit = binding;
   return () => {
     if (platformBackExit === binding) {
@@ -156,7 +160,11 @@ export function bindPlatformBackExit(confirm: () => Promise<boolean>): () => voi
 
 // A missing or unsupported native continuation leaves the confirmation available.
 export function leavePlatformBack(): Promise<boolean> {
-  return platformBackExit?.confirm() ?? Promise.resolve(false);
+  return canLeavePlatformBack() ? platformBackExit!.controller.leave() : Promise.resolve(false);
+}
+
+export function canLeavePlatformBack(): boolean {
+  return platformBackExit?.controller.canLeave() ?? false;
 }
 
 // Whether back on the start screen with no card open leaves the game: a closable app's window

@@ -10,6 +10,7 @@ import { modalInput } from "./modalInput.ts";
 
 export interface ExitData {
   readonly accepted: () => Promise<boolean>;
+  readonly canLeave: () => boolean;
   readonly cancelled: () => void;
   readonly words: { readonly question: string; readonly title: string };
 }
@@ -21,6 +22,7 @@ export class ExitScene extends Scene {
   private accepting = false;
   private closeModal: (() => void) | undefined;
   private pending: (accepting: boolean) => void = () => {};
+  private exitButton: HTMLButtonElement | undefined;
 
   constructor() {
     super("exit");
@@ -31,6 +33,7 @@ export class ExitScene extends Scene {
     this.decided = false;
     this.accepting = false;
     this.closeModal = undefined;
+    this.exitButton = undefined;
   }
 
   create(): void {
@@ -45,6 +48,7 @@ export class ExitScene extends Scene {
       width: "small",
     });
     card.root.hidden = true;
+    this.exitButton = card.buttons.exit;
     this.pending = (accepting) => {
       for (const button of Object.values(card.buttons)) {
         button.disabled = accepting;
@@ -53,9 +57,11 @@ export class ExitScene extends Scene {
         card.close.disabled = accepting;
       }
       if (!accepting) {
+        this.update();
         card.dialog.focus({ preventScroll: true });
       }
     };
+    this.update();
     const input = modalInput(this);
     const backdrop = showModalBackdrop(this);
     const cancel = () => this.decide(false);
@@ -105,11 +111,21 @@ export class ExitScene extends Scene {
     void this.decide(false);
   }
 
+  override update(): void {
+    if (this.exitButton !== undefined && !this.decided) {
+      this.exitButton.disabled = this.accepting || !this.request.canLeave();
+    }
+  }
+
   private async decide(accepted: boolean): Promise<void> {
     if (this.decided || this.accepting || !this.sys.isActive() || !modalInput(this).accepts()) {
       return;
     }
     if (accepted) {
+      if (!this.request.canLeave()) {
+        this.update();
+        return;
+      }
       this.accepting = true;
       this.pending(true);
       let left = false;

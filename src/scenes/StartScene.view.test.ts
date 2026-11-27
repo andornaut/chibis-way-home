@@ -10,6 +10,7 @@ const requestUpdateCheck = vi.hoisted(() => vi.fn());
 vi.mock("phaser", () => ({ Scene: class {} }));
 vi.mock("../pwa/index.ts", () => ({
   PHONE_EVENTS: { backPressed: "back-pressed" },
+  canLeavePlatformBack: () => false,
   closeApp: vi.fn(),
   exitShown: () => false,
   leavePlatformBack: vi.fn(async () => false),

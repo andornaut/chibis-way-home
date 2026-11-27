@@ -39,10 +39,11 @@ beforeEach(() => {
 });
 afterEach(() => layer.dispose());
 
-function openCard() {
+function openCard(available = true) {
   const events = new EventEmitter();
   const accepted = vi.fn(async () => true);
   const cancelled = vi.fn();
+  const canLeave = vi.fn(() => available);
   const stop = vi.fn(() => events.emit("shutdown"));
   const scene = Object.assign(new ExitScene(), {
     events,
@@ -50,11 +51,11 @@ function openCard() {
     sys: { isActive: () => true },
   });
   // Copy is supplied by the caller, independent of the native Back continuation.
-  scene.init({ accepted, cancelled, words: START_EXIT_TEXT });
+  scene.init({ accepted, canLeave, cancelled, words: START_EXIT_TEXT });
   scene.create();
   const button = (label: string) =>
     [...document.querySelectorAll("button")].find((button) => button.textContent === label)!;
-  return { accepted, button, cancelled, events, stop };
+  return { accepted, button, canLeave, cancelled, events, scene, stop };
 }
 
 it.each([
@@ -95,12 +96,32 @@ it("keeps one pending native continuation and restores Cancel after a refused de
   expect(card.accepted).toHaveBeenCalledOnce();
   expect(card.cancelled).not.toHaveBeenCalled();
   expect(card.stop).not.toHaveBeenCalled();
+  card.canLeave.mockReturnValue(false);
   resolve(false);
   await Promise.resolve();
   expect(card.button(TEXT.restart.cancel).disabled).toBe(false);
+  expect(card.button(TEXT.start.exit).disabled).toBe(true);
   card.button(TEXT.restart.cancel).click();
   expect(card.cancelled).toHaveBeenCalledOnce();
   expect(card.stop).toHaveBeenCalledOnce();
+});
+
+it("shows an unavailable Exit as disabled while keeping Cancel usable", async () => {
+  const card = openCard(false);
+  await dom.ready;
+  expect(card.button(TEXT.start.exit).disabled).toBe(true);
+  expect(card.button(TEXT.start.exit).textContent).toBe(TEXT.start.exit);
+  expect(card.button(TEXT.restart.cancel).disabled).toBe(false);
+  card.button(TEXT.start.exit).click();
+  expect(card.accepted).not.toHaveBeenCalled();
+  card.canLeave.mockReturnValue(true);
+  card.scene.update();
+  expect(card.button(TEXT.start.exit).disabled).toBe(false);
+  card.canLeave.mockReturnValue(false);
+  card.scene.update();
+  expect(card.button(TEXT.start.exit).disabled).toBe(true);
+  card.button(TEXT.restart.cancel).click();
+  expect(card.cancelled).toHaveBeenCalledOnce();
 });
 
 it("cancels platform Back at modal priority without passing it to the opener", async () => {
