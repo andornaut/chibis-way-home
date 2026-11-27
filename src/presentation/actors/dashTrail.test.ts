@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { BIRD_FRAME } from "../assets/index.ts";
-import { DASH_TRAIL } from "../data/dashTrail.ts";
+import { BIRD_FRAME } from "../../assets/index.ts";
+import { DASH_TRAIL } from "../../data/dashTrail.ts";
 import { dashTrail } from "./dashTrail.ts";
 
 const duration = 0.25;

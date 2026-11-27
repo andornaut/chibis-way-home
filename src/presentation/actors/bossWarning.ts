@@ -1,8 +1,8 @@
-import type { BossWarningTuning } from "../data/bossWarning.ts";
-import type { PixelRun, SpriteContact } from "../data/types/index.ts";
-import type { BehaviourState } from "../rules/boss/index.ts";
+import type { BossWarningTuning } from "../../data/bossWarning.ts";
+import type { PixelRun, SpriteContact } from "../../data/types/index.ts";
+import type { BehaviourState } from "../../rules/boss/index.ts";
 
-export type { BossWarningTuning } from "../data/bossWarning.ts";
+export type { BossWarningTuning } from "../../data/bossWarning.ts";
 
 interface Outline {
   readonly ink: readonly PixelRun[];

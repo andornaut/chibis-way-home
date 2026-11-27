@@ -1,8 +1,8 @@
 import { expect, it } from "vitest";
 
-import manifest from "../../public/art/manifest.json" with { type: "json" };
-import sheet from "../../public/art/sprites/boss-removal.json" with { type: "json" };
-import { BOSS_REMOVAL_SECONDS } from "../data/behaviours.ts";
+import manifest from "../../../public/art/manifest.json" with { type: "json" };
+import sheet from "../../../public/art/sprites/boss-removal.json" with { type: "json" };
+import { BOSS_REMOVAL_SECONDS } from "../../data/behaviours.ts";
 import { BOSS_REMOVAL_ART, bossRemovalView } from "./bossRemoval.ts";
 
 it.each([

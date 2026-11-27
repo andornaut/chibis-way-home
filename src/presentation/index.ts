@@ -1,6 +1,18 @@
 // Phaser-free picks of what the world draws: each sprite's tag, frame and whole-pixel position
 // from the game state, so the scenes only draw what is picked.
-export { type AirJumpCue, airJumpCue, stepAirJumpCue } from "./airJumpCue.ts";
+export { type AirJumpCue, airJumpCue, stepAirJumpCue } from "./actors/airJumpCue.ts";
+export { behaviourPose } from "./actors/behaviour.ts";
+export {
+  birdFrameAt,
+  type BirdPose,
+  clearAirJumpPose,
+  startPose,
+  stepPose,
+} from "./actors/bird.ts";
+export { BOSS_REMOVAL_ART, bossRemovalView } from "./actors/bossRemoval.ts";
+export { bossWarning, type BossWarningTuning } from "./actors/bossWarning.ts";
+export { characterState, nextQuirkAt } from "./actors/character.ts";
+export { dashTrail } from "./actors/dashTrail.ts";
 export {
   backdropBottomRect,
   backgroundGroundOffset,
@@ -9,17 +21,11 @@ export {
   chunkParallax,
   interiorBackdrop,
 } from "./backdrop/index.ts";
-export { behaviourPose } from "./behaviour.ts";
-export { birdFrameAt, type BirdPose, clearAirJumpPose, startPose, stepPose } from "./bird.ts";
-export { BOSS_REMOVAL_ART, bossRemovalView } from "./bossRemoval.ts";
-export { bossWarning, type BossWarningTuning } from "./bossWarning.ts";
-export { characterState, nextQuirkAt } from "./character.ts";
 export {
   crumblingAppearance,
   type CrumblingSkin,
   crumblingSkinTiles,
 } from "./crumblingPresentation.ts";
-export { dashTrail } from "./dashTrail.ts";
 export {
   deathFrameIndex,
   deathLabels,

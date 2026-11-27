@@ -1,7 +1,7 @@
 import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
-import type { DashTrailTuning, Rect } from "../data/types/index.ts";
-import type { BirdDashState } from "../rules/bird/index.ts";
+import type { DashTrailTuning, Rect } from "../../data/types/index.ts";
+import type { BirdDashState } from "../../rules/bird/index.ts";
 
 interface DashTrailPixel extends Rect {
   readonly alpha: number;
