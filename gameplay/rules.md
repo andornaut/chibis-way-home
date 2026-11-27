@@ -57,7 +57,7 @@ The play loop, controls, interface, progression and saves. See [movement and ski
 - **Forks:** V1 is linear and has no route forks or laps
 - **Progression:** Parcel depot is unlocked from the start. Clearing a stage unlocks the next built stage in the route table. Clearing a zone's final stage opens the next zone. Unlocked built stages remain available for replay
 - **Selection:** only manually pressing Continue on the map opens the selected zone's stage-selection modal. Up to three full-size side-by-side cards per page stay in catalogue order, including locked stages, which remain grey and disabled. Previous and Next controls change pages; the modal opens on the page containing the highlighted latest available stage. Keyboard navigation can focus unlocked stages across pages or activate enabled page controls. Each card shows an actual scene screenshot, the main stage name at the standard font size, and a smaller, lighter Stage {number} label using its catalogue ordinal at the top right. Names never shrink to fit
-- **Walk:** Chibi stands on a zone. Left, Right or tapping a zone moves him to an available zone, and Continue selects the zone he stands on
+- **Walk:** Chibi stands on a zone. Left and A step left. Right and D step right. Tapping an available zone also moves him there. Up, Down and Tab move focus through the footer actions and include Menu at the ends. Continue selects the zone he stands on
 
 ## Runs and attempts
 
