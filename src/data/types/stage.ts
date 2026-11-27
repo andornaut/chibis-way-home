@@ -435,17 +435,15 @@ interface RoomShop {
   readonly items: readonly string[];
 }
 
-// A room behind a door (ROOMS by key, in src/data/rooms.ts): a full-screen still scene that Use at
-// its door shows, play paused, until he leaves. Its name is TEXT.rooms[key].name. art: its
-// backdrop, the whole game view; without one, a plain placeholder. animations and cast: what is
-// drawn over it. enter selects its entry dialogue; grant names its permanent skill.
+// A full-screen room opened by Use at its door, with play paused until Chibi leaves.
+// Its name comes from TEXT.rooms and its backdrop, cast and animations from ROOMS.
 export interface RoomPlan {
   readonly animations?: readonly RoomAnimation[];
   readonly art?: string;
   readonly cast?: readonly RoomCast[];
   // Optional conversation key in DIALOGUES, separate from the entry summary.
   readonly conversation?: string;
-  // Entry dialogue key in DIALOGUES; skill grants are idempotent on every entry.
+  // Entry summary key in DIALOGUES.
   readonly enter?: string;
   readonly grant?: SkillId;
   readonly shop?: RoomShop;
