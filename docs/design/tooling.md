@@ -42,3 +42,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0334 | Organize Chibi's source and public interfaces                                                 | [cwh-0334.md](../work/cwh-0334.md) |
 | cwh-0343 | Add a shared documentation navigation layout                                                  | [cwh-0343.md](../work/cwh-0343.md) |
 | cwh-0345 | Separate documentation guides and reference                                                   | [cwh-0345.md](../work/cwh-0345.md) |
+| cwh-0348 | Pin Delivery Kit 8.7.0 for the shared store cutover                                           | [cwh-0348.md](../work/cwh-0348.md) |
