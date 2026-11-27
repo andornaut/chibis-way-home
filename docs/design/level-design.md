@@ -36,3 +36,5 @@ Reference: [stages](../../gameplay/design.md#stages), [chunks](../../gameplay/de
 | cwh-0324 | Qualify more ordinary layouts in earlier zones                            | [cwh-0324.md](../work/cwh-0324.md) |
 | cwh-0329 | Qualify 35 ordinary layouts in every zone                                 | [cwh-0329.md](../work/cwh-0329.md) |
 | cwh-0331 | Qualify layouts with overhead hazards for Double jump                     | [cwh-0331.md](../work/cwh-0331.md) |
+| cwh-0332 | Draw and retain power-up gifts per zone visit                             | [cwh-0332.md](../work/cwh-0332.md) |
+| cwh-0333 | Add an optional conversation with a gift-room helper                      | [cwh-0333.md](../work/cwh-0333.md) |
