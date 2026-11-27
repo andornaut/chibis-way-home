@@ -187,6 +187,40 @@
         list-style: none;
         font-size: 16px;
       }
+      .controls {
+        min-width: 0;
+        text-align: left;
+      }
+      .controls h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+      .controls table {
+        width: 100%;
+        margin-top: 12px;
+        border-collapse: collapse;
+        table-layout: fixed;
+        overflow-wrap: anywhere;
+      }
+      .controls caption {
+        padding-bottom: 4px;
+        font-weight: 600;
+        text-align: left;
+      }
+      .controls th,
+      .controls td {
+        padding: 8px;
+        border-bottom: 1px solid var(--home-dslate);
+        text-align: left;
+        vertical-align: top;
+      }
+      .controls th:first-child {
+        width: 28%;
+      }
+      .controls p {
+        margin: 12px 0 0;
+        color: var(--home-dslate);
+      }
       .steps {
         box-sizing: border-box;
         width: min(368px, calc(100vw - 32px));
@@ -251,6 +285,78 @@
           <ul class="keys">
             %HOME_INSTRUCTIONS%
           </ul>
+          <section class="controls" aria-labelledby="controls-title">
+            <h2 id="controls-title">Controls</h2>
+            <table>
+              <caption>
+                Gameplay
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Action</th>
+                  <th scope="col">Input</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Jump</th>
+                  <td>
+                    Space, W, K or Up arrow; left mouse button; touch Jump. Hold for a higher jump.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Move</th>
+                  <td>
+                    A, H or Left arrow; D, L or Right arrow. On touch, drag left or right off a
+                    button.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Pause</th>
+                  <td>P, or tap or click Pause.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Use</th>
+                  <td>E, F or Enter; right mouse button; touch Use.</td>
+                </tr>
+              </tbody>
+            </table>
+            <table>
+              <caption>
+                Menu
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Action</th>
+                  <th scope="col">Input</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Activate</th>
+                  <td>
+                    E, F, Enter or Space on a focused action; tap, click or right-click an available
+                    button.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Back or skip</th>
+                  <td>
+                    Escape uses visible Skip first, then an allowed Close or Back. Required choices
+                    stay open.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Focus</th>
+                  <td>Arrow keys, W/A/S/D or K/H/J/L; Tab forward or Shift+Tab back.</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              On the map, Left/A/H and Right/D/L choose a destination. Use Continue to select a
+              stage. Native text fields and sliders keep their own keys.
+            </p>
+          </section>
         </div>
       </div>
     </main>
