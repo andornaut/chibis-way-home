@@ -44,21 +44,18 @@ export function dialogueKeyAction(
   focus: DialogueControl | undefined,
   { key, repeat, shiftKey }: Pick<KeyboardEvent, "key" | "repeat" | "shiftKey">,
 ): DialogueAction | undefined {
-  if (repeat || ["Alt", "Control", "Meta", "Shift"].includes(key)) {
-    return undefined;
-  }
-  if (key === "Tab") {
-    return shiftKey ? "previousFocus" : "nextFocus";
-  }
-  if (["ArrowDown", "ArrowRight"].includes(key)) {
+  const action = focusKeyAction(key, shiftKey, repeat);
+  if (action === "next") {
     return "nextFocus";
   }
-  if (["ArrowUp", "ArrowLeft"].includes(key)) {
+  if (action === "previous") {
     return "previousFocus";
   }
-  return focus !== "continue" && focus !== undefined && ["Enter", " "].includes(key)
-    ? focus
-    : "advance";
+  return action === "press"
+    ? focus === "skip" || focus === "previous"
+      ? focus
+      : "advance"
+    : undefined;
 }
 
 export interface DialoguePress {

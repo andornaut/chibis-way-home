@@ -1,4 +1,4 @@
-import { stepFocus } from "../focus/index.ts";
+import { focusKeyAction, stepFocus } from "../focus/index.ts";
 
 export type MapAction = "continue" | "home";
 type MapKeyAction =
@@ -14,16 +14,20 @@ const STEP_KEYS: Readonly<Record<string, -1 | 1>> = {
   KeyA: -1,
   KeyD: 1,
 };
-const CONTINUE_KEYS = ["ArrowUp", "KeyE", "KeyW"];
+const CONTINUE_KEYS = ["KeyE", "KeyW"];
 
-// Left/Right and A/D retain map navigation. Tab selects footer actions; Enter/Space use the
+// Left/Right and A/D retain map navigation. Up/Down and Tab select footer actions; Enter/Space use the
 // focused action or safely default to Continue. Held activation keys never activate twice.
 export function mapKeyAction(
   focus: MapAction | undefined,
   { code, repeat, shiftKey }: Pick<KeyboardEvent, "code" | "repeat" | "shiftKey">,
 ): MapKeyAction | undefined {
-  if (code === "Tab") {
-    return { kind: "focus", target: stepFocus(MAP_ACTIONS, focus, shiftKey ? "previous" : "next") };
+  const navigation = focusKeyAction(code, shiftKey, repeat);
+  if (
+    (code === "Tab" || code === "ArrowUp" || code === "ArrowDown") &&
+    (navigation === "next" || navigation === "previous")
+  ) {
+    return { kind: "focus", target: stepFocus(MAP_ACTIONS, focus, navigation) };
   }
   const by = STEP_KEYS[code];
   if (by !== undefined) {

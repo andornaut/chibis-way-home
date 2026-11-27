@@ -216,9 +216,10 @@ it("steps the focus through Continue then Skip, wrapping, and presses the focuse
   const { continue: next, skip } = TEXT.dialogue;
   expect(steps).toEqual([next, skip, next, skip]);
   pressKey([], "x");
-  expect(line()).toBe(PARAGRAPHS[1]!.text);
+  expect(line()).toBe(PARAGRAPHS[0]!.text);
+  expect(opener.dialogueClosed).not.toHaveBeenCalled();
   pressKey([], "Enter", { repeat: true });
-  expect(line()).toBe(PARAGRAPHS[1]!.text);
+  expect(line()).toBe(PARAGRAPHS[0]!.text);
   pressKey([], "Enter");
   expect(opener.dialogueClosed).toHaveBeenCalledOnce();
 });

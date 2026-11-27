@@ -70,8 +70,10 @@ describe("dialogueParagraphs", () => {
 describe("dialogueKeyAction", () => {
   it.each([
     { action: "advance", focus: undefined, key: "Enter", repeat: false },
-    { action: "advance", focus: undefined, key: "p", repeat: false },
-    { action: "advance", focus: undefined, key: "Escape", repeat: false },
+    { action: undefined, focus: undefined, key: "p", repeat: false },
+    { action: undefined, focus: undefined, key: "Escape", repeat: false },
+    { action: undefined, focus: undefined, key: "q", repeat: false },
+    { action: undefined, focus: "skip", key: "q", repeat: false },
     { action: "nextFocus", focus: undefined, key: "Tab", repeat: false },
     { action: "nextFocus", focus: undefined, key: "ArrowRight", repeat: false },
     { action: "skip", focus: "skip", key: "Enter", repeat: false },

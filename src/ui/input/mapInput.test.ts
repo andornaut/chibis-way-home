@@ -22,6 +22,16 @@ describe("map footer keyboard input", () => {
     });
   });
 
+  it("uses vertical arrows to reach both footer actions without entering a stage", () => {
+    const key = { code: "ArrowDown", repeat: false, shiftKey: false };
+    expect(mapKeyAction(undefined, key)).toEqual({ kind: "focus", target: "continue" });
+    expect(mapKeyAction("continue", key)).toEqual({ kind: "focus", target: "home" });
+    expect(mapKeyAction("home", { ...key, code: "ArrowUp" })).toEqual({
+      kind: "focus",
+      target: "continue",
+    });
+  });
+
   it.each(["continue", "home"] as const)(
     "activates explicitly focused %s only on a fresh press",
     (focus) => {
@@ -31,7 +41,7 @@ describe("map footer keyboard input", () => {
     },
   );
 
-  it.each(["ArrowUp", "KeyE", "KeyW"])(
+  it.each(["KeyE", "KeyW"])(
     "keeps %s a direct Continue shortcut even with Home focused",
     (code) => {
       expect(mapKeyAction("home", { code, repeat: false, shiftKey: false })).toEqual({

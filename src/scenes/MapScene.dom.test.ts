@@ -313,3 +313,20 @@ it("positions the exact travel frame mask at the sprite origin in both facings",
   expect(root.hasAttribute("data-bird-flipped")).toBe(false);
   expect(root.style.getPropertyValue("--map-bird-image")).toBe("");
 });
+
+it("reaches Back to title with arrows and activates only the focused footer action", async () => {
+  const { root, route } = setup();
+  ready.finish!(true);
+  await Promise.resolve();
+  const key = (code: string) =>
+    root.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, code }));
+  key("ArrowDown");
+  expect(document.activeElement).toBe(root.querySelector('[data-control="continue"]'));
+  expect(route.launch).not.toHaveBeenCalled();
+  key("ArrowDown");
+  expect(document.activeElement).toBe(root.querySelector('[data-control="home"]'));
+  expect(route.start).not.toHaveBeenCalled();
+  key("Enter");
+  expect(route.start).toHaveBeenCalledExactlyOnceWith("start", { returnedToTitle: true });
+  expect(route.launch).not.toHaveBeenCalled();
+});
