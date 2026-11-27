@@ -70,7 +70,7 @@ Start-screen Start and Continue use `ui-button-primary`, dslate with white label
 
 ### Modal content fitting
 
-Footer action alignment follows the [shared product-consistency policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#product-consistency). Retain Chibi's existing action sizes, gaps and padding, header close X and navigation placement.
+Footer action alignment follows the [shared product-consistency policy](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md#product-consistency). Retain Chibi's existing action sizes, gaps and padding, header close X and navigation placement.
 
 Every ordinary modal takes its width family's width and fits its nine-slice frame's height to its actual content, with 16px clear padding around ordinary body content. A card's width is its family's width, or the view less the 16px screen margin on each side where that is narrower: `min(family, 720 - 32)` in the 720x360 view. The values are `CARD_WIDTH` and `CARD_SCREEN_MARGIN` in [layout data](../src/data/layout.ts). Fonts stay full size; the width is never a reason to shrink text.
 

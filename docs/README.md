@@ -25,6 +25,6 @@ superseded work. Each records its scope, criteria and any recorded decisions or
 outcome. Its README defines the convention and retains the historical index.
 Follow a work item's design-area link for the current rules.
 
-The shared [game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md)
+The shared [game policies](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md)
 define cross-game product and development rules. Local Art, Gameplay and Source
 documents retain Chibi's specific design and implementation.

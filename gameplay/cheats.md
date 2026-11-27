@@ -1,6 +1,6 @@
 # Cheats
 
-The [shared saves and cheats policy](https://github.com/andornaut/game-coordinator/blob/main/docs/game-policies.md#saves-and-cheats) applies.
+The [shared saves and cheats policy](https://github.com/andornaut/game-coordinator/blob/main/docs/design/game-policies.md#saves-and-cheats) applies.
 
 ## Entry and modal
 
