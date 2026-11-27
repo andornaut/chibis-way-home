@@ -6,6 +6,9 @@ import { afterEach, expect, it, vi } from "vitest";
 
 import pug from "../../public/art/sprites/dog-pug.json" with { type: "json" };
 import dash from "../../public/art/sprites/icon-skill-dash.json" with { type: "json" };
+import { GIFT_CONVERSATIONS } from "../data/dialogues.ts";
+import { ZONE_MAP } from "../data/map.ts";
+import { TEXT } from "../data/text.ts";
 import type { RoomView } from "../ui/index.ts";
 
 vi.mock("phaser", () => ({
@@ -33,14 +36,15 @@ vi.mock("./domUi.ts", () => ({
 vi.mock("./scenePalette.ts", () => ({ paletteColour: () => 0 }));
 
 import { artFrameUrl, revealSceneView } from "./domUi.ts";
-import { RoomScene } from "./RoomScene.ts";
+import { type RoomData, RoomScene } from "./RoomScene.ts";
+import { grantSkill } from "./save.ts";
 
 afterEach(() => {
   document.body.replaceChildren();
   vi.clearAllMocks();
 });
 
-function fixture() {
+function fixture(data: RoomData = { room: "dash-gift", stage: "street" }) {
   let resolve: (shown: boolean) => void = () => {};
   const revealed = new Promise<boolean>((done) => {
     resolve = done;
@@ -51,11 +55,17 @@ function fixture() {
     return { cancel, revealed };
   });
   const events = new EventEmitter();
-  const controller = { resume: vi.fn(), setVisible: vi.fn(), stop: vi.fn() };
+  const controller = {
+    launch: vi.fn(),
+    pause: vi.fn(),
+    resume: vi.fn(),
+    setVisible: vi.fn(),
+    stop: vi.fn(),
+  };
   const idle = sheetTags(pug as AsepriteSheet).get("idle")!;
   const portrait = { frame: { name: idle[0]!.frame }, height: 32, width: 44 };
   const room = new RoomScene();
-  room.init({ room: "dash-gift", stage: "street" });
+  room.init(data);
   Object.assign(room, {
     cache: { json: { get: (key: string) => (key === "dog-pug" ? pug : dash) } },
     events,
@@ -76,6 +86,7 @@ function fixture() {
       }
       resolve(shown);
     },
+    room,
     scene,
   };
 }
@@ -107,6 +118,66 @@ it("hands off only after all idle frames decode, follows the native portrait fra
   scene.view.leave.click();
   expect(controller.resume).toHaveBeenCalledExactlyOnceWith("zone");
   expect(controller.stop).toHaveBeenCalledOnce();
+});
+
+it("opens the destination conversation once and restores the same room and Talk focus", async () => {
+  const destination = ZONE_MAP.destinations.find(({ id }) => id === "home-city")!;
+  const { controller, resolve, room, scene } = fixture({
+    room: "dash-gift",
+    stage: destination.stages[0]!,
+  });
+  const originalView = scene.view;
+  expect(grantSkill).toHaveBeenCalledExactlyOnceWith("dash");
+  scene.view.talk!.click();
+  expect(controller.launch).not.toHaveBeenCalled();
+  resolve(true);
+  await Promise.resolve();
+  scene.view.talk!.dispatchEvent(new KeyboardEvent("keydown", { bubbles: true, key: "Tab" }));
+  expect(document.activeElement).toBe(scene.view.talk);
+  scene.view.talk!.dispatchEvent(
+    new KeyboardEvent("keydown", { bubbles: true, key: "Enter", repeat: true }),
+  );
+  expect(controller.launch).not.toHaveBeenCalled();
+  scene.view.talk!.click();
+  scene.view.talk!.click();
+  scene.view.leave.click();
+  expect(controller.launch).toHaveBeenCalledExactlyOnceWith("dialogue", {
+    linear: true,
+    opener: "room",
+    scene: GIFT_CONVERSATIONS[destination.id],
+  });
+  expect(controller.pause).toHaveBeenCalledOnce();
+  expect(controller.stop).not.toHaveBeenCalled();
+  room.dialogueClosed();
+  room.dialogueClosed();
+  expect(controller.resume).toHaveBeenCalledExactlyOnceWith();
+  expect(scene.view).toBe(originalView);
+  expect(document.activeElement).toBe(scene.view.talk);
+  expect(grantSkill).toHaveBeenCalledOnce();
+  scene.view.leave.click();
+  expect(controller.resume).toHaveBeenLastCalledWith("zone");
+  expect(controller.stop).toHaveBeenCalledOnce();
+});
+
+it.each([false, true])(
+  "shows the lifetime only for the source-provided zone-scoped flag %s",
+  (zoneScopedGift) => {
+    const { scene } = fixture({ room: "dash-gift", stage: "street", zoneScopedGift });
+    expect(scene.view.root.querySelector("#room-gift-lifetime")?.textContent).toBe(
+      zoneScopedGift ? TEXT.room.giftLifetime : undefined,
+    );
+  },
+);
+
+it("does not resume a stopped room from a late conversation completion", async () => {
+  const { controller, events, resolve, room, scene } = fixture();
+  resolve(true);
+  await Promise.resolve();
+  scene.view.talk!.click();
+  expect(controller.launch).toHaveBeenCalledOnce();
+  events.emit("shutdown");
+  room.dialogueClosed();
+  expect(controller.resume).not.toHaveBeenCalled();
 });
 
 it("cancels a pending room handoff on shutdown without enabling stale controls", async () => {

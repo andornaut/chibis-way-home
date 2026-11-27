@@ -15,8 +15,9 @@ import { type Cameras, type GameObjects, Scene, Scenes } from "phaser";
 
 import { PLAY_STEP_LIMITS, STEP_SECONDS } from "../core/index.ts";
 import { CHARACTERS } from "../data/characters.ts";
-import { DIALOGUES, SPEAKERS } from "../data/dialogues.ts";
+import { DIALOGUES, GIFT_CONVERSATIONS, SPEAKERS } from "../data/dialogues.ts";
 import { ROOM_LAYOUT } from "../data/layout.ts";
+import { ZONE_MAP } from "../data/map.ts";
 import { ROOMS } from "../data/rooms.ts";
 import { TEXT } from "../data/text.ts";
 import type { RoomPlan } from "../data/types/index.ts";
@@ -33,7 +34,9 @@ import {
   roomPortraitProperties,
   type RoomView,
   SKILL_ART,
+  stepFocus,
 } from "../ui/index.ts";
+import type { DialogueData, DialogueOpener } from "./DialogueScene.ts";
 import { bindSceneActions } from "./domTaps.ts";
 import { artFrameUrl, mountSceneView, revealSceneView, sceneDomUi } from "./domUi.ts";
 import { captureTab } from "./keyboardCapture.ts";
@@ -43,24 +46,36 @@ import { grantSkill, recordRoomTime } from "./save.ts";
 import { paletteColour } from "./scenePalette.ts";
 
 const ZONE = "zone";
+type RoomControl = "leave" | "talk";
+type RoomActionEvent =
+  | Exclude<RoomEvent, { readonly kind: "press" }>
+  | {
+      readonly down: RoomControl | undefined;
+      readonly kind: "press";
+      readonly up: RoomControl | undefined;
+    };
 
 // What a room opens with: its key in ROOMS, and the stage whose door leads to it.
 export interface RoomData {
   readonly room: string;
   readonly stage: string;
+  readonly zoneScopedGift?: boolean;
 }
 
 // The room behind a door, over the whole canvas in place of the zone, which ZoneScene pauses
 // while it shows: the room's backdrop (or a placeholder ink fill with a frame), its animations
 // and cast, its name, and Leave at the top right. Leave, back and Escape each close it and resume
-// the zone, which returns him to the door (ZoneScene). Tab and the arrows focus Leave, and Enter
-// and Space press it once focused. Time in the room is active play: it counts toward the stage's
+// the zone, which returns him to the door (ZoneScene). Tab and arrows focus room actions; Enter
+// and Space press the focused action. Time in the room is active play: it counts toward the stage's
 // attempt and totals on the zone's step clock, and time while the room is paused does not.
-export class RoomScene extends Scene {
+export class RoomScene extends Scene implements DialogueOpener {
   private contentCamera!: Cameras.Scene2D.Camera;
-  private focused = false;
+  private focused: RoomControl | undefined;
+  private conversation: string | undefined;
+  private talking = false;
+  private zoneScopedGift = false;
   private leaving = false;
-  private pressed: "leave" | undefined;
+  private pressed: RoomControl | undefined;
   private room!: RoomPlan;
   private roomKey = "";
   private stage = "";
@@ -85,7 +100,14 @@ export class RoomScene extends Scene {
     this.roomKey = data.room;
     this.stage = data.stage;
     this.clock = startStepClock;
-    this.focused = false;
+    this.focused = undefined;
+    this.talking = false;
+    this.zoneScopedGift = data.zoneScopedGift === true;
+    const destination = ZONE_MAP.destinations.find(({ stages }) => stages.includes(data.stage));
+    this.conversation =
+      room.conversation === "mallow-gift" && destination !== undefined
+        ? GIFT_CONVERSATIONS[destination.id]
+        : room.conversation;
     this.leaving = false;
     this.pressed = undefined;
     this.domReady = false;
@@ -207,6 +229,7 @@ export class RoomScene extends Scene {
         actions: TEXT.buttons,
         icons: TEXT.actionIcons,
         name: TEXT.rooms[this.roomKey]?.name ?? "",
+        ...(this.conversation === undefined ? {} : { talk: TEXT.room.talk }),
         ...(words === undefined || paragraph === undefined
           ? {}
           : {
@@ -215,6 +238,7 @@ export class RoomScene extends Scene {
                 disc: fillNames(TEXT.skillDetails.disc, { skill: words.title }),
                 paragraph,
                 title: words.title,
+                ...(this.zoneScopedGift ? { lifetime: TEXT.room.giftLifetime } : {}),
               },
             }),
       },
@@ -261,6 +285,7 @@ export class RoomScene extends Scene {
     this.events.once("shutdown", () => {
       this.visit++;
       this.domReady = false;
+      this.talking = false;
       this.view = undefined;
       reveal.cancel();
       stopInput();
@@ -275,9 +300,7 @@ export class RoomScene extends Scene {
         this.domReady = true;
         modalInput(this).ready(true);
         this.renderDomPortrait();
-        if (this.focused) {
-          focusTarget(view.leave);
-        }
+        this.restoreFocus();
       },
       (error: unknown) => console.warn("The room UI failed to load", error),
     );
@@ -317,15 +340,20 @@ export class RoomScene extends Scene {
       this.act({ key: event.key, kind: "key", repeat: event.repeat, shift: event.shiftKey });
     };
     view.root.addEventListener("keydown", onKey);
-    const stopTaps = bindSceneActions<"leave">(
+    const stopTaps = bindSceneActions<RoomControl>(
       { preventDefault: true, target: view.root, view: view.root },
       input,
       {
-        accepts: () => this.domReady && !this.leaving,
-        activate: () => this.act({ down: "leave", kind: "press", up: "leave" }),
-        controlAt: (event) => (event.composedPath().includes(view.leave) ? "leave" : null),
-        controls: ["leave"],
-        element: () => view.leave,
+        accepts: () => this.domReady && !this.leaving && !this.talking,
+        activate: (control) => this.act({ down: control, kind: "press", up: control }),
+        controlAt: (event) =>
+          view.talk !== undefined && event.composedPath().includes(view.talk)
+            ? "talk"
+            : event.composedPath().includes(view.leave)
+              ? "leave"
+              : null,
+        controls: view.talk === undefined ? ["leave"] : ["talk", "leave"],
+        element: (control) => (control === "talk" ? view.talk! : view.leave),
         show: (pressed) => {
           this.pressed = pressed;
           this.render();
@@ -340,6 +368,7 @@ export class RoomScene extends Scene {
 
   private render(): void {
     this.view?.leave.toggleAttribute("data-pressed", this.pressed === "leave");
+    this.view?.talk?.toggleAttribute("data-pressed", this.pressed === "talk");
   }
 
   private watchInput(): void {
@@ -364,21 +393,79 @@ export class RoomScene extends Scene {
     });
   }
 
-  private act(event: RoomEvent): void {
-    if (this.leaving) {
+  private act(event: RoomActionEvent): void {
+    if (this.leaving || this.talking) {
       return;
     }
-    const outcome = roomEvent(this.focused, event);
-    if (outcome.focused !== this.focused) {
-      this.focused = outcome.focused;
-      this.render();
-      if (this.domReady && this.view !== undefined) {
-        focusTarget(this.view.leave);
+    if (event.kind === "press") {
+      if (event.down !== undefined && event.down === event.up) {
+        if (event.down === "talk") {
+          this.talk();
+        } else {
+          this.leave();
+        }
       }
+      return;
+    }
+    const action =
+      event.kind === "key" ? focusKeyAction(event.key, event.shift, event.repeat) : undefined;
+    if (this.view?.talk !== undefined && (action === "next" || action === "previous")) {
+      this.focused = stepFocus(["talk", "leave"] as const, this.focused, action);
+      this.restoreFocus();
+      return;
+    }
+    if (action === "press" && this.focused === "talk") {
+      this.talk();
+      return;
+    }
+    const outcome = roomEvent(this.focused === "leave", event);
+    if (outcome.focused && this.focused !== "leave") {
+      this.focused = "leave";
+      this.render();
+      this.restoreFocus();
     }
     if (outcome.leaves) {
       this.leave();
     }
+  }
+
+  private restoreFocus(): void {
+    if (!this.domReady || this.view === undefined || this.focused === undefined) {
+      return;
+    }
+    const target = this.focused === "talk" ? this.view.talk : this.view.leave;
+    if (target !== undefined) {
+      focusTarget(target);
+    }
+  }
+
+  private talk(): void {
+    if (this.conversation === undefined) {
+      return;
+    }
+    this.talking = true;
+    this.focused = "talk";
+    this.pressed = undefined;
+    modalInput(this).ready(false);
+    this.render();
+    this.scene.launch("dialogue", {
+      linear: true,
+      opener: "room",
+      scene: this.conversation,
+    } satisfies DialogueData);
+    this.scene.pause();
+  }
+
+  dialogueClosed(): void {
+    if (!this.talking || this.leaving) {
+      return;
+    }
+    this.talking = false;
+    this.pressed = undefined;
+    this.clock = startStepClock;
+    this.scene.resume();
+    modalInput(this).ready(this.domReady);
+    this.restoreFocus();
   }
 
   override update(time: number): void {

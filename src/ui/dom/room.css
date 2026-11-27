@@ -61,8 +61,14 @@
   text-align: start;
 }
 
-/* The footer, the card padding in from the view's sides and bottom, where the sole gift action's
-   group centres it. */
+.room-skill-copy {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  max-width: calc(var(--ui-unit) * var(--room-description-width) * 1px);
+}
+
+/* The gift actions' group, the card padding in from the view's sides and bottom. */
 .room-footer {
   position: absolute;
   right: calc(var(--ui-unit) * var(--card-padding) * 1px);

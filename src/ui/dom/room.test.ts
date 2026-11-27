@@ -106,6 +106,23 @@ it("keeps authoring gift glyphs and dialogue portraits independent of a live roo
   live.root.remove();
 });
 
+it("places optional secondary Talk before primary Continue and includes supplied lifetime text", () => {
+  const { words } = giftWords();
+  const view = createRoomView(document, COLOURS, {
+    ...words,
+    gift: { ...words.gift, lifetime: TEXT.room.giftLifetime },
+    talk: TEXT.room.talk,
+  });
+  expect([...view.root.querySelectorAll("button")]).toEqual([view.talk, view.leave]);
+  expect(view.talk?.textContent).toBe(TEXT.room.talk);
+  expect(view.talk?.classList.contains("ui-text-button-primary")).toBe(false);
+  expect(view.leave.classList.contains("ui-text-button-primary")).toBe(true);
+  expect(view.root.querySelector("#room-gift-lifetime")?.textContent).toBe(TEXT.room.giftLifetime);
+  expect(
+    createRoomView(document, COLOURS, words).root.querySelector("#room-gift-lifetime"),
+  ).toBeNull();
+});
+
 // Leave's group is as wide as its face, so its face's right edge is the group's.
 it("puts Leave's face at y 2 ending at x 712, its press area ending at the view's edges", () => {
   const size = { height: TEXT_BUTTON.height, width: 81 };

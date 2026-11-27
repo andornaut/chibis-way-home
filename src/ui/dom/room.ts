@@ -23,8 +23,8 @@ import { createSkillDisc } from "./skillDisc.ts";
 
 // A room's text and controls in the HTML UI (room.css, on ui.css). An ordinary room shows its
 // name as the page title and a sole secondary Leave at the top right. A gift room shows the
-// helper's dialogue panel, the skill's card between the panel and the footer, and a sole primary
-// action centred in the footer. Each action sits in its own kit action group.
+// helper's dialogue panel and the skill's card between the panel and the footer. The footer's
+// kit action group places optional secondary Talk before primary Continue.
 
 export interface RoomViewColours {
   readonly cream: number;
@@ -37,16 +37,19 @@ export interface RoomViewColours {
 export interface RoomViewWords extends ActionHelpWords {
   readonly action: string;
   readonly name: string;
+  readonly talk?: string;
   readonly gift?: {
     readonly description: string;
     readonly disc: string;
     readonly paragraph: PanelParagraph;
     readonly title: string;
+    readonly lifetime?: string;
   };
 }
 
 export interface RoomView {
   readonly leave: HTMLButtonElement;
+  readonly talk: HTMLButtonElement | undefined;
   readonly glyph: HTMLImageElement | undefined;
   readonly panel: DialoguePanelView | undefined;
   readonly root: HTMLElement;
@@ -105,7 +108,7 @@ export function createRoomView(
       createActions(document, [leave], { className: "room-leave", width: "content" }).element,
     );
     root.append(view);
-    return { glyph: undefined, leave, panel: undefined, root };
+    return { glyph: undefined, leave, panel: undefined, root, talk: undefined };
   }
   const gift = words.gift;
   const panel = createDialoguePanel(document, "room-helper");
@@ -129,11 +132,25 @@ export function createRoomView(
   const description = make("p", "room-description ui-text-body");
   description.id = "room-description";
   description.append(...createActionHelp(document, colours, words, gift.description));
-  body.append(disc.element, description);
+  const copy = make("div", "room-skill-copy");
+  copy.append(description);
+  if (gift.lifetime !== undefined) {
+    const lifetime = make("p", "room-gift-lifetime ui-text-body");
+    lifetime.id = "room-gift-lifetime";
+    lifetime.textContent = gift.lifetime;
+    copy.append(lifetime);
+    frame.dialog.setAttribute("aria-describedby", "room-description room-gift-lifetime");
+  }
+  body.append(disc.element, copy);
   frame.content.append(body);
   const footer = make("div", "room-footer");
-  footer.append(createActions(document, [leave]).element);
+  const talk = words.talk === undefined ? undefined : textButton(document, words.talk);
+  footer.append(
+    createActions(document, [...(talk === undefined ? [] : [talk]), leave], {
+      context: { axis: "row" },
+    }).element,
+  );
   view.append(panel.element, footer);
   root.append(frame.root, view);
-  return { glyph: disc.glyph, leave, panel, root };
+  return { glyph: disc.glyph, leave, panel, root, talk };
 }
