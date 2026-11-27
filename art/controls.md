@@ -115,7 +115,7 @@ The Start-only update notice places secondary Cancel on the left and primary Upd
 
 ## Button roles and states
 
-Primary and secondary buttons share one silhouette, cut corners and nine-slice geometry. Role sets the resting colours. Focus and press colour the face interior, preserving the ordinary frame and existing press motion.
+Primary and secondary rectangular buttons share cut upper corners, square lower face and lip corners, and the same nine-slice geometry. Role sets the resting colours. Focus and press colour the face interior, preserving the ordinary frame and existing press motion.
 
 | Role/state        | Fill     | Label/icon | Ordinary frame                 | Geometry                         |
 | ----------------- | -------- | ---------- | ------------------------------ | -------------------------------- |

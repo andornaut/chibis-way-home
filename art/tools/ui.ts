@@ -121,7 +121,7 @@
  * - ui-quit, 20x20: the doorway with an arrow leaving it, the nav's Exit icon. Tags normal (cream),
  *   pressed (white, the arrow 2px further out).
  * - ui-button, nine-slice 16x28, margins 2,4,2,6: the secondary button, dog-walker-game's shape
- *   with no outline and cut corners: a grey face, one step darker than the card, with an lgrey
+ *   with no outline, cut upper corners and square lower face/lip corners: a grey face, with an lgrey
  *   highlight on its top row and a slate lip 4px deep. Label ink (6.39:1 on grey). Tags normal,
  *   pressed (the face sinks 2px and the lip is gone, so its label moves down 2). The appended
  *   disabled tag keeps normal alpha geometry with one flat opaque lgrey fill.
@@ -345,6 +345,10 @@ function resume(state: string): pixel.Frame {
   const g = new Grid(160, 44);
   panel({ rim: null }, g, 0, top, 160, 44 - top, "dgreen");
   g.rect(1, top + 1, 158, 38, "green");
+  // The full-width lip meets both sides; its square ink bottom stays on row 43.
+  const lipTop = top + 39;
+  g.rect(0, lipTop, 160, 43 - lipTop, "dgreen");
+  g.rect(0, 43, 160, 1, "ink");
   return g.px;
 }
 
@@ -363,8 +367,8 @@ for (let i = 0; i < 11; i++) {
 }
 
 /**
- * 16x28 nine-slice, the dog-walker-game button: no outline, cut corners, a face with a 1px
- * highlight on its top row and a lip 4px deep; pressed, the face sinks 2px and the lip is gone.
+ * 16x28 nine-slice: no outline, cut upper corners and square lower face/lip corners, with a 1px
+ * top highlight and a lip 4px deep; pressed, the face sinks 2px and the lip is gone.
  */
 function plate(
   { face, hi, lip }: { face: string; lip: string; hi: string },
@@ -375,11 +379,10 @@ function plate(
   const g = new Grid(16, 28);
   const top = disabled || state === "normal" ? 0 : 2;
   if (!top) {
-    g.rect(1, 24, 14, 4, l);
-    g.rect(0, 24, 16, 3, l);
+    g.rect(0, 24, 16, 4, l);
   }
   g.rect(1, top, 14, 24, f);
-  g.rect(0, top + 1, 16, 22, f);
+  g.rect(0, top + 1, 16, 23, f);
   g.rect(2, top + 1, 12, 1, h);
   return g.px;
 }
