@@ -52,19 +52,18 @@
         display: grid;
         position: relative;
         flex: none;
-        grid-template-areas: "brand" "details";
-        grid-template-columns: minmax(0, 558px);
+        grid-template-columns: minmax(0, 1fr);
         justify-content: center;
         justify-items: center;
-        gap: 16px;
+        gap: 32px;
         width: 100%;
-        max-width: 1040px;
+        max-width: 960px;
         margin: auto;
         text-align: center;
       }
       .brand {
-        grid-area: brand;
         width: min(558px, 100%);
+        margin: 0;
       }
       .scenery,
       .scenery::before,
@@ -94,7 +93,12 @@
         opacity: 0.12;
       }
       .hero {
+        display: grid;
+        justify-items: center;
+        align-items: center;
+        gap: 16px;
         position: relative;
+        width: 100%;
         margin: 0;
       }
       .logo {
@@ -104,7 +108,6 @@
         image-rendering: pixelated;
       }
       .details {
-        grid-area: details;
         display: grid;
         gap: 16px;
         width: 100%;
@@ -112,8 +115,9 @@
       }
       .about {
         display: grid;
-        gap: 16px;
-        max-width: 440px;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
       }
       .pitch,
       .sub {
@@ -181,7 +185,6 @@
       .keys {
         display: grid;
         gap: 8px;
-        max-width: 440px;
         margin: 0;
         padding: 0;
         list-style: none;
@@ -194,6 +197,29 @@
       .controls h2 {
         margin: 0;
         font-size: 20px;
+      }
+      .about h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+      .home-footer {
+        box-sizing: border-box;
+        width: 100%;
+        padding-top: 16px;
+        border-top: 1px solid var(--home-dslate);
+      }
+      .home-footer nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+      .home-footer a {
+        color: var(--home-dslate);
+        text-underline-offset: 3px;
+      }
+      .home-footer a:focus-visible {
+        outline: 3px solid var(--home-ink);
+        outline-offset: 3px;
       }
       .controls table {
         width: 100%;
@@ -250,9 +276,8 @@
         justify-self: end;
       }
       @media (min-width: 900px) {
-        .home-content {
-          grid-template-areas: "brand details";
-          grid-template-columns: minmax(0, 558px) minmax(0, 440px);
+        .hero {
+          grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
           gap: 32px;
           align-items: center;
           text-align: start;
@@ -268,97 +293,104 @@
     <main>
       <div class="scenery" aria-hidden="true"></div>
       <div class="home-content">
-        <div class="brand">
-          <h1 class="hero">
+        <header class="hero">
+          <h1 class="brand">
             <img class="logo" src="/art/logo.png" width="558" height="239" alt="Chibi's Way Home" />
           </h1>
-        </div>
-        <div class="details">
-          <div class="about">
+          <div class="details">
             <p class="pitch">%HOME_DESCRIPTION%</p>
-            <p class="sub">%HOME_SUBLINE%</p>
+            <div class="actions">
+              <a class="play" href="/play/">%HOME_PLAY%</a>
+              <button class="install" id="install" type="button" hidden>%HOME_INSTALL%</button>
+            </div>
           </div>
-          <div class="actions">
-            <button class="install" id="install" type="button" hidden>%HOME_INSTALL%</button>
-            <a class="play" href="/play/">%HOME_PLAY%</a>
-          </div>
+        </header>
+        <section class="about" aria-labelledby="about-title">
+          <h2 id="about-title">About</h2>
+          <p class="sub">%HOME_SUBLINE%</p>
           <ul class="keys">
             %HOME_INSTRUCTIONS%
           </ul>
-          <section class="controls" aria-labelledby="controls-title">
-            <h2 id="controls-title">Controls</h2>
-            <table>
-              <caption>
-                Gameplay
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Action</th>
-                  <th scope="col">Input</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">Jump</th>
-                  <td>
-                    Space, W, K or Up arrow. Left-click the playfield or tap Jump. Hold for a higher
-                    jump.
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">Move</th>
-                  <td>
-                    A, H or Left arrow to move left. D, L or Right arrow to move right. On touch,
-                    drag left or right on the playfield.
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">Pause</th>
-                  <td>P, or tap or click Pause.</td>
-                </tr>
-                <tr>
-                  <th scope="row">Use</th>
-                  <td>E, F or Enter. Right-click the playfield or tap Use.</td>
-                </tr>
-              </tbody>
-            </table>
-            <table>
-              <caption>
-                Menu
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Action</th>
-                  <th scope="col">Input</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">Activate</th>
-                  <td>
-                    E, F, Enter or Space on a focused action. Tap, click or right-click an available
-                    button.
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">Back or skip</th>
-                  <td>
-                    Escape uses visible Skip first, then an allowed Close or Back. Required choices
-                    stay open.
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">Focus</th>
-                  <td>Arrow keys, W/A/S/D or K/H/J/L. Tab forward or Shift+Tab back.</td>
-                </tr>
-              </tbody>
-            </table>
-            <p>
-              On the map, Left/A/H and Right/D/L choose a destination. Use Continue to select a
-              stage. Native text fields and sliders keep their own keys.
-            </p>
-          </section>
-        </div>
+        </section>
+        <section class="controls" aria-labelledby="controls-title">
+          <h2 id="controls-title">Controls</h2>
+          <table>
+            <caption>
+              Gameplay
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Action</th>
+                <th scope="col">Input</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Jump</th>
+                <td>
+                  Space, W, K or Up arrow. Left-click the playfield or tap Jump. Hold for a higher
+                  jump.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Move</th>
+                <td>
+                  A, H or Left arrow to move left. D, L or Right arrow to move right. On touch, drag
+                  left or right on the playfield.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Pause</th>
+                <td>P, or tap or click Pause.</td>
+              </tr>
+              <tr>
+                <th scope="row">Use</th>
+                <td>E, F or Enter. Right-click the playfield or tap Use.</td>
+              </tr>
+            </tbody>
+          </table>
+          <table>
+            <caption>
+              Menu
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Action</th>
+                <th scope="col">Input</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Activate</th>
+                <td>
+                  E, F, Enter or Space on a focused action. Tap, click or right-click an available
+                  button.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Back or skip</th>
+                <td>
+                  Escape uses visible Skip first, then an allowed Close or Back. Required choices
+                  stay open.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Focus</th>
+                <td>Arrow keys, W/A/S/D or K/H/J/L. Tab forward or Shift+Tab back.</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            On the map, Left/A/H and Right/D/L choose a destination. Use Continue to select a stage.
+            Native text fields and sliders keep their own keys.
+          </p>
+        </section>
+        <footer class="home-footer">
+          <nav aria-label="Footer">
+            <a href="/">Home</a>
+            <a href="/play/">Play</a>
+          </nav>
+        </footer>
       </div>
     </main>
 
