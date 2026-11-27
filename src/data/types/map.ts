@@ -31,6 +31,7 @@ interface MapDecoration {
 // Its marker centre is on the map grid; icon is an art key with normal and visited tags.
 export interface MapDestination {
   readonly at: TilePoint;
+  readonly giftCount: 2 | 3;
   readonly icon: string;
   readonly id: string;
   readonly stages: readonly [string, ...string[]];

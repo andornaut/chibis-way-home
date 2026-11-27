@@ -6,8 +6,20 @@ const AVAILABLE = new Set(IDS);
 const MAP: ZoneMap = {
   decorations: [],
   destinations: [
-    { at: { col: 0, row: 0 }, icon: "map-icon-zone", id: "first", stages: ["one", "two"] },
-    { at: { col: 10, row: 0 }, icon: "map-icon-zone", id: "second", stages: ["three", "four"] },
+    {
+      at: { col: 0, row: 0 },
+      giftCount: 2,
+      icon: "map-icon-zone",
+      id: "first",
+      stages: ["one", "two"],
+    },
+    {
+      at: { col: 10, row: 0 },
+      giftCount: 2,
+      icon: "map-icon-zone",
+      id: "second",
+      stages: ["three", "four"],
+    },
   ],
   edges: IDS.slice(1).map((to, index) => ({ built: true, from: IDS[index]!, to })),
   finish: "four",

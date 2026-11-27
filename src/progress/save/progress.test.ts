@@ -23,7 +23,7 @@ const node = (id: string, kind: MapNode["kind"], zone?: string): MapNode => ({
 const MAP: ZoneMap = {
   decorations: [],
   destinations: [
-    { at: { col: 0, row: 0 }, icon: "zone", id: "test-zone", stages: ["start", "built"] },
+    { at: { col: 0, row: 0 }, giftCount: 2, icon: "zone", id: "test-zone", stages: ["start", "built"] },
   ],
   edges: [
     { built: true, from: "start", to: "fork" },
