@@ -1,6 +1,9 @@
 import { clamp01 } from "@andornaut/game-kit/runtime/numbers";
 
 import type { Point, Rect } from "../../data/types/index.ts";
+import { TOUCH_CHROME_FRAME } from "../layout/controlChrome.ts";
+
+export { TOUCH_CHROME_FRAME } from "../layout/controlChrome.ts";
 
 export type TouchChromeKind = "jump" | "knob" | "move" | "use";
 export type TouchChromePose = "held" | "held-left" | "held-right" | "press" | "rest";
@@ -9,7 +12,6 @@ export interface TouchChromeColours {
   readonly ink: number;
   readonly white: number;
 }
-export const TOUCH_CHROME_FRAME = 75;
 export const TOUCH_KNOB_FRAME = 11;
 
 export type TouchChromeLayer =

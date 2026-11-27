@@ -1,6 +1,9 @@
 import { clamp } from "@andornaut/game-kit/runtime/numbers";
 
 import type { Point, Rect } from "../../data/types/index.ts";
+import type { PathStroke } from "../layout/mapScreen.ts";
+
+export type { PathStroke } from "../layout/mapScreen.ts";
 
 // A path on the map: a quadratic Bezier from one node's centre to the next.
 interface Curve {
@@ -8,14 +11,6 @@ interface Curve {
   readonly from: Point;
   readonly to: Point;
 }
-
-// How a path is inked: squares width wide stamped every step px along it, solid, dashed (on and
-// off count the stamps' centres, in px), or as dots, one at each end and the rest spaced evenly,
-// about every px apart.
-export type PathStroke =
-  | { readonly kind: "dashes"; readonly off: number; readonly on: number; readonly width: number }
-  | { readonly kind: "dots"; readonly every: number; readonly width: number }
-  | { readonly kind: "solid"; readonly width: number };
 
 // A path's ends: each node's centre, and how far from it the path stops.
 interface PathEnds {

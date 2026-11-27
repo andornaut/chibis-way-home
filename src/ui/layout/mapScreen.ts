@@ -1,9 +1,16 @@
 import { MAP_LAYOUT } from "../../data/layout.ts";
 import type { Point, Rect, Size } from "../../data/types/index.ts";
-import type { PathStroke } from "../map/mapPath.ts";
 import { FONT_SCALE } from "./fontRoles.ts";
 import { hitAround } from "./hitAreas.ts";
 import { PAGE_TITLE } from "./pageTitle.ts";
+
+// How a path is inked: squares width wide stamped every step px along it, solid, dashed (on and
+// off count the stamps' centres, in px), or as dots, one at each end and the rest spaced evenly,
+// about every px apart.
+export type PathStroke =
+  | { readonly kind: "dashes"; readonly off: number; readonly on: number; readonly width: number }
+  | { readonly kind: "dots"; readonly every: number; readonly width: number }
+  | { readonly kind: "solid"; readonly width: number };
 
 // Art's paper map (art/README.md, Map), in base pixels (MAP_LAYOUT). Offsets are from a node's
 // centre. The paper fills the screen; each marker's centre pixel sits on its node's

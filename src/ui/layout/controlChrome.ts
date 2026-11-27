@@ -2,6 +2,8 @@ import type { HudDiscSize } from "@andornaut/game-kit/runtime/ui/hudDisc";
 
 import { CONTROL_DISC_FRAME, CONTROL_FRAME_INSET, SKILL_HUD } from "../../data/layout.ts";
 
+export const TOUCH_CHROME_FRAME = 75;
+
 const frame = CONTROL_DISC_FRAME;
 const restDiameter = frame - 2 * CONTROL_FRAME_INSET;
 
