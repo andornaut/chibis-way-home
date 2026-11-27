@@ -420,7 +420,7 @@ const OUTPUTS: Readonly<Record<ArtSet, readonly string[]>> = {
   ],
   speakerPortraits: [
     pixel.MANIFEST,
-    ...sprites("portrait-goose", "portrait-raccoon", "portrait-tip"),
+    ...sprites("portrait-goose", "portrait-mallow", "portrait-raccoon", "portrait-tip"),
   ],
   start: [pixel.MANIFEST, "public/art/images/start-background.png"],
   ui: [
