@@ -100,7 +100,7 @@ Apartment continues in this floor order:
 - **Ending:** the fixed finish has the final short-jump ceiling, red-edged gap and canopy
 - **Layout:** the tutorial introduces the parcel depot of the blue cityscape with a fixed opening and ending around seeded hand-designed street chunks. The middle uses matching city scenery and the zone's difficulty band, with varied climbing and moving-platform chunks
 - **Opening:** the fixed start has the opened parcel on safe ground, depot jump lessons and a staged Archie introduction before normal gameplay
-- **Rooms:** the street door leads to its assigned skill gift room
+- **Rooms:** gift rooms follow the [zone draw](#rooms)
 - **Route:** the main path continues right toward the city boundary; all three Blue stages descend to a lower open route by stairs or by drops onto narrow landings over red pits, climb by a lift or by terraces, rise to the upper route past a red-hazard gate or by the bank ferry, and return to the surface by stairs, open or guarded by a moving red gate, without requiring any skill. Fixed caps, doors, stage IDs and lengths are defined by their recipes. Streets is the second stage and unlocks when this tutorial is completed; City boundary is third
 
 ## City boundary
@@ -108,7 +108,7 @@ Apartment continues in this floor order:
 - **Encounter:** the deep-ascent connector immediately precedes City boundary's one authored Archie arena
 - **Layout:** the third Blue cityscape stage is randomized from a fixed start, seeded middle chunks and a fixed finish. It uses the street backgrounds and sidewalk terrain, with steps, required climbing routes, moving ledges, red ground strips, red-edged gaps and low-ceiling short-jump challenges inside the zone's difficulty band. The finish has sparse facades and an open outward view
 - **Replay:** entering from the map draws a fresh assembly seed; retries keep that layout. Completing Streets unlocks this stage; unlocked stages remain available for replay
-- **Rooms:** one door in the fixed start leads to its assigned skill gift room
+- **Rooms:** gift rooms follow the [zone draw](#rooms)
 
 ## Industrial outskirts
 
@@ -140,20 +140,19 @@ Apartment continues in this floor order:
 - **Encounters:** Familiar neighbourhood's one Kiwi encounter is its designed arena. Kiwi uses the shared detection, pursuit and pacing rules
 - **Layout:** City outskirts, Back streets and Familiar neighbourhood each use fixed openings and endings around shared randomized middle layouts within the zone's difficulty band. The middle challenges sit on a lower route: ground challenges, compound lift, low-ceiling shuttle and high-return chunks, platform orbits and a vertical red gate. Stairs guarded by moving red gates, or drops onto landings with a red gate on the wide second one, descend from the surface to the lower route; guarded stairs drop deeper below it and climb back; a lift, or terraces with a red gate at their foot, climb from the lower route, then an upper red-gate ascent or the bank ferry rises to the upper route; and a red-gate return, or a descent under two hanging walls with a red gate between them, descends to the surface
 - **Progression:** clearing Ravine opens City outskirts; clearing City outskirts opens Back streets, then Familiar neighbourhood. Unlocked stages remain replayable
-- **Rooms:** each stage's door leads to its skill gift room: Dash in City outskirts, Double jump in Back streets and Speedy in Familiar neighbourhood
+- **Rooms:** gift rooms follow the [zone draw](#rooms)
 
 ## Apartment building
 
 - **Checkpoint:** each floor is a standalone stage with one checkpoint at its lower beginning. Death restarts that floor on Try again in the same generated run
 - **Encounters:** see [Fert’s encounter rules](bosses.md#fert-encounter)
 - **Goal:** reaching the upper stair or elevator exit activates the floor transition automatically. Nonfinal floors show stage statistics and Continue before the next floor. Penthouse shows Fert's outgoing exchange, stage and zone statistics, then the celebration, including on replay
-- **Layout:** fixed one-screen openings and endings surround randomized one-screen middle chunks within the zone's difficulty band. Every floor shares one opening layout; Penthouse's opening has the same layout before its own wall of tall skyline windows. Apartment uses 120-row stages, with a safe lower spawn and a zigzag ascent connecting to the upper climb. The upper window and automatic exit sit in their authored positions; ordinary routes require no skill. Stage IDs, lengths and gift rooms are defined by their recipes. Fert's floors include solid cover that stops parcels
+- **Layout:** fixed one-screen openings and endings surround randomized one-screen middle chunks within the zone's difficulty band. Every floor shares one opening layout; Penthouse's opening has the same layout before its own wall of tall skyline windows. Apartment uses 120-row stages, with a safe lower spawn and a zigzag ascent connecting to the upper climb. The upper window and automatic exit sit in their authored positions; ordinary routes require no skill. Stage IDs and lengths are defined by their recipes. Gift rooms follow the [zone draw](#rooms). Fert's floors include solid cover that stops parcels
 - **Progression:** Familiar neighbourhood opens Lobby, followed by Restaurant, Pool, Spa, Residential floors and Penthouse. Each clear unlocks the next floor; unlocked floors remain replayable
 - **Rooms:** doors remain entrances to optional special rooms. Stairs and elevators are automatic floor exits, not room doors
 
 ## Rooms
 
 - **Enter:** every door sits within a visibly larger, coherent building or facade. Outdoor entrances share the door's world plane; distant parallax scenery does not replace their surroundings. Indoor doors use appropriate existing walls and trim. Use at a room's door plays the door's opening animation, if it has one, with play held, then shows the room as a full-screen still scene with a little animation, such as a bartender behind his bar. Play pauses until Chibi leaves, and leaving returns him to the door, shown closed. He leaves a skill gift room with its primary Continue button; ordinary rooms use Leave. Back, Esc and P open Pause or Menu according to the room's current pausability, without leaving it; Tab or an arrow focuses the room button, then Enter or Space presses it. A showing bark hides and holds its time while a door or room covers the stage
-- **Gifts:** the stage doors offer seven Dash, seven Double jump and seven Speedy grants across the twenty-one stages, with their assignments in `src/data/zones.ts`. The grant is saved on entry, before any dialogue acknowledgement. A supportive placeholder animal presents one top-panel gift line, alongside an in-room skill-details card. That card is ordinary nonmodal room content and adds no separate pause or dim layer; entering the room still holds the outside stage until Chibi leaves
-- **Per stage:** every stage has a skill gift room; repeated rooms make the skills easy to find and test
+- **Gifts:** each three-stage zone draws two distinct gifts from Dash, Double jump and Speedy, in two distinct stages. Apartment building draws all three gifts across three of its six floors. A stage has at most one gift. The zone seed and assignments persist through retries, replays, same-zone map visits and Continue. Entering a different zone starts a fresh draw, including when returning to a previously visited zone. The grant is saved on room entry, before any dialogue acknowledgement. A supportive placeholder animal presents one top-panel gift line, alongside an in-room skill-details card. That card is ordinary nonmodal room content and adds no separate pause or dim layer; entering the room still holds the outside stage until Chibi leaves
 - **World:** the side-scrolling stages are the game world; rooms are the only other places, each reached through a door

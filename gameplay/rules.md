@@ -105,7 +105,7 @@ There are 26 achievements in three tiers, in this catalogue order:
 | Medium | Zone clears for Woodland, Home city and Apartment building; All gift rooms; no-death third stages for Archie, Pebble and Trixi; no-death zones for Blue cityscape and Industrial outskirts |
 | Hard   | No-death third stages for Bini, Kiwi and Fert; no-death zones for Countryside, Woodland, Home city and Apartment building; Home with no skills                                             |
 
-- **All gift rooms:** owning Dash, Double jump and Speedy
+- **All gift rooms:** collecting each of Dash, Double jump and Speedy from gift rooms over the journey. Entering a different zone clears the usable inventory but keeps this collection record and earned achievements
 - **Boss escape:** the first escape from that boss. An escape on the same physics step as a death or an area change does not count
 - **Home with no skills:** finishing the journey without ever using a skill since the last confirmed Restart: no dash, no double jump, and Speedy never selected. Owning a skill without using it, and owning Speedy without selecting it, do not break it
 - **No-death third stage:** clearing the third stage of that boss's zone (for Fert, Penthouse) on its first attempt (see New runs: a death or an uncleared exit uses it up)
