@@ -6,7 +6,6 @@ import { setTextRole } from "@andornaut/game-kit/runtime/web/ui/dom/uiTheme";
 
 import { DIALOGUE_PANEL_ALPHA } from "../../data/dialogues.ts";
 import { DIALOGUE_LAYOUT } from "../../data/layout.ts";
-import { SCREEN } from "../../data/screen.ts";
 import type { DialogueSpeaker } from "../../data/types/index.ts";
 import type { DialogueControl } from "../dialogue/conversation.ts";
 import { DIALOGUE_PORTRAIT_SIZE, DIALOGUE_SCREEN, dialogueSpeakerLayout } from "../layout/index.ts";
@@ -21,7 +20,7 @@ import { textButton } from "./card.ts";
 // above its card (room.ts).
 
 const { box } = DIALOGUE_SCREEN;
-const { footer, nameTab } = DIALOGUE_LAYOUT;
+const { nameTab } = DIALOGUE_LAYOUT;
 
 // The layout properties dialogue.css reads, in base px, written on each panel's scene view.
 export const DIALOGUE_PANEL_LAYOUT: LayoutValues = {
@@ -44,12 +43,9 @@ export const DIALOGUE_PANEL_LAYOUT: LayoutValues = {
   "--dialogue-y": box.y,
 };
 
-// The action row's top below the panel, its right edge in from the view's at the panel's right
-// edge, and its inset from the view's right and bottom on departure.
+// Every dialogue action row shares the existing bottom page inset.
 export const DIALOGUE_FOOTER_LAYOUT: LayoutValues = {
-  "--dialogue-departure-inset": DIALOGUE_LAYOUT.departureInset,
-  "--dialogue-footer-right": SCREEN.width - box.x - box.width,
-  "--dialogue-footer-top": box.y + box.height + footer.gap,
+  "--dialogue-footer-bottom": DIALOGUE_LAYOUT.departureInset,
 };
 
 // A paragraph as the panel shows it: its speaker's side, and their name tab, or none for a null
@@ -154,7 +150,7 @@ export interface DialogueView {
 }
 
 // Previous and Next share the existing footer; Skip has its own top-right group. A departure
-// fills the view with the cleared stage preview and keeps the footer at its bottom-right corner.
+// fills the view with the cleared stage preview behind the same centred bottom row.
 export function createDialogueView(
   document: Document,
   departure: boolean,
@@ -185,6 +181,7 @@ export function createDialogueView(
   buttons.skip.dataset.control = "skip";
   const { element: footer } = createActions(document, [buttons.continue, buttons.previous], {
     className: "dialogue-footer",
+    context: { axis: "row" },
     width: "content",
   });
   footer.toggleAttribute("data-departure", departure);

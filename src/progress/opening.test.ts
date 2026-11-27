@@ -5,6 +5,33 @@ import type { OpeningBeat, OpeningLayer, OpeningShot } from "../data/types/index
 import { createOpeningPlayback, openingDestination, openingPose } from "./opening.ts";
 
 describe("manual opening playback", () => {
+  it("keeps a one-page opening on its final Next when Skip is unavailable", () => {
+    const done = vi.fn();
+    const playback = createOpeningPlayback(done, OPENING.slice(0, 1));
+    expect(playback.canSkip()).toBe(false);
+    playback.skip();
+    expect(done).not.toHaveBeenCalled();
+    playback.advance();
+    expect(done).toHaveBeenCalledOnce();
+  });
+
+  it("recomputes Skip through linear history and leaves the final Next active", () => {
+    const done = vi.fn();
+    const playback = createOpeningPlayback(done, OPENING.slice(0, 3));
+    expect(playback.canSkip()).toBe(true);
+    playback.advance();
+    expect(playback.canSkip()).toBe(true);
+    playback.advance();
+    expect(playback.canSkip()).toBe(false);
+    playback.skip();
+    expect(done).not.toHaveBeenCalled();
+    playback.previous();
+    expect(playback.canSkip()).toBe(true);
+    expect(playback.frame().beatIndex).toBe(1);
+    playback.advance();
+    playback.advance();
+    expect(done).toHaveBeenCalledOnce();
+  });
   it("holds the final shot, returns to the prior beat's start, and completes only by advance", () => {
     const done = vi.fn();
     const shots = [

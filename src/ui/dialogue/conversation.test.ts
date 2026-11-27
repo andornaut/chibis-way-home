@@ -9,6 +9,7 @@ import {
   dialogueParagraphs,
   type DialoguePress,
   dialogueProgress,
+  dialogueSkipAvailable,
   dialogueTapAction,
   moveDialoguePress,
 } from "./conversation.ts";
@@ -170,18 +171,32 @@ describe("terminal dialogue choices", () => {
     expect(() => dialogueChoice(choiceWords, invalid)).toThrow();
   });
 
-  it.each(["advance", "skip"] as const)(
-    "%s at the last paragraph opens a required choice",
-    (action) => {
-      expect(dialogueProgress(choice, plan.lines.length, plan.lines.length - 1, action)).toEqual({
-        choice,
-        kind: "choice",
-      });
-      expect(dialogueProgress(undefined, plan.lines.length, plan.lines.length - 1, action)).toEqual(
-        { kind: "complete" },
-      );
-    },
-  );
+  it("the last Next opens a required choice or completes a linear conversation", () => {
+    expect(dialogueProgress(choice, plan.lines.length, plan.lines.length - 1, "advance")).toEqual({
+      choice,
+      kind: "choice",
+    });
+    expect(
+      dialogueProgress(undefined, plan.lines.length, plan.lines.length - 1, "advance"),
+    ).toEqual({ kind: "complete" });
+  });
+
+  it.each([
+    { count: 1, index: 0, name: "sole linear page", skip: false },
+    { count: 3, index: 0, name: "first page", skip: true },
+    { count: 3, index: 1, name: "middle page before final Next", skip: true },
+    { count: 3, index: 2, name: "final page or next page is a fork", skip: false },
+  ])("gates Skip on the current and immediate next Next: $name", ({ count, index, skip }) => {
+    expect(dialogueSkipAvailable(count, index)).toBe(skip);
+    if (!skip) {
+      for (const terminal of [choice, undefined]) {
+        expect(dialogueProgress(terminal, count, index, "skip")).toEqual({
+          index,
+          kind: "paragraph",
+        });
+      }
+    }
+  });
 
   it("Previous restores a paragraph without reaching the terminal choice or completing", () => {
     expect(dialogueProgress(choice, 3, 2, "previous")).toEqual({ index: 1, kind: "paragraph" });

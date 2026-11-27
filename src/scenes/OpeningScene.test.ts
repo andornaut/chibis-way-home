@@ -199,6 +199,25 @@ it("skips hidden Previous in the initial focus order and still skips the whole o
   expect(saveOpeningSeen).toHaveBeenCalledOnce();
 });
 
+it("moves focus from final-page Skip to Next and rejects the unavailable action", async () => {
+  const { root, scene } = await htmlOpening();
+  const controls = scene as unknown as { activate(action: "continue" | "skip"): void };
+  for (let index = 0; index < OPENING.length - 2; index++) {
+    controls.activate("continue");
+  }
+  const skip = root.querySelector<HTMLButtonElement>('[data-control="skip"]')!;
+  const next = root.querySelector<HTMLButtonElement>('[data-control="continue"]')!;
+  expect(skip.hidden).toBe(false);
+  skip.focus();
+  controls.activate("continue");
+  expect(skip.hidden).toBe(true);
+  expect(document.activeElement).toBe(next);
+  controls.activate("skip");
+  expect(saveOpeningSeen).not.toHaveBeenCalled();
+  controls.activate("continue");
+  expect(saveOpeningSeen).toHaveBeenCalledOnce();
+});
+
 it("returns to the first caption without saving and moves focus from hidden Previous to Next", async () => {
   const { root, scene } = await htmlOpening();
   const caption = root.querySelector(".opening-caption")!;

@@ -160,19 +160,12 @@
   text-align: start;
 }
 
-/* The action group, as wide as its faces, starts below the panel with its right edge on the
-   panel's. */
+/* Center the content-width navigation group at the bottom, including a lone Next. */
 .dialogue-region .dialogue-footer {
   position: absolute;
-  top: calc(var(--ui-unit) * var(--dialogue-footer-top) * 1px);
-  right: calc(var(--ui-unit) * var(--dialogue-footer-right) * 1px);
-}
-
-/* A departure's row sits its inset in from the view's bottom-right corner. */
-.dialogue-region .dialogue-footer[data-departure] {
-  top: auto;
-  right: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px);
-  bottom: calc(var(--ui-unit) * var(--dialogue-departure-inset) * 1px);
+  bottom: calc(var(--ui-unit) * var(--dialogue-footer-bottom) * 1px);
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 /* Skip is separate from paragraph navigation, at the shared page content inset. */

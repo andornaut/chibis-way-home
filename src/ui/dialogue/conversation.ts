@@ -146,7 +146,12 @@ export function dialogueChoiceKey(
   };
 }
 
-// Skip and the last paragraph reach the same terminal state. A choice is returned for display,
+// Every paragraph has one Next action. The immediate next page must also have Next for Skip.
+export function dialogueSkipAvailable(paragraphCount: number, index: number): boolean {
+  return index >= 0 && index + 1 < paragraphCount;
+}
+
+// Eligible Skip and the last Next reach the same terminal state. A required choice is displayed,
 // never converted into an answer or a completed conversation.
 export function dialogueProgress(
   choice: DialogueChoice | undefined,
@@ -159,6 +164,9 @@ export function dialogueProgress(
   | { readonly kind: "complete" } {
   if (action === "previous") {
     return { index: Math.max(0, index - 1), kind: "paragraph" };
+  }
+  if (action === "skip" && !dialogueSkipAvailable(paragraphCount, index)) {
+    return { index, kind: "paragraph" };
   }
   if (action === "advance" && index + 1 < paragraphCount) {
     return { index: index + 1, kind: "paragraph" };

@@ -1,5 +1,4 @@
-/* The footer keeps its height and right anchor. Its action group is as wide as its faces, which
-   fit their labels. */
+/* The caption has its own row above the centred navigation faces. */
 .opening-view {
   pointer-events: none;
 }
@@ -11,18 +10,20 @@
   left: 0;
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  column-gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
-  height: calc(var(--ui-unit) * var(--opening-footer-height) * 1px);
-  padding: 0 calc(var(--ui-unit) * var(--card-padding) * 1px);
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  row-gap: calc(var(--ui-unit) * var(--card-gap) * 1px);
+  min-height: calc(var(--ui-unit) * var(--opening-footer-height) * 1px);
+  padding: calc(var(--ui-unit) * var(--card-padding) * 1px);
   background: var(--colour-ink);
 }
 
 .opening-caption {
   margin: 0;
-  white-space: pre;
+  max-width: 100%;
+  white-space: pre-wrap;
   color: var(--colour-white);
+  text-align: center;
   text-box: trim-both cap alphabetic;
 }
 

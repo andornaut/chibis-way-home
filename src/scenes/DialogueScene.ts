@@ -13,6 +13,7 @@ import {
   type DialogueParagraph,
   dialogueParagraphs,
   dialogueProgress,
+  dialogueSkipAvailable,
   type DialogueView,
   pauseKey,
   showPanelParagraph,
@@ -175,11 +176,16 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
     if (view === undefined) {
       return;
     }
-    const canGoBack = this.paragraph > 0;
-    if (!canGoBack && view.root.ownerDocument.activeElement === view.buttons.previous) {
-      view.buttons.continue.focus({ preventScroll: true });
+    const available = {
+      previous: this.paragraph > 0,
+      skip: dialogueSkipAvailable(this.paragraphs.length, this.paragraph),
+    };
+    for (const control of ["previous", "skip"] as const) {
+      if (!available[control] && view.root.ownerDocument.activeElement === view.buttons[control]) {
+        view.buttons.continue.focus({ preventScroll: true });
+      }
+      view.buttons[control].hidden = !available[control];
     }
-    view.buttons.previous.hidden = !canGoBack;
     showPanelParagraph(view.panel, paragraph);
     const { portrait } = view.panel;
     const key = paragraph.portrait;
@@ -228,6 +234,9 @@ export class DialogueScene extends Scene implements DialogueChoiceOpener {
       return;
     }
     if (action === "previous" && this.paragraph === 0) {
+      return;
+    }
+    if (action === "skip" && !dialogueSkipAvailable(this.paragraphs.length, this.paragraph)) {
       return;
     }
     const next = dialogueProgress(this.choice, this.paragraphs.length, this.paragraph, action);

@@ -80,6 +80,7 @@ export function createOpeningPlayback(onFinish: () => void, beats: readonly Open
     finished = true;
     onFinish();
   };
+  const canSkip = () => !finished && beatIndex + 1 < beats.length;
   return {
     advance() {
       if (finished) {
@@ -93,6 +94,7 @@ export function createOpeningPlayback(onFinish: () => void, beats: readonly Open
       }
     },
     canGoBack,
+    canSkip,
     frame() {
       const beat = beats[beatIndex]!;
       let time = elapsed;
@@ -119,7 +121,11 @@ export function createOpeningPlayback(onFinish: () => void, beats: readonly Open
         elapsed = 0;
       }
     },
-    skip: finish,
+    skip() {
+      if (canSkip()) {
+        finish();
+      }
+    },
     tick(seconds: number) {
       if (!finished && Number.isFinite(seconds)) {
         elapsed += Math.max(0, seconds);

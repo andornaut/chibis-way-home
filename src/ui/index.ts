@@ -38,6 +38,7 @@ export {
   dialogueParagraphs,
   type DialoguePress,
   dialogueProgress,
+  dialogueSkipAvailable,
   dialogueTapAction,
   moveDialoguePress,
   type ResolvedDialogueChoice,

@@ -56,6 +56,7 @@ export function createOpeningView(document: Document, words: OpeningWords): Open
   buttons.previous.hidden = true;
   const actions = createActions(document, [buttons.continue, buttons.previous], {
     className: "opening-actions",
+    context: { axis: "row" },
     width: "content",
   });
   const skip = createActions(document, [buttons.skip], {

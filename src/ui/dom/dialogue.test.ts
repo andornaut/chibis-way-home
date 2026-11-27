@@ -51,16 +51,12 @@ it("holds a bark's panel hidden in a status region without controls", () => {
   expect(root.querySelectorAll("button")).toHaveLength(0);
 });
 
-it("starts the footer below the panel on its right edge, and a departure's in from the corner", () => {
+it("keeps the bottom row's full-height faces clear of the dialogue panel", () => {
   const { box } = DIALOGUE_SCREEN;
   const footer = DIALOGUE_FOOTER_LAYOUT as Readonly<Record<string, number>>;
-  expect(footer).toEqual({
-    "--dialogue-departure-inset": 16,
-    "--dialogue-footer-right": 120,
-    "--dialogue-footer-top": 140,
-  });
-  expect(SCREEN.width - footer["--dialogue-footer-right"]!).toBe(box.x + box.width);
-  expect(footer["--dialogue-footer-top"]).toBe(box.y + box.height + DIALOGUE_LAYOUT.footer.gap);
+  const top = SCREEN.height - footer["--dialogue-footer-bottom"]! - TEXT_BUTTON.height;
+  expect(footer["--dialogue-footer-bottom"]).toBe(DIALOGUE_LAYOUT.departureInset);
+  expect(top).toBeGreaterThanOrEqual(box.y + box.height + DIALOGUE_LAYOUT.footer.gap);
 });
 
 // The row is as wide as its faces and the gap, so its right edge is Continue's.

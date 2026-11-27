@@ -47,7 +47,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-function mountConversation() {
+function mountConversation(key = SCENE!) {
   const game = { events: new EventEmitter() };
   const opener = { dialogueClosed: vi.fn() };
   const events = new EventEmitter();
@@ -58,7 +58,7 @@ function mountConversation() {
     scene: route,
     textures: { exists: () => true },
   });
-  scene.init({ scene: SCENE! });
+  scene.init({ scene: key });
   scene.create();
   modalInput(scene).open();
   const root = document.querySelector<HTMLElement>(".dialogue-scene")!;
@@ -81,6 +81,36 @@ async function conversation() {
   await dom.backdropReady;
   return mounted;
 }
+
+it("limits Mallow Skip to the first page, restores history and completes with the final Next", async () => {
+  const key = Object.keys(DIALOGUES).find((name) => name.startsWith("gift-mallow-"))!;
+  expect(DIALOGUES[key]!.lines).toHaveLength(2);
+  const { button, opener, scene } = mountConversation(key);
+  await dom.backdropReady;
+  expect(button("skip").hidden).toBe(false);
+  button("skip").focus();
+  (scene as unknown as { act(action: "advance"): void }).act("advance");
+  expect(button("skip").hidden).toBe(true);
+  expect(document.activeElement).toBe(button("continue"));
+  button("skip").click();
+  expect(opener.dialogueClosed).not.toHaveBeenCalled();
+  button("previous").click();
+  expect(button("skip").hidden).toBe(false);
+  button("continue").click();
+  button("continue").click();
+  expect(opener.dialogueClosed).toHaveBeenCalledOnce();
+});
+
+it("omits Skip for a one-page conversation without disabling its completing Next", async () => {
+  const key = Object.keys(DIALOGUES).find((name) => DIALOGUES[name]!.lines.length === 1)!;
+  const { button, opener } = mountConversation(key);
+  await dom.backdropReady;
+  expect(button("skip").hidden).toBe(true);
+  button("skip").click();
+  expect(opener.dialogueClosed).not.toHaveBeenCalled();
+  button("continue").click();
+  expect(opener.dialogueClosed).toHaveBeenCalledOnce();
+});
 
 it("keeps the dialogue hidden until the backdrop has rendered", async () => {
   let backdropRendered: () => void = () => undefined;
@@ -188,6 +218,11 @@ it("keeps a required terminal choice after revisiting a paragraph and through Sk
   press(button("continue"));
   expect(route.launch).not.toHaveBeenCalled();
   press(button("skip"));
+  expect(route.launch).not.toHaveBeenCalled();
+  expect(button("skip").hidden).toBe(true);
+  press(button("previous"));
+  expect(button("skip").hidden).toBe(false);
+  press(button("skip"));
   expect(route.launch).toHaveBeenCalledExactlyOnceWith("dialogueChoice", { choice });
   press(button("previous"));
   press(button("continue"));
@@ -254,7 +289,7 @@ it("contains P and Escape without advancing, and takes no action the modal gate 
 });
 
 it("keeps the panel and footer painted under a required choice, closing with its answer", async () => {
-  const { opener, root, route, scene } = await conversation();
+  const { button, opener, root, route, scene } = await conversation();
   // No authored conversation ends in a choice, so this one is given one at its last line.
   const [prompt, first, second] = Object.keys(TEXT.lines);
   const choice: DialogueChoice = {
@@ -265,6 +300,10 @@ it("keeps the panel and footer painted under a required choice, closing with its
     prompt: prompt!,
   };
   Object.assign(scene, { choice, paragraph: PARAGRAPHS.length - 1 });
+  // A pending Skip cannot pass a page whose immediate successor is the chooser.
+  button("skip").click();
+  expect(route.launch).not.toHaveBeenCalled();
+  expect(opener.dialogueClosed).not.toHaveBeenCalled();
   pressKey([], "Enter");
   expect(route.launch).toHaveBeenCalledExactlyOnceWith("dialogueChoice", { choice });
   expect(route.pause).toHaveBeenCalledOnce();

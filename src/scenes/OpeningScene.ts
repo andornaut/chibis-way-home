@@ -144,7 +144,9 @@ export class OpeningScene extends Scene {
   }
 
   private actionAvailable(action: OpeningAction): boolean {
-    return action !== "previous" || this.playback.canGoBack();
+    return action === "skip"
+      ? this.playback.canSkip()
+      : action !== "previous" || this.playback.canGoBack();
   }
 
   private watchPresses(view: OpeningView): () => void {
@@ -236,12 +238,17 @@ export class OpeningScene extends Scene {
       }
       if (this.view !== undefined) {
         const { buttons, root } = this.view;
-        const canGoBack = this.playback.canGoBack();
-        if (!canGoBack && root.ownerDocument.activeElement === buttons.previous) {
-          this.focus = "continue";
-          buttons.continue.focus();
+        for (const control of ["previous", "skip"] as const) {
+          const available = this.actionAvailable(control);
+          if (
+            !available &&
+            (this.focus === control || root.ownerDocument.activeElement === buttons[control])
+          ) {
+            this.focus = "continue";
+            buttons.continue.focus();
+          }
+          buttons[control].hidden = !available;
         }
-        buttons.previous.hidden = !canGoBack;
         showOpeningCaption(text, this.view);
       }
       this.beat = frame.beat;
