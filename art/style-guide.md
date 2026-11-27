@@ -242,8 +242,9 @@ The homepage reuses the existing logo and city backdrops on a quiet powder-blue 
 
 - Actions: the hero places primary Play first and Install second when available, each 144px wide and at least 48px high, with a 16px gap and 16px horizontal content padding. Play uses dark steel with a white label; Install uses grey with ink text. Preserve the existing browser install prompt or steps flow and hide Install once installed.
 - Copy: the hero contains the existing game description and actions. About follows as a heading and one compact paragraph using the existing subline; Controls has its own section below. Keep the pitch at 20px and body text at 16px. Reflow or allow vertical scrolling rather than shrinking text.
-- Layout: align Hero, About, Controls and footer to one centred outer column, at most 960px wide, with 32px between groups. At viewport widths of 900px and above, the hero places the logo beside the description and actions in 1.2:1 columns with a 32px gap. Below 900px, stack logo, description and actions in that order, centred with 16px gaps. Keep at least 16px safe-area side padding and 24px top and bottom padding, with the bottom safe area respected. Short landscape screens retain vertical scrolling at full type size.
-- Navigation: keep the footer's Home and Play links and their behaviour, aligned to the same outer column. Page headers and hero content remain distinct from modal framing.
+- Layout: align Hero, About and Controls to one centred outer column, at most 960px wide, with 32px between groups. At viewport widths of 900px and above, the hero places the logo beside the description and actions in 1.2:1 columns with a 32px gap. Below 900px, stack logo, description and actions in that order, centred with 16px gaps. Keep at least 16px safe-area side padding and 24px top and bottom padding, with the bottom safe area respected. Short landscape screens retain vertical scrolling at full type size.
+
+Page headers and hero content remain distinct from modal framing.
 
 ## Opening presentation
 
