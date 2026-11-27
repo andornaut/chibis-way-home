@@ -573,6 +573,19 @@
     },
     {
       "encounters": 0,
+      "grade": 3,
+      "id": "countryside-windmill-lookout--countryside-overhead-islands",
+      "kind": "pair",
+      "layout": "a8c8d2bad3dfbc86",
+      "modules": ["windmill-lookout", "countryside-overhead-islands"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "e5c31d976255e66a",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "7ff8253af4382e8b:3006",
+      "work": 3006
+    },
+    {
+      "encounters": 0,
       "grade": 4,
       "id": "countryside-windmill-lookout--countryside-raised-red-channel",
       "kind": "pair",
@@ -636,7 +649,7 @@
       "work": 10121
     }
   ],
-  "inputs": { "data": "08bc911606b7e2f3", "proofs": "6ecc74a01ff28a0b" },
+  "inputs": { "data": "8e43c2b1acf911a8", "proofs": "6ecc74a01ff28a0b" },
   "version": 1,
   "zone": "countryside"
 }

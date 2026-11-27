@@ -48,6 +48,19 @@
     {
       "encounters": 0,
       "grade": 3,
+      "id": "industrial-crane-lookout--industrial-overhead-transfer",
+      "kind": "pair",
+      "layout": "b2619d2b07aa9a07",
+      "modules": ["crane-lookout", "industrial-overhead-transfer"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "4fce46d512728b15",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "27149cbf63d7d5b5:850",
+      "work": 850
+    },
+    {
+      "encounters": 0,
+      "grade": 3,
       "id": "industrial-crane-lookout--industrial-staggered-bridge",
       "kind": "pair",
       "layout": "d6230dd1c5ed6660",
@@ -662,7 +675,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "ba4bbf4a4662a32d", "proofs": "6ecc74a01ff28a0b" },
+  "inputs": { "data": "fed6c655f806138a", "proofs": "6ecc74a01ff28a0b" },
   "version": 1,
   "zone": "industrial"
 }

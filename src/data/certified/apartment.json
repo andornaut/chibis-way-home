@@ -167,6 +167,19 @@
     {
       "encounters": 0,
       "grade": 4,
+      "id": "apartment-chandelier-approach--apartment-overhead-recovery",
+      "kind": "pair",
+      "layout": "57e0f3d06e51b2d1",
+      "modules": ["chandelier-approach", "apartment-overhead-recovery"],
+      "proof": { "kind": "ordinary", "tuning": "63028676eb5663ac", "version": 1 },
+      "route": "6a2d1e952054be22",
+      "slots": { "door": 0, "event": 0 },
+      "trace": "c7d84eb66918d635:699",
+      "work": 699
+    },
+    {
+      "encounters": 0,
+      "grade": 4,
       "id": "apartment-chandelier-approach--apartment-shuttle-overpass",
       "kind": "pair",
       "layout": "14c8534f3c815424",
@@ -457,7 +470,7 @@
       "work": 408
     }
   ],
-  "inputs": { "data": "42e5ba62522d601d", "proofs": "6ecc74a01ff28a0b" },
+  "inputs": { "data": "1c98e4a176cc2854", "proofs": "6ecc74a01ff28a0b" },
   "version": 1,
   "zone": "apartment"
 }
