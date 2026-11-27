@@ -133,7 +133,9 @@ export interface GameText {
   // The action that returns him to the room's door.
   readonly room: {
     readonly continue: string;
+    readonly giftLifetime: string;
     readonly leave: string;
+    readonly talk: string;
   };
   // Each room's name, by its key in ROOMS, shown in the room.
   readonly rooms: Readonly<Record<string, { readonly name: string }>>;

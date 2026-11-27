@@ -443,6 +443,8 @@ export interface RoomPlan {
   readonly animations?: readonly RoomAnimation[];
   readonly art?: string;
   readonly cast?: readonly RoomCast[];
+  // Optional conversation key in DIALOGUES, separate from the entry summary.
+  readonly conversation?: string;
   // Entry dialogue key in DIALOGUES; skill grants are idempotent on every entry.
   readonly enter?: string;
   readonly grant?: SkillId;
