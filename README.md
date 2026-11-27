@@ -14,8 +14,8 @@ The [gameplay rules](gameplay/design.md) and [gameplay targets](gameplay/README.
 
 ## Developing
 
-Use `make check` for isolated lint, tests and builds, or `make build` to produce `dist/`. See [development](docs/development.md) for prerequisites, focused checks, native commands and container details.
+Use `make check` for isolated lint, tests and builds, or `make build` to produce `dist/`. See [development](docs/guides/development.md) for prerequisites, focused checks, native commands and container details.
 
 ## Deploying
 
-The scheduled Delivery Kit runner gates, pushes and deploys local `main`. See [delivery](docs/delivery.md) for the configuration and gate-image procedure.
+The scheduled Delivery Kit runner gates, pushes and deploys local `main`. See [delivery](docs/reference/delivery.md) for the configuration and gate-image procedure.

@@ -1,6 +1,6 @@
-# Development
+# Development reference
 
-[Documentation index](README.md) · [Delivery](delivery.md)
+[Reference index](README.md) · [Development guide](../guides/development.md)
 
 Run commands from the repository root.
 
@@ -31,7 +31,7 @@ The custom image (`tests/container/Dockerfile`) has two stages. The `toolchain` 
 
 ## Native tools
 
-Native tools also include `npm run dev`, `npm run format`, `npm run preview`, `npm run reaches`, `npm run simulate -- --help` and `npm run test:game-kit` (the game-kit wiring tests that game-kit's release proof runs after `npm run typecheck`). Runtime documentation is in [source reference](../src/README.md).
+Native tools also include `npm run dev`, `npm run format`, `npm run preview`, `npm run reaches`, `npm run simulate -- --help` and `npm run test:game-kit` (the game-kit wiring tests that game-kit's release proof runs after `npm run typecheck`). Runtime documentation is in [source reference](../../src/README.md).
 
 ## Dependency workarounds
 

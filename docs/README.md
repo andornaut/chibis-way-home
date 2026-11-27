@@ -2,14 +2,14 @@
 
 [Project overview](../README.md)
 
-## Guides
+## Sections
 
 | Guide                             | Purpose                                                                                                                                            |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Art](../art/README.md)           | Asset pipeline and tooling, with the [style guide](../art/style-guide.md), [controls](../art/controls.md) and [layout](../art/layout.md).          |
-| [Delivery](delivery.md)           | Scheduled delivery, configuration and gate-image maintenance.                                                                                      |
 | [Design areas](design/README.md)  | Short topic summaries and links to detailed references and related work items.                                                                     |
-| [Development](development.md)     | Commands, prerequisites, isolated checks and dependency workarounds.                                                                               |
+| [Guides](guides/README.md)        | Development and gate-image maintenance walkthroughs.                                                                                               |
+| [Reference](reference/README.md)  | Commands, prerequisites, containers, configuration and operational details.                                                                        |
 | [Gameplay](../gameplay/README.md) | Scope, tuning and playtesting, with [rules](../gameplay/design.md), [undecided ideas](../gameplay/ideas.md) and [later work](../gameplay/next.md). |
 | [Source](../src/README.md)        | Architecture, data, saves, assets and development tools.                                                                                           |
 | [Work items](work/README.md)      | Request records, approval conventions and the historical work index.                                                                               |
