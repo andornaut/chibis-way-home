@@ -238,12 +238,12 @@ The logo uses a full canonical cream bird standing on a simple platform above a 
 
 ## Homepage
 
-Approved layout target for paired page implementation: reuse the existing logo and city backdrop assets with a quiet powder-blue hero field. Extend the skyline across that field rather than confining it to a rectangular tile directly behind the logo. Keep its contrast low enough that copy and controls remain the focus. The muted zone palette, natural 558:239 logo aspect ratio and nearest-neighbour image sampling remain unchanged; no new illustration is required.
+The homepage reuses the existing logo and city backdrops on a quiet powder-blue field. Repeating far and middle city layers form an `aria-hidden` backdrop across the main area, behind the page content. Preserve the muted palette, natural 558:239 logo aspect ratio and nearest-neighbour image sampling; no new illustration is required.
 
-- Actions: retain Install on the left and primary Play on the right, each 144x48, 16px apart, with 48px minimum height and at least 16px horizontal content padding. Preserve installation availability and existing interaction semantics. Play uses dark steel with a white label; secondary actions retain the shared grey treatment and disabled controls retain pale steel.
-- Copy: retain the existing game description, subline and input instructions. Use the existing full-size page type, with a 20px pitch and 16px body text. Reflow or allow vertical scrolling rather than shrinking text.
-- Layout: on wide views, place the logo beside one coherent text column containing the pitch, subline, actions and input instructions. Keep the actions with the copy rather than below the logo. On narrow views, stack logo, copy, actions and instructions in that reading order. Retain at least 16px safe-area page padding, 16px between content groups and clear space around the logo. Keep short landscape screens scrollable when their full-size content exceeds the available height.
-- Navigation: preserve the existing logo, Home and Play navigation links and their behaviour. Page headers and hero content remain distinct from modal framing.
+- Actions: the hero places primary Play first and Install second when available, each 144px wide and at least 48px high, with a 16px gap and 16px horizontal content padding. Play uses dark steel with a white label; Install uses grey with ink text. Preserve the existing browser install prompt or steps flow and hide Install once installed.
+- Copy: the hero contains the existing game description and actions. About follows as a heading and one compact paragraph using the existing subline; Controls has its own section below. Keep the pitch at 20px and body text at 16px. Reflow or allow vertical scrolling rather than shrinking text.
+- Layout: align Hero, About, Controls and footer to one centred outer column, at most 960px wide, with 32px between groups. At viewport widths of 900px and above, the hero places the logo beside the description and actions in 1.2:1 columns with a 32px gap. Below 900px, stack logo, description and actions in that order, centred with 16px gaps. Keep at least 16px safe-area side padding and 24px top and bottom padding, with the bottom safe area respected. Short landscape screens retain vertical scrolling at full type size.
+- Navigation: keep the footer's Home and Play links and their behaviour, aligned to the same outer column. Page headers and hero content remain distinct from modal framing.
 
 ## Opening presentation
 
