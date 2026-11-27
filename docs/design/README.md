@@ -1,5 +1,7 @@
 # Design
 
+[Documentation index](../README.md)
+
 Each area has a short design summary and an index of its work items. The owned topic docs in
 [art/](../../art/README.md), [gameplay/](../../gameplay/README.md) and [src/](../../src/README.md)
 remain the detailed reference. Work items and their convention are in
