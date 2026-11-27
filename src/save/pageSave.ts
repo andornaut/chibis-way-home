@@ -10,6 +10,7 @@ import { loadSave, type SaveFormat } from "@andornaut/game-kit/runtime/save/vers
 import { BOSS_CHARACTERS } from "../data/achievements.ts";
 import { CHUNKS } from "../data/chunks.ts";
 import { ZONE_MAP } from "../data/map.ts";
+import { ROOMS } from "../data/rooms.ts";
 import type { AchievementId, BossId, SkillId } from "../data/types/index.ts";
 import { RECIPES } from "../data/zones.ts";
 import {
@@ -25,6 +26,7 @@ import {
   earnedAt,
   hasRecordedStats,
   mapProgress,
+  mapProgressBase,
   openMap,
   type PlayTipId,
   type Progress,
@@ -46,6 +48,7 @@ import {
   zoneEndingAt,
   type ZoneStatsSummary,
 } from "../progress/index.ts";
+import { createGiftVisitSave } from "./giftVisit.ts";
 import { skillGrantEffects, withGrantedSkill } from "./skillGrant.ts";
 
 // What one createPageSave holds: the stores over its storage, the loaded progress and what the
@@ -176,7 +179,7 @@ function judgeAchievements(
   page: PageState,
   scopes: readonly (readonly [AchievementScope, Partial<AchievementFacts>])[],
 ): void {
-  const profile = { skillUsed: page.stats.skillUsed(), skills: page.progress.skills };
+  const profile = { skillUsed: page.stats.skillUsed(), skills: page.progress.journeyGiftSkills };
   const found = new Set(
     scopes.flatMap(([scope, facts]) => earnedAt(page.earnedIds, scope, { ...profile, ...facts })),
   );
@@ -224,14 +227,11 @@ function achievementCard(page: PageState): AchievementEntry[] {
   const visit = page.stats.currentVisit();
   return achievementEntries(page.earnedIds, {
     skillUsed: page.stats.skillUsed(),
-    skills: page.progress.skills,
+    skills: page.progress.journeyGiftSkills,
     ...(visit && { visit }),
   });
 }
 
-function beginZoneVisit(page: PageState, zone: string): void {
-  page.stats.beginVisit(zone);
-}
 // Whether the map opens stage, the rule the save format holds a completed stage and the stand to.
 function opensOnMap(page: PageState, stage: string): boolean {
   const { completed } = savedMap(page);
@@ -323,10 +323,6 @@ function wholeRunStats(page: PageState): WholeRunStatsSummary {
 function resetWholeRunStats(page: PageState): void {
   page.stats.resetWholeRun();
   void page.stats.flush();
-}
-
-function savedSkills(page: PageState): readonly SkillId[] {
-  return page.progress.skills;
 }
 
 // The selected skill while it is owned, or none.
@@ -430,15 +426,10 @@ function saveZoneIntro(page: PageState, zone: string): void {
     return;
   }
   write(page, {
-    activeSkill: page.progress.activeSkill,
-    allZonesUnlocked: page.progress.allZonesUnlocked,
-    at: "map",
+    ...mapProgressBase(page.progress),
     ...savedMap(page),
-    openingSeen: page.progress.openingSeen,
     ...savedRecent(page),
-    seenTips: page.progress.seenTips,
     seenZoneIntros: [...seen, zone],
-    skills: page.progress.skills,
   });
 }
 
@@ -452,15 +443,10 @@ function saveStand(page: PageState, stand: string): void {
 
 function writeStand(page: PageState, stand: string): void {
   write(page, {
-    activeSkill: page.progress.activeSkill,
-    allZonesUnlocked: page.progress.allZonesUnlocked,
-    at: "map",
+    ...mapProgressBase(page.progress),
     completed: savedMap(page).completed,
-    openingSeen: page.progress.openingSeen,
     ...savedRecent(page),
-    seenTips: page.progress.seenTips,
     seenZoneIntros: seenZoneIntros(page),
-    skills: page.progress.skills,
     stand,
   });
 }
@@ -483,15 +469,10 @@ function completeRunLinkStage(page: PageState, stage: string): void {
 function saveCompleted(page: PageState, node: string): void {
   const { completed } = savedMap(page);
   write(page, {
-    activeSkill: page.progress.activeSkill,
-    allZonesUnlocked: page.progress.allZonesUnlocked,
-    at: "map",
+    ...mapProgressBase(page.progress),
     completed: completed.includes(node) ? completed : [...completed, node],
-    openingSeen: page.progress.openingSeen,
     ...savedRecent(page),
-    seenTips: page.progress.seenTips,
     seenZoneIntros: seenZoneIntros(page),
-    skills: page.progress.skills,
     stand: node,
   });
 }
@@ -630,11 +611,15 @@ export function createPageSave(storage: SaveStorage, watchLeaving: (flush: () =>
     writesInFlight: new Set(),
   };
   return {
+    ...createGiftVisitSave(ZONE_MAP, ROOMS, {
+      progress: () => page.progress,
+      write: (next) => write(page, next),
+    }),
     achievementCard: bound(page, achievementCard),
     activeSkill: bound(page, activeSkill),
     activeStageTime: bound(page, activeStageTime),
     beginStageRun: bound(page, beginStageRun),
-    beginZoneVisit: bound(page, beginZoneVisit),
+    beginZoneVisit: (zone: string) => page.stats.beginVisit(zone),
     clearProgress: bound(page, clearProgress),
     clearStageTime: bound(page, clearStageTime),
     completeRunLinkStage: bound(page, completeRunLinkStage),
@@ -661,7 +646,7 @@ export function createPageSave(storage: SaveStorage, watchLeaving: (flush: () =>
     savedMap: bound(page, savedMap),
     savedProgress: bound(page, savedProgress),
     savedRecentMiddleChunks: bound(page, savedRecentMiddleChunks),
-    savedSkills: bound(page, savedSkills),
+    savedSkills: () => page.progress.skills,
     seenZoneIntros: bound(page, seenZoneIntros),
     selectActiveSkill: bound(page, selectActiveSkill),
     settleWrites: bound(page, settleWrites),

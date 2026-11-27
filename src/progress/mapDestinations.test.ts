@@ -14,7 +14,7 @@ import {
   stageDestinationId,
   steppedDestination,
 } from "./mapDestinations.ts";
-import { progressFormat } from "./save/progress.ts";
+import { BEGINNING, progressFormat } from "./save/progress.ts";
 
 describe("destination selection", () => {
   it.each([
@@ -48,6 +48,7 @@ describe("destination selection", () => {
 
   it("preserves stage-two unlock and latest highlight while replaying stage one", () => {
     const progress = {
+      ...BEGINNING,
       activeSkill: null,
       allZonesUnlocked: false,
       at: "map" as const,

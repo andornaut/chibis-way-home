@@ -10,6 +10,7 @@ import { BEGINNING, type Progress, PROGRESS_VERSION, progressFormat } from "./sa
 const ZONE = ZONE_MAP.destinations[0]!.id;
 const OTHER = ZONE_MAP.destinations[1]!.id;
 const AT_MAP: Progress = {
+  ...BEGINNING,
   activeSkill: null,
   allZonesUnlocked: false,
   at: "map",

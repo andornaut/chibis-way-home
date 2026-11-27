@@ -33,7 +33,7 @@ export interface VisitFirstTries {
   readonly zone: string;
 }
 
-// What a scope knows. Every scope has the owned skills and whether a skill was used since the
+// What a scope knows. Every scope has the journey's collected gifts and whether a skill was used since the
 // last confirmed Restart.
 export interface AchievementFacts {
   // escape: the boss escaped.
@@ -72,6 +72,10 @@ function achievementKinds(
       holds: (facts, { count }) =>
         SKILL_IDS.filter((skill) => facts.skills.includes(skill)).length >=
         resolveThreshold(SKILL_IDS.length, count),
+      progress: (facts, { count }) => ({
+        have: SKILL_IDS.filter((skill) => facts.skills.includes(skill)).length,
+        need: resolveThreshold(SKILL_IDS.length, count),
+      }),
       scopes: ["skill"],
     },
     "stage-first-try": {
@@ -135,7 +139,8 @@ export function achievementEntries(
     if (held.has(id)) {
       return { earned: true, id };
     }
-    const progress = ACHIEVEMENT_JUDGE.progress("zone-clear", facts, conditions);
+    const scope = conditions.some(({ kind }) => kind === "skills-owned") ? "skill" : "zone-clear";
+    const progress = ACHIEVEMENT_JUDGE.progress(scope, facts, conditions);
     return { earned: false, id, ...(progress && { progress }) };
   });
 }

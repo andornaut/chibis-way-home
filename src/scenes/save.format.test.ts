@@ -15,44 +15,48 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"allZonesUnlocked":false,"at":"beginning","openingSeen":true,"seenTips":[],"skills":[]',
-      ',"version":13}',
+      '{"activeSkill":null,"allZonesUnlocked":false,"at":"beginning","giftVisit":null,"journeyGiftSkills":[',
+      '],"openingSeen":true,"seenTips":[],"skills":[],"version":14}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"allZonesUnlocked":false,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
-      'seenZoneIntros":[],"skills":[],"stand":"street","version":13}',
+      '{"activeSkill":null,"allZonesUnlocked":false,"at":"map","giftVisit":null,"journeyGiftSkills":[],"ope',
+      'ningSeen":true,"seenTips":[],"skills":[],"completed":[],"seenZoneIntros":[],"stand":"street","versio',
+      'n":14}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"allZonesUnlocked":false,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
-      'seenZoneIntros":[],"skills":["dash"],"stand":"street","version":13}',
+      '{"activeSkill":null,"allZonesUnlocked":false,"at":"map","giftVisit":null,"journeyGiftSkills":["dash"',
+      '],"openingSeen":true,"seenTips":[],"skills":["dash"],"completed":[],"seenZoneIntros":[],"stand":"str',
+      'eet","version":14}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":null,"allZonesUnlocked":false,"at":"map","completed":[],"openingSeen":true,"seenTips":[],"',
-      'seenZoneIntros":[],"skills":["dash","speedy"],"stand":"street","version":13}',
+      '{"activeSkill":null,"allZonesUnlocked":false,"at":"map","giftVisit":null,"journeyGiftSkills":["dash"',
+      ',"speedy"],"openingSeen":true,"seenTips":[],"skills":["dash","speedy"],"completed":[],"seenZoneIntro',
+      's":[],"stand":"street","version":14}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":[],"openingSeen":true,"seenTips":',
-      '[],"seenZoneIntros":[],"skills":["dash","speedy"],"stand":"street","version":13}',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","giftVisit":null,"journeyGiftSkills":["d',
+      'ash","speedy"],"openingSeen":true,"seenTips":[],"skills":["dash","speedy"],"completed":[],"seenZoneI',
+      'ntros":[],"stand":"street","version":14}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":[],"stand":"street","openingSeen"',
-      ':true,"seenTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy',
-      '"],"version":13}',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","giftVisit":null,"journeyGiftSkills":["d',
+      'ash","speedy"],"openingSeen":true,"seenTips":[],"skills":["dash","speedy"],"completed":[],"stand":"s',
+      'treet","seenZoneIntros":["blue-cityscape"],"version":14}',
     ].join(""),
   ],
   [
@@ -68,17 +72,17 @@ const SESSION_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":["street"],"openingSeen":true,"se',
-      'enTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand',
-      '":"street","version":13}',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","giftVisit":null,"journeyGiftSkills":["d',
+      'ash","speedy"],"openingSeen":true,"seenTips":[],"skills":["dash","speedy"],"completed":["street"],"s',
+      'eenZoneIntros":["blue-cityscape"],"stand":"street","version":14}',
     ].join(""),
   ],
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":["street"],"openingSeen":true,"se',
-      'enTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand',
-      '":"city-streets","version":13}',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","giftVisit":null,"journeyGiftSkills":["d',
+      'ash","speedy"],"openingSeen":true,"seenTips":[],"skills":["dash","speedy"],"completed":["street"],"s',
+      'eenZoneIntros":["blue-cityscape"],"stand":"city-streets","version":14}',
     ].join(""),
   ],
 ];
@@ -86,9 +90,9 @@ const REOPEN_WRITES: readonly (readonly [string, string])[] = [
   [
     "chibis-way-home.save",
     [
-      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","completed":["street"],"openingSeen":true,"se',
-      'enTips":[],"seenZoneIntros":["blue-cityscape"],"skills":["dash","speedy"],"stand',
-      '":"city-streets","version":13}',
+      '{"activeSkill":"speedy","allZonesUnlocked":false,"at":"map","giftVisit":null,"journeyGiftSkills":["d',
+      'ash","speedy"],"openingSeen":true,"seenTips":[],"skills":["dash","speedy"],"completed":["street"],"s',
+      'eenZoneIntros":["blue-cityscape"],"stand":"city-streets","version":14}',
     ].join(""),
   ],
   [
@@ -177,6 +181,8 @@ it("reopens records saved before the move and writes them back byte for byte", a
     allZonesUnlocked: false,
     at: "map",
     completed: ["street"],
+    giftVisit: null,
+    journeyGiftSkills: ["dash", "speedy"],
     openingSeen: true,
     seenTips: [],
     seenZoneIntros: ["blue-cityscape"],

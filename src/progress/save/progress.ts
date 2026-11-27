@@ -6,6 +6,7 @@ import type {
 
 import { RECENT_STAGES } from "../../data/stageProgress.ts";
 import type { SkillSelection, ZoneMap } from "../../data/types/index.ts";
+import { type GiftVisit, isGiftVisit } from "../gifts.ts";
 import { openMap } from "../map.ts";
 import { isSkillId } from "../skills.ts";
 import { isSeenTip, type SeenTip } from "../tips.ts";
@@ -18,11 +19,16 @@ export type RecentChunks = Readonly<Partial<Record<string, readonly (readonly st
 // the map, with the zone nodes he has completed, the zone node he stands on and the recent
 // middle chunks. seenTips: the first-time tips shown this playthrough, in the order they showed
 // (SeenTip). allZonesUnlocked: Unlock all zones opened every zone and stage on the map.
-export type Progress = SkillSelection & {
+type ProgressProfile = SkillSelection & {
   readonly allZonesUnlocked: boolean;
+  readonly giftVisit: GiftVisit | null;
+  readonly journeyGiftSkills: SkillSelection["skills"];
   readonly openingSeen: boolean;
   readonly seenTips: readonly SeenTip[];
-} & (
+};
+
+export type Progress = ProgressProfile &
+  (
     | { readonly at: "beginning" }
     | {
         readonly at: "map";
@@ -37,6 +43,8 @@ export const BEGINNING: Progress = {
   activeSkill: null,
   allZonesUnlocked: false,
   at: "beginning",
+  giftVisit: null,
+  journeyGiftSkills: [],
   openingSeen: false,
   seenTips: [],
   skills: [],
@@ -45,11 +53,25 @@ export const BEGINNING: Progress = {
 // The save format's version. Before the first release, a change to the format or a map node or
 // zone renamed bumps it, and older saves reset to the beginning. Chunk ids are advisory: an
 // unknown one is dropped on load, so renaming a chunk needs no bump.
-export const PROGRESS_VERSION = 13;
+export const PROGRESS_VERSION = 14;
 export const PROGRESS_KEYS = {
   backup: "chibis-way-home.save-backup",
   save: "chibis-way-home.save",
 } as const;
+
+// Common map fields are preserved by entry, introduction and completion writes and decoding.
+export function mapProgressBase(progress: ProgressProfile) {
+  return {
+    activeSkill: progress.activeSkill,
+    allZonesUnlocked: progress.allZonesUnlocked,
+    at: "map" as const,
+    giftVisit: progress.giftVisit,
+    journeyGiftSkills: progress.journeyGiftSkills,
+    openingSeen: progress.openingSeen,
+    seenTips: progress.seenTips,
+    skills: progress.skills,
+  };
+}
 
 // Where he is on the map for progress: the beginning stands him on the map's start with
 // nothing completed.
@@ -118,12 +140,30 @@ function recentChunks(
 // The progress save's format on map, zones and the chunk ids: a save that no longer fits the map
 // or zones (a renamed node, a path not built, a zone removed) is refused, and the player starts
 // from the beginning; unknown recent chunk ids are dropped.
+function giftProblem(map: ZoneMap, progress: Progress): string | undefined {
+  if (progress.giftVisit !== null && !isGiftVisit(map, progress.giftVisit)) {
+    return "the save has an invalid gift visit";
+  }
+  if (
+    !Array.isArray(progress.journeyGiftSkills) ||
+    !progress.journeyGiftSkills.every(isSkillId) ||
+    new Set(progress.journeyGiftSkills).size !== progress.journeyGiftSkills.length
+  ) {
+    return "the save has an invalid journey gift list";
+  }
+  return undefined;
+}
+
 export function progressFormat(
   map: ZoneMap,
   zones: Readonly<Record<string, unknown>>,
   chunks: ReadonlySet<string>,
 ): SaveFormat<Progress> {
   const checked = (progress: Progress): Checked<Progress> => {
+    const giftIssue = giftProblem(map, progress);
+    if (giftIssue !== undefined) {
+      return { ok: false, reason: giftIssue };
+    }
     if (
       !Array.isArray(progress.skills) ||
       !progress.skills.every(isSkillId) ||
@@ -178,6 +218,8 @@ export function progressFormat(
       allZonesUnlocked,
       at,
       completed,
+      giftVisit,
+      journeyGiftSkills,
       openingSeen,
       recent,
       seenTips,
@@ -197,11 +239,26 @@ export function progressFormat(
       if (!Array.isArray(skills) || !skills.every(isSkillId)) {
         return { ok: false, reason: "the save has no valid skill list" };
       }
+      if (giftVisit !== null && !isGiftVisit(map, giftVisit)) {
+        return { ok: false, reason: "the save has no valid gift visit" };
+      }
+      if (!Array.isArray(journeyGiftSkills) || !journeyGiftSkills.every(isSkillId)) {
+        return { ok: false, reason: "the save has no valid journey gift list" };
+      }
       if (activeSkill !== null && !isSkillId(activeSkill)) {
         return { ok: false, reason: "the save has no valid active skill" };
       }
       if (at === "beginning") {
-        return checked({ activeSkill, allZonesUnlocked, at, openingSeen, seenTips, skills });
+        return checked({
+          activeSkill,
+          allZonesUnlocked,
+          at,
+          giftVisit,
+          journeyGiftSkills,
+          openingSeen,
+          seenTips,
+          skills,
+        });
       }
       if (at !== "map") {
         return { ok: false, reason: "the save does not say where he is" };
@@ -220,15 +277,18 @@ export function progressFormat(
         return { ok: false, reason: "the save's recent chunks are not lists of chunk ids" };
       }
       return checked({
-        activeSkill,
-        allZonesUnlocked,
-        at,
+        ...mapProgressBase({
+          activeSkill,
+          allZonesUnlocked,
+          giftVisit,
+          journeyGiftSkills,
+          openingSeen,
+          seenTips,
+          skills,
+        }),
         completed,
-        openingSeen,
         ...(Object.keys(kept).length > 0 && { recent: kept }),
-        seenTips,
         seenZoneIntros,
-        skills,
         stand,
       });
     },

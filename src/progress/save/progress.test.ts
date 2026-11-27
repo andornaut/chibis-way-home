@@ -23,7 +23,13 @@ const node = (id: string, kind: MapNode["kind"], zone?: string): MapNode => ({
 const MAP: ZoneMap = {
   decorations: [],
   destinations: [
-    { at: { col: 0, row: 0 }, giftCount: 2, icon: "zone", id: "test-zone", stages: ["start", "built"] },
+    {
+      at: { col: 0, row: 0 },
+      giftCount: 2,
+      icon: "zone",
+      id: "test-zone",
+      stages: ["start", "built"],
+    },
   ],
   edges: [
     { built: true, from: "start", to: "fork" },
@@ -50,6 +56,8 @@ const stored = (fields: object, version = PROGRESS_VERSION) =>
   JSON.stringify({
     activeSkill: null,
     allZonesUnlocked: false,
+    giftVisit: null,
+    journeyGiftSkills: [],
     openingSeen: false,
     seenTips: [],
     seenZoneIntros: [],
@@ -58,6 +66,7 @@ const stored = (fields: object, version = PROGRESS_VERSION) =>
     version,
   });
 const at = (stand: string, completed: string[] = []): Progress => ({
+  ...BEGINNING,
   activeSkill: null,
   allZonesUnlocked: false,
   at: "map",
@@ -72,6 +81,14 @@ const at = (stand: string, completed: string[] = []): Progress => ({
 describe("progressFormat", () => {
   it.each<[string, Progress]>([
     ["the beginning", BEGINNING],
+    [
+      "a zone gift visit and journey gifts",
+      {
+        ...BEGINNING,
+        giftVisit: { seed: 31, zone: "test-zone" },
+        journeyGiftSkills: ["dash", "speedy"],
+      },
+    ],
     [
       "all permanent skills",
       { ...BEGINNING, activeSkill: "dash", skills: ["dash", "doubleJump", "speedy"] },
@@ -110,6 +127,10 @@ describe("progressFormat", () => {
     ["unowned active selection", stored({ activeSkill: "dash", at: "beginning" })],
     ["unknown active selection", stored({ activeSkill: "fly", at: "beginning" })],
     ["missing skills", stored({ at: "beginning", skills: undefined })],
+    ["missing gift visit", stored({ at: "beginning", giftVisit: undefined })],
+    ["unknown gift zone", stored({ at: "beginning", giftVisit: { seed: 1, zone: "missing" } })],
+    ["invalid gift seed", stored({ at: "beginning", giftVisit: { seed: -1, zone: "test-zone" } })],
+    ["invalid journey gifts", stored({ at: "beginning", journeyGiftSkills: ["dash", "dash"] })],
     ["missing zone unlock", stored({ allZonesUnlocked: undefined, at: "beginning" })],
     ["unknown skill", stored({ activeSkill: "dash", at: "beginning", skills: ["dash", "fly"] })],
     ["duplicate skill", stored({ activeSkill: "dash", at: "beginning", skills: ["dash", "dash"] })],
@@ -218,6 +239,7 @@ describe("built cityscape progress", () => {
     "keeps current-format progress at $stand with $completed completed",
     ({ completed, stand, unlocked }) => {
       const progress = {
+        ...BEGINNING,
         activeSkill: null,
         allZonesUnlocked: false,
         at: "map" as const,

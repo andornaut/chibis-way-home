@@ -12,6 +12,13 @@ export {
   ORDERED_ACHIEVEMENTS,
   zoneEndingAt,
 } from "./achievements.ts";
+export {
+  giftDraw,
+  type GiftVisit,
+  type PreparedStageGift,
+  prepareGift,
+  sameGiftVisit,
+} from "./gifts.ts";
 export { isLastZone, nodeOf, type OpenMap, openMap } from "./map.ts";
 export {
   destinationForStage,
@@ -32,6 +39,7 @@ export {
 export {
   BEGINNING,
   mapProgress,
+  mapProgressBase,
   type Progress,
   PROGRESS_KEYS,
   PROGRESS_VERSION,
