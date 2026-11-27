@@ -437,6 +437,12 @@
       "once": []
     },
     {
+      "key": "portrait-mallow",
+      "png": "sprites/portrait-mallow.png",
+      "json": "sprites/portrait-mallow.json",
+      "once": []
+    },
+    {
       "key": "portrait-pigeon",
       "png": "sprites/portrait-pigeon.png",
       "json": "sprites/portrait-pigeon.json",
