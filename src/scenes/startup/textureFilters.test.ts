@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import manifestJson from "../../public/art/manifest.json" with { type: "json" };
-import { type ArtManifest, atlasPageKey } from "../assets/index.ts";
+import manifestJson from "../../../public/art/manifest.json" with { type: "json" };
+import { type ArtManifest, atlasPageKey } from "../../assets/index.ts";
 
 const manifest = manifestJson as unknown as ArtManifest;
 

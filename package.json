@@ -19,7 +19,7 @@
     "lint": "./tests/container/check lint-only",
     "format": "prettier --write . && eslint --fix .",
     "test": "./tests/container/check test",
-    "test:game-kit": "vitest run --configLoader runner --no-cache --no-fsModuleCache src/rules/boss/behaviourTraversalGoals.test.ts src/scenes/BootScene.test.ts",
+    "test:game-kit": "vitest run --configLoader runner --no-cache --no-fsModuleCache src/rules/boss/behaviourTraversalGoals.test.ts src/scenes/startup/BootScene.test.ts",
     "simulate": "node src/sim/cli.ts",
     "reaches": "node src/sim/reachCli.ts",
     "clean": "rm -rf dist .wrangler",

@@ -16,7 +16,7 @@ const manifest = vi.hoisted(() => ({
   sprites: [],
   tilesets: [],
 }));
-vi.mock("../../public/art/manifest.json", () => ({ default: manifest }));
+vi.mock("../../../public/art/manifest.json", () => ({ default: manifest }));
 vi.mock("phaser", async () => {
   const { sceneStub } = await import("@andornaut/game-kit/test/phaser/sceneStub");
   return {
@@ -47,17 +47,17 @@ vi.mock("phaser", async () => {
     Textures: { FilterMode: { LINEAR: 0, NEAREST: 1 } },
   };
 });
-vi.mock("./save.ts", () => ({ loadProgress: startup.load, probeSaveAge: startup.probe }));
-vi.mock("../pwa/index.ts", async () => {
-  const { createRequiredUpdate } = await import("../pwa/requiredUpdate.ts");
+vi.mock("../save.ts", () => ({ loadProgress: startup.load, probeSaveAge: startup.probe }));
+vi.mock("../../pwa/index.ts", async () => {
+  const { createRequiredUpdate } = await import("../../pwa/requiredUpdate.ts");
   return { requireNewer: startup.requireNewer, requiredUpdate: createRequiredUpdate() };
 });
-vi.mock("./domUi.ts", () => ({
+vi.mock("../domUi.ts", () => ({
   mountSceneView: startup.mount,
   prepareDomUi: startup.prepare,
 }));
-vi.mock("../ui/index.ts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../ui/index.ts")>()),
+vi.mock("../../ui/index.ts", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../ui/index.ts")>()),
   createMessageCard: (_document: unknown, id: string, text: string) => ({ id, text }),
 }));
 vi.mock("./atlasArt.ts", () => ({
@@ -73,11 +73,11 @@ import {
   type AtlasManifest,
   atlasPageKey,
   BUNDLED_ART_DATA,
-} from "../assets/index.ts";
-import { TEXT } from "../data/text.ts";
-import { backgroundProgress, loadingProgress } from "../loading/progress.ts";
-import { requiredUpdate } from "../pwa/index.ts";
-import { UI_FRAMES } from "../ui/index.ts";
+} from "../../assets/index.ts";
+import { TEXT } from "../../data/text.ts";
+import { backgroundProgress, loadingProgress } from "../../loading/progress.ts";
+import { requiredUpdate } from "../../pwa/index.ts";
+import { UI_FRAMES } from "../../ui/index.ts";
 import { BootScene } from "./BootScene.ts";
 import * as textureArt from "./textureFilters.ts";
 
@@ -347,7 +347,7 @@ it("shows the connect message when no newer version can be downloaded, until one
 });
 
 it("keeps failed required UI before all save mutation and retries its own entry once", async () => {
-  const { requiredLoading } = await import("../loading/required.ts");
+  const { requiredLoading } = await import("../../loading/required.ts");
   art.atlas = null;
   startup.prepare.mockRejectedValueOnce(new Error("Required font failed"));
   startup.load.mockResolvedValue("current");
@@ -369,7 +369,7 @@ it("keeps failed required UI before all save mutation and retries its own entry 
 });
 
 it("retries only a failed required atlas page before art initialization or save entry", async () => {
-  const { requiredLoading } = await import("../loading/required.ts");
+  const { requiredLoading } = await import("../../loading/required.ts");
   vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
   vi.stubGlobal("window", { clearTimeout, location: { search: "" }, setTimeout });
   vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -471,7 +471,7 @@ it("does not enter from an obsolete required UI completion after Boot shuts down
 
 it("retains owned UI aliases through a font retry and creates remaining world aliases once", async () => {
   const { addAtlasArt } = await vi.importActual<typeof import("./atlasArt.ts")>("./atlasArt.ts");
-  const { requiredLoading } = await import("../loading/required.ts");
+  const { requiredLoading } = await import("../../loading/required.ts");
   art.add.mockImplementation(addAtlasArt);
   const keys = [...new Set(UI_FRAMES.map(({ art }) => art))];
   const atlas: AtlasManifest = {

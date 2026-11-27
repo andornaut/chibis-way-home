@@ -14,16 +14,16 @@ import type { ProgressHandle } from "@andornaut/game-kit/runtime/progressState";
 import type { RequiredUpdateState } from "@andornaut/game-kit/runtime/web/pwa/dom/launch";
 import { Scene } from "phaser";
 
-import manifestJson from "../../public/art/manifest.json" with { type: "json" };
+import manifestJson from "../../../public/art/manifest.json" with { type: "json" };
 import {
   ART_MANIFEST_KEY,
   ART_PATH,
   type ArtManifest,
   atlasPageKey,
   BUNDLED_ART_DATA,
-} from "../assets/index.ts";
-import { TILE } from "../data/screen.ts";
-import { TEXT } from "../data/text.ts";
+} from "../../assets/index.ts";
+import { TILE } from "../../data/screen.ts";
+import { TEXT } from "../../data/text.ts";
 import {
   beginRequiredUpdate,
   beginStartupChecks,
@@ -31,13 +31,13 @@ import {
   observeRequiredAttempt,
   requiredLoading,
   startupLoading,
-} from "../loading/index.ts";
-import { requiredUpdate, requireNewer } from "../pwa/index.ts";
-import { createMessageCard, UI_FRAMES } from "../ui/index.ts";
-import { ACHIEVEMENT_NOTICE } from "./achievementNotice.ts";
+} from "../../loading/index.ts";
+import { requiredUpdate, requireNewer } from "../../pwa/index.ts";
+import { createMessageCard, UI_FRAMES } from "../../ui/index.ts";
+import { ACHIEVEMENT_NOTICE } from "../achievementNotice.ts";
+import { mountSceneView, prepareDomUi } from "../domUi.ts";
+import { loadProgress, probeSaveAge } from "../save.ts";
 import { addAtlasArt, ATLAS, queueAtlasPages } from "./atlasArt.ts";
-import { mountSceneView, prepareDomUi } from "./domUi.ts";
-import { loadProgress, probeSaveAge } from "./save.ts";
 import { filterLoadedArt } from "./textureFilters.ts";
 
 // The manifest ships inside the hashed bundle rather than loading from /art/, so a copy an earlier

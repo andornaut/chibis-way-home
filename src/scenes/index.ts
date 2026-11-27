@@ -2,7 +2,6 @@
 // src/game.ts registers with the game.
 export { AchievementNoticeScene } from "./AchievementNoticeScene.ts";
 export { AchievementsScene } from "./AchievementsScene.ts";
-export { BootScene } from "./BootScene.ts";
 export { CelebrationScene } from "./CelebrationScene.ts";
 export { CheatsScene } from "./CheatsScene.ts";
 export { CutsceneScene } from "./CutsceneScene.ts";
@@ -19,6 +18,7 @@ export { SettingsScene } from "./SettingsScene.ts";
 export { SkillDetailScene } from "./SkillDetailScene.ts";
 export { StageSelectScene } from "./StageSelectScene.ts";
 export { StartScene } from "./StartScene.ts";
+export { BootScene } from "./startup/BootScene.ts";
 export { installUpdateModalBridge, UpdateScene } from "./UpdateScene.ts";
 export { ZoneBarkScene } from "./ZoneBarkScene.ts";
 export { ZoneDepartureScene } from "./ZoneDepartureScene.ts";

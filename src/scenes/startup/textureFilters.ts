@@ -1,7 +1,7 @@
 import { setTextureFilters } from "@andornaut/game-kit/runtime/view/phaser/textureFilter";
 import type { Scene } from "phaser";
 
-import { type ArtManifest, type AtlasManifest, atlasPageKey } from "../assets/index.ts";
+import { type ArtManifest, type AtlasManifest, atlasPageKey } from "../../assets/index.ts";
 
 export type TextureFilter = "linear" | "nearest";
 
