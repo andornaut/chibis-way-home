@@ -129,8 +129,7 @@
         line-height: 1.4;
         text-wrap: balance;
       }
-      .sub,
-      .keys {
+      .sub {
         color: var(--home-dslate);
       }
       .actions {
@@ -182,22 +181,11 @@
         outline: 3px solid var(--home-ink);
         outline-offset: 3px;
       }
-      .keys {
-        display: grid;
-        gap: 8px;
-        margin: 0;
-        padding: 0;
-        list-style: none;
-        font-size: 16px;
-      }
       .controls {
         min-width: 0;
         text-align: left;
       }
-      .controls h2 {
-        margin: 0;
-        font-size: 20px;
-      }
+      .controls h2,
       .about h2 {
         margin: 0;
         font-size: 20px;
@@ -308,9 +296,6 @@
         <section class="about" aria-labelledby="about-title">
           <h2 id="about-title">About</h2>
           <p class="sub">%HOME_SUBLINE%</p>
-          <ul class="keys">
-            %HOME_INSTRUCTIONS%
-          </ul>
         </section>
         <section class="controls" aria-labelledby="controls-title">
           <h2 id="controls-title">Controls</h2>
