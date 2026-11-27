@@ -4,7 +4,7 @@ import { BUTTON_GAP } from "@andornaut/game-kit/runtime/ui/spacing";
 import type { Plugin } from "vite";
 
 import { TEXT } from "../data/text.ts";
-import type { GameText } from "../data/types/index.ts";
+import type { ControlAction, GameText } from "../data/types/index.ts";
 import { actionHelpCss, actionHelpHtml, escaped } from "../homePage/index.ts";
 
 // The steps dialog's sections, one per kind of browser in kind order, each marked data-steps with
@@ -34,13 +34,17 @@ export function homePageHtml(text: GameText, html: string): string {
     PLAY: text.homePage.play,
     SUBLINE: text.homePage.subline,
   };
+  const controls: Readonly<Record<string, ControlAction>> = {
+    CONTROL_JUMP: "jump",
+    CONTROL_MOVE: "move",
+    CONTROL_USE: "use",
+  };
   return html
     .replace("<!-- HOME_ACTION_STYLE -->", `<style>${actionHelpCss()}${homeActionsCss()}</style>`)
     .replace(/%HOME_([A-Z_]+)%/gu, (_, key: string) => {
-      if (key === "INSTRUCTIONS") {
-        return text.homePage.instructions
-          .map((line) => `<li>${actionHelpHtml(text.buttons, line)}</li>`)
-          .join("\n");
+      const action = controls[key];
+      if (action !== undefined) {
+        return actionHelpHtml(text.buttons, `{${action}}`);
       }
       if (key === "INSTALL_STEPS") {
         return installStepsHtml(text.settings.installSteps);

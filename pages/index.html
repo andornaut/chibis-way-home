@@ -231,6 +231,12 @@
       .controls th:first-child {
         width: 28%;
       }
+      .controls .action-help-action {
+        flex-wrap: wrap;
+        min-height: 0;
+        max-width: 100%;
+        white-space: normal;
+      }
       .controls p {
         margin: 12px 0 0;
         color: var(--home-dslate);
@@ -311,14 +317,14 @@
             </thead>
             <tbody>
               <tr>
-                <th scope="row">Jump</th>
+                <th scope="row">%HOME_CONTROL_JUMP%</th>
                 <td>
                   Space, W, K or Up arrow. Left-click the playfield or tap Jump. Hold for a higher
                   jump.
                 </td>
               </tr>
               <tr>
-                <th scope="row">Move</th>
+                <th scope="row">%HOME_CONTROL_MOVE%</th>
                 <td>
                   A, H or Left arrow to move left. D, L or Right arrow to move right. On touch, drag
                   left or right on the playfield.
@@ -329,7 +335,7 @@
                 <td>P, or tap or click Pause.</td>
               </tr>
               <tr>
-                <th scope="row">Use</th>
+                <th scope="row">%HOME_CONTROL_USE%</th>
                 <td>E, F or Enter. Right-click the playfield or tap Use.</td>
               </tr>
             </tbody>

@@ -89,30 +89,35 @@ describe("the logos", () => {
 describe("the home page's controls", () => {
   it("renders each authored action beside a filled vector control icon", async () => {
     const html = await pageText();
-    const controls = /<ul class="keys">(.*?)<\/ul>/u.exec(html)![1]!;
-    expect([...controls.matchAll(/<li>/gu)]).toHaveLength(TEXT.homePage.instructions.length);
+    const controls = /<section class="controls"[^>]*>(.*?)<\/section>/u.exec(html)![1]!;
+    expect([...controls.matchAll(/<table>/gu)]).toHaveLength(2);
+    expect(controls).toContain("<caption> Gameplay </caption>");
+    expect(controls).toContain("<caption> Menu </caption>");
+    const headings = [...controls.matchAll(/<th scope="row">(.*?)<\/th>/gu)].map(([, row]) => row!);
+    expect(headings).toHaveLength(7);
     for (const action of ["move", "jump", "use"] as const) {
-      expect(controls).toContain(`<span>${TEXT.buttons[action]}</span>`);
-      expect(controls).toContain(`action-help-${action}`);
-      expect(controls).toContain(`fill="${palette.colours.navy}"`);
+      const heading = headings.find((row) => row.includes(`action-help-${action}`));
+      expect(heading).toContain(`<span>${escaped(TEXT.buttons[action])}</span>`);
+      expect(heading).toContain(`fill="${palette.colours.navy}"`);
+      expect(heading).toContain('aria-hidden="true"');
     }
-    expect(controls).toContain('aria-hidden="true"');
     expect(controls).not.toContain("style=");
-    expect(controls).not.toMatch(/\{(?:move|jump|use)\}|Keyboard:|KeyE|Space|arrows/iu);
+    expect(controls).not.toMatch(/\{(?:move|jump|use)\}|%HOME_/u);
   });
   it("escapes action labels and prose while preserving only renderer-owned markup", async () => {
     const html = homePageHtml(
       {
         ...TEXT,
         buttons: { ...TEXT.buttons, use: "Use <unsafe>" },
-        homePage: { ...TEXT.homePage, instructions: ["<script>{use}</script>"] },
+        homePage: { ...TEXT.homePage, subline: "<script>{use}</script> & overview" },
       },
       await readFile(HOME_PAGE, "utf8"),
     );
-    expect(html).toContain("&lt;script&gt;");
+    expect(html).toContain('<p class="sub">&lt;script&gt;{use}&lt;/script&gt; &amp; overview</p>');
     expect(html).toContain("Use &lt;unsafe&gt;");
-    expect(html).toContain("&lt;/script&gt;");
     expect(html).not.toContain("<unsafe>");
+    expect(html).not.toContain("<script>{use}</script>");
+    expect([...html.matchAll(/<svg /gu)]).toHaveLength(3);
   });
 });
 
