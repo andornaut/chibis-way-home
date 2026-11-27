@@ -21,12 +21,19 @@ const kit = vi.hoisted(() => {
     run: vi.fn<ReturnType<typeof createLaunch>["run"]>(async () => "play"),
   };
   return {
+    backGuard: {
+      canLeave: vi.fn(() => false),
+      dispose: vi.fn(),
+      leave: vi.fn(async () => false),
+      setEnabled: vi.fn(),
+    },
     context: {} as unknown,
     create: vi.fn((context: unknown, options: LaunchOptions): ReturnType<typeof createLaunch> => {
       void context;
       void options;
       return launch;
     }),
+    firefoxApp: vi.fn(() => true),
     launch,
     prepare: vi.fn(),
   };
@@ -47,13 +54,14 @@ vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/launch", () => ({
 vi.mock("@andornaut/game-kit/runtime/web/pwa/backNavigation", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@andornaut/game-kit/runtime/web/pwa/backNavigation")>()),
   backCloseWatcher: vi.fn(() => () => new EventTarget()),
-  isFirefoxAndroidApp: () => true,
+  isFirefoxAndroidApp: kit.firefoxApp,
 }));
 vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/backNavigation", async (importOriginal) => ({
   ...(await importOriginal<
     typeof import("@andornaut/game-kit/runtime/web/pwa/dom/backNavigation")
   >()),
   browserCloseWatcher: vi.fn(),
+  createBackNavigationGuard: vi.fn(() => kit.backGuard),
 }));
 vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/installFlow", () => ({
   pageRunsAsApp: () => false,
@@ -68,6 +76,9 @@ vi.mock("@andornaut/game-kit/runtime/web/pwa/dom/wakeLock", () => ({
 beforeEach(() => {
   vi.resetModules();
   vi.clearAllMocks();
+  kit.backGuard.canLeave.mockReturnValue(false);
+  kit.backGuard.leave.mockResolvedValue(false);
+  kit.firefoxApp.mockReturnValue(true);
   vi.stubEnv("PROD", true);
   const navigator = { maxTouchPoints: 0, userAgent: "" };
   vi.stubGlobal(
@@ -93,6 +104,41 @@ const preparation: BrowserLaunchPreparation = {
   parent: {} as HTMLElement,
 };
 const beforeLaunch = vi.fn();
+
+it("binds one shared page guard through confirmation and disposes it only when the page owner ends", async () => {
+  kit.firefoxApp.mockReturnValue(false);
+  const { createBackNavigationGuard } =
+    await import("@andornaut/game-kit/runtime/web/pwa/dom/backNavigation");
+  const pwa = await import("./index.ts");
+  pwa.setupPhoneApp(preparation, beforeLaunch);
+  expect(createBackNavigationGuard).toHaveBeenCalledOnce();
+  expect(kit.backGuard.setEnabled).toHaveBeenCalledExactlyOnceWith(true);
+  const [context, target] = vi.mocked(createBackNavigationGuard).mock.calls[0]!;
+  expect(target).toBe(window);
+  expect(context.history).toBe(window.history);
+  expect(context.timer).toBe(window);
+  const back = vi.fn();
+  window.addEventListener(pwa.PHONE_EVENTS.backPressed, back);
+  context.onBack();
+  expect(back).toHaveBeenCalledOnce();
+  kit.backGuard.canLeave.mockReturnValue(true);
+  expect(pwa.canLeavePlatformBack()).toBe(true);
+  expect(await pwa.leavePlatformBack()).toBe(false);
+  expect(kit.backGuard.leave).toHaveBeenCalledOnce();
+  expect(kit.backGuard.setEnabled).toHaveBeenCalledTimes(1);
+  window.dispatchEvent(Object.assign(new Event("pagehide"), { persisted: true }));
+  expect(kit.backGuard.dispose).not.toHaveBeenCalled();
+  window.dispatchEvent(Object.assign(new Event("pageshow"), { persisted: true }));
+  expect(kit.backGuard.setEnabled).toHaveBeenCalledTimes(2);
+  expect(createBackNavigationGuard).toHaveBeenCalledOnce();
+  window.dispatchEvent(Object.assign(new Event("pagehide"), { persisted: false }));
+  expect(kit.backGuard.dispose).toHaveBeenCalledOnce();
+  expect(pwa.canLeavePlatformBack()).toBe(false);
+  expect(await pwa.leavePlatformBack()).toBe(false);
+  expect(kit.backGuard.leave).toHaveBeenCalledOnce();
+  window.dispatchEvent(Object.assign(new Event("pageshow"), { persisted: true }));
+  expect(kit.backGuard.setEnabled).toHaveBeenCalledTimes(2);
+});
 
 it("keeps platform exit unavailable until bound and releases only the owning launch", async () => {
   const { bindPlatformBackExit, canLeavePlatformBack, leavePlatformBack } =
@@ -300,8 +346,6 @@ it.each([
     const pwa = await import("./index.ts");
     pwa.setupPhoneApp(preparation, beforeLaunch);
     expect(pwa.exitShown()).toBe(shown);
-    // Back leaves from a browser tab, and from an app only where its window closes.
-    expect(pwa.backLeavesGame()).toBe(app ? shown : true);
   },
 );
 

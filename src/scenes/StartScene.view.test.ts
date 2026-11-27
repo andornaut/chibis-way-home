@@ -33,6 +33,7 @@ vi.mock("./domUi.ts", () => ({
 }));
 
 import { START_EXIT_TEXT } from "../data/text.ts";
+import { leavePlatformBack } from "../pwa/index.ts";
 import { modalInput } from "./modalInput.ts";
 import { type StartData, StartScene } from "./StartScene.ts";
 
@@ -41,44 +42,51 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-it.each([false, true])("asks once for platform Back on bare Start (returned %s)", (returned) => {
-  vi.stubGlobal("window", new EventTarget());
-  const events = new EventEmitter();
-  const launch = vi.fn();
-  const back = vi.fn();
-  const game = { events: new EventEmitter() };
-  const card = { back, events: new EventEmitter(), game };
-  const scene = Object.assign(new StartScene(), {
-    draw: vi.fn(),
-    drawFocus: vi.fn(),
-    events,
-    game,
-    input: { keyboard: new EventEmitter() },
-    scene: { get: () => card, key: "start", launch },
-    showPressed: vi.fn(),
-    sys: { isActive: () => true },
-    textures: { getFrame: () => ({ realHeight: 239, realWidth: 558 }) },
-  }) as unknown as StartScene;
-  scene.create(returned ? { returnedToTitle: true } : undefined);
-  const input = modalInput(scene);
-  window.dispatchEvent(new Event("back-pressed"));
-  expect(launch).not.toHaveBeenCalled();
-  input.ready(true);
-  window.dispatchEvent(new Event("back-pressed"));
-  expect(launch).toHaveBeenCalledOnce();
-  const [key, request] = launch.mock.calls[0]!;
-  expect(key).toBe("exit");
-  expect(request.words).toEqual(START_EXIT_TEXT);
-  window.dispatchEvent(new Event("back-pressed"));
-  expect(back).toHaveBeenCalledOnce();
-  expect(launch).toHaveBeenCalledOnce();
-  request.cancelled();
-  window.dispatchEvent(new Event("back-pressed"));
-  expect(launch).toHaveBeenCalledTimes(2);
-  events.emit("shutdown");
-  window.dispatchEvent(new Event("back-pressed"));
-  expect(launch).toHaveBeenCalledTimes(2);
-});
+it.each([false, true])(
+  "asks once for platform Back on bare Start (returned %s)",
+  async (returned) => {
+    vi.stubGlobal("window", new EventTarget());
+    const events = new EventEmitter();
+    const launch = vi.fn();
+    const back = vi.fn();
+    const game = { events: new EventEmitter() };
+    const card = { back, events: new EventEmitter(), game };
+    const scene = Object.assign(new StartScene(), {
+      draw: vi.fn(),
+      drawFocus: vi.fn(),
+      events,
+      game,
+      input: { keyboard: new EventEmitter() },
+      scene: { get: () => card, key: "start", launch },
+      showPressed: vi.fn(),
+      sys: { isActive: () => true },
+      textures: { getFrame: () => ({ realHeight: 239, realWidth: 558 }) },
+    }) as unknown as StartScene;
+    scene.create(returned ? { returnedToTitle: true } : undefined);
+    const input = modalInput(scene);
+    window.dispatchEvent(new Event("back-pressed"));
+    expect(launch).not.toHaveBeenCalled();
+    input.ready(true);
+    window.dispatchEvent(new Event("back-pressed"));
+    expect(launch).toHaveBeenCalledOnce();
+    const [key, request] = launch.mock.calls[0]!;
+    expect(key).toBe("exit");
+    expect(request.words).toEqual(START_EXIT_TEXT);
+    window.dispatchEvent(new Event("back-pressed"));
+    expect(back).toHaveBeenCalledOnce();
+    expect(launch).toHaveBeenCalledOnce();
+    request.cancelled();
+    window.dispatchEvent(new Event("back-pressed"));
+    expect(launch).toHaveBeenCalledTimes(2);
+    vi.mocked(leavePlatformBack).mockResolvedValueOnce(true);
+    expect(await launch.mock.calls[1]![1].accepted()).toBe(true);
+    window.dispatchEvent(new Event("back-pressed"));
+    expect(launch).toHaveBeenCalledTimes(3);
+    events.emit("shutdown");
+    window.dispatchEvent(new Event("back-pressed"));
+    expect(launch).toHaveBeenCalledTimes(3);
+  },
+);
 
 it("opens the restart card from Restart and takes focus back when it closes", () => {
   vi.stubGlobal("window", new EventTarget());

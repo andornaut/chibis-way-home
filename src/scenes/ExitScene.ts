@@ -113,7 +113,10 @@ export class ExitScene extends Scene {
 
   override update(): void {
     if (this.exitButton !== undefined && !this.decided) {
-      this.exitButton.disabled = this.accepting || !this.request.canLeave();
+      const disabled = this.accepting || !this.request.canLeave();
+      if (this.exitButton.disabled !== disabled) {
+        this.exitButton.disabled = disabled;
+      }
     }
   }
 

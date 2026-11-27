@@ -94,7 +94,13 @@ export class StartScene extends Scene implements RestartOpener {
       } else if (!this.starting && modalInput(this).accepts(event)) {
         this.card = "exit";
         this.scene.launch("exit", {
-          accepted: leavePlatformBack,
+          accepted: async () => {
+            const left = await leavePlatformBack();
+            if (left && this.card === "exit") {
+              this.card = undefined;
+            }
+            return left;
+          },
           canLeave: canLeavePlatformBack,
           cancelled: () => {
             this.card = undefined;

@@ -7,7 +7,7 @@
 // a fresh document already runs a complete staged build, which the router promotes silently at
 // the launch navigation. During play, a newer build stages in the background and switches only
 // through Update now or the newer-save guard.
-import { appCannotClose, canExitApp } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
+import { canExitApp } from "@andornaut/game-kit/runtime/web/pwa/appWindow";
 import {
   backCloseWatcher,
   isFirefoxAndroidApp,
@@ -15,7 +15,7 @@ import {
 import type { LaunchResult } from "@andornaut/game-kit/runtime/web/pwa/buildContract";
 import {
   browserCloseWatcher,
-  guardBackNavigation,
+  createBackNavigationGuard,
 } from "@andornaut/game-kit/runtime/web/pwa/dom/backNavigation";
 import { pageRunsAsApp } from "@andornaut/game-kit/runtime/web/pwa/dom/installFlow";
 import {
@@ -54,13 +54,13 @@ export const networkPlay = createNetworkPlay();
 
 // Close eligibility, captured as the page loads, before the back guard can add a history entry.
 let appCloses = false;
-let backLeaves = true;
 let screenWakeLock: ScreenWakeLock | undefined;
 interface PlatformBackExit {
   canLeave(): boolean;
   leave(): Promise<boolean>;
 }
 let platformBackExit: { readonly controller: PlatformBackExit } | undefined;
+let stopBackNavigation: (() => void) | undefined;
 
 // A first install reports progress and failure to the page shell before the game loads.
 function setupLaunch(context: LaunchContext): Promise<LaunchResult> {
@@ -109,20 +109,44 @@ export function setupPhoneApp(
   );
   const createCloseWatcher = backCloseWatcher(navigator.userAgent, browserCloseWatcher());
   appCloses = canExitApp(createCloseWatcher, window);
-  backLeaves = !appCannotClose(createCloseWatcher, window);
+  stopBackNavigation?.();
   // Firefox for Android's installed app keeps its own back.
   // WORKAROUND: https://bugzilla.mozilla.org/show_bug.cgi?id=2079243 (see isFirefoxAndroidApp).
   if (!isFirefoxAndroidApp(navigator.userAgent, (query) => matchMedia(query).matches)) {
-    guardBackNavigation(
+    const guard = createBackNavigationGuard(
       {
         createCloseWatcher,
-        history,
+        history: window.history,
         onBack: () => dispatchPhoneEvent(window, PHONE_EVENTS.backPressed),
         stateKey: BACK_GUARD_KEY,
         timer: window,
       },
       window,
     );
+    const release = bindPlatformBackExit(guard);
+    guard.setEnabled(true);
+    const onPageShow = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        guard.setEnabled(true);
+      }
+    };
+    const onPageHide = (event: PageTransitionEvent) => {
+      if (!event.persisted) {
+        stop();
+      }
+    };
+    const stop = () => {
+      release();
+      guard.dispose();
+      window.removeEventListener("pagehide", onPageHide);
+      window.removeEventListener("pageshow", onPageShow);
+      if (stopBackNavigation === stop) {
+        stopBackNavigation = undefined;
+      }
+    };
+    stopBackNavigation = stop;
+    window.addEventListener("pagehide", onPageHide);
+    window.addEventListener("pageshow", onPageShow);
   }
   screenWakeLock = createScreenWakeLock(
     window,
@@ -165,13 +189,6 @@ export function leavePlatformBack(): Promise<boolean> {
 
 export function canLeavePlatformBack(): boolean {
   return platformBackExit?.controller.canLeave() ?? false;
-}
-
-// Whether back on the start screen with no card open leaves the game: a closable app's window
-// closes and a browser tab goes to the site's home page. An app whose window a script cannot
-// close keeps back on the start screen.
-export function backLeavesGame(): boolean {
-  return backLeaves;
 }
 
 // Updates to a version at least as new as the one that wrote the save, by itself and with no
