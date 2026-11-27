@@ -100,7 +100,7 @@ beforeEach(() => {
     "ZoneIntroductionScene",
     "ZoneScene",
   ]) {
-    vi.doMock(`../scenes/${name}.ts`, () => ({
+    vi.doMock(`../scenes/${name === "BootScene" ? "startup/" : ""}${name}.ts`, () => ({
       [name]: class {
         constructor(signal?: AbortSignal) {
           if (name === "BootScene" && signal !== undefined) {
