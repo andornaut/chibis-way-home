@@ -44,3 +44,4 @@ Reference: [developing](../../README.md#developing), [deploying](../../README.md
 | cwh-0345 | Separate documentation guides and reference                                                   | [cwh-0345.md](../work/cwh-0345.md) |
 | cwh-0348 | Pin Delivery Kit 8.7.0 for the shared store cutover                                           | [cwh-0348.md](../work/cwh-0348.md) |
 | cwh-0349 | Pin Delivery Kit 8.8.0 for the shared layout migration                                        | [cwh-0349.md](../work/cwh-0349.md) |
+| cwh-0351 | Adopt Game Kit 0.95.2 grouped-startup recovery                                                | [cwh-0351.md](../work/cwh-0351.md) |
