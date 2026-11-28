@@ -888,9 +888,7 @@ export class PauseScene extends Scene implements AchievementsOpener, CheatsOpene
     this.events.once(
       "shutdown",
       foregroundGameEscape(document, () =>
-        this.entryAvailable() && !this.blocked() && this.cardInput().accepts()
-          ? () => this.act("open")
-          : undefined,
+        this.entryAvailable() ? () => void this.open(true) : undefined,
       ),
     );
     const onPauseKey = (event: KeyboardEvent) => {

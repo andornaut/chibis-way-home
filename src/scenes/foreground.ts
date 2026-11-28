@@ -25,6 +25,9 @@ export function registerSceneForeground(scene: Scene, root: HTMLElement): () => 
   const stop = foregroundInput(root.ownerDocument).register({
     active: () => scene.scene.isActive() && root.isConnected && !root.hidden,
     dismiss: () => {
+      if (key === "start") {
+        return null;
+      }
       const close = root.querySelector<HTMLElement>(
         key === "room"
           ? '[data-control="leave"]'
@@ -34,6 +37,7 @@ export function registerSceneForeground(scene: Scene, root: HTMLElement): () => 
       );
       return close === null ? null : foregroundAction(close);
     },
+    ...(key === "start" ? { escape: "pass-through" as const } : {}),
     guard: { gate: input },
     preserveKey: (event) =>
       key === "map" &&

@@ -4,6 +4,10 @@ Chibi plays in landscape with touch Move, Jump and Use, plus keyboard and mouse 
 Discrete pointer actions share a 500 ms hold by default. Pause and Menu share one entry and
 contain Settings and Achievements. Back restores the invoking view, Close dismisses the top
 dialog, and Resume returns to play. Modal input and keyboard focus stay in the top card.
+On Start, Escape opens Menu. During active, pausable play, Escape opens Pause. A foreground
+surface keeps its own dismissal action, so Escape from Settings returns to Pause and
+the next fresh press resumes play. Enter and Space each toggle an available focused
+switch once per press.
 
 Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 [interface](../../gameplay/design.md#interface), [screens and UI](../../src/README.md#screens-and-ui),
@@ -68,3 +72,4 @@ Reference: [screen and controls](../../gameplay/design.md#screen-and-controls),
 | cwh-0344 | Square the lower edges of game buttons                                  | [cwh-0344.md](../work/cwh-0344.md) |
 | cwh-0346 | Keep Start button text inside the rotated face                          | [cwh-0346.md](../work/cwh-0346.md) |
 | cwh-0347 | Confirm platform Back before leaving Start                              | [cwh-0347.md](../work/cwh-0347.md) |
+| cwh-0350 | Open the Start Menu with Escape                                         | [cwh-0350.md](../work/cwh-0350.md) |

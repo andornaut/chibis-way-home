@@ -211,6 +211,40 @@ it("returns keyboard focus to the Menu entry after native disabled-button blur a
   expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(false);
 });
 
+it("opens the ready Start Menu with a fresh Escape from the Start button", async () => {
+  const f = await startMenu();
+  const card = f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!;
+  const release = () =>
+    document.activeElement!.dispatchEvent(
+      new KeyboardEvent("keyup", { bubbles: true, cancelable: true, key: "Escape" }),
+    );
+  expect(document.activeElement?.textContent).toBe(TEXT.start.start);
+  modalInput(f.start).ready(false);
+  f.key("Escape");
+  release();
+  await settle();
+  expect(card.hidden).toBe(true);
+  modalInput(f.start).ready(true);
+  f.key("Escape", true);
+  release();
+  await settle();
+  expect(card.hidden).toBe(true);
+
+  expect(f.key("Escape").defaultPrevented).toBe(true);
+  await settle();
+  expect(card.hidden).toBe(false);
+  expect(f.pause.dialog.querySelector(".ui-card-title")?.textContent).toBe(TEXT.menu.title);
+  f.key("Escape", true);
+  expect(card.hidden).toBe(false);
+  release();
+  f.key("Escape");
+  f.game.events.emit("postrender");
+  await settle();
+  expect(card.hidden).toBe(true);
+  expect(document.activeElement?.textContent).toBe(TEXT.start.start);
+  expect(exit).not.toHaveBeenCalled();
+});
+
 it("cannot activate or route Tab to Menu underneath an ordinary modal", async () => {
   const f = await startMenu();
   const dialog = document.createElement("section");
@@ -221,6 +255,7 @@ it("cannot activate or route Tab to Menu underneath an ordinary modal", async ()
   f.pause.update();
   expect(f.pause.pauseButton.closest("[inert]")).not.toBeNull();
   f.pause.pauseButton.click();
+  f.key("Escape");
   await settle();
   expect(f.pause.dialog.closest<HTMLElement>(".ui-card-scene")!.hidden).toBe(true);
   action.focus();
