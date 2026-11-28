@@ -50,7 +50,7 @@
     "prettier": "^3.10.1",
     "skia-canvas": "4.0.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.2",
+    "typescript-eslint": "^8.73.0",
     "vite": "^8.3.8",
     "vitest": "^5.1.0",
     "wawoff2": "2.0.1",
